@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FÁTIMA CALDEA — STUDIO PRO V5 · MÓDULO 2 · VIDEO</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#C9A84C;--gold2:#7A6130;--gold3:#E8CC7A;
+  --bg:#0a0a0a;--bg2:#111;--bg3:#191919;--bg4:#0f0f0f;
+  --green:#27AE60;--blue:#2980B9;--red:#E74C3C;--purple:#9B59B6;--cyan:#00bcd4;
+  --border:rgba(201,168,76,.18);--text:#e8e0d0;--muted:#4a4535;
+}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;}
+
+/* ── PUENTE SUPERIOR ── */
+.bridge{background:rgba(4,6,8,.98);border-bottom:2px solid rgba(201,168,76,.18);padding:0 14px;display:flex;align-items:center;height:44px;position:sticky;top:0;z-index:100;}
+.br-logo{font-size:9px;font-weight:700;letter-spacing:.2em;color:var(--gold);padding-right:14px;border-right:1px solid rgba(201,168,76,.15);margin-right:8px;white-space:nowrap;}
+.br-tab{display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-right:1px solid rgba(201,168,76,.08);font-size:8px;color:var(--gold2);text-decoration:none;white-space:nowrap;transition:.15s;}
+.br-tab.act{color:var(--gold);background:rgba(201,168,76,.1);border-bottom:2px solid var(--gold);}
+.br-tab:hover:not(.act){color:var(--gold);}
+.br-dot{width:6px;height:6px;border-radius:50%;}
+
+/* ── HEADER ── */
+.hdr{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.logo{font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--gold);}
+.sub{font-size:7px;color:var(--gold2);margin-top:2px;}
+.badge-m2{background:rgba(41,128,185,.12);border:1px solid rgba(41,128,185,.3);color:var(--blue);padding:3px 8px;border-radius:3px;font-size:7px;}
+
+/* ── SHELL 2 COLUMNAS ── */
+.shell{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 96px);}
+
+/* ── PANEL IZQ ── */
+.left{background:var(--bg2);border-right:1px solid var(--border);padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:0;}
+.sec{font-size:7px;letter-spacing:.2em;color:var(--gold2);text-transform:uppercase;border-bottom:1px solid rgba(201,168,76,.1);padding-bottom:3px;margin:10px 0 6px;}
+.sec:first-child{margin-top:0;}
+
+/* APIs */
+.api-list{display:flex;flex-direction:column;gap:2px;}
+.api-row{display:flex;align-items:center;justify-content:space-between;padding:5px 7px;border-radius:3px;cursor:pointer;transition:.15s;}
+.api-free{background:rgba(39,174,96,.06);border:1px solid rgba(39,174,96,.18);color:var(--green);}
+.api-key{background:rgba(142,68,173,.06);border:1px solid rgba(142,68,173,.18);color:var(--purple);}
+.api-row.active-api{outline:1.5px solid var(--gold);}
+.api-name{font-size:7.5px;flex:1;}
+.api-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-on{background:var(--green);}
+.dot-off{background:#333;}
+.api-key-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:8px;padding:4px 6px;margin-top:3px;font-family:'JetBrains Mono',monospace;display:none;}
+.api-key-input.show{display:block;}
+
+/* Referencia */
+.ref-zone{border:1.5px dashed rgba(201,168,76,.3);border-radius:6px;padding:10px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:rgba(201,168,76,.02);}
+.ref-zone:hover,.ref-zone.drag-over{border-color:var(--gold);background:rgba(201,168,76,.06);}
+.ref-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.ref-icon{font-size:20px;opacity:.35;margin-bottom:3px;}
+.ref-txt{font-size:7.5px;color:var(--gold2);line-height:1.5;}
+.ref-txt strong{color:var(--gold);display:block;font-size:8.5px;}
+.ref-preview-wrap{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
+.ref-thumb{position:relative;width:54px;height:40px;}
+.ref-thumb img,.ref-thumb video{width:54px;height:40px;object-fit:cover;border-radius:3px;border:1px solid var(--border);}
+.ref-thumb-del{position:absolute;top:-4px;right:-4px;width:13px;height:13px;background:var(--red);border-radius:50%;font-size:7px;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;}
+.ref-badge{display:none;background:rgba(41,128,185,.1);border:1px solid rgba(41,128,185,.3);border-radius:3px;padding:3px 7px;font-size:7px;color:var(--blue);margin-top:4px;}
+.ref-badge.show{display:block;}
+.sl-wrap{margin-bottom:5px;}
+.sl-lbl{display:flex;justify-content:space-between;font-size:7px;color:var(--gold2);margin-bottom:2px;}
+.sl{width:100%;height:2px;accent-color:var(--gold);cursor:pointer;}
+
+/* Switches */
+.switch-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;}
+.switch-lbl{font-size:8px;color:var(--text);}
+.sw{position:relative;width:32px;height:17px;cursor:pointer;flex-shrink:0;}
+.sw input{opacity:0;width:0;height:0;}
+.sw-sl{position:absolute;inset:0;background:var(--bg3);border-radius:10px;transition:.2s;border:1px solid var(--border);}
+.sw-sl::before{content:'';position:absolute;width:11px;height:11px;background:var(--muted);border-radius:50%;bottom:2px;left:2px;transition:.2s;}
+.sw input:checked+.sw-sl{background:rgba(201,168,76,.2);border-color:var(--gold);}
+.sw input:checked+.sw-sl::before{transform:translateX(15px);background:var(--gold);}
+
+/* Fitness selectores */
+.fit-panel{display:none;background:rgba(59,130,246,.04);border:1px solid rgba(59,130,246,.15);border-radius:6px;padding:8px;margin-bottom:6px;}
+.fit-panel.show{display:block;}
+.fit-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-bottom:5px;}
+.fit-btn{padding:4px 2px;border:1px solid rgba(59,130,246,.2);border-radius:2px;font-size:6.5px;color:#60a5fa;text-align:center;cursor:pointer;background:transparent;transition:.1s;line-height:1.4;}
+.fit-btn.sel{background:rgba(59,130,246,.15);border-color:#3b82f6;color:#93c5fd;}
+.fit-etiqueta{background:#0f1f3d;border:1px solid #1e3a5f;border-radius:4px;padding:5px 8px;font-size:7px;color:#60a5fa;margin-top:4px;word-break:break-all;}
+.fit-etiqueta strong{color:#facc15;font-family:monospace;display:block;font-size:9px;margin-top:2px;}
+
+/* Categorías peluquería */
+.cat-panel{display:none;margin-bottom:6px;}
+.cat-panel.show{display:block;}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;max-height:130px;overflow-y:auto;margin-bottom:5px;}
+.cat-btn{padding:4px 3px;border:1px solid rgba(201,168,76,.12);border-radius:2px;font-size:6.5px;color:var(--gold2);text-align:center;cursor:pointer;background:var(--bg3);transition:.1s;line-height:1.3;}
+.cat-btn.sel{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.06);}
+.cat-btn:hover:not(.sel){border-color:rgba(201,168,76,.3);color:var(--text);}
+.cat-var-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-bottom:5px;}
+
+/* Prompt */
+.txt-f{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:8px;padding:5px 7px;margin-bottom:4px;font-family:'JetBrains Mono',monospace;resize:vertical;transition:border-color .2s;}
+.txt-f::placeholder{color:var(--muted);}
+.txt-f:focus{outline:none;border-color:var(--gold);}
+.mode-badge{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:3px;padding:4px 7px;font-size:7px;color:var(--gold2);margin-bottom:4px;}
+
+/* Parámetros video */
+.param-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px;}
+.param-item{display:flex;flex-direction:column;gap:2px;}
+.param-lbl{font-size:6.5px;color:var(--gold2);}
+.param-sel{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:7px;padding:3px 4px;font-family:'JetBrains Mono',monospace;}
+
+/* GEN BTN */
+.gen-btn{width:100%;padding:11px;background:linear-gradient(135deg,var(--gold2),var(--gold));border:none;border-radius:4px;color:#000;font-size:10px;font-weight:700;letter-spacing:.15em;cursor:pointer;transition:.2s;margin-top:4px;font-family:'JetBrains Mono',monospace;}
+.gen-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,168,76,.3);}
+.gen-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+/* ── PANEL CENTRO ── */
+.center{background:var(--bg4);padding:14px;display:flex;flex-direction:column;gap:10px;}
+.c-toolbar{display:flex;gap:3px;flex-wrap:wrap;align-items:center;background:var(--bg2);padding:6px 8px;border-radius:4px;border:1px solid var(--border);}
+.ctool{padding:4px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;font-size:7.5px;color:var(--gold2);cursor:pointer;transition:.1s;white-space:nowrap;font-family:'JetBrains Mono',monospace;}
+.ctool.act,.ctool:hover{border-color:var(--gold);color:var(--gold);}
+.ctool.gold{background:var(--gold);color:#000;border-color:var(--gold);font-weight:700;}
+.ctool.m4{color:var(--cyan);border-color:rgba(0,188,212,.3);}
+.ctool.m4:hover{background:rgba(0,188,212,.08);}
+.ctool.danger{color:var(--red);border-color:rgba(231,76,60,.2);}
+.tool-sep{width:1px;background:var(--border);height:18px;flex-shrink:0;}
+
+/* Área video */
+.video-area{position:relative;flex:1;min-height:340px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.video-ph{text-align:center;pointer-events:none;}
+.video-ph .icon{font-size:40px;opacity:.1;margin-bottom:10px;}
+.video-ph p{font-size:8px;color:var(--muted);letter-spacing:.12em;line-height:1.8;}
+#mainVideo{width:100%;max-height:460px;border-radius:8px;display:none;outline:none;}
+.canvas-spinner{position:absolute;inset:0;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;}
+.spinner-ring{width:44px;height:44px;border:3px solid rgba(201,168,76,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;}
+.spinner-txt{font-size:9px;color:var(--gold);letter-spacing:.15em;}
+.spinner-sub{font-size:7px;color:var(--gold2);margin-top:4px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Status */
+.status-bar{background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.12);border-radius:3px;padding:5px 10px;font-size:7.5px;color:var(--gold2);min-height:24px;}
+.s-ok{color:var(--green)!important;}
+.s-err{color:var(--red)!important;}
+.s-info{color:var(--blue)!important;}
+
+/* Prompt preview */
+.prompt-preview{background:var(--bg3);border:1px solid var(--border);border-left:2px solid var(--gold);border-radius:3px;padding:6px 8px;font-size:7px;color:#aaa;line-height:1.5;word-break:break-word;max-height:60px;overflow-y:auto;}
+.prompt-preview .lbl{font-size:6px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;}
+
+/* Save bar */
+.save-bar{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.s-btn{padding:5px 12px;border-radius:3px;font-size:8px;cursor:pointer;transition:.1s;font-family:'JetBrains Mono',monospace;}
+.s-btn.pri{background:var(--gold);color:#000;border:none;font-weight:700;}
+.s-btn.sec{background:transparent;border:1px solid var(--border);color:var(--gold2);}
+.s-btn.sec:hover{border-color:var(--gold);color:var(--gold);}
+.s-btn.m4{background:transparent;border:1px solid rgba(0,188,212,.35);color:var(--cyan);}
+.s-btn.m4:hover{background:rgba(0,188,212,.08);}
+.s-btn.danger{background:transparent;border:1px solid rgba(231,76,60,.3);color:var(--red);}
+
+/* Galería */
+.quick-gal{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px;}
+.qg-title{font-size:7px;color:var(--gold2);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;}
+.bulk-ctrl{display:flex;gap:4px;margin-bottom:5px;align-items:center;flex-wrap:wrap;}
+.bulk-btn{padding:3px 8px;background:transparent;border:1px solid rgba(201,168,76,.3);border-radius:3px;color:var(--gold2);cursor:pointer;font-size:7px;font-family:'JetBrains Mono',monospace;}
+.bulk-btn:hover{border-color:var(--gold);color:var(--gold);}
+.bulk-bar{display:none;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:4px;padding:5px 8px;margin-bottom:5px;align-items:center;gap:6px;flex-wrap:wrap;font-size:7px;}
+.bulk-bar.show{display:flex;}
+.vid-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;}
+.vid-card{background:var(--bg3);border:1px solid var(--border);border-radius:5px;overflow:hidden;position:relative;transition:.15s;}
+.vid-card:hover{border-color:rgba(201,168,76,.4);}
+.vid-card.sel{outline:2px solid var(--gold);}
+.vid-thumb-wrap{position:relative;height:80px;background:var(--bg4);display:flex;align-items:center;justify-content:center;}
+.vid-thumb-wrap video{width:100%;height:80px;object-fit:cover;}
+.vid-thumb-icon{font-size:28px;opacity:.5;}
+.vid-chk{position:absolute;top:4px;left:4px;width:15px;height:15px;background:rgba(0,0,0,.7);border:1.5px solid var(--gold);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;cursor:pointer;}
+.vid-chk.on{background:var(--gold);color:#000;}
+.vid-ruta{position:absolute;top:4px;right:4px;font-size:5.5px;padding:1px 4px;border-radius:2px;font-weight:700;}
+.ruta-fitness{background:rgba(59,130,246,.8);color:#fff;}
+.ruta-academia{background:rgba(39,174,96,.8);color:#fff;}
+.ruta-libre{background:rgba(201,168,76,.8);color:#000;}
+.vid-info{padding:5px 6px;background:var(--bg3);}
+.vid-name-input{width:100%;background:var(--bg4);border:1px solid rgba(201,168,76,.15);border-radius:2px;color:var(--text);font-size:7px;padding:2px 4px;font-family:'JetBrains Mono',monospace;margin-bottom:3px;}
+.vid-name-input:focus{outline:none;border-color:var(--gold);}
+.vid-meta{font-size:6px;color:var(--gold2);}
+.vid-acts{display:flex;gap:2px;padding:4px 5px;background:var(--bg3);border-top:1px solid rgba(201,168,76,.08);}
+.va{flex:1;padding:3px 2px;border:1px solid rgba(201,168,76,.12);border-radius:2px;font-size:6.5px;color:var(--gold2);text-align:center;cursor:pointer;}
+.va:hover{border-color:var(--gold);color:var(--gold);}
+
+/* Footer */
+.ftr{background:var(--bg2);border-top:1px solid var(--border);padding:5px 14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+.ft{font-size:6.5px;color:var(--gold2);}
+.ft span{color:var(--gold);}
+</style>
+</head>
+<body>
+
+<!-- ══ PUENTE SUPERIOR ══ -->
+<div class="bridge">
+  <div class="br-logo">✦ FÁTIMA CALDEA</div>
+  <a href="modulo1_imagen.html" class="br-tab">
+    <div class="br-dot" style="background:var(--muted);"></div>⚡ M1 · Imagen
+  </a>
+  <a href="modulo2_video.html" class="br-tab act">
+    <div class="br-dot" style="background:var(--gold);"></div>🎬 M2 · Video
+    <span style="font-size:5.5px;padding:1px 4px;background:var(--gold);color:#000;border-radius:2px;font-weight:700;">ACTIVO</span>
+  </a>
+  <a href="modulo3_voz.html" class="br-tab">
+    <div class="br-dot" style="background:var(--muted);"></div>🔊 M3 · Voz
+  </a>
+  <a href="modulo4_carpeta.html" class="br-tab">
+    <div class="br-dot" style="background:var(--muted);"></div>📁 M4 · Carpeta
+  </a>
+  <!-- 🔧 PARCHE: link a Admin -->
+  <a href="admin.html" class="br-tab" style="border-left:1px solid rgba(201,168,76,.15);">
+    <div class="br-dot" style="background:var(--muted);"></div>🛠️ Admin
+  </a>
+  <!-- 🆕 link al Admin de Academia (motores de 360 clases) -->
+  <a href="admin_motores.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-left:1px solid rgba(0,242,255,.2);font-size:8px;color:#60a5fa;text-decoration:none;white-space:nowrap;transition:.15s;background:rgba(0,242,255,.04);">
+    <div style="width:6px;height:6px;border-radius:50%;background:#60a5fa;"></div>
+    🎓 Academia
+  </a>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+    <div style="font-size:7px;color:var(--green);display:flex;align-items:center;gap:4px;">
+      <div style="width:6px;height:6px;background:var(--green);border-radius:50%;"></div>
+      <span id="userChip">fatimahairstudio082 · Admin</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── HEADER ── -->
+<div class="hdr">
+  <div>
+    <div class="logo">FÁTIMA CALDEA — STUDIO PRO V5</div>
+    <div class="sub">MÓDULO 2 · Motor de Video IA · 6 APIs · 3 Cerebros · Image-to-Video · Carpeta M4</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span class="badge-m2">● M2 ACTIVO</span>
+    <button style="font-size:7px;color:var(--gold2);cursor:pointer;padding:3px 7px;border:1px solid var(--border);border-radius:3px;background:transparent;" onclick="window.close()">✕ Cerrar</button>
+  </div>
+</div>
+
+<!-- ══ SHELL ══ -->
+<div class="shell">
+
+  <!-- ══ PANEL IZQ ══ -->
+  <div class="left">
+
+    <!-- ── 6 MOTORES API ── -->
+    <div class="sec">🎬 Motor de Video IA · 6 APIs</div>
+    <div class="api-list">
+
+      <!-- GRATUITO -->
+      <div class="api-row api-free active-api" id="engine-pollinations" onclick="selectEngine(this,'pollinations')">
+        <span class="api-name">Pollinations / HF · Gratis</span>
+        <div class="api-dot dot-on"></div>
+      </div>
+
+      <!-- PRIVADAS -->
+      <div class="api-row api-key" id="engine-veo" onclick="toggleKey('veo')">
+        <span class="api-name">Google · Veo AI</span>
+        <div class="api-dot dot-off" id="dot-veo"></div>
+      </div>
+      <input class="api-key-input" id="key-veo" type="password" placeholder="Google Veo API Key → Enter" onkeydown="saveKey('veo',event)">
+
+      <div class="api-row api-key" id="engine-sora" onclick="toggleKey('sora')">
+        <span class="api-name">OpenAI · Sora / Video</span>
+        <div class="api-dot dot-off" id="dot-sora"></div>
+      </div>
+      <input class="api-key-input" id="key-sora" type="password" placeholder="sk-... → Enter para guardar" onkeydown="saveKey('sora',event)">
+
+      <div class="api-row api-key" id="engine-kling" onclick="toggleKey('kling')">
+        <span class="api-name">Kling AI · Cinemático</span>
+        <div class="api-dot dot-off" id="dot-kling"></div>
+      </div>
+      <input class="api-key-input" id="key-kling" type="password" placeholder="Kling API Key → Enter" onkeydown="saveKey('kling',event)">
+
+      <div class="api-row api-key" id="engine-luma" onclick="toggleKey('luma')">
+        <span class="api-name">Luma · Dream Machine</span>
+        <div class="api-dot dot-off" id="dot-luma"></div>
+      </div>
+      <input class="api-key-input" id="key-luma" type="password" placeholder="Luma API Key → Enter" onkeydown="saveKey('luma',event)">
+
+      <div class="api-row api-key" id="engine-svd" onclick="toggleKey('svd')">
+        <span class="api-name">Stability AI · SVD I2V</span>
+        <div class="api-dot dot-off" id="dot-svd"></div>
+      </div>
+      <input class="api-key-input" id="key-svd" type="password" placeholder="sk-... → Enter para guardar" onkeydown="saveKey('svd',event)">
+
+      <div class="api-row api-key" id="engine-replicate" onclick="toggleKey('replicate')">
+        <span class="api-name">Replicate · Multi-modelo (Kling/Luma/SVD/Wan)</span>
+        <div class="api-dot dot-off" id="dot-replicate"></div>
+      </div>
+      <input class="api-key-input" id="key-replicate" type="password" placeholder="r8_... → Enter para guardar" onkeydown="saveKey('replicate',event)">
+
+      <div class="api-row api-key" id="engine-runway" onclick="toggleKey('runway')">
+        <span class="api-name">Runway · Gen-3 / Gen-4</span>
+        <div class="api-dot dot-off" id="dot-runway"></div>
+      </div>
+      <input class="api-key-input" id="key-runway" type="password" placeholder="key_... → Enter para guardar" onkeydown="saveKey('runway',event)">
+
+    </div>
+
+    <!-- Claude Vision para análisis de referencia -->
+    <div style="margin-top:6px;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.18);border-radius:4px;padding:6px 8px;">
+      <div style="font-size:6.5px;color:var(--gold);margin-bottom:4px;">🔍 Claude Vision · Analiza referencia → prompt técnico</div>
+      <div class="api-row api-key" id="engine-anthropic" onclick="toggleKey('anthropic')" style="margin-bottom:3px;">
+        <span class="api-name">Anthropic · Claude Vision</span>
+        <div class="api-dot dot-off" id="dot-anthropic"></div>
+      </div>
+      <input class="api-key-input" id="key-anthropic" type="password" placeholder="sk-ant-... → Enter" onkeydown="saveKey('anthropic',event)">
+      <div style="font-size:6px;color:var(--muted);margin-top:3px;line-height:1.5;">Con clave: Claude analiza tu imagen/video y construye el prompt cinemático exacto.</div>
+    </div>
+
+    <!-- ── REFERENCIA IMAGE/VIDEO-TO-VIDEO ── -->
+    <div class="sec">📷 Referencia · I2V / V2V</div>
+    <div class="ref-zone" id="refZone">
+      <input type="file" id="refInput" accept="image/*,video/mp4" multiple onchange="handleRefUpload(event)">
+      <div class="ref-icon">📎</div>
+      <div class="ref-txt"><strong>+ Subir referencia</strong>JPG · PNG · MP4 corto</div>
+    </div>
+    <div class="ref-preview-wrap" id="refPreview"></div>
+    <div class="ref-badge" id="refBadge">✅ Referencia activa · I2V/V2V habilitado</div>
+    <div class="sl-wrap" style="margin-top:5px;">
+      <div class="sl-lbl"><span>Intensidad referencia</span><span id="refIntVal" style="color:var(--gold)">65%</span></div>
+      <input type="range" class="sl" id="refIntSl" min="0" max="100" value="65" oninput="refIntVal.textContent=this.value+'%'">
+    </div>
+
+    <!-- ── PARÁMETROS VIDEO ── -->
+    <div class="sec">⚙️ Parámetros de video</div>
+    <div class="param-grid">
+      <div class="param-item">
+        <div class="param-lbl">Duración</div>
+        <select class="param-sel" id="pDur">
+          <option value="4">4 seg</option>
+          <option value="5" selected>5 seg</option>
+          <option value="8">8 seg</option>
+          <option value="10">10 seg</option>
+        </select>
+      </div>
+      <div class="param-item">
+        <div class="param-lbl">FPS</div>
+        <select class="param-sel" id="pFps">
+          <option value="24">24 fps</option>
+          <option value="30">30 fps</option>
+          <option value="60" selected>60 fps</option>
+        </select>
+      </div>
+      <div class="param-item">
+        <div class="param-lbl">Resolución</div>
+        <select class="param-sel" id="pRes">
+          <option value="720p">720p</option>
+          <option value="1080p" selected>1080p</option>
+          <option value="4k">4K</option>
+        </select>
+      </div>
+      <div class="param-item">
+        <div class="param-lbl">Ratio</div>
+        <select class="param-sel" id="pRatio">
+          <option value="16:9" selected>16:9</option>
+          <option value="9:16">9:16 Reel</option>
+          <option value="1:1">1:1</option>
+        </select>
+      </div>
+    </div>
+    <div class="sl-wrap">
+      <div class="sl-lbl"><span>Estabilidad cinemática</span><span id="vStab" style="color:var(--gold)">80%</span></div>
+      <input type="range" class="sl" id="stabSl" min="0" max="100" value="80" oninput="vStab.textContent=this.value+'%'">
+    </div>
+
+    <!-- ══ 3 CEREBROS ══ -->
+    <div class="sec">🧠 Cerebros de generación</div>
+    <div class="switch-row">
+      <span class="switch-lbl">💪 Cerebro 1 · Fitness indexado</span>
+      <label class="sw"><input type="checkbox" id="swFitness" onchange="setCerebro('fitness')"><span class="sw-sl"></span></label>
+    </div>
+    <div class="switch-row">
+      <span class="switch-lbl">✂️ Cerebro 2 · Categorías peluquería</span>
+      <label class="sw"><input type="checkbox" id="swCats" onchange="setCerebro('cats')"><span class="sw-sl"></span></label>
+    </div>
+    <div class="switch-row">
+      <span class="switch-lbl">🤖 Cerebro 3 · Motor libre / Autónomo</span>
+      <label class="sw"><input type="checkbox" id="swLibre" checked onchange="setCerebro('libre')"><span class="sw-sl"></span></label>
+    </div>
+
+    <!-- CEREBRO 1: FITNESS -->
+    <div class="fit-panel" id="fitPanel">
+      <div style="font-size:8px;color:#60a5fa;font-weight:700;margin-bottom:6px;">💪 Indexador Fitness · Video</div>
+      <div style="font-size:6.5px;color:#60a5fa;margin-bottom:3px;">Nivel técnico</div>
+      <div class="fit-grid-3">
+        <div class="fit-btn sel" id="fn6" onclick="setFN(this,'6')">🟢<br><span style="font-size:5.5px;">6 · Principiante</span></div>
+        <div class="fit-btn" id="fn8" onclick="setFN(this,'8')">🟠<br><span style="font-size:5.5px;">8 · Intermedio</span></div>
+        <div class="fit-btn" id="fn12" onclick="setFN(this,'12')">🔴<br><span style="font-size:5.5px;">12 · Avanzado</span></div>
+      </div>
+      <div style="font-size:6.5px;color:#60a5fa;margin-bottom:3px;margin-top:5px;">Grupo muscular</div>
+      <div class="fit-grid-3">
+        <div class="fit-btn sel" id="fg-gluteo" onclick="setFG(this,'gluteo')">🍑<br><span style="font-size:5.5px;">Glúteo</span></div>
+        <div class="fit-btn" id="fg-pierna" onclick="setFG(this,'pierna')">🦵<br><span style="font-size:5.5px;">Pierna</span></div>
+        <div class="fit-btn" id="fg-superior" onclick="setFG(this,'superior')">💪<br><span style="font-size:5.5px;">Superior</span></div>
+      </div>
+      <div style="font-size:6.5px;color:#60a5fa;margin-bottom:3px;margin-top:5px;">Equipamiento</div>
+      <div class="fit-grid-3">
+        <div class="fit-btn sel" id="fe-mancuerna" onclick="setFE(this,'mancuerna')">🏋️<br><span style="font-size:5.5px;">Mancuerna</span></div>
+        <div class="fit-btn" id="fe-maquina" onclick="setFE(this,'maquina')">⚙️<br><span style="font-size:5.5px;">Máquina</span></div>
+        <div class="fit-btn" id="fe-corporal" onclick="setFE(this,'corporal')">🤸<br><span style="font-size:5.5px;">Corporal</span></div>
+      </div>
+      <div style="font-size:6.5px;color:#60a5fa;margin-bottom:3px;margin-top:5px;">Motor objetivo</div>
+      <div class="fit-grid-3">
+        <div class="fit-btn sel" id="fm-masa" onclick="setFM(this,'masa')">📈<br><span style="font-size:5.5px;">Masa</span></div>
+        <div class="fit-btn" id="fm-perder" onclick="setFM(this,'perder')">🔥<br><span style="font-size:5.5px;">Grasa</span></div>
+        <div class="fit-btn" id="fm-mantener" onclick="setFM(this,'mantener')">⚖️<br><span style="font-size:5.5px;">Mantener</span></div>
+      </div>
+      <div class="fit-etiqueta">Etiqueta Firebase:<strong id="fitEtiqueta">gluteo_masa_mancuerna_6_v1</strong></div>
+    </div>
+
+    <!-- CEREBRO 2: CATEGORÍAS -->
+    <div class="cat-panel" id="catPanel">
+      <div style="font-size:8px;color:var(--green);font-weight:700;margin-bottom:5px;">✂️ 22 Categorías · Peluquería</div>
+      <div class="cat-grid" id="catGrid"></div>
+      <div class="cat-var-grid">
+        <div class="fit-btn sel" id="cv-cliente" onclick="selectCatVar('cliente',this)">Cliente</div>
+        <div class="fit-btn" id="cv-peluquero" onclick="selectCatVar('peluquero',this)">Peluquero</div>
+        <div class="fit-btn" id="cv-protocolo" onclick="selectCatVar('protocolo',this)">Protocolo</div>
+        <div class="fit-btn" id="cv-alertas" onclick="selectCatVar('alertas',this)">Alertas</div>
+      </div>
+    </div>
+
+    <!-- CEREBRO 3: PROMPT LIBRE / AUTÓNOMO -->
+    <div class="sec">✍️ Prompt libre · Cerebro 3 autónomo</div>
+    <div class="mode-badge" id="modeBadge">🤖 Motor libre activo · El sistema expande tu idea automáticamente</div>
+    <textarea class="txt-f" id="txtPrompt" rows="4" placeholder="Describe el video · Ej: Mujer realizando hip thrust en gimnasio profesional, cámara lenta lateral...&#10;&#10;El Cerebro 3 añadirá automáticamente: estabilidad, 60fps, iluminación, lente y consistencia de cuadro."></textarea>
+    <input class="txt-f" id="txtTitulo" placeholder="Título del video...">
+    <input class="txt-f" id="txtEtiqueta" placeholder="Etiqueta Firebase · Ej: fitness_gluteo_v1">
+
+    <button class="gen-btn" id="genBtn" onclick="generar()">🎬 GENERAR VIDEO</button>
+  </div>
+
+  <!-- ══ PANEL CENTRO ══ -->
+  <div class="center">
+
+    <!-- TOOLBAR -->
+    <div class="c-toolbar">
+      <div class="ctool gold" onclick="generar()">🎬 GENERAR</div>
+      <div class="tool-sep"></div>
+      <div class="ctool" onclick="document.getElementById('mainVideo').play()">▶ Play</div>
+      <div class="ctool" onclick="document.getElementById('mainVideo').pause()">⏸ Pausa</div>
+      <div class="ctool danger" onclick="clearVideo()">🗑️ Limpiar</div>
+      <div class="tool-sep"></div>
+      <div class="ctool" onclick="selAll()">☑ Todas</div>
+      <div class="ctool" onclick="deselAll()">☐ Ninguna</div>
+      <div class="ctool" onclick="descargarLote()">📥 Lote</div>
+      <div class="ctool m4" onclick="enviarM4()">📁 → M4</div>
+    </div>
+
+    <!-- ÁREA VIDEO -->
+    <div class="video-area">
+      <div class="video-ph" id="videoPH">
+        <div class="icon">🎬</div>
+        <p>MÓDULO 2 · MOTOR DE VIDEO IA<br>3 Cerebros · 6 APIs · I2V · V2V<br>Genera tu primer video</p>
+      </div>
+      <video id="mainVideo" controls playsinline></video>
+      <div class="canvas-spinner" id="spinner">
+        <div class="spinner-ring"></div>
+        <div class="spinner-txt" id="spinnerTxt">GENERANDO VIDEO...</div>
+        <div class="spinner-sub" id="spinnerSub">Procesando con motor de IA...</div>
+      </div>
+    </div>
+
+    <!-- PROMPT PREVIEW -->
+    <div class="prompt-preview">
+      <div class="lbl">🎬 Prompt expandido que se enviará al motor</div>
+      <span id="promptPreviewTxt">Escribe tu prompt o activa un cerebro...</span>
+    </div>
+
+    <!-- STATUS -->
+    <div class="status-bar" id="statusBar">Estado: listo · Módulo 2 Video activo · 3 Cerebros disponibles</div>
+
+    <!-- SAVE BAR -->
+    <div class="save-bar">
+      <button class="s-btn pri" onclick="guardar()">💾 GUARDAR</button>
+      <button class="s-btn sec" onclick="descargarActual()">📥 MP4</button>
+      <button class="s-btn m4" onclick="enviarActualM4()">📁 → Carpeta M4</button>
+      <button class="s-btn danger" onclick="clearVideo()">🗑️ Limpiar</button>
+      <span style="margin-left:auto;font-size:7px;color:var(--gold2);">Sesión: <span id="ftSes" style="color:var(--gold);">0</span> · Galería: <span id="ftGal" style="color:var(--gold);">0</span></span>
+    </div>
+
+    <!-- GALERÍA -->
+    <div class="quick-gal">
+      <div class="qg-title">🕓 Galería de sesión · Checkbox = seleccionar · Campo nombre = renombrar en caliente</div>
+
+      <!-- Bulk bar -->
+      <div class="bulk-bar" id="bulkBar">
+        <span id="bulkCount" style="color:var(--gold);font-weight:700;">0</span>
+        <span style="color:var(--gold2);">seleccionados</span>
+        <button class="bulk-btn" onclick="descargarLote()">📥 Descargar lote</button>
+        <button class="bulk-btn" style="border-color:rgba(0,188,212,.4);color:var(--cyan);" onclick="enviarM4()">📁 Enviar a M4</button>
+        <button class="bulk-btn" style="border-color:rgba(231,76,60,.3);color:var(--red);" onclick="eliminarSel()">🗑 Eliminar</button>
+        <button class="bulk-btn" onclick="deselAll()">✕ Cancelar</button>
+      </div>
+
+      <div class="bulk-ctrl">
+        <button class="bulk-btn" onclick="selAll()">☑ Todas</button>
+        <button class="bulk-btn" onclick="deselAll()">☐ Ninguna</button>
+        <span style="font-size:6.5px;color:var(--muted);">Doble clic = reproducir en área principal</span>
+      </div>
+
+      <div class="vid-grid" id="vidGrid">
+        <div style="font-size:7px;color:var(--muted);padding:4px;">Sin videos aún — genera tu primer video</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="ftr">
+  <span class="ft">Motor: <span id="ftMotor">Pollinations/HF·Gratis</span></span>
+  <span class="ft">Cerebro: <span id="ftCerebro">Libre/Autónomo</span></span>
+  <span class="ft">Ruta: <span id="ftRuta">libre</span></span>
+  <span class="ft">Videos: <span id="ftGen">0</span></span>
+  <span class="ft" style="margin-left:auto;">✦ FÁTIMA CALDEA STUDIO PRO V5 · MÓDULO 2 · MOTOR VIDEO</span>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// ESTADO GLOBAL M2
+// ════════════════════════════════════════════════════════════
+const MV = {
+  engine: 'pollinations',
+  cerebro: 'libre',   // 'fitness' | 'cats' | 'libre'
+  ruta: 'libre',      // 'fitness' | 'academia' | 'libre'
+  gallery: [],        // {id, url, blob, nombre, label, ruta, fecha, engine}
+  selected: new Set(),
+  currentUrl: null,
+  currentBlob: null,
+  sessionCount: 0,
+  refMedia: [],       // {src, b64, type:'img'|'vid', file}
+  _fitN:'6', _fitG:'gluteo', _fitE:'mancuerna', _fitM:'masa',
+  _fitEtiqueta:'gluteo_masa_mancuerna_6_v1',
+  _catIdx:0, _catVar:'cliente'
+};
+
+const mainVideo = document.getElementById('mainVideo');
+const videoPH   = document.getElementById('videoPH');
+const spinner   = document.getElementById('spinner');
+const sb        = document.getElementById('statusBar');
+
+function setStatus(msg,type=''){sb.innerHTML=type==='ok'?`<span class="s-ok">✓ ${msg}</span>`:type==='err'?`<span class="s-err">⚠ ${msg}</span>`:type==='info'?`<span class="s-info">ℹ ${msg}</span>`:msg;}
+
+// ════════════════════════════════════════════════════════════
+// CATEGORÍAS PELUQUERÍA — 22
+// ════════════════════════════════════════════════════════════
+const CATS=[
+  {id:'bioseg',label:'🛡️ Bioseguridad',prompts:{cliente:'professional hairdressing salon biosecurity video, sterilized tools, protective cape, clean clinic environment, smooth camera pan, 60fps',peluquero:'hairdresser biosecurity protocol video, gloves mask apron, professional demonstration, cinematic lighting',protocolo:'biosecurity protocol step by step video, numbered infographic animation, clean design',alertas:'hairdressing safety alert video, warning signs, red yellow palette, animated infographic'}},
+  {id:'herram',label:'✂️ Herramientas',prompts:{cliente:'professional hairdressing tools showcase video, scissors combs clips, elegant slow motion, product photography style',peluquero:'hairdresser tools demonstration video, scissors razor clippers, educational cinematic',protocolo:'tools maintenance protocol video, cleaning sterilization steps, professional',alertas:'hairdressing tools safety video, sharp blades electrical risks, animated warnings'}},
+  {id:'divis',label:'📐 Divisiones',prompts:{cliente:'hair sectioning video, clean lines on mannequin, professional slow motion camera',peluquero:'hair sectioning techniques video, 4 sections T-section, labeled tutorial',protocolo:'hair sectioning protocol video, step by step numbered, professional salon',alertas:'hair sectioning errors video, wrong vs correct, educational comparison'}},
+  {id:'lavado',label:'💧 Lavado',prompts:{cliente:'professional hair washing video, warm water massage technique, elegant salon atmosphere',peluquero:'shampoo application technique video, scalp massage steps, smooth camera',protocolo:'hair washing protocol video, temperature product dosage massage, numbered steps',alertas:'hair washing mistakes video, product overuse wrong temperature, educational'}},
+  {id:'tinte',label:'🎨 Tinte',prompts:{cliente:'professional hair coloring video, beautiful transformation, salon environment, cinematic',peluquero:'hair coloring technique video, brush application root to tip, slow motion',protocolo:'hair color application protocol video, mixing ratio timing strand test, professional',alertas:'hair color safety video, allergy test chemical hazards, animated warnings'}},
+  {id:'mechas',label:'🌟 Mechas',prompts:{cliente:'foil highlights transformation video, beautiful blonde result, salon cinematic',peluquero:'foil highlights technique video, sectioning weaving placement, tutorial',protocolo:'highlights protocol video, section size application timing, professional steps',alertas:'highlights errors video, overlapping uneven sections, corrective tutorial'}},
+  {id:'balayage',label:'🌊 Balayage',prompts:{cliente:'balayage transformation video, sun-kissed gradient result, salon quality cinematic',peluquero:'balayage freehand painting video, brush strokes technique, tutorial',protocolo:'balayage protocol video, product consistency painting direction timing',alertas:'balayage mistakes video, wrong placement patchiness, corrective guide'}},
+  {id:'queratina',label:'💎 Queratina',prompts:{cliente:'keratin treatment video, smooth shiny hair transformation, professional salon',peluquero:'keratin application video, sectioning product distribution flat iron sealing',protocolo:'keratin protocol video, preparation application timing aftercare steps',alertas:'keratin safety video, formaldehyde risks ventilation gloves, warnings'}},
+  {id:'hidrat',label:'🌿 Hidratación',prompts:{cliente:'hair hydration treatment video, glossy healthy transformation, salon care cinematic',peluquero:'hydration treatment video, mask application layers heat cap, tutorial',protocolo:'hydration protocol video, diagnosis product selection timing steps',alertas:'over-moisturizing hair video, protein moisture balance, educational'}},
+  {id:'corte',label:'✂️ Corte',prompts:{cliente:'professional haircut transformation video, clean lines, salon cinematic result',peluquero:'haircut techniques video, guide lines elevation angles, tutorial',protocolo:'haircut protocol video, consultation sectioning angle finishing',alertas:'haircut errors video, uneven guide wrong elevation, correction tutorial'}},
+  {id:'plancha',label:'🔥 Planchado',prompts:{cliente:'flat iron styling video, silky straight transformation, salon quality cinematic',peluquero:'flat iron technique video, temperature settings sectioning tension',protocolo:'flat iron protocol video, heat protection temperature guide steps',alertas:'flat iron safety video, heat damage fire hazard temperature warning'}},
+  {id:'secado',label:'💨 Secado',prompts:{cliente:'professional blow dry video, voluminous bouncy blowout, salon cinematic',peluquero:'blow dry technique video, dryer angle brush technique sectioning',protocolo:'blow dry protocol video, towel dry heat protection finishing steps',alertas:'blow dry damage video, overheating wrong angle frizz, educational'}},
+  {id:'tecpeine',label:'🪮 Téc.Peine',prompts:{cliente:'comb technique video, smooth finished style, professional salon result',peluquero:'comb techniques video, backcombing smoothing teasing detangling tutorial',protocolo:'comb technique protocol video, tooth spacing tension direction steps',alertas:'comb usage warnings video, breakage risk wrong detangling, educational'}},
+  {id:'tectijera',label:'✂️ Téc.Tijera',prompts:{cliente:'scissor technique video, beautiful layered result, professional salon',peluquero:'scissors techniques video, point cutting slide cutting texturizing tutorial',protocolo:'scissors protocol video, finger angle tension cutting motion steps',alertas:'scissors warnings video, dulling blades wrong angle, safety tutorial'}},
+  {id:'elev',label:'📊 Elevaciones',prompts:{cliente:'hair elevation angles video, perfect layers balanced cut result',peluquero:'elevation angles technical video, 0 to 180 degrees graduation labels',protocolo:'hair elevation protocol video, angle guide technique selection',alertas:'elevation errors video, over-elevation uneven weight, correction guide'}},
+  {id:'morfol',label:'👤 Morfología',prompts:{cliente:'face shape analysis video, oval round square heart diamond, recommendation',peluquero:'face morphology guide video, shapes recommended cuts, professional tutorial',protocolo:'face shape protocol video, measurement identification recommendation',alertas:'morphology assessment video, common misidentification, corrective guide'}},
+  {id:'correc',label:'🎯 Corrección',prompts:{cliente:'hair color correction video, beautiful transformation, professional salon',peluquero:'color correction technique video, neutralizing lifting toning steps',protocolo:'color correction protocol video, assessment strand test neutralization',alertas:'correction risks video, over-processing breakage, professional warning'}},
+  {id:'matis',label:'✨ Matización',prompts:{cliente:'hair toning video, beautiful neutral ash blonde, salon quality result',peluquero:'toning technique video, toner application timing neutralization tutorial',protocolo:'toning protocol video, level assessment selection timing steps',alertas:'toning warnings video, over-toning green purple cast, correction'}},
+  {id:'mezclas',label:'🧪 Mezclas',prompts:{cliente:'hair color mixing video, vibrant accurate result, professional salon',peluquero:'color mixing video, ratio chart developer volumes mixing bowl technique',protocolo:'mixing protocol video, ratio 1:1 1:2 weight measurement consistency',alertas:'mixing safety video, chemical reaction risks wrong developer, warning'}},
+  {id:'cabgraso',label:'💧 Cab.Graso',prompts:{cliente:'oily scalp treatment video, fresh clean transformation, professional salon',peluquero:'oily scalp technique video, product application massage tutorial',protocolo:'oily scalp protocol video, diagnosis selection frequency steps',alertas:'oily scalp errors video, overwashing product buildup, educational'}},
+  {id:'cabreseco',label:'🌵 Cab.Reseco',prompts:{cliente:'dry scalp treatment video, hydrated healthy transformation, professional',peluquero:'dry scalp technique video, oil application massage moisturizing tutorial',protocolo:'dry scalp protocol video, diagnosis hydration routine steps',alertas:'dry scalp dandruff video, identification treatment differences, educational'}},
+  {id:'alertas',label:'⚠️ Alertas',prompts:{cliente:'hairdressing safety alerts video, important precautions, professional infographic animated',peluquero:'hairdresser risk alerts video, chemical exposure ergonomics tool safety',protocolo:'salon safety protocol video, emergency procedures chemical spill burns',alertas:'critical hairdressing warnings video, red icons, chemical electrical animated'}}
+];
+
+// ════════════════════════════════════════════════════════════
+// INIT — construir catGrid
+// ════════════════════════════════════════════════════════════
+(function init(){
+  const g=document.getElementById('catGrid');
+  CATS.forEach((c,i)=>{
+    const d=document.createElement('div');
+    d.className='cat-btn'+(i===0?' sel':'');
+    d.textContent=c.label;
+    d.onclick=()=>{activarCerebro('cats');MV._catIdx=i;g.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel'));d.classList.add('sel');updatePromptPreview();};
+    g.appendChild(d);
+  });
+  updateCerebros();
+  calcFitEtiqueta();
+})();
+
+// ════════════════════════════════════════════════════════════
+// CEREBROS — lógica de activación
+// ════════════════════════════════════════════════════════════
+function setCerebro(cual){
+  const F=document.getElementById('swFitness');
+  const C=document.getElementById('swCats');
+  const L=document.getElementById('swLibre');
+  // Excluyente: activar un cerebro apaga los otros (ya no se pisan los botones)
+  if(cual==='fitness' && F.checked){ C.checked=false; L.checked=false; }
+  if(cual==='cats'    && C.checked){ F.checked=false; L.checked=false; }
+  if(cual==='libre'   && L.checked){ F.checked=false; C.checked=false; }
+  // Siempre debe quedar al menos un cerebro activo
+  if(!F.checked && !C.checked && !L.checked){
+    if(cual==='fitness') F.checked=true; else if(cual==='cats') C.checked=true; else L.checked=true;
+  }
+  updateCerebros();
+}
+
+/* Activa un cerebro directamente (al tocar una categoría o selector fitness,
+   el cerebro correcto se enciende solo — sin tener que tocar el interruptor) */
+function activarCerebro(cual){
+  const F=document.getElementById('swFitness');
+  const C=document.getElementById('swCats');
+  const L=document.getElementById('swLibre');
+  F.checked=(cual==='fitness');
+  C.checked=(cual==='cats');
+  L.checked=(cual==='libre');
+  updateCerebros();
+}
+
+function updateCerebros(){
+  const swF=document.getElementById('swFitness').checked;
+  const swC=document.getElementById('swCats').checked;
+  const swL=document.getElementById('swLibre').checked;
+
+  document.getElementById('fitPanel').classList.toggle('show',swF);
+  document.getElementById('catPanel').classList.toggle('show',swC);
+
+  const txtPrompt=document.getElementById('txtPrompt');
+
+  let cerebro='libre', ruta='libre', badgeText='', badgeStyle='';
+
+  if(swF){
+    cerebro='fitness'; ruta='fitness';
+    badgeText='💪 CEREBRO 1 ACTIVO · Fitness indexado · Prompt bloqueado — ejercicios exactos inyectados automáticamente';
+    badgeStyle='background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);color:#60a5fa;';
+    txtPrompt.disabled=true; txtPrompt.style.opacity='.4';
+  } else if(swC){
+    cerebro='cats'; ruta='academia';
+    badgeText='✂️ CEREBRO 2 ACTIVO · Categoría peluquería seleccionada — parámetros técnicos inyectados';
+    badgeStyle='background:rgba(39,174,96,.08);border:1px solid rgba(39,174,96,.3);color:var(--green);';
+    txtPrompt.disabled=true; txtPrompt.style.opacity='.4';
+  } else {
+    cerebro='libre'; ruta='libre';
+    badgeText='🤖 CEREBRO 3 ACTIVO · Motor libre autónomo — escribe tu idea, el sistema la expande con variables cinemáticas obligatorias';
+    badgeStyle='background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);color:var(--gold);';
+    txtPrompt.disabled=false; txtPrompt.style.opacity='1';
+  }
+
+  MV.cerebro=cerebro; MV.ruta=ruta;
+  const badge=document.getElementById('modeBadge');
+  badge.style.cssText=badgeStyle+'border-radius:3px;padding:4px 7px;font-size:7px;margin-bottom:4px;';
+  badge.textContent=badgeText;
+  document.getElementById('ftCerebro').textContent=cerebro==='fitness'?'Fitness':cerebro==='cats'?'Peluquería':'Libre/Autónomo';
+  document.getElementById('ftRuta').textContent=ruta;
+  updatePromptPreview();
+}
+
+// ════════════════════════════════════════════════════════════
+// FITNESS — selectores
+// ════════════════════════════════════════════════════════════
+function setFN(el,v){activarCerebro('fitness');MV._fitN=v;selFit(['fn6','fn8','fn12'],el);calcFitEtiqueta();}
+function setFG(el,v){activarCerebro('fitness');MV._fitG=v;selFit(['fg-gluteo','fg-pierna','fg-superior'],el);calcFitEtiqueta();}
+function setFE(el,v){activarCerebro('fitness');MV._fitE=v;selFit(['fe-mancuerna','fe-maquina','fe-corporal'],el);calcFitEtiqueta();}
+function setFM(el,v){activarCerebro('fitness');MV._fitM=v;selFit(['fm-masa','fm-perder','fm-mantener'],el);calcFitEtiqueta();}
+function selFit(ids,active){ids.forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove('sel');});if(active)active.classList.add('sel');}
+function calcFitEtiqueta(){
+  const base=`${MV._fitG}_${MV._fitM}_${MV._fitE}_${MV._fitN}`;
+  MV._fitEtiqueta=base+'_v1';
+  document.getElementById('fitEtiqueta').textContent=MV._fitEtiqueta;
+  document.getElementById('txtEtiqueta').value=MV._fitEtiqueta;
+  updatePromptPreview();
+}
+
+// ════════════════════════════════════════════════════════════
+// CATEGORÍA VAR
+// ════════════════════════════════════════════════════════════
+function selectCatVar(v,el){activarCerebro('cats');MV._catVar=v;['cv-cliente','cv-peluquero','cv-protocolo','cv-alertas'].forEach(id=>document.getElementById(id)?.classList.remove('sel'));el.classList.add('sel');updatePromptPreview();}
+
+// ════════════════════════════════════════════════════════════
+// CONSTRUIR PROMPT SEGÚN CEREBRO
+// ════════════════════════════════════════════════════════════
+const EJERCICIOS_VIDEO={
+  gluteo:{
+    mancuerna:{'6':['Hip thrust con mancuerna','Sentadilla sumo con mancuerna','Zancada inversa con mancuerna','Peso muerto rumano con mancuerna','Abducción de cadera de pie con mancuerna','Puente de glúteo en suelo'],
+    '8':['Hip thrust con mancuerna y pausa 2s','Sentadilla búlgara con mancuernas','Peso muerto rumano unilateral','Zancada caminando con mancuernas','Step-up lateral con mancuerna','Sentadilla sumo con mancuerna','Abducción de cadera','Buenos días con mancuerna'],
+    '12':['Hip thrust pesado','Sentadilla búlgara','Peso muerto unilateral','Zancada caminando','Step-up lateral','Buenos días','Sentadilla sumo pesada','Abducción cadera','Zancada inversa','Hip thrust unilateral','Sentadilla copa','Extensión cadera inclinada']},
+    maquina:{'6':['Prensa pie alto y ancho','Abductora máquina','Hip thrust Smith','Extensión cadera polea','Kickback polea','Sentadilla Smith pie adelantado'],
+    '8':['Hip thrust Smith','Prensa pie alto','Abductora máquina','Kickback polea','Extensión cadera polea','Sentadilla Smith','Curl femoral','Aducción máquina'],
+    '12':['Hip thrust Smith pesado','Prensa pie alto','Abductora máquina','Kickback polea','Extensión cadera polea','Sentadilla Smith','Curl femoral','Aducción máquina','Prensa unilateral','Hip thrust banco Smith','Sentadilla hack','Abductora de pie polea']},
+    corporal:{'6':['Puente glúteo suelo','Sentadilla profunda','Zancada lateral','Patada cuadrupedia','Puente unilateral','Isométrica pared'],
+    '8':['Hip thrust banco isométrico','Búlgara peso corporal','Zancada caminando','Step-up banco','Puente unilateral pausa','Patada extensión','Sentadilla sumo profunda','Clamshell'],
+    '12':['Hip thrust banco pausa','Búlgara','Zancada caminando','Step-up rodilla','Puente unilateral','Pistol asistida','Banda abducción','Patada cuadrupedia','Zancada lateral','Sumo profunda','Frog pumps','Búlgara isométrica 3s']}
+  },
+  pierna:{
+    mancuerna:{'6':['Sentadilla mancuernas','Peso muerto rumano','Zancada inversa','Step-up mancuerna','Sentadilla sumo','Pantorrilla de pie'],
+    '8':['Sentadilla goblet','Peso muerto rumano','Zancada búlgara','Step-up lateral','Zancada caminando','Sentadilla sumo','Curl femoral pie','Elevación pantorrilla'],
+    '12':['Goblet pesada','Peso muerto rumano','Búlgara','Step-up lateral','Zancada caminando','Sumo pesada','Curl femoral','Pantorrilla unilateral','Curtsy lunge','Zancada inversa','Sentadilla copa','Sumo peso muerto']},
+    maquina:{'6':['Prensa 45°','Extensión cuádriceps','Curl femoral','Abductora','Smith sentadilla','Pantorrilla prensa'],
+    '8':['Prensa 45°','Extensión cuádriceps','Curl femoral','Hack sentadilla','Abductora','Aductora','Pantorrilla prensa','Sentadilla Smith'],
+    '12':['Prensa 45°','Extensión cuádriceps','Curl femoral','Hack','Abductora','Aductora','Pantorrilla','Smith','Curl sentado','Prensa horizontal','Extensión lumbar','Leg press unilateral']},
+    corporal:{'6':['Sentadilla profunda','Zancada inversa','Step-up banco','Isométrica pared','Pantorrilla pie','Sentadilla sumo'],
+    '8':['Búlgara','Zancada caminando','Step-up rodilla','Isométrica pared','Pistol asistida','Zancada lateral','Pantorrilla unilateral','Sumo profunda'],
+    '12':['Búlgara','Pistol libre','Zancada caminando','Step-up salto','Zancada lateral','Isométrica prolongada','Pantorrilla unilateral','Sumo pausa','Zancada cruzada','Sentadilla salto','Step-up lateral','Talones escalón']}
+  },
+  superior:{
+    mancuerna:{'6':['Press hombro sentado','Curl bíceps','Extensión tríceps','Remo un brazo','Press pecho suelo','Crunch mancuerna'],
+    '8':['Press hombro pie','Curl alterno','Extensión tras nuca','Remo inclinado','Press pecho banco','Elevación lateral','Giro ruso','Sit-up mancuerna'],
+    '12':['Press hombro pie','Curl alterno','Extensión cabeza','Remo inclinado','Press pecho','Elevación lateral','Remo vertical','Press Arnold','Curl concentrado','Press inclinado','V-ups','Giro ruso pesado']},
+    maquina:{'6':['Press pecho máquina','Remo máquina','Jalón polea','Press hombro máquina','Extensión tríceps cuerda','Crunch polea'],
+    '8':['Press pecho sit-down','Remo prono','Jalón polea','Press hombros articulada','Curl polea barra','Extensión cuerda','Cruce poleas','Rodillas torre'],
+    '12':['Press unilateral','Remo apoyo pecho','Jalón abierto','Arnold Smith','Scott bíceps','Extensión cabeza polea','Cruce altas','Face pull','Jalón supino','Remo unilateral','Press inclinado Smith','Crunch placas']},
+    corporal:{'6':['Push-up asistida','Fondos banco','Superman','Pike push-up','Plancha','Rodillas suelo'],
+    '8':['Push-up completa','Diamante','Fondos paralelas','Pull-up pronada','Pike hombros','Plancha lateral','Toque hombros','Tijeras'],
+    '12':['Push-up','Diamante','Fondos','Pull-up','Pike','Rotación torso','Declinada','Pull-up supina','Explosiva','Colgado barra','Hollow body','Bicicleta']}
+  }
+};
+
+function construirPromptFitness(){
+  const lista=EJERCICIOS_VIDEO[MV._fitG]?.[MV._fitE]?.[MV._fitN];
+  if(!lista)return null;
+  const fps=document.getElementById('pFps').value;
+  const res=document.getElementById('pRes').value;
+  const ratio=document.getElementById('pRatio').value;
+  const dur=document.getElementById('pDur').value;
+  const gLabel=MV._fitG==='gluteo'?'glute':MV._fitG==='pierna'?'leg':'upper body';
+  const eLabel=MV._fitE==='mancuerna'?'dumbbells':MV._fitE==='maquina'?'gym machines':'bodyweight';
+  const nLabel=MV._fitN==='6'?'beginner':MV._fitN==='8'?'intermediate':'advanced';
+  const mLabel=MV._fitM==='masa'?'hypertrophy':MV._fitM==='perder'?'fat loss':'maintenance';
+  const listaStr=lista.map((e,i)=>`${i+1}. ${e}`).join(', ');
+  return `Professional fitness tutorial video showing ${MV._fitN} ${gLabel} exercises with ${eLabel} for ${nLabel} ${mLabel} training. Sequential demonstration panels: ${listaStr}. Each exercise shown with perfect form and muscle activation visualization in orange. Cinematic quality ${fps}fps ${res} ${ratio}, smooth camera movement, professional gym lighting, stable frame consistency, ${dur} seconds per exercise, dark professional background, high detail 8k quality.`;
+}
+
+function construirPromptCats(){
+  const c=CATS[MV._catIdx];
+  if(!c)return '';
+  const fps=document.getElementById('pFps').value;
+  const res=document.getElementById('pRes').value;
+  const ratio=document.getElementById('pRatio').value;
+  const base=c.prompts[MV._catVar]||c.prompts.cliente;
+  return `${base}. Cinematic ${fps}fps ${res} ${ratio}, smooth stable camera, professional lighting, consistent frame quality, high detail.`;
+}
+
+// CEREBRO 3 — Motor autónomo expande prompt libre
+function expandirPromptLibre(texto){
+  if(!texto.trim())return '';
+  const fps=document.getElementById('pFps').value;
+  const res=document.getElementById('pRes').value;
+  const ratio=document.getElementById('pRatio').value;
+  const stab=document.getElementById('stabSl').value;
+  // Variables cinemáticas obligatorias inyectadas automáticamente
+  const cinematicas=`Cinematic ${fps}fps ${res} ${ratio}, ultra-stable camera with ${stab}% stabilization, professional three-point lighting setup, 35mm prime lens, consistent frame-to-frame quality, smooth motion blur, professional color grading, high detail 8k quality, no camera shake, seamless loop-ready.`;
+  return `${texto.trim()}. ${cinematicas}`;
+}
+
+function buildPromptFinal(){
+  let prompt='';
+  if(MV.cerebro==='fitness')      prompt=construirPromptFitness()||'';
+  else if(MV.cerebro==='cats')    prompt=construirPromptCats();
+  else{
+    const txt=document.getElementById('txtPrompt').value.trim();
+    prompt=txt?expandirPromptLibre(txt):'';
+  }
+  // Si hay referencia, enriquecer
+  if(MV.refMedia.length>0){
+    prompt+='. Based on uploaded reference media: maintain exact body geometry, posture, composition and structural lines from reference, image-to-video faithful transformation.';
+  }
+  return prompt;
+}
+
+function updatePromptPreview(){
+  const p=buildPromptFinal();
+  document.getElementById('promptPreviewTxt').textContent=p||'Activa un cerebro o escribe tu prompt...';
+}
+document.getElementById('txtPrompt').addEventListener('input',updatePromptPreview);
+
+// ════════════════════════════════════════════════════════════
+// REFERENCIA — drag & drop, upload
+// ════════════════════════════════════════════════════════════
+function handleRefUpload(e){
+  const files=[...e.target.files].slice(0,4);
+  files.forEach(f=>{
+    const isVid=f.type.startsWith('video/');
+    const r=new FileReader();
+    r.onload=ev=>{
+      MV.refMedia.push({src:ev.target.result,b64:ev.target.result.split(',')[1],type:isVid?'vid':'img',file:f});
+      renderRefPreviews();
+    };
+    r.readAsDataURL(f);
+  });
+  e.target.value='';
+}
+const rz=document.getElementById('refZone');
+rz.addEventListener('dragover',e=>{e.preventDefault();rz.classList.add('drag-over');});
+rz.addEventListener('dragleave',()=>rz.classList.remove('drag-over'));
+rz.addEventListener('drop',e=>{
+  e.preventDefault();rz.classList.remove('drag-over');
+  const files=[...e.dataTransfer.files].filter(f=>f.type.startsWith('image/')||f.type==='video/mp4').slice(0,4);
+  files.forEach(f=>{const r=new FileReader();r.onload=ev=>{MV.refMedia.push({src:ev.target.result,b64:ev.target.result.split(',')[1],type:f.type.startsWith('video')?'vid':'img',file:f});renderRefPreviews();};r.readAsDataURL(f);});
+});
+
+function renderRefPreviews(){
+  const pv=document.getElementById('refPreview');
+  pv.innerHTML='';
+  MV.refMedia.forEach((m,i)=>{
+    const wrap=document.createElement('div');wrap.className='ref-thumb';
+    const el=m.type==='vid'?document.createElement('video'):document.createElement('img');
+    el.src=m.src;if(m.type==='vid'){el.muted=true;el.loop=true;el.autoplay=true;}
+    const del=document.createElement('button');del.className='ref-thumb-del';del.textContent='✕';
+    del.onclick=()=>{MV.refMedia.splice(i,1);renderRefPreviews();};
+    wrap.appendChild(el);wrap.appendChild(del);pv.appendChild(wrap);
+  });
+  document.getElementById('refBadge').classList.toggle('show',MV.refMedia.length>0);
+  updatePromptPreview();
+}
+
+// ════════════════════════════════════════════════════════════
+// MOTOR — selección y claves
+// ════════════════════════════════════════════════════════════
+function selectEngine(el,e){
+  MV.engine=e;
+  document.querySelectorAll('.api-row').forEach(r=>r.classList.remove('active-api'));
+  el.classList.add('active-api');
+  document.getElementById('ftMotor').textContent=e;
+  setStatus('Motor activo: '+e,'info');
+}
+function toggleKey(engine){
+  const inp=document.getElementById('key-'+engine);
+  if(!inp)return;
+  inp.classList.toggle('show');
+  if(inp.classList.contains('show'))inp.focus();
+  if(loadKey(engine)){
+    const row=document.getElementById('engine-'+engine);
+    if(row)selectEngine(row,engine);
+    setStatus('Motor '+engine+' activo · clave guardada','ok');
+  }
+}
+function saveKey(engine,event){
+  if(event.key!=='Enter')return;
+  const val=document.getElementById('key-'+engine).value.trim();
+  if(!val)return;
+  localStorage.setItem('fc_vidkey_'+engine,val);
+  const dot=document.getElementById('dot-'+engine);
+  if(dot)dot.className='api-dot dot-on';
+  document.getElementById('key-'+engine).classList.remove('show');
+  const row=document.getElementById('engine-'+engine);
+  if(row)selectEngine(row,engine);
+  setStatus('✓ Clave '+engine+' guardada · Motor activo','ok');
+}
+function loadKey(e){return localStorage.getItem('fc_vidkey_'+e)||'';}
+
+// Restaurar claves al inicio
+['veo','sora','kling','luma','svd','replicate','anthropic'].forEach(k=>{
+  if(loadKey(k)){
+    const d=document.getElementById('dot-'+k);
+    if(d)d.className='api-dot dot-on';
+    const inp=document.getElementById('key-'+k);
+    if(inp)inp.placeholder='✓ Clave guardada · Enter para actualizar';
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// GENERAR VIDEO — Motor universal
+// ════════════════════════════════════════════════════════════
+async function generar(){
+  const prompt=buildPromptFinal();
+  if(!prompt){setStatus('⚠️ Sin prompt — activa un cerebro o escribe algo','err');return;}
+
+  videoPH.style.display='none';
+  mainVideo.style.display='none';
+  spinner.style.display='flex';
+  document.getElementById('genBtn').disabled=true;
+  document.getElementById('spinnerTxt').textContent='GENERANDO VIDEO...';
+  document.getElementById('spinnerSub').textContent='Motor: '+MV.engine+' · Cerebro: '+MV.cerebro;
+  setStatus('Generando con '+MV.engine+'...','info');
+  updatePromptPreview();
+
+  let videoUrl=null, videoBlob=null;
+  try{
+    const result=await callVideoEngine(MV.engine,prompt);
+    videoUrl=result.url;
+    videoBlob=result.blob||null;
+  }catch(err){
+    spinner.style.display='none';
+    videoPH.style.display='flex';
+    document.getElementById('genBtn').disabled=false;
+    setStatus('❌ Error: '+err.message,'err');
+    return;
+  }
+
+  if(!videoUrl){
+    spinner.style.display='none';
+    videoPH.style.display='flex';
+    document.getElementById('genBtn').disabled=false;
+    setStatus('Sin respuesta del motor. Intenta de nuevo.','err');
+    return;
+  }
+
+  MV.currentUrl=videoUrl;
+  MV.currentBlob=videoBlob;
+  mainVideo.src=videoUrl;
+  mainVideo.style.display='block';
+  videoPH.style.display='none';
+  spinner.style.display='none';
+  document.getElementById('genBtn').disabled=false;
+  MV.sessionCount++;
+  document.getElementById('ftSes').textContent=MV.sessionCount;
+  document.getElementById('ftGen').textContent=MV.sessionCount;
+  addToGallery(videoUrl,videoBlob);
+  setStatus('✓ Video generado · '+MV.engine+' · Cerebro: '+MV.cerebro+' · Ruta: '+MV.ruta,'ok');
+}
+
+// ════════════════════════════════════════════════════════════
+// MOTORES DE VIDEO — implementaciones
+// ════════════════════════════════════════════════════════════
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+
+async function callVideoEngine(engine,prompt){
+  const dur=document.getElementById('pDur').value;
+  const fps=document.getElementById('pFps').value;
+  const res=document.getElementById('pRes').value;
+  const ratio=document.getElementById('pRatio').value;
+  const hasRef=MV.refMedia.length>0;
+  const refB64=hasRef?MV.refMedia[0].b64:null;
+  const refType=hasRef?MV.refMedia[0].type:'img';
+  const stab=document.getElementById('stabSl').value/100;
+
+  // ── POLLINATIONS / HUGGINGFACE (gratis) ─────────────────
+  if(engine==='pollinations'){
+    // Pollinations no tiene API de video real — usamos HF como fallback
+    // Con prompt enriquecido generamos una URL de placeholder para flujo demo
+    const key=loadKey('anthropic');
+    let promptFinal=prompt;
+    if(hasRef&&key){
+      const desc=await analizarConClaude(refB64,key,refType);
+      if(desc)promptFinal=desc+'. '+prompt;
+    }
+    // HuggingFace video (zeroscope o stable-video-diffusion si disponible)
+    try{
+      const hfKey=loadKey('hf');
+      if(hfKey){
+        // Endpoint nuevo: router.huggingface.co reemplazó a api-inference.huggingface.co
+        const r=await fetch('https://router.huggingface.co/hf-inference/models/THUDM/CogVideoX-5b',{
+          method:'POST',
+          headers:{'Authorization':'Bearer '+hfKey,'Content-Type':'application/json'},
+          body:JSON.stringify({inputs:promptFinal})
+        });
+        if(r.ok){const blob=await r.blob(); if(/video\//.test(blob.type)) return{url:URL.createObjectURL(blob),blob};}
+        else { let m='HTTP '+r.status; try{const e=await r.json();m=e.error||m;}catch(_){} console.warn('HF video:',m); }
+      }
+    }catch(e){console.warn('HF error:',e);}
+    // No existe generación de VIDEO 100% gratuita y anónima (Pollinations solo hace imagen).
+    throw new Error('No hay generación de VIDEO gratuita y anónima. Opciones: (1) pega una clave gratuita de HuggingFace en «fc_vidkey_hf» (modelo CogVideoX); (2) usa Kling / Luma / Sora / Veo con tu clave de créditos. El motor gratis de Pollinations solo genera IMÁGENES (Módulo 1).');
+  }
+
+  const key=loadKey(engine);
+  if(!key)throw new Error('Clave no configurada para '+engine+' · Haz clic en el motor → pega tu clave → Enter');
+
+  // ── GOOGLE VEO ───────────────────────────────────────────
+  if(engine==='veo'){
+    const body={model:'veo-2.0-generate-001',prompt:{text:prompt},generationConfig:{durationSeconds:parseInt(dur),aspectRatio:ratio}};
+    if(hasRef&&refType==='img'){body.image={bytesBase64Encoded:refB64,mimeType:'image/jpeg'};}
+    const r=await fetch(`https://aiplatform.googleapis.com/v1/projects/fatima-studio/locations/us-central1/publishers/google/models/veo-2.0-generate-001:generateVideo`,{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    const d=await r.json();
+    if(d.error)throw new Error('Veo: '+d.error.message);
+    // Veo devuelve operación asíncrona
+    return await pollOperation(key,d.name,'veo');
+  }
+
+  // ── OPENAI SORA ──────────────────────────────────────────
+  if(engine==='sora'){
+    const body={model:'sora',prompt,duration:parseInt(dur),resolution:res,n:1};
+    if(hasRef&&refType==='img'){body.image=`data:image/jpeg;base64,${refB64}`;}
+    const r=await fetch('https://api.openai.com/v1/video/generations',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    const d=await r.json();
+    if(d.error)throw new Error('Sora: '+d.error.message);
+    if(d.data?.[0]?.url)return{url:d.data[0].url};
+    return await pollOpenAIVideo(key,d.id);
+  }
+
+  // ── KLING AI ─────────────────────────────────────────────
+  if(engine==='kling'){
+    const body={model_name:'kling-v1-5',prompt,cfg_scale:0.5,mode:'std',duration:dur};
+    if(hasRef&&refType==='img')body.image=`data:image/jpeg;base64,${refB64}`;
+    const endpoint=hasRef?'https://api.klingai.com/v1/videos/image2video':'https://api.klingai.com/v1/videos/text2video';
+    const r=await fetch(endpoint,{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    const d=await r.json();
+    if(d.code!==0)throw new Error('Kling: '+d.message);
+    return await pollKling(key,d.data.task_id);
+  }
+
+  // ── LUMA DREAM MACHINE ───────────────────────────────────
+  if(engine==='luma'){
+    const body={prompt,aspect_ratio:ratio,loop:false};
+    if(hasRef){body.keyframes={frame0:{type:refType==='vid'?'video':'image',url:`data:image/jpeg;base64,${refB64}`}};}
+    const r=await fetch('https://api.lumalabs.ai/dream-machine/v1/generations',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    const d=await r.json();
+    if(d.detail)throw new Error('Luma: '+(typeof d.detail==='string'?d.detail:JSON.stringify(d.detail)));
+    return await pollLuma(key,d.id);
+  }
+
+  // ── STABILITY AI SVD ─────────────────────────────────────
+  if(engine==='svd'){
+    if(!hasRef||refType!=='img')throw new Error('Stability SVD requiere imagen de referencia · Sube una imagen JPG/PNG primero');
+    const bs=atob(refB64);const arr=new Uint8Array(bs.length);for(let i=0;i<bs.length;i++)arr[i]=bs.charCodeAt(i);
+    const imgBlob=new Blob([arr],{type:'image/jpeg'});
+    const fd=new FormData();fd.append('image',imgBlob,'reference.jpg');
+    fd.append('seed',String(Math.floor(Math.random()*999999)));
+    fd.append('motion_bucket_id',String(Math.round(stab*127)));
+    fd.append('output_format','mp4');
+    const r=await fetch('https://api.stability.ai/v2beta/image-to-video',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+key,'Accept':'application/json'},
+      body:fd
+    });
+    const d=await r.json();
+    if(d.message)throw new Error('SVD: '+d.message);
+    return await pollSVD(key,d.id);
+  }
+
+  // ── REPLICATE · Multi-modelo (vía puente Netlify) ──────
+  if(engine==='replicate'){
+    const token=loadKey('replicate');
+    if(!token)throw new Error('Pega tu clave de Replicate (r8_...) y pulsa Enter para guardarla');
+    const proxy = location.origin + '/.netlify/functions/replicate';
+    // Si hay imagen de referencia → modelo imagen-a-video; si no → texto-a-video
+    const useImg = hasRef && refType==='img';
+    const model = MV.replicateModel || (useImg ? 'wan-video/wan-2.2-i2v-fast' : 'wan-video/wan-2.2-t2v-fast');
+    const input = { prompt };
+    if(useImg) input.image = 'data:image/jpeg;base64,'+refB64;
+    const startR = await fetch(proxy+'/v1/models/'+model+'/predictions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({ input })
+    });
+    const pred = await startR.json();
+    if(pred.error) throw new Error('Replicate: '+(typeof pred.error==='string'?pred.error:JSON.stringify(pred.error)));
+    if(!pred.id) throw new Error('Replicate: respuesta inesperada del servidor');
+    return await pollReplicate(token, pred.id);
+  }
+
+  throw new Error('Motor no reconocido: '+engine);
+}
+
+// ── Seguimiento de la generación en Replicate ──
+async function pollReplicate(token,id,max=160){
+  const proxy = location.origin + '/.netlify/functions/replicate';
+  for(let i=0;i<max;i++){
+    await delay(3000);
+    document.getElementById('spinnerSub').textContent='Replicate · procesando '+Math.round(i/max*100)+'%...';
+    const r=await fetch(proxy+'/v1/predictions/'+id,{headers:{'Authorization':'Bearer '+token}});
+    const d=await r.json();
+    if(d.status==='succeeded'){
+      const out=d.output;
+      const url=Array.isArray(out)?out[out.length-1]:out;
+      if(!url)throw new Error('Replicate: terminó sin devolver video');
+      return {url};
+    }
+    if(d.status==='failed'||d.status==='canceled')throw new Error('Replicate: '+(d.error||'generación fallida'));
+  }
+  throw new Error('Replicate: tiempo de espera agotado (intenta un video más corto)');
+}
+
+// ════════════════════════════════════════════════════════════
+// CLAUDE VISION — analiza referencia
+// ════════════════════════════════════════════════════════════
+async function analizarConClaude(b64,key,type){
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
+      body:JSON.stringify({model:'claude-opus-4-5',max_tokens:350,messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+        {type:'text',text:'Analiza esta referencia visual de ejercicio o técnica. Describe con precisión: posturas corporales, movimientos, ángulos, plano de cámara ideal, iluminación sugerida. Devuelve SOLO descripción técnica en inglés, máximo 100 palabras, para prompt de video IA.'}
+      ]}]})
+    });
+    const d=await r.json();
+    if(d.error)throw new Error(d.error.message);
+    return d.content?.[0]?.text?.trim()||null;
+  }catch(e){console.warn('Claude Vision:',e.message);return null;}
+}
+
+// ════════════════════════════════════════════════════════════
+// POLLING — helpers asíncronos
+// ════════════════════════════════════════════════════════════
+async function pollKling(key,taskId,max=80){
+  for(let i=0;i<max;i++){
+    await delay(3000);
+    document.getElementById('spinnerSub').textContent='Kling · '+Math.round(i/max*100)+'% procesado...';
+    const r=await fetch('https://api.klingai.com/v1/videos/text2video/'+taskId,{headers:{'Authorization':'Bearer '+key}});
+    const d=await r.json();
+    if(d.data?.task_status==='succeed')return{url:d.data.task_result?.videos?.[0]?.url};
+    if(d.data?.task_status==='failed')throw new Error('Kling fallido: '+d.data.task_status_msg);
+  }
+  throw new Error('Kling: tiempo de espera agotado');
+}
+
+async function pollLuma(key,genId,max=80){
+  for(let i=0;i<max;i++){
+    await delay(4000);
+    document.getElementById('spinnerSub').textContent='Luma Dream Machine · '+Math.round(i/max*100)+'%...';
+    const r=await fetch('https://api.lumalabs.ai/dream-machine/v1/generations/'+genId,{headers:{'Authorization':'Bearer '+key}});
+    const d=await r.json();
+    if(d.state==='completed')return{url:d.assets?.video};
+    if(d.state==='failed')throw new Error('Luma fallido: '+d.failure_reason);
+  }
+  throw new Error('Luma: tiempo de espera agotado');
+}
+
+async function pollSVD(key,videoId,max=80){
+  for(let i=0;i<max;i++){
+    await delay(5000);
+    document.getElementById('spinnerSub').textContent='Stability SVD · '+Math.round(i/max*100)+'%...';
+    const r=await fetch('https://api.stability.ai/v2beta/image-to-video/result/'+videoId,{headers:{'Authorization':'Bearer '+key,'Accept':'video/*'}});
+    if(r.status===200){const blob=await r.blob();return{url:URL.createObjectURL(blob),blob};}
+    if(r.status!==202){const d=await r.json();throw new Error('SVD: '+d.message);}
+  }
+  throw new Error('SVD: tiempo de espera agotado');
+}
+
+async function pollOpenAIVideo(key,jobId,max=80){
+  for(let i=0;i<max;i++){
+    await delay(5000);
+    document.getElementById('spinnerSub').textContent='Sora · '+Math.round(i/max*100)+'%...';
+    const r=await fetch('https://api.openai.com/v1/video/generations/'+jobId,{headers:{'Authorization':'Bearer '+key}});
+    const d=await r.json();
+    if(d.status==='completed')return{url:d.data?.[0]?.url};
+    if(d.status==='failed')throw new Error('Sora: '+d.error?.message||'error');
+  }
+  throw new Error('Sora: tiempo de espera agotado');
+}
+
+async function pollOperation(key,opName,engine,max=60){
+  for(let i=0;i<max;i++){
+    await delay(5000);
+    document.getElementById('spinnerSub').textContent='Veo · '+Math.round(i/max*100)+'%...';
+    const r=await fetch('https://aiplatform.googleapis.com/v1/'+opName,{headers:{'Authorization':'Bearer '+key}});
+    const d=await r.json();
+    if(d.done&&d.response?.videos?.[0])return{url:d.response.videos[0].uri};
+    if(d.error)throw new Error('Veo: '+d.error.message);
+  }
+  throw new Error('Veo: tiempo de espera agotado');
+}
+
+// ════════════════════════════════════════════════════════════
+// GALERÍA — guardar, render, bulk
+// ════════════════════════════════════════════════════════════
+function resolverNombre(){
+  const tit=document.getElementById('txtTitulo').value.trim();
+  const etiq=document.getElementById('txtEtiqueta').value.trim();
+  if(MV.cerebro==='fitness')return MV._fitEtiqueta;
+  return etiq||tit||'video_'+Date.now();
+}
+
+function addToGallery(url,blob){
+  const nombre=resolverNombre();
+  const item={id:'v'+Date.now(),url,blob,nombre,label:nombre,ruta:MV.ruta,fecha:new Date().toLocaleDateString('es-ES'),engine:MV.engine,cerebro:MV.cerebro};
+  MV.gallery.unshift(item);
+  if(MV.gallery.length>30)MV.gallery.pop();
+  document.getElementById('ftGal').textContent=MV.gallery.length;
+  renderVidGrid();
+}
+
+function guardar(){
+  if(!MV.currentUrl){setStatus('Genera un video primero','err');return;}
+  addToGallery(MV.currentUrl,MV.currentBlob);
+  setStatus('✓ Video guardado en galería','ok');
+}
+
+function renderVidGrid(){
+  const g=document.getElementById('vidGrid');
+  if(!MV.gallery.length){g.innerHTML='<div style="font-size:7px;color:var(--muted);padding:4px;">Sin videos aún</div>';return;}
+  g.innerHTML='';
+  MV.gallery.forEach((item,i)=>{
+    const sel=MV.selected.has(item.id);
+    const card=document.createElement('div');
+    card.className='vid-card'+(sel?' sel':'');
+
+    const rutaClass=item.ruta==='fitness'?'ruta-fitness':item.ruta==='academia'?'ruta-academia':'ruta-libre';
+    const rutaLabel=item.ruta==='fitness'?'FIT':item.ruta==='academia'?'ACAD':'LIBRE';
+
+    card.innerHTML=`
+      <div class="vid-thumb-wrap">
+        <div class="vid-thumb-icon">🎬</div>
+        <div class="vid-chk${sel?' on':''}" onclick="event.stopPropagation();toggleSel('${item.id}')">${sel?'✓':''}</div>
+        <div class="vid-ruta ${rutaClass}">${rutaLabel}</div>
+      </div>
+      <div class="vid-info">
+        <input class="vid-name-input" value="${item.nombre}" placeholder="Renombrar..." 
+          onchange="renombrarItem('${item.id}',this.value)" onclick="event.stopPropagation()">
+        <div class="vid-meta">${item.engine} · ${item.fecha} · ${item.cerebro}</div>
+      </div>
+      <div class="vid-acts">
+        <div class="va" onclick="event.stopPropagation();reproducirItem('${item.id}')" title="Reproducir">▶</div>
+        <div class="va" onclick="event.stopPropagation();descargarItem('${item.id}')" title="Descargar MP4">📥</div>
+        <div class="va" onclick="event.stopPropagation();enviarItemM4('${item.id}')" title="Enviar a M4" style="color:var(--cyan);">📁</div>
+        <div class="va" onclick="event.stopPropagation();eliminarItem('${item.id}')" style="color:var(--red);" title="Eliminar">🗑</div>
+      </div>`;
+
+    card.addEventListener('click',()=>toggleSel(item.id));
+    card.addEventListener('dblclick',e=>{e.stopPropagation();reproducirItem(item.id);});
+    g.appendChild(card);
+  });
+  updateBulkBar();
+}
+
+function renombrarItem(id,nombre){const item=MV.gallery.find(g=>g.id===id);if(item)item.nombre=nombre;}
+function reproducirItem(id){const item=MV.gallery.find(g=>g.id===id);if(!item)return;mainVideo.src=item.url;mainVideo.style.display='block';videoPH.style.display='none';mainVideo.play();setStatus('▶ Reproduciendo: '+item.nombre,'ok');}
+function descargarItem(id){const item=MV.gallery.find(g=>g.id===id);if(!item)return;const a=document.createElement('a');a.href=item.url;a.download=item.nombre+'.mp4';a.click();}
+function eliminarItem(id){MV.gallery=MV.gallery.filter(g=>g.id!==id);MV.selected.delete(id);document.getElementById('ftGal').textContent=MV.gallery.length;renderVidGrid();}
+
+// ── BULK ──
+function toggleSel(id){if(MV.selected.has(id))MV.selected.delete(id);else MV.selected.add(id);renderVidGrid();}
+function selAll(){MV.gallery.forEach(g=>MV.selected.add(g.id));renderVidGrid();}
+function deselAll(){MV.selected.clear();renderVidGrid();}
+function eliminarSel(){if(!confirm('¿Eliminar '+MV.selected.size+' video(s)?'))return;MV.gallery=MV.gallery.filter(g=>!MV.selected.has(g.id));MV.selected.clear();document.getElementById('ftGal').textContent=MV.gallery.length;renderVidGrid();setStatus('✓ Eliminados','ok');}
+function updateBulkBar(){const n=MV.selected.size;const bar=document.getElementById('bulkBar');bar.classList.toggle('show',n>0);document.getElementById('bulkCount').textContent=n;}
+
+// ── DESCARGAR LOTE ──
+async function descargarLote(){
+  const items=MV.gallery.filter(g=>MV.selected.has(g.id));
+  if(!items.length){setStatus('Selecciona videos primero','err');return;}
+  setStatus('Descargando '+items.length+' video(s)...','info');
+  for(const item of items){
+    const a=document.createElement('a');a.href=item.url;a.download=item.nombre+'.mp4';a.click();
+    await delay(400);
+  }
+  setStatus('✓ '+items.length+' video(s) descargados','ok');
+}
+
+// ── ENVIAR A M4 — CONEXIÓN DIRECTA CON CARPETA INTELIGENTE ──
+function enviarItemM4(id){
+  const item=MV.gallery.find(g=>g.id===id);
+  if(!item){setStatus('Video no encontrado','err');return;}
+  const queue=JSON.parse(localStorage.getItem('fc_carpeta_queue')||'[]');
+  const _it={tipo:'vid',dataUrl:item.url,label:item.nombre+'.mp4',motor:item.engine,cerebro:item.cerebro,ruta:item.ruta,fecha:item.fecha,size:0};
+  if(item.cerebro==='fitness'){ _it.claseId=item.nombre; _it.cat='fitness'; _it.titulo=item.nombre; }
+  queue.push(_it);
+  localStorage.setItem('fc_carpeta_queue',JSON.stringify(queue));
+  setStatus('✓ Video "'+item.nombre+'" enviado a Carpeta M4','ok');
+  if(confirm('¿Abrir la Carpeta Inteligente M4 ahora?'))window.open('modulo4_carpeta.html','_blank');
+}
+
+function enviarM4(){
+  const items=MV.gallery.filter(g=>MV.selected.has(g.id));
+  if(!items.length){setStatus('Selecciona videos primero','err');return;}
+  const queue=JSON.parse(localStorage.getItem('fc_carpeta_queue')||'[]');
+  items.forEach(item=>{
+    const _it={tipo:'vid',dataUrl:item.url,label:item.nombre+'.mp4',motor:item.engine,cerebro:item.cerebro,ruta:item.ruta,fecha:item.fecha,size:0};
+    if(item.cerebro==='fitness'){ _it.claseId=item.nombre; _it.cat='fitness'; _it.titulo=item.nombre; }
+    queue.push(_it);
+  });
+  localStorage.setItem('fc_carpeta_queue',JSON.stringify(queue));
+  setStatus('✓ '+items.length+' video(s) enviados a Carpeta M4','ok');
+  if(confirm('✓ '+items.length+' video(s) en Carpeta M4.\n¿Abrir la Carpeta Inteligente ahora?'))window.open('modulo4_carpeta.html','_blank');
+}
+
+function enviarActualM4(){
+  if(!MV.currentUrl){setStatus('Genera un video primero','err');return;}
+  const nombre=resolverNombre();
+  const queue=JSON.parse(localStorage.getItem('fc_carpeta_queue')||'[]');
+  const _it={tipo:'vid',dataUrl:MV.currentUrl,label:nombre+'.mp4',motor:MV.engine,cerebro:MV.cerebro,ruta:MV.ruta,fecha:new Date().toLocaleTimeString('es-ES'),size:0};
+  if(MV.cerebro==='fitness'){ _it.claseId=nombre; _it.cat='fitness'; _it.titulo=nombre; }
+  queue.push(_it);
+  localStorage.setItem('fc_carpeta_queue',JSON.stringify(queue));
+  setStatus('✓ Video actual enviado a Carpeta M4: '+nombre,'ok');
+  if(confirm('¿Abrir la Carpeta Inteligente M4 ahora?'))window.open('modulo4_carpeta.html','_blank');
+}
+
+// ── ACCIONES INDIVIDUALES ──
+function clearVideo(){MV.currentUrl=null;MV.currentBlob=null;mainVideo.src='';mainVideo.style.display='none';videoPH.style.display='flex';setStatus('Área limpiada','info');}
+function descargarActual(){
+  if(!MV.currentUrl){setStatus('Genera un video primero','err');return;}
+  const a=document.createElement('a');
+  a.href=MV.currentUrl;a.download=resolverNombre()+'.mp4';a.click();
+  setStatus('✓ Video descargado','ok');
+}
+</script>
+
+<!-- ════════ MOTOR BRIDGE — biblioteca de las 360 clases ════════ -->
+<script src="motor_p1_bioseg_balayage.js"></script>
+<script src="motor_p2_queratina_elevaciones.js"></script>
+<script src="motor_p3_morfologia_alertas.js"></script>
+<script src="motor_helper.js"></script>
+<script src="m2_motor_bridge.js"></script>
+
+</body>
+</html>

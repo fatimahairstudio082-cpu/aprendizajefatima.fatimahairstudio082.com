@@ -1,0 +1,11 @@
+# Netlify: cabeceras para que la PWA funcione bien
+
+/service-worker.js
+  Cache-Control: no-cache
+  Service-Worker-Allowed: /
+
+/manifest.json
+  Content-Type: application/manifest+json
+
+/manifest-estudio.json
+  Content-Type: application/manifest+json

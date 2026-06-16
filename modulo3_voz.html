@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FÁTIMA CALDEA — MÓDULO 3 · VOZ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#C9A84C;--gold2:#7A6130;--gold3:#E8CC7A;
+  --bg:#0a0a0a;--bg2:#111;--bg3:#191919;--bg4:#0f0f0f;
+  --green:#27AE60;--blue:#2980B9;--red:#E74C3C;--purple:#9B59B6;--cyan:#00bcd4;
+  --border:rgba(201,168,76,.18);--text:#e8e0d0;--muted:#4a4535;
+}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;}
+.hdr{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.logo{font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--gold);}
+.sub{font-size:7px;color:var(--gold2);margin-top:2px;}
+.badge{background:rgba(41,128,185,.12);border:1px solid rgba(41,128,185,.3);color:var(--blue);padding:3px 8px;border-radius:3px;font-size:7px;}
+.shell{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 96px);}
+.left{background:var(--bg2);border-right:1px solid var(--border);padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+.sec{font-size:7px;letter-spacing:.2em;color:var(--gold2);text-transform:uppercase;border-bottom:1px solid rgba(201,168,76,.1);padding-bottom:3px;margin-bottom:6px;}
+.motor-card{border:1px solid var(--border);border-radius:6px;padding:10px;cursor:pointer;transition:all .2s;}
+.motor-card:hover{border-color:rgba(201,168,76,.4);}
+.motor-card.active{border-color:var(--gold);background:rgba(201,168,76,.05);}
+.motor-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.motor-name{font-size:9px;font-weight:700;color:var(--text);}
+.motor-badge{font-size:6.5px;padding:2px 6px;border-radius:3px;}
+.badge-free{background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.25);color:var(--green);}
+.badge-key{background:rgba(142,68,173,.1);border:1px solid rgba(142,68,173,.25);color:var(--purple);}
+.motor-desc{font-size:7px;color:var(--gold2);line-height:1.5;}
+.motor-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dot-on{background:var(--green);}
+.dot-off{background:#333;}
+.voice-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;}
+.voice-btn{padding:5px 4px;border:1px solid var(--border);border-radius:3px;font-size:7px;color:var(--gold2);text-align:center;cursor:pointer;background:var(--bg3);transition:.15s;line-height:1.4;}
+.voice-btn:hover{border-color:var(--gold);color:var(--text);}
+.voice-btn.sel{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.06);}
+.key-row{display:flex;gap:4px;align-items:center;}
+.key-in{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:8px;padding:5px 7px;font-family:'JetBrains Mono',monospace;}
+.key-in:focus{outline:none;border-color:var(--gold);}
+.key-save{padding:5px 10px;background:var(--gold);border:none;border-radius:3px;color:#000;font-size:8px;font-weight:700;cursor:pointer;}
+.sl-wrap{margin-bottom:6px;}
+.sl-lbl{display:flex;justify-content:space-between;font-size:7px;color:var(--gold2);margin-bottom:2px;}
+.sl{width:100%;height:2px;accent-color:var(--gold);cursor:pointer;}
+.center{background:var(--bg4);padding:16px;display:flex;flex-direction:column;gap:12px;}
+.tabs{display:flex;gap:3px;margin-bottom:4px;}
+.tab-btn{padding:6px 14px;border:1px solid var(--border);border-radius:3px;font-size:8px;color:var(--gold2);cursor:pointer;background:transparent;font-family:'JetBrains Mono',monospace;transition:.15s;}
+.tab-btn.act{background:var(--gold);color:#000;border-color:var(--gold);font-weight:700;}
+.tts-panel,.stt-panel{display:none;}
+.tts-panel.act,.stt-panel.act{display:flex;flex-direction:column;gap:10px;}
+.txt-area{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:9px;padding:10px 12px;font-family:'JetBrains Mono',monospace;resize:vertical;min-height:120px;transition:border-color .2s;}
+.txt-area:focus{outline:none;border-color:var(--gold);}
+.txt-area::placeholder{color:var(--muted);}
+.playbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.play-btn{padding:7px 14px;border:none;border-radius:4px;font-size:8.5px;font-weight:700;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:.08em;transition:.2s;}
+.play-btn.pri{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#000;}
+.play-btn.sec{background:transparent;border:1px solid var(--border);color:var(--gold2);}
+.play-btn.sec:hover{border-color:var(--gold);color:var(--gold);}
+.play-btn.m4{background:transparent;border:1px solid rgba(0,188,212,.45);color:var(--cyan);font-size:8px;}
+.play-btn.m4:hover{background:rgba(0,188,212,.08);}
+.play-btn.m4all{background:transparent;border:1px solid rgba(0,188,212,.25);color:#00a8b8;font-size:8px;}
+.play-btn.m4all:hover{background:rgba(0,188,212,.06);}
+.play-btn.danger{background:transparent;border:1px solid rgba(231,76,60,.3);color:var(--red);}
+.play-btn:disabled{opacity:.35;cursor:not-allowed;}
+.audio-progress{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;}
+.prog-bar-wrap{height:4px;background:rgba(201,168,76,.15);border-radius:2px;overflow:hidden;margin:6px 0;}
+.prog-bar-fill{height:100%;background:var(--gold);border-radius:2px;width:0%;transition:width .3s;}
+.prog-info{display:flex;justify-content:space-between;font-size:7px;color:var(--gold2);}
+
+/* ── HISTORIAL CON CHECKBOXES ── */
+.audio-hist{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;}
+.hist-title{font-size:7px;color:var(--gold2);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;}
+.hist-bulk-bar{display:none;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:4px;padding:5px 8px;margin-bottom:6px;align-items:center;gap:6px;flex-wrap:wrap;font-size:7px;}
+.hist-bulk-bar.show{display:flex;}
+.hist-ctrl{display:flex;gap:4px;margin-bottom:6px;}
+.hc-btn{padding:3px 7px;background:transparent;border:1px solid rgba(201,168,76,.25);border-radius:3px;color:var(--gold2);cursor:pointer;font-size:6.5px;font-family:'JetBrains Mono',monospace;}
+.hc-btn:hover{border-color:var(--gold);color:var(--gold);}
+.audio-item{display:flex;align-items:center;gap:6px;padding:5px 7px;border:1px solid var(--border);border-radius:4px;margin-bottom:4px;background:var(--bg3);transition:.1s;}
+.audio-item.sel-item{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.04);}
+.ai-chk{width:14px;height:14px;border:1.5px solid var(--gold);border-radius:3px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;background:transparent;}
+.ai-chk.on{background:var(--gold);color:#000;}
+.audio-item-play{width:22px;height:22px;background:var(--gold);border:none;border-radius:50%;color:#000;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.audio-item-info{flex:1;min-width:0;}
+.audio-item-txt{font-size:7.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.audio-item-meta{font-size:6.5px;color:var(--gold2);margin-top:1px;}
+.audio-item-acts{display:flex;gap:3px;flex-shrink:0;}
+.aia{padding:3px 6px;border:1px solid var(--border);border-radius:2px;font-size:6.5px;color:var(--gold2);cursor:pointer;background:transparent;}
+.aia:hover{border-color:var(--gold);color:var(--gold);}
+.aia.m4c{color:var(--cyan);border-color:rgba(0,188,212,.3);}
+.aia.m4c:hover{background:rgba(0,188,212,.08);}
+.aia.danger:hover{border-color:var(--red);color:var(--red);}
+
+/* STT */
+.rec-indicator{display:none;align-items:center;gap:8px;padding:8px 12px;background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2);border-radius:6px;}
+.rec-dot{width:10px;height:10px;background:var(--red);border-radius:50%;animation:pulse 1s infinite;}
+.rec-indicator.show{display:flex;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.rec-output{background:var(--bg3);border:1px solid var(--border);border-left:2px solid var(--gold);border-radius:4px;padding:10px 12px;font-size:9px;color:var(--text);min-height:80px;line-height:1.6;word-break:break-word;}
+.dest-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.dest-btn{padding:4px 8px;border:1px solid var(--border);border-radius:3px;font-size:7px;color:var(--gold2);cursor:pointer;background:transparent;font-family:'JetBrains Mono',monospace;}
+.dest-btn.sel{background:rgba(201,168,76,.1);border-color:var(--gold);color:var(--gold);}
+.status-bar{background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.12);border-radius:3px;padding:5px 10px;font-size:7.5px;color:var(--gold2);}
+.s-ok{color:var(--green)!important;}
+.s-err{color:var(--red)!important;}
+.s-info{color:var(--blue)!important;}
+.s-rec{color:var(--red)!important;}
+.el-voices{display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto;}
+.el-voice{padding:5px 8px;border:1px solid var(--border);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:7.5px;color:var(--gold2);background:var(--bg3);}
+.el-voice:hover{border-color:var(--gold);color:var(--text);}
+.el-voice.sel{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.06);}
+.el-voice-preview{width:18px;height:18px;background:rgba(201,168,76,.15);border:none;border-radius:50%;color:var(--gold);font-size:9px;cursor:pointer;}
+/* indicador grabación Web Speech */
+.ws-rec-badge{display:none;background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.3);border-radius:3px;padding:3px 8px;font-size:7px;color:var(--red);margin-top:5px;align-items:center;gap:5px;}
+.ws-rec-badge.show{display:flex;}
+.ws-rec-dot{width:7px;height:7px;background:var(--red);border-radius:50%;animation:pulse 1s infinite;}
+.ftr{background:var(--bg2);border-top:1px solid var(--border);padding:5px 14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+.ft{font-size:6.5px;color:var(--gold2);}
+.ft span{color:var(--gold);}
+</style>
+</head>
+<body>
+
+<!-- ══ PUENTE SUPERIOR ══ -->
+<div style="background:rgba(4,6,8,.98);border-bottom:2px solid rgba(201,168,76,.18);padding:0 14px;display:flex;align-items:center;height:44px;position:sticky;top:0;z-index:100;">
+  <div style="font-size:9px;font-weight:700;letter-spacing:.2em;color:#C9A84C;padding-right:14px;border-right:1px solid rgba(201,168,76,.15);margin-right:8px;white-space:nowrap;">✦ FÁTIMA CALDEA</div>
+  <a href="modulo1_imagen.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-right:1px solid rgba(201,168,76,.08);font-size:8px;color:#7A6130;text-decoration:none;white-space:nowrap;">
+    <div style="width:6px;height:6px;border-radius:50%;background:#4a4535;"></div>⚡ M1 · Imagen
+  </a>
+  <a href="modulo2_video.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-right:1px solid rgba(201,168,76,.08);font-size:8px;color:#7A6130;text-decoration:none;white-space:nowrap;">
+    <div style="width:6px;height:6px;border-radius:50%;background:#4a4535;"></div>🎬 M2 · Video
+  </a>
+  <a href="modulo3_voz.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-right:1px solid rgba(201,168,76,.08);font-size:8px;color:#C9A84C;background:rgba(201,168,76,.1);border-bottom:2px solid #C9A84C;text-decoration:none;white-space:nowrap;">
+    <div style="width:6px;height:6px;border-radius:50%;background:#C9A84C;"></div>🔊 M3 · Voz
+    <span style="font-size:5.5px;padding:1px 4px;background:#C9A84C;color:#000;border-radius:2px;font-weight:700;">ACTIVO</span>
+  </a>
+  <a href="modulo4_carpeta.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;font-size:8px;color:#7A6130;text-decoration:none;white-space:nowrap;">
+    <div style="width:6px;height:6px;border-radius:50%;background:#4a4535;"></div>📁 M4 · Carpeta
+  </a>
+  <!-- 🔧 PARCHE: link a Admin -->
+  <a href="admin.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-left:1px solid rgba(201,168,76,.15);font-size:8px;color:#7A6130;text-decoration:none;white-space:nowrap;">
+    <div style="width:6px;height:6px;border-radius:50%;background:#4a4535;"></div>🛠️ Admin
+  </a>
+  <!-- 🆕 link al Admin de Academia (motores de 360 clases) -->
+  <a href="admin_motores.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-left:1px solid rgba(0,242,255,.2);font-size:8px;color:#a78bfa;text-decoration:none;white-space:nowrap;transition:.15s;background:rgba(0,242,255,.04);">
+    <div style="width:6px;height:6px;border-radius:50%;background:#a78bfa;"></div>
+    🎓 Academia
+  </a>
+  <div style="margin-left:auto;font-size:7px;color:#27AE60;display:flex;align-items:center;gap:4px;">
+    <div style="width:6px;height:6px;background:#27AE60;border-radius:50%;"></div>Studio V5
+  </div>
+</div>
+
+<div class="hdr">
+  <div>
+    <div class="logo">FÁTIMA CALDEA — MÓDULO 3 · VOZ</div>
+    <div class="sub">TTS · STT · Web Speech API (graba Blob) · ElevenLabs · OpenAI TTS · Selección múltiple · Carpeta M4</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="badge">● M3 ACTIVO</span>
+    <button style="padding:5px 12px;background:transparent;border:1px solid var(--border);color:var(--gold2);font-size:8px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;" onclick="window.close()">✕ Cerrar</button>
+  </div>
+</div>
+
+<div class="shell">
+  <!-- ══ PANEL IZQ ══ -->
+  <div class="left">
+
+    <div>
+      <div class="sec">🔊 Motor de voz (TTS)</div>
+
+      <div class="motor-card active" id="mc-webspeech" onclick="selectMotor('webspeech')">
+        <div class="motor-header">
+          <span class="motor-name">Web Speech API</span>
+          <span class="motor-badge badge-free">GRATIS</span>
+          <div class="motor-dot dot-on"></div>
+        </div>
+        <div class="motor-desc">Sin clave · Chrome/Edge · Helena, Laura, Mónica... · Graba Blob automáticamente</div>
+      </div>
+
+      <div class="motor-card" id="mc-elevenlabs" onclick="selectMotor('elevenlabs')" style="margin-top:5px;">
+        <div class="motor-header">
+          <span class="motor-name">ElevenLabs</span>
+          <span class="motor-badge badge-key">API PRIVADA</span>
+          <div class="motor-dot dot-off" id="dot-el"></div>
+        </div>
+        <div class="motor-desc">Voces IA ultra realistas · 10k chars/mes gratis</div>
+      </div>
+      <div id="el-key-section" style="display:none;margin-top:5px;">
+        <div class="key-row">
+          <input class="key-in" type="password" id="el-key" placeholder="xi_... → Enter">
+          <button class="key-save" onclick="saveELKey()">✓</button>
+        </div>
+        <div style="font-size:6.5px;color:var(--muted);margin-top:3px;">elevenlabs.io → Profile → API Key</div>
+      </div>
+
+      <div class="motor-card" id="mc-openai-tts" onclick="selectMotor('openai-tts')" style="margin-top:5px;">
+        <div class="motor-header">
+          <span class="motor-name">OpenAI TTS</span>
+          <span class="motor-badge badge-key">API PRIVADA</span>
+          <div class="motor-dot dot-off" id="dot-oai"></div>
+        </div>
+        <div class="motor-desc">6 voces naturales · tts-1 y tts-1-hd</div>
+      </div>
+      <div id="oai-key-section" style="display:none;margin-top:5px;">
+        <div class="key-row">
+          <input class="key-in" type="password" id="oai-key" placeholder="sk-... → Enter">
+          <button class="key-save" onclick="saveOAIKey()">✓</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="voice-selector-section">
+      <div class="sec">🎙️ Seleccionar voz</div>
+      <div id="ws-voices">
+        <div style="font-size:7px;color:var(--gold2);margin-bottom:5px;">Voces del sistema detectadas:</div>
+        <div class="voice-grid" id="wsVoiceGrid"><div class="voice-btn sel" id="vbtn-0">Cargando...</div></div>
+      </div>
+      <div id="el-voices-section" style="display:none;">
+        <div style="font-size:7px;color:var(--gold2);margin-bottom:5px;">Voces ElevenLabs:</div>
+        <div class="el-voices" id="elVoiceList">
+          <div class="el-voice sel" data-id="21m00Tcm4TlvDq8ikWAM" onclick="selectELVoice(this,'21m00Tcm4TlvDq8ikWAM','Rachel')"><span>Rachel · Narración suave</span><button class="el-voice-preview" onclick="previewELVoice(event,'21m00Tcm4TlvDq8ikWAM')">▶</button></div>
+          <div class="el-voice" data-id="AZnzlk1XvdvUeBnXmlld" onclick="selectELVoice(this,'AZnzlk1XvdvUeBnXmlld','Domi')"><span>Domi · Energética</span><button class="el-voice-preview" onclick="previewELVoice(event,'AZnzlk1XvdvUeBnXmlld')">▶</button></div>
+          <div class="el-voice" data-id="EXAVITQu4vr4xnSDxMaL" onclick="selectELVoice(this,'EXAVITQu4vr4xnSDxMaL','Bella')"><span>Bella · Natural femenina</span><button class="el-voice-preview" onclick="previewELVoice(event,'EXAVITQu4vr4xnSDxMaL')">▶</button></div>
+          <div class="el-voice" data-id="ErXwobaYiN019PkySvjV" onclick="selectELVoice(this,'ErXwobaYiN019PkySvjV','Antoni')"><span>Antoni · Masculina profunda</span><button class="el-voice-preview" onclick="previewELVoice(event,'ErXwobaYiN019PkySvjV')">▶</button></div>
+          <div class="el-voice" data-id="MF3mGyEYCl7XYWbV9V6O" onclick="selectELVoice(this,'MF3mGyEYCl7XYWbV9V6O','Elli')"><span>Elli · Joven y clara</span><button class="el-voice-preview" onclick="previewELVoice(event,'MF3mGyEYCl7XYWbV9V6O')">▶</button></div>
+          <div class="el-voice" data-id="TxGEqnHWrfWFTfGW9XjX" onclick="selectELVoice(this,'TxGEqnHWrfWFTfGW9XjX','Josh')"><span>Josh · Masculina casual</span><button class="el-voice-preview" onclick="previewELVoice(event,'TxGEqnHWrfWFTfGW9XjX')">▶</button></div>
+          <div class="el-voice" data-id="pNInz4obpvDJp1VIToHF" onclick="selectELVoice(this,'pNInz4obpvDJp1VIToHF','Adam')"><span>Adam · Formal profundo</span><button class="el-voice-preview" onclick="previewELVoice(event,'pNInz4obpvDJp1VIToHF')">▶</button></div>
+          <div class="el-voice" data-id="yoZ06aMxZJJ28mfd3POQ" onclick="selectELVoice(this,'yoZ06aMxZJJ28mfd3POQ','Sam')"><span>Sam · Neutra natural</span><button class="el-voice-preview" onclick="previewELVoice(event,'yoZ06aMxZJJ28mfd3POQ')">▶</button></div>
+        </div>
+        <button style="width:100%;margin-top:5px;padding:5px;background:transparent;border:1px solid var(--border);border-radius:3px;color:var(--gold2);font-size:7px;cursor:pointer;" onclick="loadELVoices()">↻ Cargar voces de mi cuenta</button>
+      </div>
+      <div id="oai-voices-section" style="display:none;">
+        <div style="font-size:7px;color:var(--gold2);margin-bottom:5px;">Voces OpenAI:</div>
+        <div class="voice-grid">
+          <div class="voice-btn sel" onclick="selectOAIVoice(this,'alloy')">Alloy · Neutra</div>
+          <div class="voice-btn" onclick="selectOAIVoice(this,'echo')">Echo · Masculina</div>
+          <div class="voice-btn" onclick="selectOAIVoice(this,'fable')">Fable · Expresiva</div>
+          <div class="voice-btn" onclick="selectOAIVoice(this,'onyx')">Onyx · Profunda</div>
+          <div class="voice-btn" onclick="selectOAIVoice(this,'nova')">Nova · Femenina</div>
+          <div class="voice-btn" onclick="selectOAIVoice(this,'shimmer')">Shimmer · Suave</div>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:5px;">
+          <div class="voice-btn sel" id="oai-m-std" onclick="selectOAIModel(this,'tts-1')" style="flex:1;">tts-1 · Rápido</div>
+          <div class="voice-btn" id="oai-m-hd" onclick="selectOAIModel(this,'tts-1-hd')" style="flex:1;">tts-1-hd · HD</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec">🎛️ Parámetros de voz</div>
+      <div class="sl-wrap">
+        <div class="sl-lbl"><span>Velocidad</span><span id="vSpeed" style="color:var(--gold)">1.0x</span></div>
+        <input type="range" class="sl" id="speedSl" min="0.5" max="2" step="0.1" value="1" oninput="vSpeed.textContent=parseFloat(this.value).toFixed(1)+'x'">
+      </div>
+      <div class="sl-wrap">
+        <div class="sl-lbl"><span>Tono (pitch)</span><span id="vPitch" style="color:var(--gold)">1.0</span></div>
+        <input type="range" class="sl" id="pitchSl" min="0.5" max="2" step="0.1" value="1" oninput="vPitch.textContent=parseFloat(this.value).toFixed(1)">
+      </div>
+      <div class="sl-wrap">
+        <div class="sl-lbl"><span>Volumen</span><span id="vVol" style="color:var(--gold)">100%</span></div>
+        <input type="range" class="sl" id="volSl" min="0" max="1" step="0.05" value="1" oninput="vVol.textContent=Math.round(this.value*100)+'%'">
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ PANEL CENTRO ══ -->
+  <div class="center">
+    <div class="tabs">
+      <button class="tab-btn act" id="tab-tts" onclick="switchTab('tts')">🔊 Texto → Voz</button>
+      <button class="tab-btn" id="tab-stt" onclick="switchTab('stt')">🎤 Voz → Texto</button>
+    </div>
+
+    <!-- TTS PANEL -->
+    <div class="tts-panel act" id="panel-tts">
+
+      <div>
+        <div class="sec">✍️ Texto para convertir a voz</div>
+        <textarea class="txt-area" id="ttsText" placeholder="Escribe aquí el texto de tu ficha técnica, recomendación profesional, descripción del ejercicio..."></textarea>
+        <div style="display:flex;justify-content:space-between;font-size:6.5px;color:var(--muted);margin-top:3px;">
+          <span id="charCount">0 caracteres</span>
+          <span id="motorActivo" style="color:var(--gold)">Motor: Web Speech API</span>
+        </div>
+        <!-- Badge grabación Web Speech -->
+        <div class="ws-rec-badge" id="wsRecBadge">
+          <div class="ws-rec-dot"></div>
+          <span>Grabando audio con MediaRecorder para poder enviarlo a M4...</span>
+        </div>
+      </div>
+
+      <!-- PLAYBAR PRINCIPAL -->
+      <div class="playbar">
+        <button class="play-btn pri" id="btnPlay" onclick="reproducir()">▶ REPRODUCIR</button>
+        <button class="play-btn sec" id="btnPause" onclick="pausar()" disabled>⏸ PAUSAR</button>
+        <button class="play-btn sec" id="btnResume" onclick="reanudar()" disabled style="display:none;">▶ REANUDAR</button>
+        <button class="play-btn danger" id="btnStop" onclick="detener()" disabled>■ DETENER</button>
+        <button class="play-btn sec" onclick="limpiarTexto()">🗑 Limpiar</button>
+        <button class="play-btn sec" onclick="descargarUltimo()">📥 Descargar MP3</button>
+        <button class="play-btn m4" onclick="enviarSeleccionadosM4()" title="Enviar audios seleccionados a Carpeta M4">📁 Selec. → M4</button>
+        <button class="play-btn m4all" onclick="enviarTodosM4()" title="Enviar todos los audios a Carpeta M4">📁 Todos → M4</button>
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="audio-progress" id="audioProgress" style="display:none;">
+        <div class="prog-info">
+          <span id="progStatus">Reproduciendo...</span>
+          <span id="progTime">0:00</span>
+        </div>
+        <div class="prog-bar-wrap"><div class="prog-bar-fill" id="progFill"></div></div>
+        <div class="prog-info">
+          <span id="progVoice" style="color:var(--gold2);">—</span>
+          <span id="progMotor" style="color:var(--gold2);">—</span>
+        </div>
+      </div>
+
+      <!-- HISTORIAL CON CHECKBOXES Y BOTÓN M4 POR ITEM -->
+      <div class="audio-hist">
+        <div class="hist-title">📁 Audios generados · Checkbox = seleccionar · 📁 = enviar a M4</div>
+
+        <!-- Barra bulk -->
+        <div class="hist-bulk-bar" id="histBulkBar">
+          <span id="histBulkCount" style="color:var(--gold);font-weight:700;">0</span>
+          <span style="color:var(--gold2);">seleccionados</span>
+          <button onclick="enviarSeleccionadosM4()" style="padding:3px 8px;background:transparent;border:1px solid var(--cyan);border-radius:3px;color:var(--cyan);cursor:pointer;font-size:7px;">📁 Enviar a M4</button>
+          <button onclick="descargarSeleccionados()" style="padding:3px 8px;background:transparent;border:1px solid var(--green);border-radius:3px;color:var(--green);cursor:pointer;font-size:7px;">📥 Descargar</button>
+          <button onclick="eliminarSeleccionados()" style="padding:3px 8px;background:transparent;border:1px solid var(--red);border-radius:3px;color:var(--red);cursor:pointer;font-size:7px;">🗑 Eliminar</button>
+          <button onclick="deselAll()" style="padding:3px 8px;background:transparent;border:1px solid var(--muted);border-radius:3px;color:var(--gold2);cursor:pointer;font-size:7px;">✕ Cancelar</button>
+        </div>
+
+        <!-- Controles selección -->
+        <div class="hist-ctrl">
+          <button class="hc-btn" onclick="selAll()">☑ Todos</button>
+          <button class="hc-btn" onclick="deselAll()">☐ Ninguno</button>
+        </div>
+
+        <div id="audioHistList">
+          <div style="font-size:7px;color:var(--muted);padding:4px;">Sin audios generados aún. Reproduce cualquier texto para ver los audios aquí.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STT PANEL -->
+    <div class="stt-panel" id="panel-stt">
+      <div class="rec-indicator" id="recIndicator">
+        <div class="rec-dot"></div>
+        <span style="font-size:8px;color:var(--red);letter-spacing:.1em;">GRABANDO · Habla ahora en español</span>
+        <span id="recTimer" style="font-size:7px;color:var(--red);margin-left:auto;">0:00</span>
+      </div>
+      <div>
+        <div class="sec">🎤 Texto dictado en tiempo real</div>
+        <div class="rec-output" id="recOutput"><span style="color:var(--muted);">El texto dictado aparece aquí en tiempo real...</span></div>
+      </div>
+      <div class="playbar">
+        <button class="play-btn pri" id="btnDictar" onclick="iniciarDictado()">🎤 INICIAR DICTADO</button>
+        <button class="play-btn danger" id="btnDetDic" onclick="detenerDictado()" style="display:none;">■ DETENER</button>
+        <button class="play-btn sec" onclick="usarTexto()">📋 Usar texto</button>
+        <button class="play-btn sec" onclick="leerDictado()">🔊 Leer dictado</button>
+        <button class="play-btn sec" onclick="limpiarDictado()">🗑 Limpiar</button>
+      </div>
+      <div>
+        <div class="sec">📤 Enviar texto dictado a</div>
+        <div class="dest-row">
+          <button class="dest-btn sel" id="dest-tts" onclick="selectDest('tts',this)">TTS · Reproducir</button>
+          <button class="dest-btn" id="dest-prompt" onclick="selectDest('prompt',this)">Prompt IA</button>
+          <button class="dest-btn" id="dest-titulo" onclick="selectDest('titulo',this)">Título ficha</button>
+          <button class="dest-btn" id="dest-rec" onclick="selectDest('rec',this)">Recomendación</button>
+          <button class="dest-btn" id="dest-pasos" onclick="selectDest('pasos',this)">Pasos técnicos</button>
+        </div>
+      </div>
+      <div>
+        <div class="sec">✏️ Texto acumulado — editable</div>
+        <textarea class="txt-area" id="sttEditable" rows="4" placeholder="El texto dictado aparece aquí para editarlo antes de usarlo..."></textarea>
+        <div class="playbar" style="margin-top:6px;">
+          <button class="play-btn pri" onclick="enviarTextoEditado()">✓ Enviar texto editado</button>
+          <button class="play-btn sec" onclick="copiarStt()">📋 Copiar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-bar" id="statusBar">Estado: listo · Módulo 3 Voz activo · Todos los motores registran audio para M4</div>
+  </div>
+</div>
+
+<div class="ftr">
+  <span class="ft">Motor: <span id="ftMotor">Web Speech API</span></span>
+  <span class="ft">Voz: <span id="ftVoz">—</span></span>
+  <span class="ft">Audios: <span id="ftAudios">0</span></span>
+  <span class="ft">Seleccionados: <span id="ftSel" style="color:var(--gold);">0</span></span>
+  <span class="ft" style="margin-left:auto;">✦ FÁTIMA CALDEA STUDIO PRO V5 · MÓDULO 3 · VOZ</span>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ════════════════════════════════════════════════════════════
+const V = {
+  motor: 'webspeech',
+  wsVoices: [],
+  wsSelectedIdx: 0,
+  elVoiceId: '21m00Tcm4TlvDq8ikWAM',
+  elVoiceName: 'Rachel',
+  oaiVoice: 'alloy',
+  oaiModel: 'tts-1',
+  destino: 'tts',
+  audioHistory: [],   // {id, texto, url, blob, motor, fecha, nombre, seleccionado}
+  selectedIds: new Set(),
+  currentUtterance: null,
+  recFull: '',
+  recognition: null,
+  recInterval: null,
+  recSeconds: 0,
+  // MediaRecorder para capturar Web Speech
+  mediaRecorder: null,
+  mediaStream: null,
+  mediaChunks: []
+};
+
+const sb = document.getElementById('statusBar');
+function setStatus(msg,type=''){sb.innerHTML=type==='ok'?`<span class="s-ok">✓ ${msg}</span>`:type==='err'?`<span class="s-err">⚠ ${msg}</span>`:type==='info'?`<span class="s-info">ℹ ${msg}</span>`:type==='rec'?`<span class="s-rec">● ${msg}</span>`:msg;}
+
+// ════════════════════════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════════════════════════
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('act'));
+  document.querySelectorAll('.tts-panel,.stt-panel').forEach(p=>p.classList.remove('act'));
+  document.getElementById('tab-'+tab).classList.add('act');
+  document.getElementById('panel-'+tab).classList.add('act');
+}
+
+// ════════════════════════════════════════════════════════════
+// MOTOR
+// ════════════════════════════════════════════════════════════
+function selectMotor(m){
+  V.motor=m;
+  document.querySelectorAll('.motor-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('mc-'+m).classList.add('active');
+  document.getElementById('el-key-section').style.display=m==='elevenlabs'?'block':'none';
+  document.getElementById('oai-key-section').style.display=m==='openai-tts'?'block':'none';
+  document.getElementById('ws-voices').style.display=m==='webspeech'?'block':'none';
+  document.getElementById('el-voices-section').style.display=m==='elevenlabs'?'block':'none';
+  document.getElementById('oai-voices-section').style.display=m==='openai-tts'?'block':'none';
+  const labels={webspeech:'Web Speech API',elevenlabs:'ElevenLabs','openai-tts':'OpenAI TTS'};
+  document.getElementById('motorActivo').textContent='Motor: '+labels[m];
+  document.getElementById('ftMotor').textContent=labels[m];
+  setStatus('Motor activo: '+labels[m],'info');
+}
+
+// ════════════════════════════════════════════════════════════
+// WEB SPEECH — voces
+// ════════════════════════════════════════════════════════════
+function cargarVocesWS(){
+  const voices=window.speechSynthesis.getVoices();
+  if(!voices.length){setTimeout(cargarVocesWS,200);return;}
+  const esVoices=voices.filter(v=>v.lang.startsWith('es'));
+  const todas=[...esVoices,...voices.filter(v=>!v.lang.startsWith('es'))].slice(0,16);
+  V.wsVoices=todas;
+  const grid=document.getElementById('wsVoiceGrid');
+  grid.innerHTML='';
+  todas.forEach((v,i)=>{
+    const btn=document.createElement('div');
+    btn.className='voice-btn'+(i===0?' sel':'');
+    btn.id='vbtn-'+i;
+    btn.textContent=v.name.substring(0,18)+(v.lang?' · '+v.lang.substring(0,5):'');
+    btn.title=v.name+' · '+v.lang;
+    btn.onclick=()=>selectWSVoice(i);
+    grid.appendChild(btn);
+  });
+  if(todas.length)document.getElementById('ftVoz').textContent=todas[0].name.substring(0,20);
+}
+function selectWSVoice(idx){
+  V.wsSelectedIdx=idx;
+  document.querySelectorAll('#wsVoiceGrid .voice-btn').forEach(b=>b.classList.remove('sel'));
+  const btn=document.getElementById('vbtn-'+idx);
+  if(btn)btn.classList.add('sel');
+  document.getElementById('ftVoz').textContent=V.wsVoices[idx]?.name?.substring(0,20)||'—';
+  setStatus('Voz: '+V.wsVoices[idx]?.name,'ok');
+  const test=new SpeechSynthesisUtterance('Hola, esta es mi voz.');
+  test.voice=V.wsVoices[idx];test.rate=1;test.pitch=1;test.volume=1;
+  speechSynthesis.cancel();speechSynthesis.speak(test);
+}
+
+// ════════════════════════════════════════════════════════════
+// CAPTURAR AUDIO DEL SISTEMA — MediaRecorder
+// Captura lo que sale por los altavoces (o en Chrome con getUserMedia)
+// ════════════════════════════════════════════════════════════
+async function iniciarGrabacionWS(){
+  try{
+    // Intentar captura del micrófono como proxy del audio del sistema
+    // (Chrome no permite capturar audio del sistema directamente sin extensión)
+    // Alternativa: crear AudioContext y capturar la salida de la voz
+    V.mediaChunks=[];
+    // Usamos AudioContext + MediaStreamDestination para capturar SpeechSynthesis
+    const ac=new AudioContext();
+    const dest=ac.createMediaStreamDestination();
+    // No podemos conectar SpeechSynthesis directamente al AudioContext en todos los navegadores,
+    // así que usamos getUserMedia del micrófono como fallback capturando el audio ambiente
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    V.mediaStream=stream;
+    const mimeType=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':'audio/webm';
+    V.mediaRecorder=new MediaRecorder(stream,{mimeType});
+    V.mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size>0)V.mediaChunks.push(e.data);};
+    V.mediaRecorder.start(100);
+    document.getElementById('wsRecBadge').classList.add('show');
+    return true;
+  }catch(e){
+    console.warn('MediaRecorder no disponible:',e.message);
+    return false;
+  }
+}
+
+function detenerGrabacionWS(){
+  return new Promise(resolve=>{
+    document.getElementById('wsRecBadge').classList.remove('show');
+    if(!V.mediaRecorder||V.mediaRecorder.state==='inactive'){
+      if(V.mediaStream)V.mediaStream.getTracks().forEach(t=>t.stop());
+      resolve(null);return;
+    }
+    V.mediaRecorder.onstop=()=>{
+      if(V.mediaStream)V.mediaStream.getTracks().forEach(t=>t.stop());
+      if(V.mediaChunks.length>0){
+        const mimeType=V.mediaRecorder.mimeType||'audio/webm';
+        const blob=new Blob(V.mediaChunks,{type:mimeType});
+        resolve(blob);
+      }else resolve(null);
+      V.mediaRecorder=null;V.mediaStream=null;V.mediaChunks=[];
+    };
+    V.mediaRecorder.stop();
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// ELEVENLABS
+// ════════════════════════════════════════════════════════════
+function saveELKey(){const key=document.getElementById('el-key').value.trim();if(!key){setStatus('Pega tu clave ElevenLabs primero','err');return;}localStorage.setItem('fc_el_key',key);document.getElementById('dot-el').className='motor-dot dot-on';document.getElementById('el-key').value='';document.getElementById('el-key').placeholder='✓ Clave guardada';setStatus('✓ Clave ElevenLabs guardada','ok');loadELVoices();}
+async function loadELVoices(){const key=localStorage.getItem('fc_el_key');if(!key){setStatus('Configura tu clave ElevenLabs primero','err');return;}setStatus('Cargando voces...','info');try{const r=await fetch('https://api.elevenlabs.io/v1/voices',{headers:{'xi-api-key':key}});const d=await r.json();if(d.detail)throw new Error(d.detail);const list=document.getElementById('elVoiceList');list.innerHTML='';d.voices.forEach(voice=>{const div=document.createElement('div');div.className='el-voice';div.dataset.id=voice.voice_id;div.innerHTML=`<span>${voice.name} · ${voice.labels?.accent||voice.category||'—'}</span><button class="el-voice-preview" onclick="previewELVoice(event,'${voice.voice_id}')">▶</button>`;div.onclick=(e)=>{if(e.target.tagName!=='BUTTON')selectELVoice(div,voice.voice_id,voice.name);};list.appendChild(div);});setStatus('✓ '+d.voices.length+' voces cargadas','ok');}catch(e){setStatus('Error cargando voces: '+e.message,'err');}}
+function selectELVoice(el,id,name){V.elVoiceId=id;V.elVoiceName=name;document.querySelectorAll('.el-voice').forEach(v=>v.classList.remove('sel'));el.classList.add('sel');document.getElementById('ftVoz').textContent=name;setStatus('Voz ElevenLabs: '+name,'ok');}
+async function previewELVoice(e,voiceId){e.stopPropagation();const key=localStorage.getItem('fc_el_key');if(!key){setStatus('Configura tu clave ElevenLabs primero','err');return;}try{const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,{method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json'},body:JSON.stringify({text:'Hola, soy Fátima Caldea, profesora de peluquería y fitness.',voice_settings:{stability:0.5,similarity_boost:0.8}})});const blob=await r.blob();new Audio(URL.createObjectURL(blob)).play();setStatus('▶ Preview reproduciendo...','ok');}catch(e){setStatus('Error preview: '+e.message,'err');}}
+
+// ════════════════════════════════════════════════════════════
+// OPENAI TTS
+// ════════════════════════════════════════════════════════════
+function saveOAIKey(){const key=document.getElementById('oai-key').value.trim();if(!key)return;localStorage.setItem('fc_oai_key',key);document.getElementById('dot-oai').className='motor-dot dot-on';document.getElementById('oai-key').value='';document.getElementById('oai-key').placeholder='✓ Clave guardada';setStatus('✓ Clave OpenAI TTS guardada','ok');}
+function selectOAIVoice(el,v){V.oaiVoice=v;document.querySelectorAll('#oai-voices-section .voice-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');document.getElementById('ftVoz').textContent=v;}
+function selectOAIModel(el,m){V.oaiModel=m;['oai-m-std','oai-m-hd'].forEach(id=>document.getElementById(id)?.classList.remove('sel'));el.classList.add('sel');}
+
+// ════════════════════════════════════════════════════════════
+// REPRODUCCIÓN TTS — TODOS LOS MOTORES GENERAN BLOB
+// ════════════════════════════════════════════════════════════
+async function reproducir(){
+  const texto=document.getElementById('ttsText').value.trim();
+  if(!texto){setStatus('Escribe un texto primero','err');return;}
+  document.getElementById('audioProgress').style.display='block';
+  document.getElementById('btnPlay').disabled=true;
+  document.getElementById('btnStop').disabled=false;
+  document.getElementById('btnPause').disabled=false;
+  document.getElementById('progStatus').textContent='Reproduciendo...';
+  document.getElementById('progVoice').textContent='Voz: '+document.getElementById('ftVoz').textContent;
+  document.getElementById('progMotor').textContent='Motor: '+document.getElementById('ftMotor').textContent;
+  if(V.motor==='webspeech')await reproducirWS(texto);
+  else if(V.motor==='elevenlabs')await reproducirEL(texto);
+  else if(V.motor==='openai-tts')await reproducirOAI(texto);
+}
+
+// ── WEB SPEECH + MEDIARECORDER ──────────────────────────────
+async function reproducirWS(texto){
+  speechSynthesis.cancel();
+  // Iniciar grabación de micrófono/sistema
+  const grabando=await iniciarGrabacionWS();
+  if(!grabando){
+    setStatus('ℹ️ Microfono no disponible — reproduciendo sin grabar. Permite el micrófono para capturar el audio a M4.','info');
+  }
+  V.currentUtterance=new SpeechSynthesisUtterance(texto);
+  if(V.wsVoices[V.wsSelectedIdx])V.currentUtterance.voice=V.wsVoices[V.wsSelectedIdx];
+  V.currentUtterance.rate=parseFloat(document.getElementById('speedSl').value);
+  V.currentUtterance.pitch=parseFloat(document.getElementById('pitchSl').value);
+  V.currentUtterance.volume=parseFloat(document.getElementById('volSl').value);
+  V.currentUtterance.lang='es-ES';
+  const vozNombre=V.wsVoices[V.wsSelectedIdx]?.name||'Web Speech';
+  let prog=0;
+  const interval=setInterval(()=>{prog=Math.min(prog+2,95);document.getElementById('progFill').style.width=prog+'%';},200);
+  V.currentUtterance.onend=async()=>{
+    clearInterval(interval);
+    document.getElementById('progFill').style.width='100%';
+    document.getElementById('progStatus').textContent='✓ Completado';
+    document.getElementById('btnPlay').disabled=false;
+    document.getElementById('btnStop').disabled=true;
+    document.getElementById('btnPause').disabled=true;
+    // Detener grabación y obtener blob
+    const blob=await detenerGrabacionWS();
+    const url=blob?URL.createObjectURL(blob):null;
+    guardarAudioHistorial(texto,url,blob,'Web Speech · '+vozNombre);
+    setStatus('✓ Reproducción completada · Audio '+(blob?'grabado y listo para M4':'sin grabar (permite micrófono)'),'ok');
+  };
+  V.currentUtterance.onerror=async(e)=>{
+    clearInterval(interval);
+    await detenerGrabacionWS();
+    document.getElementById('btnPlay').disabled=false;
+    setStatus('Error reproducción: '+e.error,'err');
+  };
+  speechSynthesis.speak(V.currentUtterance);
+  setStatus('▶ Reproduciendo con Web Speech API'+(grabando?' · grabando audio...':''),'ok');
+}
+
+// ── ELEVENLABS ───────────────────────────────────────────────
+async function reproducirEL(texto){
+  const key=localStorage.getItem('fc_el_key');
+  if(!key){setStatus('Configura tu clave ElevenLabs','err');document.getElementById('btnPlay').disabled=false;return;}
+  setStatus('☁️ Generando audio con ElevenLabs...','info');
+  try{
+    const r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${V.elVoiceId}`,{method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json'},body:JSON.stringify({text:texto,model_id:'eleven_multilingual_v2',voice_settings:{stability:0.5,similarity_boost:0.8,speed:parseFloat(document.getElementById('speedSl').value)}})});
+    if(!r.ok){const e=await r.json();throw new Error(e.detail?.message||'Error API');}
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const audio=new Audio(url);audio.volume=parseFloat(document.getElementById('volSl').value);
+    guardarAudioHistorial(texto,url,blob,'ElevenLabs · '+V.elVoiceName);
+    audio.onended=()=>{document.getElementById('progFill').style.width='100%';document.getElementById('progStatus').textContent='✓ Completado';document.getElementById('btnPlay').disabled=false;document.getElementById('btnStop').disabled=true;document.getElementById('btnPause').disabled=true;setStatus('✓ ElevenLabs reproducido · Audio guardado en lista','ok');};
+    audio.play();document.getElementById('progFill').style.width='80%';
+    setStatus('▶ Reproduciendo audio ElevenLabs...','ok');
+  }catch(e){setStatus('Error ElevenLabs: '+e.message,'err');document.getElementById('btnPlay').disabled=false;}
+}
+
+// ── OPENAI TTS ───────────────────────────────────────────────
+async function reproducirOAI(texto){
+  const key=localStorage.getItem('fc_oai_key');
+  if(!key){setStatus('Configura tu clave OpenAI','err');document.getElementById('btnPlay').disabled=false;return;}
+  setStatus('☁️ Generando audio con OpenAI TTS...','info');
+  try{
+    const r=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model:V.oaiModel,input:texto,voice:V.oaiVoice,speed:parseFloat(document.getElementById('speedSl').value)})});
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Error API');}
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const audio=new Audio(url);audio.volume=parseFloat(document.getElementById('volSl').value);
+    guardarAudioHistorial(texto,url,blob,'OpenAI · '+V.oaiVoice);
+    audio.onended=()=>{document.getElementById('progFill').style.width='100%';document.getElementById('progStatus').textContent='✓ Completado';document.getElementById('btnPlay').disabled=false;document.getElementById('btnStop').disabled=true;document.getElementById('btnPause').disabled=true;setStatus('✓ OpenAI TTS reproducido · Audio guardado en lista','ok');};
+    audio.play();document.getElementById('progFill').style.width='80%';
+    setStatus('▶ Reproduciendo OpenAI TTS...','ok');
+  }catch(e){setStatus('Error OpenAI TTS: '+e.message,'err');document.getElementById('btnPlay').disabled=false;}
+}
+
+function pausar(){if(V.motor==='webspeech')speechSynthesis.pause();document.getElementById('btnPause').style.display='none';document.getElementById('btnResume').style.display='';document.getElementById('btnResume').disabled=false;setStatus('⏸ Pausado','info');}
+function reanudar(){if(V.motor==='webspeech')speechSynthesis.resume();document.getElementById('btnPause').style.display='';document.getElementById('btnResume').style.display='none';setStatus('▶ Reanudando...','ok');}
+async function detener(){
+  speechSynthesis.cancel();
+  if(V.motor==='webspeech')await detenerGrabacionWS();
+  document.getElementById('btnPlay').disabled=false;document.getElementById('btnStop').disabled=true;document.getElementById('btnPause').disabled=true;
+  document.getElementById('progStatus').textContent='■ Detenido';setStatus('■ Detenido','info');
+}
+function limpiarTexto(){document.getElementById('ttsText').value='';document.getElementById('charCount').textContent='0 caracteres';}
+
+// ════════════════════════════════════════════════════════════
+// HISTORIAL — guardar y renderizar CON SELECCIÓN MÚLTIPLE
+// ════════════════════════════════════════════════════════════
+function guardarAudioHistorial(texto,url,blob,motor){
+  const nombre='audio_'+(V.audioHistory.length+1)+'_'+new Date().toLocaleTimeString('es-ES').replace(/:/g,'');
+  const item={
+    id:'a'+Date.now(),
+    texto,url,blob,motor,
+    nombre,
+    fecha:new Date().toLocaleTimeString('es-ES'),
+    seleccionado:false
+  };
+  V.audioHistory.unshift(item);
+  document.getElementById('ftAudios').textContent=V.audioHistory.length;
+  renderAudioHist();
+}
+
+function renderAudioHist(){
+  const list=document.getElementById('audioHistList');
+  if(!V.audioHistory.length){list.innerHTML='<div style="font-size:7px;color:var(--muted);padding:4px;">Sin audios generados aún.</div>';updateBulkBar();return;}
+  list.innerHTML='';
+  V.audioHistory.forEach((item,i)=>{
+    const sel=V.selectedIds.has(item.id);
+    const div=document.createElement('div');
+    div.className='audio-item'+(sel?' sel-item':'');
+
+    // checkbox
+    const chk=document.createElement('div');
+    chk.className='ai-chk'+(sel?' on':'');
+    chk.textContent=sel?'✓':'';
+    chk.onclick=()=>toggleSelItem(item.id);
+
+    // play
+    const play=document.createElement('button');
+    play.className='audio-item-play';play.textContent='▶';
+    play.onclick=()=>{if(item.url){new Audio(item.url).play();}else{setStatus('Sin audio grabado para este item','err');}};
+
+    // info
+    const info=document.createElement('div');info.className='audio-item-info';
+    const txt=document.createElement('div');txt.className='audio-item-txt';txt.textContent=item.texto.substring(0,60)+(item.texto.length>60?'...':'');
+    const meta=document.createElement('div');meta.className='audio-item-meta';
+    meta.textContent=item.motor+' · '+item.fecha+(item.blob?' · '+formatSize(item.blob.size):' · sin blob');
+    info.appendChild(txt);info.appendChild(meta);
+
+    // acciones
+    const acts=document.createElement('div');acts.className='audio-item-acts';
+
+    const dl=document.createElement('div');dl.className='aia';dl.textContent='📥';dl.title='Descargar';
+    dl.onclick=()=>descargarItem(item);
+
+    const m4=document.createElement('div');m4.className='aia m4c';m4.textContent='📁';m4.title='Enviar a Carpeta M4';
+    m4.onclick=()=>enviarItemM4(item);
+
+    const del=document.createElement('div');del.className='aia danger';del.textContent='🗑';del.title='Eliminar';
+    del.onclick=()=>{V.audioHistory.splice(i,1);V.selectedIds.delete(item.id);document.getElementById('ftAudios').textContent=V.audioHistory.length;renderAudioHist();updateBulkBar();};
+
+    acts.appendChild(dl);acts.appendChild(m4);acts.appendChild(del);
+    div.appendChild(chk);div.appendChild(play);div.appendChild(info);div.appendChild(acts);
+    list.appendChild(div);
+  });
+  updateBulkBar();
+}
+
+function formatSize(bytes){if(!bytes)return '0 KB';if(bytes>1048576)return (bytes/1048576).toFixed(1)+' MB';return Math.round(bytes/1024)+' KB';}
+
+// ════════════════════════════════════════════════════════════
+// SELECCIÓN MÚLTIPLE
+// ════════════════════════════════════════════════════════════
+function toggleSelItem(id){if(V.selectedIds.has(id))V.selectedIds.delete(id);else V.selectedIds.add(id);renderAudioHist();}
+function selAll(){V.audioHistory.forEach(a=>V.selectedIds.add(a.id));renderAudioHist();}
+function deselAll(){V.selectedIds.clear();renderAudioHist();}
+function updateBulkBar(){
+  const n=V.selectedIds.size;
+  document.getElementById('histBulkBar').classList.toggle('show',n>0);
+  document.getElementById('histBulkCount').textContent=n;
+  document.getElementById('ftSel').textContent=n;
+}
+
+// ════════════════════════════════════════════════════════════
+// DESCARGAR
+// ════════════════════════════════════════════════════════════
+function descargarItem(item){
+  if(!item.url){setStatus('Sin audio para descargar','err');return;}
+  const a=document.createElement('a');a.href=item.url;a.download=item.nombre+'.webm';a.click();
+  setStatus('✓ Descargado: '+item.nombre,'ok');
+}
+function descargarUltimo(){const u=V.audioHistory[0];if(!u){setStatus('Sin audios generados aún','err');return;}descargarItem(u);}
+async function descargarSeleccionados(){
+  const items=V.audioHistory.filter(a=>V.selectedIds.has(a.id));
+  if(!items.length){setStatus('Selecciona audios primero','err');return;}
+  for(const item of items){descargarItem(item);await new Promise(r=>setTimeout(r,300));}
+  setStatus('✓ '+items.length+' audio(s) descargados','ok');
+}
+
+// ════════════════════════════════════════════════════════════
+// ENVIAR A CARPETA M4 — funciona con CUALQUIER motor
+// ════════════════════════════════════════════════════════════
+function enviarItemM4(item){
+  const queue=JSON.parse(localStorage.getItem('fc_carpeta_queue')||'[]');
+
+  if(item.blob){
+    // Tiene blob real — convertir a dataUrl
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      queue.push({tipo:'aud',dataUrl:ev.target.result,label:item.nombre+'.webm',motor:item.motor,fecha:item.fecha,size:item.blob.size,texto:item.texto.substring(0,80)});
+      localStorage.setItem('fc_carpeta_queue',JSON.stringify(queue));
+      setStatus('✓ Audio "'+item.nombre+'" enviado a Carpeta M4','ok');
+      if(confirm('✓ Audio listo en Carpeta M4.\n¿Abrir ahora?'))window.open('modulo4_carpeta.html','_blank');
+    };
+    reader.readAsDataURL(item.blob);
+  } else if(item.url){
+    // Sin blob pero tiene URL — guardar referencia de URL
+    queue.push({tipo:'aud',dataUrl:item.url,label:item.nombre+'.webm',motor:item.motor,fecha:item.fecha,size:0,texto:item.texto.substring(0,80),nota:'URL externa — optimizar en M4'});
+    localStorage.setItem('fc_carpeta_queue',JSON.stringify(queue));
+    setStatus('✓ Audio "'+item.nombre+'" enviado a Carpeta M4 (URL)','ok');
+    if(confirm('✓ Audio listo en Carpeta M4.\n¿Abrir ahora?'))window.open('modulo4_carpeta.html','_blank');
+  } else {
+    setStatus('⚠️ Este audio no tiene datos para enviar — el micrófono no estaba activo durante Web Speech','err');
+  }
+}
+
+function enviarSeleccionadosM4(){
+  const items=V.audioHistory.filter(a=>V.selectedIds.has(a.id));
+  if(!items.length){setStatus('Selecciona al menos un audio primero','err');return;}
+  const queue=JSON.parse(localStorage.getItem('fc_carpeta_queue')||'[]');
+  let procesados=0;
+  const total=items.length;
+  const finalizar=()=>{
+    procesados++;
+    if(procesados>=total){
+      localStorage.setItem('fc_carpeta_queue',JSON.stringify(queue));
+      setStatus('✓ '+total+' audio(s) enviados a Carpeta M4','ok');
+      if(confirm('✓ '+total+' audio(s) en Carpeta M4.\n¿Abrir ahora?'))window.open('modulo4_carpeta.html','_blank');
+    }
+  };
+  items.forEach(item=>{
+    if(item.blob){
+      const reader=new FileReader();
+      reader.onload=ev=>{queue.push({tipo:'aud',dataUrl:ev.target.result,label:item.nombre+'.webm',motor:item.motor,fecha:item.fecha,size:item.blob.size,texto:item.texto.substring(0,80)});finalizar();};
+      reader.readAsDataURL(item.blob);
+    }else if(item.url){
+      queue.push({tipo:'aud',dataUrl:item.url,label:item.nombre+'.webm',motor:item.motor,fecha:item.fecha,size:0,texto:item.texto.substring(0,80)});finalizar();
+    }else{procesados++;if(procesados>=total){localStorage.setItem('fc_carpeta_queue',JSON.stringify(queue));setStatus('✓ Enviados (algunos sin blob)','ok');}}
+  });
+}
+
+function enviarTodosM4(){
+  if(!V.audioHistory.length){setStatus('Sin audios generados aún','err');return;}
+  V.audioHistory.forEach(a=>V.selectedIds.add(a.id));
+  renderAudioHist();
+  enviarSeleccionadosM4();
+}
+
+function eliminarSeleccionados(){
+  if(!V.selectedIds.size){setStatus('Selecciona audios primero','err');return;}
+  V.audioHistory=V.audioHistory.filter(a=>!V.selectedIds.has(a.id));
+  V.selectedIds.clear();
+  document.getElementById('ftAudios').textContent=V.audioHistory.length;
+  renderAudioHist();setStatus('✓ Eliminados','ok');
+}
+
+// ════════════════════════════════════════════════════════════
+// STT — DICTADO
+// ════════════════════════════════════════════════════════════
+function iniciarDictado(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){setStatus('Tu navegador no soporta dictado. Usa Chrome o Edge.','err');return;}
+  if(V.recognition){V.recognition.stop();V.recognition=null;}
+  V.recognition=new SR();V.recognition.lang='es-ES';V.recognition.continuous=true;V.recognition.interimResults=true;
+  V.recFull='';V.recSeconds=0;
+  const out=document.getElementById('recOutput');const edit=document.getElementById('sttEditable');
+  out.innerHTML='<span style="color:var(--muted);">Escuchando...</span>';
+  V.recognition.onstart=()=>{document.getElementById('recIndicator').classList.add('show');document.getElementById('btnDictar').style.display='none';document.getElementById('btnDetDic').style.display='';V.recInterval=setInterval(()=>{V.recSeconds++;const m=Math.floor(V.recSeconds/60);const s=V.recSeconds%60;document.getElementById('recTimer').textContent=m+':'+(s<10?'0':'')+s;},1000);setStatus('● Grabando — habla ahora en español','rec');};
+  V.recognition.onresult=ev=>{let interim='';for(let i=ev.resultIndex;i<ev.results.length;i++){const t=ev.results[i][0].transcript;if(ev.results[i].isFinal){V.recFull+=t+' ';edit.value=V.recFull.trim();}else interim=t;}out.innerHTML=`<span style="color:var(--text);">${V.recFull}</span><span style="color:var(--gold2);">${interim}</span>`;};
+  V.recognition.onerror=ev=>{const errs={'not-allowed':'⚠ Permiso denegado','no-speech':'Sin voz detectada','network':'Error de red','aborted':'Cancelado'};setStatus(errs[ev.error]||'Error: '+ev.error,'err');resetRecUI();};
+  V.recognition.onend=()=>{if(V.recognition&&document.getElementById('btnDetDic').style.display!=='none'){try{V.recognition.start();}catch(e){}}else{resetRecUI();if(V.recFull.trim())setStatus('✓ Dictado completado','ok');}};
+  try{V.recognition.start();}catch(e){setStatus('Error micrófono: '+e.message,'err');resetRecUI();}
+}
+function detenerDictado(){if(V.recognition){V.recognition.stop();V.recognition=null;}resetRecUI();if(V.recFull.trim())setStatus('✓ Dictado detenido · '+V.recFull.split(' ').length+' palabras','ok');}
+function resetRecUI(){document.getElementById('recIndicator').classList.remove('show');document.getElementById('btnDictar').style.display='';document.getElementById('btnDetDic').style.display='none';clearInterval(V.recInterval);V.recognition=null;}
+function selectDest(dest,el){V.destino=dest;document.querySelectorAll('.dest-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
+function usarTexto(){const texto=document.getElementById('sttEditable').value.trim()||V.recFull.trim();if(!texto){setStatus('Dicta algo primero','err');return;}if(V.destino==='tts'){document.getElementById('ttsText').value=texto;switchTab('tts');setStatus('✓ Texto enviado a TTS','ok');}else{setStatus('✓ Texto listo para: '+V.destino,'ok');}}
+function leerDictado(){const texto=document.getElementById('sttEditable').value.trim()||V.recFull.trim();if(!texto){setStatus('Sin texto para leer','err');return;}document.getElementById('ttsText').value=texto;switchTab('tts');setTimeout(reproducir,100);}
+function copiarStt(){const texto=document.getElementById('sttEditable').value.trim();if(!texto)return;navigator.clipboard.writeText(texto).then(()=>setStatus('✓ Texto copiado al portapapeles','ok'));}
+function limpiarDictado(){V.recFull='';document.getElementById('recOutput').innerHTML='<span style="color:var(--muted);">El texto dictado aparece aquí...</span>';document.getElementById('sttEditable').value='';setStatus('Listo para nuevo dictado','info');}
+function enviarTextoEditado(){usarTexto();}
+
+document.getElementById('ttsText').addEventListener('input',function(){document.getElementById('charCount').textContent=this.value.length+' caracteres';});
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+if(window.speechSynthesis){speechSynthesis.onvoiceschanged=cargarVocesWS;cargarVocesWS();}
+if(localStorage.getItem('fc_el_key')){document.getElementById('dot-el').className='motor-dot dot-on';document.getElementById('el-key').placeholder='✓ Clave guardada';}
+if(localStorage.getItem('fc_oai_key')){document.getElementById('dot-oai').className='motor-dot dot-on';document.getElementById('oai-key').placeholder='✓ Clave guardada';}
+</script>
+
+<!-- ════════ MOTOR BRIDGE — biblioteca de las 360 clases ════════ -->
+<script src="motor_p1_bioseg_balayage.js"></script>
+<script src="motor_p2_queratina_elevaciones.js"></script>
+<script src="motor_p3_morfologia_alertas.js"></script>
+<script src="motor_helper.js"></script>
+<script src="m3_motor_bridge.js"></script>
+
+</body>
+</html>

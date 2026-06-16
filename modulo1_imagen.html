@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FÁTIMA CALDEA — STUDIO PRO V5 · MÓDULO 1</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#C9A84C;--gold2:#7A6130;--gold3:#E8CC7A;
+  --bg:#0a0a0a;--bg2:#111;--bg3:#191919;--bg4:#0f0f0f;
+  --green:#27AE60;--blue:#2980B9;--red:#E74C3C;--purple:#9B59B6;
+  --border:rgba(201,168,76,.18);--text:#e8e0d0;--muted:#4a4535;
+}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;}
+
+/* ── HEADER ── */
+.hdr{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.logo{font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--gold);}
+.sub{font-size:7px;color:var(--gold2);letter-spacing:.12em;margin-top:2px;}
+.nav{display:flex;gap:3px;flex-wrap:wrap;}
+.nav-btn{padding:5px 12px;font-size:8px;letter-spacing:.1em;border-radius:3px;cursor:pointer;border:1px solid var(--border);color:var(--gold2);background:transparent;transition:.2s;font-family:'JetBrains Mono',monospace;}
+.nav-btn.act{background:var(--gold);color:#000;border-color:var(--gold);}
+.nav-btn:hover:not(.act){border-color:var(--gold);color:var(--gold);}
+.badge-m1{background:rgba(39,174,96,.12);border:1px solid rgba(39,174,96,.3);color:var(--green);padding:3px 8px;border-radius:3px;font-size:7px;letter-spacing:.1em;}
+
+/* ── SHELL ── */
+.shell{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 52px);}
+
+/* ── PANEL IZQUIERDO ── */
+.left{background:var(--bg2);border-right:1px solid var(--border);padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:0;}
+.sec{font-size:7px;letter-spacing:.2em;color:var(--gold2);text-transform:uppercase;border-bottom:1px solid rgba(201,168,76,.1);padding-bottom:3px;margin:10px 0 6px;}
+.sec:first-child{margin-top:0;}
+
+/* Zona referencia */
+.ref-zone{border:1.5px dashed rgba(201,168,76,.3);border-radius:6px;padding:10px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:rgba(201,168,76,.02);}
+.ref-zone:hover,.ref-zone.drag-over{border-color:var(--gold);background:rgba(201,168,76,.06);}
+.ref-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.ref-icon{font-size:22px;opacity:.35;margin-bottom:4px;}
+.ref-txt{font-size:8px;color:var(--gold2);line-height:1.6;}
+.ref-txt strong{color:var(--gold);display:block;font-size:9px;}
+.ref-preview{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+.ref-thumb{position:relative;width:52px;height:52px;}
+.ref-thumb img{width:52px;height:52px;object-fit:cover;border-radius:3px;border:1px solid var(--border);}
+.ref-thumb-del{position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:var(--red);border-radius:50%;font-size:8px;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;}
+.ref-i2i-badge{background:rgba(41,128,185,.1);border:1px solid rgba(41,128,185,.3);border-radius:3px;padding:3px 7px;font-size:7px;color:var(--blue);margin-top:5px;display:none;}
+.ref-i2i-badge.show{display:block;}
+.sl-wrap{margin-bottom:5px;}
+.sl-lbl{display:flex;justify-content:space-between;font-size:7px;color:var(--gold2);margin-bottom:2px;}
+.sl{width:100%;height:2px;accent-color:var(--gold);cursor:pointer;}
+
+/* Switch categorías */
+.switch-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;}
+.switch-lbl{font-size:8px;color:var(--text);}
+.sw{position:relative;width:32px;height:17px;cursor:pointer;flex-shrink:0;}
+.sw input{opacity:0;width:0;height:0;}
+.sw-sl{position:absolute;inset:0;background:var(--bg3);border-radius:10px;transition:.2s;border:1px solid var(--border);}
+.sw-sl::before{content:'';position:absolute;width:11px;height:11px;background:var(--muted);border-radius:50%;bottom:2px;left:2px;transition:.2s;}
+.sw input:checked+.sw-sl{background:rgba(201,168,76,.2);border-color:var(--gold);}
+.sw input:checked+.sw-sl::before{transform:translateX(15px);background:var(--gold);}
+
+/* APIs */
+.api-list{display:flex;flex-direction:column;gap:2px;}
+.api-row{display:flex;align-items:center;justify-content:space-between;padding:4px 6px;border-radius:3px;cursor:pointer;transition:.15s;}
+.api-free{background:rgba(39,174,96,.06);border:1px solid rgba(39,174,96,.18);color:var(--green);}
+.api-key{background:rgba(142,68,173,.06);border:1px solid rgba(142,68,173,.18);color:var(--purple);}
+.api-row.active-api{outline:1.5px solid var(--gold);}
+.api-name{font-size:7.5px;}
+.api-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-on{background:var(--green);}
+.dot-off{background:#333;}
+.api-key-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:8px;padding:4px 6px;margin-top:3px;font-family:'JetBrains Mono',monospace;display:none;}
+.api-key-input.show{display:block;}
+
+/* Categorías */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-bottom:6px;max-height:150px;overflow-y:auto;}
+.cat-btn{padding:4px 3px;border:1px solid rgba(201,168,76,.12);border-radius:2px;font-size:6.5px;color:var(--gold2);text-align:center;cursor:pointer;background:var(--bg3);transition:.1s;line-height:1.3;}
+.cat-btn.sel{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.06);}
+.cat-btn:hover:not(.sel){border-color:rgba(201,168,76,.3);color:var(--text);}
+.cat-disabled{opacity:.3;pointer-events:none;}
+
+/* Fitness selectores */
+.fit-panel{display:none;background:rgba(59,130,246,.04);border:1px solid rgba(59,130,246,.15);border-radius:6px;padding:8px;margin-bottom:6px;}
+.fit-panel.show{display:block;}
+.fit-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-bottom:5px;}
+.fit-btn{padding:4px 2px;border:1px solid rgba(59,130,246,.2);border-radius:2px;font-size:6.5px;color:#60a5fa;text-align:center;cursor:pointer;background:transparent;transition:.1s;line-height:1.4;}
+.fit-btn.sel{background:rgba(59,130,246,.15);border-color:#3b82f6;color:#93c5fd;}
+.fit-etiqueta{background:#0f1f3d;border:1px solid #1e3a5f;border-radius:4px;padding:5px 8px;font-size:7px;color:#60a5fa;margin-top:4px;word-break:break-all;}
+.fit-etiqueta strong{color:#facc15;font-family:monospace;display:block;font-size:9px;margin-top:2px;}
+
+/* Prompt */
+.txt-f{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:8px;padding:5px 7px;margin-bottom:4px;font-family:'JetBrains Mono',monospace;resize:vertical;transition:border-color .2s;}
+.txt-f::placeholder{color:var(--muted);}
+.txt-f:focus{outline:none;border-color:var(--gold);}
+.prompt-libre-badge{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:3px;padding:4px 7px;font-size:7px;color:var(--gold2);margin-bottom:4px;}
+
+/* Bandas */
+.banda-colors{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:5px;}
+.bc{width:20px;height:20px;border-radius:3px;cursor:pointer;border:2px solid transparent;transition:.1s;flex-shrink:0;}
+.bc:hover,.bc.sel{border-color:var(--gold);}
+.banda-pos-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-bottom:5px;}
+.bp-btn{padding:4px 2px;border:1px solid var(--border);border-radius:2px;font-size:6.5px;color:var(--gold2);text-align:center;cursor:pointer;background:transparent;transition:.1px;}
+.bp-btn:hover{border-color:var(--gold);color:var(--gold);}
+.bp-btn.sel{background:rgba(201,168,76,.1);border-color:var(--gold);color:var(--gold);}
+.op-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+.op-swatch{width:24px;height:24px;border-radius:3px;border:1px solid var(--border);flex-shrink:0;}
+
+/* Ajustes imagen */
+.adj-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px;}
+.adj-item{display:flex;flex-direction:column;gap:2px;}
+.adj-lbl{font-size:6.5px;color:var(--gold2);}
+
+/* GEN BTN */
+.gen-btn{width:100%;padding:11px;background:linear-gradient(135deg,var(--gold2),var(--gold));border:none;border-radius:4px;color:#000;font-size:10px;font-weight:700;letter-spacing:.15em;cursor:pointer;transition:.2s;margin-top:4px;font-family:'JetBrains Mono',monospace;}
+.gen-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,168,76,.3);}
+.gen-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+/* ── PANEL CENTRAL ── */
+.center{background:var(--bg4);padding:14px;display:flex;flex-direction:column;gap:10px;}
+.c-toolbar{display:flex;gap:3px;flex-wrap:wrap;align-items:center;background:var(--bg2);padding:6px 8px;border-radius:4px;border:1px solid var(--border);}
+.ctool{padding:4px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;font-size:7.5px;color:var(--gold2);cursor:pointer;transition:.1s;white-space:nowrap;font-family:'JetBrains Mono',monospace;}
+.ctool.act,.ctool:hover{border-color:var(--gold);color:var(--gold);}
+.ctool.gold{background:var(--gold);color:#000;border-color:var(--gold);font-weight:700;}
+.ctool.danger{color:var(--red);border-color:rgba(231,76,60,.2);}
+.tool-sep{width:1px;background:var(--border);height:18px;flex-shrink:0;}
+
+/* Canvas */
+.canvas-wrap{position:relative;flex:1;min-height:320px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+#mainCanvas{display:block;max-width:100%;max-height:480px;}
+#mainCanvas.cur-move{cursor:move;}
+#mainCanvas.cur-text{cursor:text;}
+#mainCanvas.cur-cross{cursor:crosshair;}
+.canvas-ph{text-align:center;pointer-events:none;}
+.canvas-ph .icon{font-size:40px;opacity:.1;margin-bottom:10px;}
+.canvas-ph p{font-size:8px;color:var(--muted);letter-spacing:.12em;line-height:1.8;}
+.canvas-spinner{position:absolute;inset:0;background:rgba(0,0,0,.8);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;}
+.spinner-ring{width:40px;height:40px;border:3px solid rgba(201,168,76,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;}
+.spinner-txt{font-size:9px;color:var(--gold);letter-spacing:.15em;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Status */
+.status-bar{background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.12);border-radius:3px;padding:5px 10px;font-size:7.5px;color:var(--gold2);min-height:24px;line-height:1.5;}
+.s-ok{color:var(--green)!important;}
+.s-err{color:var(--red)!important;}
+.s-info{color:var(--blue)!important;}
+
+/* Prompt preview */
+.prompt-preview{background:var(--bg3);border:1px solid var(--border);border-left:2px solid var(--gold);border-radius:3px;padding:6px 8px;font-size:7px;color:#aaa;line-height:1.5;word-break:break-word;}
+.prompt-preview .lbl{font-size:6px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;}
+
+/* Save bar */
+.save-bar{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.s-btn{padding:5px 12px;border-radius:3px;font-size:8px;cursor:pointer;transition:.1s;font-family:'JetBrains Mono',monospace;}
+.s-btn.pri{background:var(--gold);color:#000;border:none;font-weight:700;}
+.s-btn.sec{background:transparent;border:1px solid var(--border);color:var(--gold2);}
+.s-btn.sec:hover{border-color:var(--gold);color:var(--gold);}
+.s-btn.m4{background:transparent;border:1px solid rgba(0,188,212,.35);color:#00bcd4;}
+.s-btn.m4:hover{background:rgba(0,188,212,.08);}
+.s-btn.danger{background:transparent;border:1px solid rgba(231,76,60,.3);color:var(--red);}
+
+/* Galería rápida */
+.quick-gal{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px;}
+.qg-title{font-size:7px;color:var(--gold2);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;}
+.qg-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
+.qg-thumb{height:44px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;overflow:hidden;cursor:pointer;position:relative;transition:.15s;}
+.qg-thumb:hover{border-color:var(--gold);}
+.qg-thumb img{width:100%;height:100%;object-fit:cover;}
+.qg-del{position:absolute;top:1px;right:1px;width:12px;height:12px;background:rgba(192,57,43,.9);border:none;border-radius:1px;color:#fff;font-size:7px;cursor:pointer;display:none;align-items:center;justify-content:center;}
+.qg-thumb:hover .qg-del{display:flex;}
+.qg-lbl{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.75);font-size:5.5px;color:#e8e0d0;padding:1px 2px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* Text panel */
+.text-panel{background:var(--bg2);border:1px solid rgba(201,168,76,.25);border-radius:5px;padding:8px;display:none;}
+.text-panel.vis{display:block;}
+.tp-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px;}
+.tp-lbl{font-size:6.5px;color:var(--gold2);display:block;margin-bottom:2px;}
+.tp-in{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:7px;padding:3px 4px;font-family:'JetBrains Mono',monospace;}
+.tp-btns{display:flex;gap:3px;margin-top:4px;}
+.tp-btn{flex:1;padding:4px;border:1px solid var(--border);border-radius:2px;font-size:7px;color:var(--gold2);text-align:center;cursor:pointer;background:transparent;}
+.tp-btn.pri{background:var(--gold);color:#000;border-color:var(--gold);}
+
+/* Editor opts */
+.editor-opts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--bg2);padding:4px 8px;border-radius:3px;border:1px solid var(--border);}
+.opt-lbl{font-size:7px;color:var(--gold2);}
+.opt-in{width:48px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:7px;padding:2px 4px;font-family:'JetBrains Mono',monospace;}
+.opt-color{width:22px;height:22px;border-radius:3px;border:1px solid var(--border);cursor:pointer;padding:0;}
+.opt-sel{background:var(--bg3);border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:7px;padding:2px 4px;font-family:'JetBrains Mono',monospace;}
+
+/* Footer */
+.ftr{background:var(--bg2);border-top:1px solid var(--border);padding:5px 14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+.ft{font-size:6.5px;color:var(--gold2);}
+.ft span{color:var(--gold);}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     PUENTE SUPERIOR — PESTAÑAS ENTRE MÓDULOS
+══════════════════════════════════════════════ -->
+<div style="background:rgba(4,6,8,.98);border-bottom:2px solid rgba(201,168,76,.18);padding:0 14px;display:flex;align-items:center;gap:0;height:44px;position:sticky;top:0;z-index:100;">
+  <div style="font-size:9px;font-weight:700;letter-spacing:.2em;color:var(--gold);padding-right:14px;border-right:1px solid rgba(201,168,76,.15);margin-right:8px;white-space:nowrap;">✦ FÁTIMA CALDEA</div>
+
+  <!-- 🏠 PUENTE DE LANDING — regreso al Estudio (centro de control) -->
+  <a href="estudio.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-right:1px solid rgba(201,168,76,.08);font-size:8px;color:var(--gold2);text-decoration:none;white-space:nowrap;transition:.15s;">
+    <div style="width:6px;height:6px;border-radius:50%;background:var(--muted);"></div>
+    🏠 Estudio
+  </a>
+
+  <a href="modulo1_imagen.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-right:1px solid rgba(201,168,76,.08);font-size:8px;color:var(--gold);background:rgba(201,168,76,.1);border-bottom:2px solid var(--gold);text-decoration:none;white-space:nowrap;">
+    <div style="width:6px;height:6px;border-radius:50%;background:var(--gold);"></div>
+    ⚡ M1 · Imagen
+    <span style="font-size:5.5px;padding:1px 4px;background:var(--gold);color:#000;border-radius:2px;font-weight:700;">ACTIVO</span>
+  </a>
+  <a href="modulo2_video.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-right:1px solid rgba(201,168,76,.08);font-size:8px;color:var(--gold2);text-decoration:none;white-space:nowrap;transition:.15s;">
+    <div style="width:6px;height:6px;border-radius:50%;background:var(--muted);"></div>
+    🎬 M2 · Video
+  </a>
+  <a href="modulo3_voz.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-right:1px solid rgba(201,168,76,.08);font-size:8px;color:var(--gold2);text-decoration:none;white-space:nowrap;transition:.15s;">
+    <div style="width:6px;height:6px;border-radius:50%;background:var(--muted);"></div>
+    🔊 M3 · Voz
+  </a>
+  <a href="modulo4_carpeta.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;font-size:8px;color:var(--gold2);text-decoration:none;white-space:nowrap;transition:.15s;">
+    <div style="width:6px;height:6px;border-radius:50%;background:var(--muted);"></div>
+    📁 M4 · Carpeta
+  </a>
+  <!-- 🔧 PARCHE: link a Admin -->
+  <a href="admin.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-left:1px solid rgba(201,168,76,.15);font-size:8px;color:var(--gold2);text-decoration:none;white-space:nowrap;transition:.15s;">
+    <div style="width:6px;height:6px;border-radius:50%;background:var(--muted);"></div>
+    🛠️ Admin
+  </a>
+  <!-- 🆕 link al Admin de Academia (motores de 360 clases) -->
+  <a href="admin_motores.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-left:1px solid rgba(0,242,255,.2);font-size:8px;color:#fbbf24;text-decoration:none;white-space:nowrap;transition:.15s;background:rgba(0,242,255,.04);">
+    <div style="width:6px;height:6px;border-radius:50%;background:#fbbf24;"></div>
+    🎓 Academia
+  </a>
+
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+    <div style="font-size:7px;color:var(--green);display:flex;align-items:center;gap:4px;">
+      <div style="width:6px;height:6px;background:var(--green);border-radius:50%;"></div>
+      <span id="bridgeUser">Studio V5</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── HEADER ── -->
+<div class="hdr">
+  <div>
+    <div class="logo">FÁTIMA CALDEA — STUDIO PRO V5</div>
+    <div class="sub">MÓDULO 1 · Motor de Imagen Libre · Image-to-Image · Fitness Indexado · Multi-API</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <span class="badge-m1">● M1 ACTIVO</span>
+    <div class="nav">
+      <button class="nav-btn act">⚡ Generar</button>
+      <button class="nav-btn">🗂️ Galería</button>
+      <button class="nav-btn">🔊 Voz</button>
+      <button class="nav-btn" onclick="openApiPanel()">⚙️ APIs</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:5px;background:rgba(39,174,96,.07);border:1px solid rgba(39,174,96,.2);border-radius:20px;padding:3px 9px;">
+      <div style="width:6px;height:6px;background:var(--green);border-radius:50%;"></div>
+      <span style="font-size:7px;color:var(--green);" id="userChip">—</span>
+    </div>
+    <button style="font-size:7px;color:var(--gold2);cursor:pointer;padding:3px 7px;border:1px solid var(--border);border-radius:3px;background:transparent;" onclick="doLogout()">Salir</button>
+  </div>
+</div>
+
+<!-- ── SHELL ── -->
+<div class="shell">
+
+  <!-- ══ PANEL IZQUIERDO ══ -->
+  <div class="left">
+
+    <!-- REFERENCIA IMAGE-TO-IMAGE -->
+    <div class="sec">📷 Imagen de referencia · Image-to-Image</div>
+    <div class="ref-zone" id="refZone">
+      <input type="file" id="refInput" accept="image/*" multiple onchange="handleRefUpload(event)">
+      <div class="ref-icon">📎</div>
+      <div class="ref-txt"><strong>+ Subir referencia real</strong>Postura · Ejercicio · Técnica · JPG PNG</div>
+    </div>
+    <div class="ref-preview" id="refPreview"></div>
+    <div class="ref-i2i-badge" id="i2iBadge">✅ Image-to-Image activo · La referencia guiará la generación</div>
+    <div class="sl-wrap" style="margin-top:5px;">
+      <div class="sl-lbl"><span>Intensidad referencia</span><span id="refIntVal" style="color:var(--gold)">65%</span></div>
+      <input type="range" class="sl" id="refIntSl" min="0" max="100" value="65" oninput="refIntVal.textContent=this.value+'%'">
+    </div>
+
+    <!-- MOTOR API -->
+    <div class="sec">🌐 Motor de IA</div>
+    <div class="api-list">
+      <div class="api-row api-free active-api" onclick="selectEngine(this,'flux')" id="engine-flux">
+        <span class="api-name">Pollinations · Flux</span><div class="api-dot dot-on"></div>
+      </div>
+      <div class="api-row api-free" onclick="selectEngine(this,'turbo')" id="engine-turbo">
+        <span class="api-name">Pollinations · Turbo</span><div class="api-dot dot-on"></div>
+      </div>
+      <!-- CLAVE POLLINATIONS (opcional) · gratis en enter.pollinations.ai -->
+      <div style="background:rgba(39,174,96,.06);border:1px solid rgba(39,174,96,.2);border-radius:3px;padding:5px 7px;margin-bottom:4px;">
+        <div style="font-size:6.5px;color:var(--green);margin-bottom:4px;line-height:1.6;">🔑 TOKEN GRATIS necesario · el modo anónimo ya no genera imágenes (la API responde «cola llena»).<br>1) Entra a <b>enter.pollinations.ai</b> · 2) Regístrate gratis (1 min) · 3) Copia tu token y pégalo aquí abajo.</div>
+        <div class="api-row api-key" onclick="toggleKeyInput('pollinations')" id="engine-pollinations" style="margin-bottom:3px;">
+          <span class="api-name">Pollinations · Token</span><div class="api-dot dot-off" id="dot-pollinations"></div>
+        </div>
+        <input class="api-key-input" id="key-pollinations" type="text" placeholder="Pega tu token aquí y pulsa Enter (o haz clic fuera)" onkeydown="saveKey('pollinations',event)">
+      </div>
+      <div class="api-row api-key" onclick="toggleKeyInput('dalle')" id="engine-dalle">
+        <span class="api-name">OpenAI · DALL·E 3 + i2i</span><div class="api-dot dot-off" id="dot-dalle"></div>
+      </div>
+      <input class="api-key-input" id="key-dalle" type="password" placeholder="sk-... → Enter para guardar" onkeydown="saveKey('dalle',event)">
+      <div class="api-row api-key" onclick="toggleKeyInput('stability')" id="engine-stability">
+        <span class="api-name">Stability AI · i2i nativo</span><div class="api-dot dot-off" id="dot-stability"></div>
+      </div>
+      <input class="api-key-input" id="key-stability" type="password" placeholder="sk-... → Enter para guardar" onkeydown="saveKey('stability',event)">
+      <div class="api-row api-key" onclick="toggleKeyInput('hf')" id="engine-hf">
+        <span class="api-name">HuggingFace · FLUX Dev</span><div class="api-dot dot-off" id="dot-hf"></div>
+      </div>
+      <input class="api-key-input" id="key-hf" type="password" placeholder="hf_... → Enter para guardar" onkeydown="saveKey('hf',event)">
+      <div class="api-row api-key" onclick="toggleKeyInput('together')" id="engine-together">
+        <span class="api-name">Together AI · FLUX Pro</span><div class="api-dot dot-off" id="dot-together"></div>
+      </div>
+      <input class="api-key-input" id="key-together" type="password" placeholder="Clave... → Enter para guardar" onkeydown="saveKey('together',event)">
+      <div class="api-row api-key" onclick="toggleKeyInput('replicate')" id="engine-replicate">
+        <span class="api-name">Replicate · Multi-modelo (FLUX/SDXL/Imagen)</span><div class="api-dot dot-off" id="dot-replicate"></div>
+      </div>
+      <input class="api-key-input" id="key-replicate" type="password" placeholder="r8_... → Enter para guardar" onkeydown="saveKey('replicate',event)">
+      <!-- CLAVE ANTHROPIC — para Claude Vision (analiza imagen de referencia) -->
+      <div style="margin-top:6px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:3px;padding:5px 7px;">
+        <div style="font-size:6.5px;color:var(--gold);margin-bottom:4px;">🔍 Claude Vision · Analiza referencia → prompt técnico preciso</div>
+        <div class="api-row api-key" onclick="toggleKeyInput('anthropic')" id="engine-anthropic" style="margin-bottom:3px;">
+          <span class="api-name">Anthropic · Claude Vision</span><div class="api-dot dot-off" id="dot-anthropic"></div>
+        </div>
+        <input class="api-key-input" id="key-anthropic" type="password" placeholder="sk-ant-... → Enter para guardar" onkeydown="saveKey('anthropic',event)">
+        <div style="font-size:6px;color:var(--muted);margin-top:3px;line-height:1.5;">Sin esta clave: Pollinations usará prompt enriquecido manual.<br>Con esta clave: Claude lee tu imagen y construye el prompt exacto.</div>
+      </div>
+    </div>
+
+    <!-- SWITCH MODO -->
+    <div class="sec">⚡ Modo de generación</div>
+    <div class="switch-row">
+      <span class="switch-lbl">💡 Prompt libre (prioridad total)</span>
+      <label class="sw"><input type="checkbox" id="swPromptLibre" checked onchange="setModo('libre')"><span class="sw-sl"></span></label>
+    </div>
+    <div class="switch-row">
+      <span class="switch-lbl">✂️ Categorías peluquería</span>
+      <label class="sw"><input type="checkbox" id="swCats" onchange="setModo('cats')"><span class="sw-sl"></span></label>
+    </div>
+    <div class="switch-row">
+      <span class="switch-lbl">💪 Modo Fitness indexado</span>
+      <label class="sw"><input type="checkbox" id="swFitness" onchange="setModo('fitness')"><span class="sw-sl"></span></label>
+    </div>
+
+    <!-- CATEGORÍAS PELUQUERÍA -->
+    <div id="catSection" style="display:none;">
+      <div class="sec">✂️ 22 Categorías · Sugerencia orientativa</div>
+      <div class="cat-grid" id="catGrid"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-bottom:5px;">
+        <div class="fit-btn sel" id="var-cliente" onclick="selectVar('cliente',this)">Cliente</div>
+        <div class="fit-btn" id="var-peluquero" onclick="selectVar('peluquero',this)">Peluquero</div>
+        <div class="fit-btn" id="var-protocolo" onclick="selectVar('protocolo',this)">Protocolo</div>
+        <div class="fit-btn" id="var-alertas" onclick="selectVar('alertas',this)">Alertas</div>
+      </div>
+    </div>
+
+    <!-- FITNESS INDEXADO -->
+    <div class="fit-panel" id="fitPanel">
+      <div style="font-size:8px;color:#60a5fa;font-weight:700;margin-bottom:6px;">💪 Indexador Fitness · Sistema público</div>
+
+      <div style="font-size:6.5px;color:#60a5fa;margin-bottom:3px;">Nivel técnico</div>
+      <div class="fit-grid-3">
+        <div class="fit-btn sel" id="fn6" onclick="setFN(this,'6')">🟢<br><span style="font-size:5.5px;">6 · Principiante</span></div>
+        <div class="fit-btn" id="fn8" onclick="setFN(this,'8')">🟠<br><span style="font-size:5.5px;">8 · Intermedio</span></div>
+        <div class="fit-btn" id="fn12" onclick="setFN(this,'12')">🔴<br><span style="font-size:5.5px;">12 · Avanzado</span></div>
+      </div>
+
+      <div style="font-size:6.5px;color:#60a5fa;margin-bottom:3px;margin-top:5px;">Grupo muscular</div>
+      <div class="fit-grid-3">
+        <div class="fit-btn sel" id="fg-gluteo" onclick="setFG(this,'gluteo')">🍑<br><span style="font-size:5.5px;">Glúteo</span></div>
+        <div class="fit-btn" id="fg-pierna" onclick="setFG(this,'pierna')">🦵<br><span style="font-size:5.5px;">Pierna</span></div>
+        <div class="fit-btn" id="fg-superior" onclick="setFG(this,'superior')">💪<br><span style="font-size:5.5px;">Superior</span></div>
+      </div>
+
+      <div style="font-size:6.5px;color:#60a5fa;margin-bottom:3px;margin-top:5px;">Equipamiento</div>
+      <div class="fit-grid-3">
+        <div class="fit-btn sel" id="fe-mancuerna" onclick="setFE(this,'mancuerna')">🏋️<br><span style="font-size:5.5px;">Mancuerna</span></div>
+        <div class="fit-btn" id="fe-maquina" onclick="setFE(this,'maquina')">⚙️<br><span style="font-size:5.5px;">Máquina</span></div>
+        <div class="fit-btn" id="fe-corporal" onclick="setFE(this,'corporal')">🤸<br><span style="font-size:5.5px;">Corporal</span></div>
+      </div>
+
+      <div style="font-size:6.5px;color:#60a5fa;margin-bottom:3px;margin-top:5px;">Motor objetivo</div>
+      <div class="fit-grid-3">
+        <div class="fit-btn sel" id="fm-masa" onclick="setFM(this,'masa')">📈<br><span style="font-size:5.5px;">Masa</span></div>
+        <div class="fit-btn" id="fm-perder" onclick="setFM(this,'perder')">🔥<br><span style="font-size:5.5px;">Grasa</span></div>
+        <div class="fit-btn" id="fm-mantener" onclick="setFM(this,'mantener')">⚖️<br><span style="font-size:5.5px;">Mantener</span></div>
+      </div>
+
+      <div class="fit-etiqueta">
+        Etiqueta Firebase:<strong id="fitEtiqueta">gluteo_masa_mancuerna_6_v1</strong>
+      </div>
+    </div>
+
+    <!-- PROMPT LIBRE -->
+    <div class="sec">✍️ Prompt libre · Prioridad absoluta</div>
+    <div class="prompt-libre-badge" id="promptModeBadge">✏️ Modo libre activo — escribe tu prompt exacto aquí</div>
+    <textarea class="txt-f" id="txtPrompt" rows="3" placeholder="Escribe aquí tu instrucción exacta · Ej: Mujer realizando hip thrust con barra, vista lateral, músculos glúteos activos resaltados en naranja, fondo oscuro profesional..."></textarea>
+    <input class="txt-f" id="txtTitulo" placeholder="Título de la imagen...">
+    <input class="txt-f" id="txtSubtitulo" placeholder="Subtítulo descriptivo...">
+    <textarea class="txt-f" id="txtRec" rows="2" placeholder="📋 Recomendación técnica profesional..."></textarea>
+    <input class="txt-f" id="txtPaso1" placeholder="Paso 1...">
+    <input class="txt-f" id="txtPaso2" placeholder="Paso 2...">
+    <input class="txt-f" id="txtPaso3" placeholder="Paso 3...">
+
+    <!-- BANDAS -->
+    <div class="sec">🎨 Bandas y fondos</div>
+    <div class="banda-colors" id="bandaColors">
+      <div class="bc sel" style="background:#C9A84C;" onclick="setBandaColor('#C9A84C',this)" title="Oro"></div>
+      <div class="bc" style="background:rgba(0,0,0,.85);" onclick="setBandaColor('rgba(0,0,0,.85)',this)" title="Negro"></div>
+      <div class="bc" style="background:#fff;" onclick="setBandaColor('#fff',this)" title="Blanco"></div>
+      <div class="bc" style="background:#2980B9;" onclick="setBandaColor('#2980B9',this)" title="Azul"></div>
+      <div class="bc" style="background:#E74C3C;" onclick="setBandaColor('#E74C3C',this)" title="Rojo"></div>
+      <div class="bc" style="background:#27AE60;" onclick="setBandaColor('#27AE60',this)" title="Verde"></div>
+      <div class="bc" style="background:#8E44AD;" onclick="setBandaColor('#8E44AD',this)" title="Morado"></div>
+      <div class="bc" style="background:rgba(201,168,76,.4);" onclick="setBandaColor('rgba(201,168,76,.4)',this)" title="Oro 40%"></div>
+      <div class="bc" style="background:rgba(255,255,255,.25);" onclick="setBandaColor('rgba(255,255,255,.25)',this)" title="Blanco 25%"></div>
+      <div class="bc" style="background:rgba(0,0,0,.4);" onclick="setBandaColor('rgba(0,0,0,.4)',this)" title="Negro 40%"></div>
+      <input type="color" value="#C9A84C" style="width:20px;height:20px;border-radius:3px;border:1px solid var(--border);cursor:pointer;padding:0;" oninput="setBandaColor(this.value,null)" title="Color personalizado">
+    </div>
+    <!-- POSICIÓN BANDA -->
+    <div class="banda-pos-grid">
+      <div class="bp-btn sel" id="bp-top" onclick="setBandaPos('top',this)">↑ Arriba</div>
+      <div class="bp-btn" id="bp-bottom" onclick="setBandaPos('bottom',this)">↓ Abajo</div>
+      <div class="bp-btn" id="bp-both" onclick="setBandaPos('both',this)">↕ Ambos</div>
+      <div class="bp-btn" id="bp-left" onclick="setBandaPos('left',this)">← Izq</div>
+      <div class="bp-btn" id="bp-right" onclick="setBandaPos('right',this)">→ Der</div>
+      <div class="bp-btn" id="bp-center" onclick="setBandaPos('center',this)">⊡ Centro</div>
+      <div class="bp-btn" id="bp-solid" onclick="setBandaPos('solid',this)">🎨 Sólido</div>
+      <div class="bp-btn" id="bp-none" onclick="setBandaPos('none',this)">🚫 Quitar</div>
+      <div class="bp-btn" id="bp-lr" onclick="setBandaPos('lr',this)">↔ I+D</div>
+    </div>
+    <!-- Opacidad banda -->
+    <div class="op-row">
+      <div class="op-swatch" id="bandaSwatch" style="background:#C9A84C;"></div>
+      <div style="flex:1;">
+        <div class="sl-lbl"><span>Opacidad</span><span id="bandaOpVal" style="color:var(--gold)">60%</span></div>
+        <input type="range" class="sl" id="bandaOpSl" min="0" max="100" value="60" oninput="bandaOpVal.textContent=this.value+'%';S.bandaOp=this.value/100;renderCanvas();">
+      </div>
+    </div>
+
+    <!-- AJUSTES IMAGEN -->
+    <div class="sec">🔧 Ajustes de imagen</div>
+    <div class="adj-grid">
+      <div class="adj-item"><div class="adj-lbl">Brillo <span id="vBri" style="color:var(--gold)">100%</span></div><input type="range" class="sl" min="0" max="200" value="100" oninput="vBri.textContent=this.value+'%';S.filters.brightness=this.value;renderCanvas();"></div>
+      <div class="adj-item"><div class="adj-lbl">Contraste <span id="vCon" style="color:var(--gold)">100%</span></div><input type="range" class="sl" min="0" max="200" value="100" oninput="vCon.textContent=this.value+'%';S.filters.contrast=this.value;renderCanvas();"></div>
+      <div class="adj-item"><div class="adj-lbl">Saturación <span id="vSat" style="color:var(--gold)">100%</span></div><input type="range" class="sl" min="0" max="200" value="100" oninput="vSat.textContent=this.value+'%';S.filters.saturate=this.value;renderCanvas();"></div>
+      <div class="adj-item"><div class="adj-lbl">Escala <span id="vSc" style="color:var(--gold)">100%</span></div><input type="range" class="sl" min="30" max="150" value="100" oninput="vSc.textContent=this.value+'%';S.filters.scale=this.value;renderCanvas();"></div>
+    </div>
+
+    <!-- BOTÓN GENERAR -->
+    <button class="gen-btn" id="genBtn" onclick="generar()">⚡ GENERAR IMAGEN</button>
+  </div>
+
+  <!-- ══ PANEL CENTRAL ══ -->
+  <div class="center">
+
+    <!-- TOOLBAR -->
+    <div class="c-toolbar">
+      <div class="ctool act" id="t-move" onclick="setTool('move',this)">↖ Mover</div>
+      <div class="ctool" id="t-text" onclick="setTool('text',this)">T Texto</div>
+      <div class="ctool" id="t-paint" onclick="setTool('paint',this)">✏️ Pintar</div>
+      <div class="ctool" id="t-erase" onclick="setTool('erase',this)">⬜ Borrar</div>
+      <div class="ctool" id="t-rect" onclick="setTool('rect',this)">▭ Rect</div>
+      <div class="ctool" id="t-line" onclick="setTool('line',this)">╱ Línea</div>
+      <div class="tool-sep"></div>
+      <div class="ctool" onclick="undo()">↩ Deshacer</div>
+      <div class="ctool" onclick="redo()">↪ Rehacer</div>
+      <div class="ctool danger" onclick="clearEdits()">🗑️ Limpiar edits</div>
+      <div class="tool-sep"></div>
+      <div class="ctool gold" onclick="generar()">⚡ GENERAR</div>
+    </div>
+
+    <!-- EDITOR OPTS -->
+    <div class="editor-opts">
+      <span class="opt-lbl">Color:</span>
+      <input type="color" class="opt-color" id="paintColor" value="#C9A84C">
+      <span class="opt-lbl">Tamaño:</span>
+      <input type="number" class="opt-in" id="paintSize" value="6" min="1" max="80">
+      <span class="opt-lbl" id="fontLbl" style="display:none;">Fuente:</span>
+      <select class="opt-sel" id="fontSel" style="display:none;">
+        <option value="monospace">Monospace</option>
+        <option value="sans-serif">Sans-serif</option>
+        <option value="serif">Serif</option>
+        <option value="Arial Black">Arial Black</option>
+        <option value="Georgia">Georgia</option>
+      </select>
+      <input type="checkbox" id="boldChk" style="display:none;accent-color:var(--gold);">
+      <span class="opt-lbl" id="boldLbl" style="display:none;">Bold</span>
+      <span style="margin-left:auto;font-size:6.5px;color:var(--muted);" id="toolHint">↖ Arrastra textos · Clic para seleccionar</span>
+    </div>
+
+    <!-- CANVAS -->
+    <div class="canvas-wrap">
+      <div class="canvas-ph" id="canvasPH">
+        <div class="icon">✦</div>
+        <p>MÓDULO 1 · MOTOR DE IMAGEN LIBRE<br>Escribe tu prompt · Sube referencia · Genera<br>CANVAS INTERACTIVO · EDITABLE EN TIEMPO REAL</p>
+      </div>
+      <canvas id="mainCanvas" style="display:none;"></canvas>
+      <div class="canvas-spinner" id="spinner">
+        <div class="spinner-ring"></div>
+        <div class="spinner-txt" id="spinnerTxt">GENERANDO...</div>
+      </div>
+    </div>
+
+    <!-- TEXT PANEL (elemento seleccionado) -->
+    <div class="text-panel" id="textPanel">
+      <div style="font-size:7px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;">T Elemento seleccionado</div>
+      <div class="tp-grid">
+        <div><label class="tp-lbl">Tamaño</label><input type="number" class="tp-in" id="tp-size" value="40" min="8" max="200" onchange="updateSelText()"></div>
+        <div><label class="tp-lbl">Color</label><input type="color" class="tp-in" id="tp-color" value="#C9A84C" onchange="updateSelText()"></div>
+        <div><label class="tp-lbl">Fuente</label><select class="tp-in" id="tp-font" onchange="updateSelText()"><option value="monospace">Monospace</option><option value="sans-serif">Sans</option><option value="serif">Serif</option><option value="Arial Black">Arial Black</option></select></div>
+        <div><label class="tp-lbl">Bold</label><input type="checkbox" id="tp-bold" onchange="updateSelText()" style="accent-color:var(--gold);margin-top:6px;"></div>
+      </div>
+      <input class="txt-f" id="tp-text" placeholder="Contenido..." oninput="updateSelText()">
+      <div class="tp-btns">
+        <div class="tp-btn" onclick="dupSel()">⧉ Duplicar</div>
+        <div class="tp-btn" style="color:var(--red);" onclick="delSel()">🗑 Eliminar</div>
+        <div class="tp-btn pri" onclick="deselect()">✓ OK</div>
+      </div>
+    </div>
+
+    <!-- PROMPT PREVIEW -->
+    <div class="prompt-preview" id="promptPreview">
+      <div class="lbl">⚡ Prompt que se enviará a la API</div>
+      <span id="promptPreviewTxt">Escribe tu prompt o selecciona una categoría...</span>
+    </div>
+
+    <!-- STATUS -->
+    <div class="status-bar" id="statusBar">Estado: listo · Módulo 1 activo</div>
+
+    <!-- ══ SAVE BAR — PARCHE M4 INYECTADO AQUÍ ══ -->
+    <div class="save-bar">
+      <button class="s-btn pri" onclick="guardar()">💾 GUARDAR</button>
+      <button class="s-btn sec" onclick="exportJPG()">📥 JPG</button>
+      <button class="s-btn sec" onclick="exportPDF()">📄 PDF</button>
+      <button class="s-btn m4" onclick="enviarCarpetaM4()">📁 → Carpeta M4</button>
+      <button class="s-btn danger" onclick="clearCanvas()">🗑️ Limpiar canvas</button>
+      <span style="margin-left:auto;font-size:7px;color:var(--gold2);">Sesión: <span id="ftSes" style="color:var(--gold);">0</span> · Galería: <span id="ftGal" style="color:var(--gold);">0</span></span>
+    </div>
+
+    <!-- GALERÍA RÁPIDA -->
+    <div class="quick-gal">
+      <div class="qg-title">🕓 Galería de sesión — clic para restaurar · hover para eliminar</div>
+      <div class="qg-grid" id="galGrid"><div style="font-size:7px;color:var(--muted);padding:4px;">Sin imágenes aún</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="ftr">
+  <span class="ft">Motor: <span id="ftMotor">Pollinations·Flux</span></span>
+  <span class="ft">Modo: <span id="ftModo">Libre</span></span>
+  <span class="ft">Generadas: <span id="ftGen">0</span></span>
+  <span class="ft">Canvas: <span id="ftEdits">0</span> elementos</span>
+  <span class="ft" style="margin-left:auto;">✦ FÁTIMA CALDEA STUDIO PRO V5 · MÓDULO 1 · MOTOR IMAGEN</span>
+</div>
+
+<!-- ══ FIREBASE AUTH ══ -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+const FB = {
+  apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",
+  authDomain:"aprendisajefatima.firebaseapp.com",
+  projectId:"aprendisajefatima",
+  storageBucket:"aprendisajefatima.firebasestorage.app",
+  messagingSenderId:"744176967394",
+  appId:"1:744176967394:web:743b7c2a455e1e6ba7c8bb"
+};
+const OWNER = 'fatimahairstudio082@gmail.com';
+const app  = initializeApp(FB);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, user => {
+  if(user && user.email === OWNER){
+    document.getElementById('userChip').textContent = user.email.split('@')[0]+' · Admin';
+    setStatus('✓ Sesión activa · Studio Pro V5 Módulo 1 listo','ok');
+  } else if(user){
+    signOut(auth);
+  }
+});
+
+window.doLogout = async () => {
+  if(confirm('¿Cerrar sesión?')) await signOut(auth);
+};
+window._authReady = true;
+</script>
+
+<!-- ══ LÓGICA PRINCIPAL MÓDULO 1 — ORIGINAL INTACTO ══ -->
+<script>
+// ════════════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ════════════════════════════════════════════════════════════
+const S = {
+  engine: 'flux',
+  currentImage: null,
+  lastSeed: 0,
+  sessionCount: 0,
+  gallery: [],
+  imagenesSeleccionadas: [],
+  bandaColor: '#C9A84C',
+  bandaPos: 'top',
+  bandaOp: 0.6,
+  filters: { brightness:100, contrast:100, saturate:100, scale:100 },
+  variant: 'cliente',
+  catIdx: 0,
+  _fitEtiqueta: null,
+  _fitN: '6', _fitG: 'gluteo', _fitE: 'mancuerna', _fitM: 'masa'
+};
+const ED = {
+  tool: 'move', els: [], selId: null,
+  undoStack: [], redoStack: [],
+  painting: false, paintId: null, drawStart: null,
+  dragEl: null, dragOffX: 0, dragOffY: 0,
+  W: 1024, H: 1024
+};
+let elCnt = 0;
+const nid = () => 'e'+(++elCnt);
+
+// ══ PARCHE QUIRÚRGICO M4 — función añadida sin tocar nada ══
+function enviarCarpetaM4(){
+  if(!S.currentImage){setStatus('Genera una imagen primero','err');return;}
+  deselect();renderCanvas();
+  const dataUrl=canvas.toDataURL('image/jpeg',.85);
+  const queue=JSON.parse(localStorage.getItem('fc_carpeta_queue')||'[]');
+  const etiqueta=resolverEtiqueta();
+  const esFitness = document.getElementById('swFitness').checked;
+  const item={tipo:'img',dataUrl,label:etiqueta+'.jpg',fecha:new Date().toLocaleTimeString('es-ES'),size:dataUrl.length};
+  if(esFitness){ item.claseId=etiqueta; item.cat='fitness'; item.titulo=document.getElementById('txtTitulo').value.trim()||etiqueta; }
+  queue.push(item);
+  localStorage.setItem('fc_carpeta_queue',JSON.stringify(queue));
+  setStatus('✓ Imagen enviada a Carpeta M4: '+etiqueta,'ok');
+  if(confirm('✓ Imagen "'+etiqueta+'" lista en Carpeta M4.\n¿Abrir la Carpeta Inteligente ahora?')){
+    window.open('modulo4_carpeta.html','_blank');
+  }
+}
+// ══ FIN PARCHE ══
+
+const CATS = [
+  {id:'bioseg',label:'🛡️ Bioseguridad',prompts:{cliente:'professional hairdressing salon biosecurity protocol for client, sterilized tools, protective cape, gloves, mask, clean white clinic background, medical style infographic, ultra sharp 8k',peluquero:'professional hairdresser biosecurity equipment infographic, gloves, mask, apron, sterilization tray, step by step protocol, clean background',protocolo:'biosecurity protocol hairdressing salon infographic, numbered steps, disinfection, sterilization, PPE, minimal clean design',alertas:'hairdressing biosecurity warning signs, contamination risks, alert symbols, red yellow palette, infographic poster'}},
+  {id:'herram',label:'✂️ Herramientas',prompts:{cliente:'professional hairdressing tools flat lay, scissors, combs, clips, brushes, clean white background, elegant product photography',peluquero:'hairdresser professional tools diagram labeled, scissors types, razor, clippers, combs, educational chart',protocolo:'professional hairdressing tools maintenance protocol, cleaning sterilization storage infographic',alertas:'hairdressing tools safety warnings, sharp blades, electrical risks, infographic poster'}},
+  {id:'divis',label:'📐 Divisiones',prompts:{cliente:'hair sectioning diagram for hairstyle, clean lines on mannequin head, professional illustration',peluquero:'professional hair sectioning techniques diagram, 4 sections, T-section, cross section, labeled arrows, technical illustration',protocolo:'hair sectioning step by step protocol infographic, professional salon, numbered diagram',alertas:'hair sectioning common errors infographic, wrong vs correct technique, professional education'}},
+  {id:'lavado',label:'💧 Lavado',prompts:{cliente:'professional hair washing at salon sink, warm water, massage technique, clean elegant photo',peluquero:'professional shampoo application technique diagram, scalp massage steps, product distribution',protocolo:'professional hair washing protocol infographic, water temperature, product dosage, massage technique, steps numbered',alertas:'hair washing common mistakes infographic, product overuse, wrong temperature, educational poster'}},
+  {id:'tinte',label:'🎨 Tinte',prompts:{cliente:'professional hair color application for client, beautiful transformation, salon environment, elegant photo',peluquero:'professional hair coloring technique diagram, brush application, root to tip, sectioning, timing',protocolo:'hair color application protocol infographic, mixing ratio, timing, strand test, professional steps',alertas:'hair color safety warnings infographic, allergy test, chemical hazards, processing time, red alert icons'}},
+  {id:'mechas',label:'🌟 Mechas',prompts:{cliente:'beautiful blonde highlights hair transformation, foil highlights technique, salon result',peluquero:'foil highlights technique diagram, sectioning, weaving, foil placement, professional technical illustration',protocolo:'foil highlights protocol infographic, section size, product application, timing, professional steps',alertas:'highlights common errors infographic, overlapping, uneven sections, banding, warning diagram'}},
+  {id:'balayage',label:'🌊 Balayage',prompts:{cliente:'beautiful balayage hair result, sun-kissed effect, natural gradient, salon quality',peluquero:'balayage technique diagram, freehand painting, brush strokes, sectioning, feathering',protocolo:'balayage application protocol infographic, product consistency, painting direction, timing',alertas:'balayage mistakes infographic, wrong placement, heavy hand, patchiness, corrective chart'}},
+  {id:'queratina',label:'💎 Queratina',prompts:{cliente:'keratin treatment result before after, smooth shiny hair, frizz free, professional salon',peluquero:'keratin treatment application technique diagram, sectioning, product distribution, flat iron sealing',protocolo:'keratin treatment protocol infographic, preparation, application, waiting time, sealing, aftercare',alertas:'keratin treatment safety warnings infographic, formaldehyde risks, ventilation, gloves'}},
+  {id:'hidrat',label:'🌿 Hidratación',prompts:{cliente:'professional hair hydration mask treatment, glossy healthy hair, salon care',peluquero:'hair hydration treatment diagram, product application layers, mask distribution, heat cap',protocolo:'hair hydration protocol infographic, diagnosis, product selection, application, timing',alertas:'over-moisturizing hair warnings infographic, protein moisture balance, hygral fatigue'}},
+  {id:'corte',label:'✂️ Corte',prompts:{cliente:'professional haircut transformation, clean lines, salon result, beautiful style',peluquero:'professional haircut techniques diagram, guide lines, elevation angles, cutting sections',protocolo:'haircut protocol infographic, consultation, sectioning, cutting angle, finishing, professional steps',alertas:'haircut common errors infographic, uneven guide, wrong elevation, blunt lines, correction chart'}},
+  {id:'plancha',label:'🔥 Planchado',prompts:{cliente:'professional flat iron styling result, silky straight hair, shine, salon quality',peluquero:'flat iron technique diagram, temperature settings, sectioning, tension, passes',protocolo:'flat iron styling protocol infographic, heat protection, temperature guide, sectioning',alertas:'flat iron safety warnings infographic, heat damage, fire hazard, temperature limit'}},
+  {id:'secado',label:'💨 Secado',prompts:{cliente:'professional blow dry result, voluminous bouncy hair, salon blowout',peluquero:'blow dry technique diagram, dryer angle, brush technique, sectioning, tension direction',protocolo:'blow dry protocol infographic, towel dry, heat protection, sectioning, finishing steps',alertas:'blow dry damage warnings infographic, overheating, wrong angle, frizz causes'}},
+  {id:'tecpeine',label:'🪮 Téc.Peine',prompts:{cliente:'professional comb technique result, smooth finished hair, salon style',peluquero:'professional comb techniques diagram, backcombing, smoothing, teasing, detangling',protocolo:'comb technique protocol infographic, tooth spacing, tension, direction',alertas:'comb usage warnings infographic, breakage risk, wrong detangling, educational chart'}},
+  {id:'tectijera',label:'✂️ Téc.Tijera',prompts:{cliente:'scissor technique beautiful layered haircut result, texturized, professional',peluquero:'scissors techniques diagram, point cutting, slide cutting, texturizing, notching',protocolo:'scissors technique protocol infographic, finger angle, tension, cutting motion steps',alertas:'scissors technique warnings infographic, dulling blades, wrong angle, accidents'}},
+  {id:'elev',label:'📊 Elevaciones',prompts:{cliente:'professional hair elevation angle result, perfect layers, balanced haircut',peluquero:'hair elevation angles technical diagram, 0 to 180 degrees, graduation, layers labeled',protocolo:'hair elevation protocol infographic, angle guide, technique selection, result chart',alertas:'hair elevation errors infographic, over-elevation, under-elevation, uneven weight'}},
+  {id:'morfol',label:'👤 Morfología',prompts:{cliente:'face shape analysis for hairstyle recommendation, oval round square heart diamond, infographic',peluquero:'face morphology hairstyle guide diagram, face shapes, recommended cuts, professional',protocolo:'face shape analysis protocol infographic, measurement points, shape identification, style recommendation',alertas:'face morphology assessment warnings, common misidentification, flattering vs unflattering'}},
+  {id:'correc',label:'🎯 Corrección',prompts:{cliente:'hair color correction process, beautiful transformation result, professional salon',peluquero:'hair color correction technique diagram, neutralizing, lifting, toning steps',protocolo:'color correction protocol infographic, assessment, strand test, neutralization, timeline',alertas:'color correction risks infographic, over-processing, breakage, professional warning'}},
+  {id:'matis',label:'✨ Matización',prompts:{cliente:'hair toning result, beautiful neutral ash blonde, salon quality',peluquero:'hair toning technique diagram, toner application, timing, level neutralization',protocolo:'hair toning protocol infographic, level assessment, toner selection, application timing',alertas:'hair toning warnings infographic, over-toning, green cast, purple tones, correction'}},
+  {id:'mezclas',label:'🧪 Mezclas',prompts:{cliente:'professional hair color mixing result, vibrant accurate color, salon quality',peluquero:'hair color mixing diagram, ratio chart, developer volumes, mixing bowl technique',protocolo:'hair color mixing protocol infographic, ratio 1:1 1:2, weight measurement, consistency',alertas:'hair color mixing safety warnings, chemical reaction risks, wrong developer volume'}},
+  {id:'cabgraso',label:'💧 Cab.Graso',prompts:{cliente:'oily scalp treatment result, fresh clean hair, professional salon care',peluquero:'oily scalp treatment technique diagram, product application, massage technique',protocolo:'oily scalp treatment protocol infographic, diagnosis, product selection, frequency steps',alertas:'oily scalp common errors infographic, overwashing, product buildup, wrong ingredients'}},
+  {id:'cabreseco',label:'🌵 Cab.Reseco',prompts:{cliente:'dry scalp treatment result, hydrated healthy hair, professional salon care',peluquero:'dry scalp treatment technique diagram, oil application, massage, moisturizing products',protocolo:'dry scalp treatment protocol infographic, diagnosis, hydration routine steps',alertas:'dry scalp vs dandruff infographic, identification, treatment differences, educational'}},
+  {id:'alertas',label:'⚠️ Alertas',prompts:{cliente:'hairdressing service general safety alerts for clients, important precautions, professional infographic',peluquero:'hairdresser professional risk alerts infographic, chemical exposure, ergonomics, tool safety',protocolo:'salon safety alerts protocol infographic, emergency procedures, chemical spill, burns',alertas:'critical hairdressing safety warnings infographic, red alert icons, chemical, electrical'}}
+];
+
+// ════════════════════════════════════════════════════════════
+// DOM
+// ════════════════════════════════════════════════════════════
+const canvas = document.getElementById('mainCanvas');
+const ctx    = canvas.getContext('2d');
+const ph     = document.getElementById('canvasPH');
+const spnr   = document.getElementById('spinner');
+const sb     = document.getElementById('statusBar');
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+(function init(){
+  const g = document.getElementById('catGrid');
+  CATS.forEach((c,i)=>{
+    const d = document.createElement('div');
+    d.className = 'cat-btn'+(i===0?' sel':'');
+    d.textContent = c.label;
+    d.onclick = ()=>{ activarModo('cats'); S.catIdx=i; g.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel')); d.classList.add('sel'); buildPromptFromCat(); };
+    g.appendChild(d);
+  });
+  updateModeUI();
+  calcFitEtiqueta();
+  loadGallery();
+})();
+
+// ════════════════════════════════════════════════════════════
+// SWITCHES DE MODO
+// ════════════════════════════════════════════════════════════
+function setModo(cual){
+  const L=document.getElementById('swPromptLibre');
+  const C=document.getElementById('swCats');
+  const F=document.getElementById('swFitness');
+  // Excluyente: activar uno apaga los otros (ya no se pisan los botones)
+  if(cual==='libre'   && L.checked){ C.checked=false; F.checked=false; }
+  if(cual==='cats'    && C.checked){ L.checked=false; F.checked=false; }
+  if(cual==='fitness' && F.checked){ L.checked=false; C.checked=false; }
+  // Siempre debe quedar al menos un modo activo
+  if(!L.checked && !C.checked && !F.checked){
+    if(cual==='libre') L.checked=true; else if(cual==='cats') C.checked=true; else F.checked=true;
+  }
+  updateModeUI();
+}
+
+/* Activa un modo directamente (al tocar una categoría o selector fitness,
+   el modo correcto se enciende solo — sin tener que tocar el interruptor) */
+function activarModo(cual){
+  const L=document.getElementById('swPromptLibre');
+  const C=document.getElementById('swCats');
+  const F=document.getElementById('swFitness');
+  L.checked = (cual==='libre');
+  C.checked = (cual==='cats');
+  F.checked = (cual==='fitness');
+  updateModeUI();
+}
+
+function updateModeUI(){
+  const libre   = document.getElementById('swPromptLibre').checked;
+  const cats    = document.getElementById('swCats').checked;
+  const fitness = document.getElementById('swFitness').checked;
+
+  // Mostrar SOLO el panel del modo activo (oculta los demás para que no se pisen)
+  document.getElementById('catSection').style.display = cats ? 'block' : 'none';
+  document.getElementById('fitPanel').classList.toggle('show', fitness);
+
+  const badge = document.getElementById('promptModeBadge');
+
+  if(libre){
+    badge.style.cssText = 'background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:3px;padding:4px 7px;font-size:7px;color:var(--gold);margin-bottom:4px;';
+    badge.textContent   = '✏️ MODO LIBRE ACTIVO — prioridad absoluta · Lo que escribas en el textarea es lo único que se genera. Fitness y categorías inactivos.';
+    document.getElementById('txtPrompt').style.borderColor = 'var(--gold)';
+    document.getElementById('txtPrompt').style.borderWidth = '2px';
+  } else if(fitness){
+    badge.style.cssText = 'background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.3);border-radius:3px;padding:4px 7px;font-size:7px;color:#60a5fa;margin-bottom:4px;';
+    badge.textContent   = '💪 MODO FITNESS ACTIVO — el prompt se construye desde los selectores de nivel/grupo/equipamiento/motor. Etiqueta Firebase automática.';
+    document.getElementById('txtPrompt').style.borderColor = 'rgba(59,130,246,.3)';
+    document.getElementById('txtPrompt').style.borderWidth = '1px';
+  } else if(cats){
+    badge.style.cssText = 'background:rgba(39,174,96,.08);border:1px solid rgba(39,174,96,.3);border-radius:3px;padding:4px 7px;font-size:7px;color:var(--green);margin-bottom:4px;';
+    badge.textContent   = '✂️ MODO CATEGORÍA ACTIVO — la categoría seleccionada genera el prompt base de peluquería.';
+    document.getElementById('txtPrompt').style.borderColor = 'rgba(39,174,96,.2)';
+    document.getElementById('txtPrompt').style.borderWidth = '1px';
+  } else {
+    badge.style.cssText = 'background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.3);border-radius:3px;padding:4px 7px;font-size:7px;color:var(--red);margin-bottom:4px;';
+    badge.textContent   = '⚠️ Activa al menos un modo para generar.';
+    document.getElementById('txtPrompt').style.borderColor = 'var(--border)';
+    document.getElementById('txtPrompt').style.borderWidth = '1px';
+  }
+
+  document.getElementById('ftModo').textContent = libre?'Libre':fitness?'Fitness':cats?'Categoría':'—';
+  updatePromptPreview();
+}
+
+// ════════════════════════════════════════════════════════════
+// PROMPT
+// ════════════════════════════════════════════════════════════
+function buildPrompt(){
+  const libre   = document.getElementById('swPromptLibre').checked;
+  const cats    = document.getElementById('swCats').checked;
+  const fitness = document.getElementById('swFitness').checked;
+  const txtLibre = document.getElementById('txtPrompt').value.trim();
+
+  if(libre && txtLibre) return txtLibre;
+  if(fitness){
+    const nL = S._fitN==='6'?'beginner':S._fitN==='8'?'intermediate':'advanced';
+    const gL = S._fitG==='gluteo'?'glute and buttocks exercises':S._fitG==='pierna'?'leg and thigh exercises':'upper body exercises chest back shoulders arms';
+    const eL = S._fitE==='mancuerna'?'with dumbbells':S._fitE==='maquina'?'with gym machines':'bodyweight only';
+    const mL = S._fitM==='masa'?'hypertrophy muscle gain heavy weights':S._fitM==='perder'?'fat loss high repetitions':'maintenance strength moderate load';
+    return `Professional fitness reference infographic showing ${S._fitN} ${gL} ${eL}, ${nL} level ${mL} training, anatomical muscle activation highlighted in orange, numbered exercise layout ${S._fitN} exercises, clean dark background, high detail 8k`;
+  }
+  if(cats){
+    const c = CATS[S.catIdx];
+    if(c) return c.prompts[S.variant] || c.prompts.cliente;
+  }
+  return '';
+}
+
+function buildPromptFromCat(){
+  updatePromptPreview();
+}
+
+function updatePromptPreview(){
+  const libre   = document.getElementById('swPromptLibre').checked;
+  const fitness = document.getElementById('swFitness').checked;
+  const cats    = document.getElementById('swCats').checked;
+  const txtLibre = document.getElementById('txtPrompt').value.trim();
+
+  let preview = '';
+  if(libre && txtLibre){
+    preview = '✏️ LIBRE: ' + txtLibre;
+  } else if(fitness){
+    const lista = EJERCICIOS[S._fitG]?.[S._fitE]?.[S._fitN];
+    if(lista){
+      preview = `💪 FITNESS [${S._fitG.toUpperCase()} · ${S._fitE} · ${S._fitN} ej.]\n` +
+                lista.map((e,i)=>`${i+1}. ${e}`).join(' | ');
+    } else {
+      preview = '⚠️ Sin ejercicios para esta combinación';
+    }
+  } else if(cats){
+    const c = CATS[S.catIdx];
+    if(c) preview = '✂️ CATEGORÍA: ' + (c.prompts[S.variant] || c.prompts.cliente);
+  } else {
+    preview = '⚠️ Activa un modo para generar';
+  }
+  document.getElementById('promptPreviewTxt').textContent = preview;
+}
+
+document.getElementById('txtPrompt').addEventListener('input', updatePromptPreview);
+
+// ════════════════════════════════════════════════════════════
+// VARIANTE PELUQUERÍA
+// ════════════════════════════════════════════════════════════
+function selectVar(v, el){
+  activarModo('cats');
+  S.variant = v;
+  ['var-cliente','var-peluquero','var-protocolo','var-alertas'].forEach(id=>{
+    document.getElementById(id)?.classList.remove('sel');
+  });
+  el.classList.add('sel');
+  updatePromptPreview();
+}
+
+// ════════════════════════════════════════════════════════════
+// FITNESS INDEXADO
+// ════════════════════════════════════════════════════════════
+function setFN(el,v){ S._fitN=v; selFit(['fn6','fn8','fn12'],el); calcFitEtiqueta(); }
+function setFG(el,v){ S._fitG=v; selFit(['fg-gluteo','fg-pierna','fg-superior'],el); calcFitEtiqueta(); }
+function setFE(el,v){ S._fitE=v; selFit(['fe-mancuerna','fe-maquina','fe-corporal'],el); calcFitEtiqueta(); }
+function setFM(el,v){ S._fitM=v; selFit(['fm-masa','fm-perder','fm-mantener'],el); calcFitEtiqueta(); }
+function selFit(ids, active){ ids.forEach(id=>{ const e=document.getElementById(id); if(e)e.classList.remove('sel'); }); if(active)active.classList.add('sel'); }
+
+function calcFitEtiqueta(){
+  const base = `${S._fitG}_${S._fitM}_${S._fitE}_${S._fitN}`;
+  const existing = window._FIT_IMGS ? Object.keys(window._FIT_IMGS).filter(k=>k.startsWith(base+'_v')) : [];
+  const nums = existing.map(k=>parseInt((k.match(/_v(\d+)$/)||[0,0])[1])).filter(n=>n>0);
+  const next = nums.length ? Math.max(...nums)+1 : 1;
+  S._fitEtiqueta = `${base}_v${next}`;
+  document.getElementById('fitEtiqueta').textContent = S._fitEtiqueta;
+  updatePromptPreview();
+}
+
+// ════════════════════════════════════════════════════════════
+// IMAGEN DE REFERENCIA
+// ════════════════════════════════════════════════════════════
+let refImages = [];
+
+function handleRefUpload(e){
+  const files = [...e.target.files].slice(0,4);
+  files.forEach(f => {
+    const r = new FileReader();
+    r.onload = ev => {
+      const b64 = ev.target.result.split(',')[1];
+      refImages.push({ file:f, b64, src:ev.target.result });
+      renderRefPreviews();
+    };
+    r.readAsDataURL(f);
+  });
+  e.target.value = '';
+}
+
+const rz = document.getElementById('refZone');
+rz.addEventListener('dragover', e=>{ e.preventDefault(); rz.classList.add('drag-over'); });
+rz.addEventListener('dragleave', ()=> rz.classList.remove('drag-over'));
+rz.addEventListener('drop', e=>{
+  e.preventDefault(); rz.classList.remove('drag-over');
+  const files = [...e.dataTransfer.files].filter(f=>f.type.startsWith('image/')).slice(0,4);
+  files.forEach(f=>{ const r=new FileReader(); r.onload=ev=>{ refImages.push({file:f,b64:ev.target.result.split(',')[1],src:ev.target.result}); renderRefPreviews(); }; r.readAsDataURL(f); });
+});
+
+function renderRefPreviews(){
+  const pv = document.getElementById('refPreview');
+  pv.innerHTML = '';
+  refImages.forEach((img,i)=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'ref-thumb';
+    const im = document.createElement('img');
+    im.src = img.src;
+    const del = document.createElement('button');
+    del.className = 'ref-thumb-del';
+    del.textContent = '✕';
+    del.onclick = ()=>{ refImages.splice(i,1); renderRefPreviews(); };
+    wrap.appendChild(im);
+    wrap.appendChild(del);
+    pv.appendChild(wrap);
+  });
+  const badge = document.getElementById('i2iBadge');
+  badge.classList.toggle('show', refImages.length > 0);
+  if(refImages.length) setStatus(`✅ ${refImages.length} imagen(es) de referencia · Image-to-Image activo`,'ok');
+}
+
+// ════════════════════════════════════════════════════════════
+// MOTOR DE IA
+// ════════════════════════════════════════════════════════════
+function selectEngine(el, e){
+  S.engine = e;
+  document.querySelectorAll('.api-row').forEach(r=>r.classList.remove('active-api'));
+  el.classList.add('active-api');
+  document.getElementById('ftMotor').textContent = e;
+  setStatus(`Motor activo: ${e}`,'info');
+}
+
+function toggleKeyInput(engine){
+  const inp = document.getElementById('key-'+engine);
+  const isOpen = inp.classList.toggle('show');
+  if(isOpen){ inp.focus(); }
+  const saved = loadKey(engine);
+  // 'pollinations' y 'anthropic' son claves AUXILIARES (token / Claude Vision),
+  // NO motores de generación: no deben cambiar S.engine.
+  if(saved && engine!=='pollinations' && engine!=='anthropic'){
+    selectEngine(document.getElementById('engine-'+engine), engine);
+    setStatus(`Motor ${engine} activo · clave guardada`,'ok');
+  }
+}
+
+function saveKey(engine, event){
+  if(event.key !== 'Enter') return;
+  const val = document.getElementById('key-'+engine).value.trim();
+  if(!val) return;
+  localStorage.setItem('fc_key_'+engine, val);
+  document.getElementById('dot-'+engine).className = 'api-dot dot-on';
+  document.getElementById('key-'+engine).classList.remove('show');
+  if(engine==='pollinations' || engine==='anthropic'){
+    // clave auxiliar: guardar sin cambiar de motor
+    setStatus(`✓ Clave ${engine} guardada`,'ok');
+  } else {
+    selectEngine(document.getElementById('engine-'+engine), engine);
+    setStatus(`✓ Clave ${engine} guardada · Motor activo`,'ok');
+  }
+}
+function loadKey(e){ return localStorage.getItem('fc_key_'+e)||''; }
+// Guarda la clave/token al hacer clic FUERA del campo (no solo con Enter).
+function saveKeyBlur(engine){
+  const el = document.getElementById('key-'+engine);
+  if(!el) return;
+  const val = el.value.trim();
+  if(!val) return;
+  localStorage.setItem('fc_key_'+engine, val);
+  const dot = document.getElementById('dot-'+engine); if(dot) dot.className='api-dot dot-on';
+  if(engine!=='pollinations' && engine!=='anthropic'){
+    selectEngine(document.getElementById('engine-'+engine), engine);
+  }
+  setStatus(`✓ ${engine==='pollinations'?'Token Pollinations':'Clave '+engine} guardado y activo`,'ok');
+}
+
+// ════════════════════════════════════════════════════════════
+// GENERAR IMAGEN
+// ════════════════════════════════════════════════════════════
+async function generar(){
+  const modoLibre   = document.getElementById('swPromptLibre').checked;
+  const modoCats    = document.getElementById('swCats').checked;
+  const modoFitness = document.getElementById('swFitness').checked;
+  const txtLibre    = document.getElementById('txtPrompt').value.trim();
+
+  if(modoLibre && !txtLibre){
+    setStatus('⚠️ Modo libre activo — escribe tu prompt en el textarea','err'); return;
+  }
+  if(!modoLibre && !modoCats && !modoFitness){
+    setStatus('⚠️ Activa al menos un modo: Libre, Categorías o Fitness','err'); return;
+  }
+
+  let prompt = '';
+  if(modoLibre && txtLibre){
+    prompt = txtLibre;
+  } else if(modoFitness && !modoLibre){
+    const promptFit = construirPromptFitness();
+    if(!promptFit){
+      setStatus('⚠️ Combinación sin ejercicios definidos — activa modo libre','err');
+      return;
+    }
+    prompt = promptFit;
+  } else if(modoCats && !modoLibre){
+    const c = CATS[S.catIdx];
+    if(c) prompt = c.prompts[S.variant] || c.prompts.cliente;
+  }
+
+  if(!prompt){ setStatus('⚠️ Sin prompt generado. Revisa tu configuración.','err'); return; }
+
+  const hasRef  = refImages.length > 0;
+  const refB64  = hasRef ? refImages[0].b64 : null;
+  const intensity = parseInt(document.getElementById('refIntSl').value) / 100;
+
+  let promptFinal = prompt;
+
+  if(hasRef){
+    if(S.engine === 'stability' || S.engine === 'dalle'){
+      // Motores que SÍ reciben la imagen (image-to-image real)
+      promptFinal = prompt + ', maintain exact body position posture geometry and structural lines from the reference image, professional photography high detail';
+      setStatus(`🖼️ Referencia activa (${Math.round(intensity*100)}%) · image-to-image con ${S.engine}`,'info');
+    } else {
+      // Motor GRATIS (Pollinations/HF/Together): no hace image-to-image.
+      // Generamos del prompt limpio (sin inflar la URL) y avisamos.
+      promptFinal = prompt;
+      setStatus('ℹ️ El motor gratis no hace image-to-image. Se genera con el prompt. Para usar tu imagen de referencia REAL, elige Stability o DALL·E (con tu clave).','info');
+    }
+  }
+
+  const seed = Math.floor(Math.random()*999999);
+  S.lastSeed = seed;
+
+  ph.style.display   = 'none';
+  canvas.style.display = 'none';
+  spnr.style.display  = 'flex';
+  document.getElementById('genBtn').disabled = true;
+  document.getElementById('spinnerTxt').textContent = hasRef ? 'PROCESANDO CON REFERENCIA...' : 'GENERANDO...';
+  setStatus(`Generando con ${S.engine}${hasRef?' · referencia activa':''}...`,'info');
+
+  document.getElementById('promptPreviewTxt').textContent = promptFinal;
+
+  let imgSrc = null;
+  try {
+    imgSrc = await callEngine(S.engine, promptFinal, seed, refB64);
+  } catch(err){
+    spnr.style.display   = 'none';
+    canvas.style.display = 'none';
+    ph.style.display     = 'flex';
+    document.getElementById('genBtn').disabled = false;
+    if(err && err.message === 'POLLINATIONS_LIMIT'){
+      mostrarAyudaPollinations();
+      setStatus('🚫 Pollinations GRATIS rechazó la imagen (cola llena / límite). SOLUCIÓN en 1 min: regístrate GRATIS en enter.pollinations.ai, copia tu TOKEN y pégalo en «Pollinations · Token» (panel izquierdo, ya abierto). También puedes usar DALL·E o Stability con tu clave.','err');
+    } else {
+      setStatus('❌ Error: '+err.message,'err');
+    }
+    return;
+  }
+
+  if(!imgSrc){
+    spnr.style.display = 'none';
+    ph.style.display   = 'flex';
+    document.getElementById('genBtn').disabled = false;
+    setStatus('Sin respuesta del motor. Verifica clave o intenta de nuevo.','err');
+    return;
+  }
+
+  document.getElementById('spinnerTxt').textContent = 'CARGANDO...';
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+
+  img.onload = ()=>{
+    S.currentImage = img;
+    canvas.width   = ED.W = 1024;
+    canvas.height  = ED.H = 1024;
+    ED.els=[]; ED.selId=null; ED.undoStack=[]; ED.redoStack=[];
+    addFormTexts();
+    renderCanvas();
+    canvas.style.display = 'block';
+    spnr.style.display   = 'none';
+    document.getElementById('genBtn').disabled = false;
+    S.sessionCount++;
+    document.getElementById('ftSes').textContent   = S.sessionCount;
+    document.getElementById('ftGen').textContent   = S.sessionCount;
+    document.getElementById('ftEdits').textContent = ED.els.length;
+    addToGallery();
+    const modoLabel = modoLibre?'🆓 LIBRE':modoFitness?'💪 FITNESS':'✂️ CATEGORÍA';
+    setStatus(`✓ ${modoLabel} · seed ${seed} · ${S.engine}${hasRef?' · 🖼️ referencia usada':''}`,'ok');
+  };
+
+  img.onerror = ()=>{
+    // Pollinations a veces falla la primera carga: reintento automático 1 vez con otra seed
+    if(!img._reintento && imgSrc.startsWith('http')){
+      img._reintento = true;
+      setStatus('Reintentando con el motor… (un momento)','info');
+      const nuevaSeed = Math.floor(Math.random()*999999);
+      const base = imgSrc.replace(/([?&])seed=\d+/, '$1seed='+nuevaSeed).split('&t=')[0];
+      setTimeout(()=>{ img.src = base + '&t=' + Date.now(); }, 800);
+      return;
+    }
+    spnr.style.display   = 'none';
+    ph.style.display     = 'flex';
+    document.getElementById('genBtn').disabled = false;
+    mostrarAyudaPollinations();
+    setStatus('❌ Pollinations no devolvió la imagen (cola llena / límite gratuito). Regístrate GRATIS en enter.pollinations.ai, copia tu TOKEN y pégalo en «Pollinations · Token» (panel izquierdo), o usa DALL·E / Stability con tu clave.','err');
+  };
+
+  img.src = imgSrc + (imgSrc.startsWith('http') ? '&t='+Date.now() : '');
+}
+
+// ════════════════════════════════════════════════════════════
+// BIBLIOTECA DE EJERCICIOS
+// ════════════════════════════════════════════════════════════
+const EJERCICIOS = {
+  gluteo: {
+    mancuerna: {
+      '6': ['Hip thrust con mancuerna','Sentadilla sumo con mancuerna','Zancada inversa con mancuerna','Peso muerto rumano con mancuerna','Abducción de cadera de pie con mancuerna','Elevación de glúteo en suelo (puente)'],
+      '8': ['Hip thrust con mancuerna y pausa de 2 segundos','Sentadilla búlgara con mancuernas','Peso muerto rumano unilateral con mancuerna','Zancada caminando con mancuernas','Step-up lateral con mancuerna','Sentadilla sumo con mancuerna','Abducción de cadera de pie con mancuerna','Buenos días (Good morning) con mancuerna'],
+      '12': ['Hip thrust con mancuerna pesada','Sentadilla búlgara con mancuernas','Peso muerto rumano unilateral','Zancada caminando con mancuernas','Step-up lateral con mancuerna','Buenos días (Good morning) con mancuerna','Sentadilla sumo con mancuerna pesada','Abducción de cadera de pie','Zancada inversa con mancuerna','Hip thrust unilateral con mancuerna','Sentadilla copa con mancuerna','Extensión de cadera inclinada con mancuerna']
+    },
+    maquina: {
+      '6': ['Prensa de pierna (pie alto y ancho)','Abductora sentada en máquina','Hip thrust en máquina Smith','Extensión de cadera en polea baja','Kickback de glúteo en polea','Sentadilla en máquina Smith (pie adelantado)'],
+      '8': ['Hip thrust en máquina Smith','Prensa de pierna (pie alto y ancho)','Abductora sentada en máquina','Kickback de glúteo en polea','Extensión de cadera en polea baja','Sentadilla en máquina Smith','Curl femoral tumbado','Aducción en máquina sentada'],
+      '12': ['Hip thrust en máquina Smith pesado','Prensa de pierna pie alto','Abductora sentada en máquina','Kickback de glúteo en polea','Extensión de cadera en polea baja','Sentadilla en máquina Smith','Curl femoral tumbado','Aducción en máquina','Prensa horizontal unilateral','Hip thrust en banco con barra en Smith','Sentadilla hack en máquina','Abductora de pie en polea baja (énfasis glúteo medio)']
+    },
+    corporal: {
+      '6': ['Puente de glúteo en suelo','Sentadilla profunda','Zancada lateral','Patada de glúteo en cuadrupedia','Puente de glúteo unilateral','Sentadilla isométrica en pared'],
+      '8': ['Hip thrust en banco con pausa isométrica','Sentadilla búlgara (peso corporal)','Zancada caminando','Step-up en banco','Puente de glúteo unilateral con pausa','Patada de glúteo en cuadrupedia con extensión','Sentadilla sumo profunda','Abducción lateral tumbada (clamshell)'],
+      '12': ['Hip thrust en banco con pausa larga','Sentadilla búlgara','Zancada caminando','Step-up con rodilla elevada','Puente de glúteo unilateral','Sentadilla pistol asistida','Abducción lateral con banda de resistencia','Patada de glúteo en cuadrupedia','Zancada lateral','Sentadilla sumo profunda','Frog pumps en suelo (alta repetición)','Sentadilla búlgara isométrica con pausa de 3 segundos']
+    }
+  },
+  pierna: {
+    mancuerna: {
+      '6': ['Sentadilla con mancuernas','Peso muerto rumano con mancuernas','Zancada inversa con mancuerna','Step-up con mancuerna','Sentadilla sumo con mancuerna','Extensión de pantorrilla de pie con mancuerna'],
+      '8': ['Sentadilla goblet con mancuerna','Peso muerto rumano con mancuernas','Zancada búlgara con mancuernas','Step-up lateral con mancuerna','Zancada caminando con mancuernas','Sentadilla sumo con mancuerna','Curl femoral de pie con mancuerna','Elevación de pantorrilla con mancuerna'],
+      '12': ['Sentadilla goblet pesada','Peso muerto rumano con mancuernas','Zancada búlgara con mancuernas','Step-up lateral con mancuerna','Zancada caminando con mancuernas','Sentadilla sumo pesada','Curl femoral de pie con mancuerna','Elevación de pantorrilla unilateral','Zancada cruzada hacia atrás (Curtsy lunge) con mancuernas','Zancada inversa con mancuerna','Sentadilla copa con mancuerna','Peso muerto sumo con mancuerna']
+    },
+    maquina: {
+      '6': ['Prensa de pierna a 45 grados','Extensión de cuádriceps sentada','Curl femoral tumbado','Abductora sentada','Sentadilla en máquina Smith','Elevación de pantorrilla en prensa'],
+      '8': ['Prensa de pierna a 45 grados','Extensión de cuádriceps sentada','Curl femoral tumbado','Sentadilla hack en máquina','Abductora sentada','Aductora sentada','Elevación de pantorrilla en prensa','Sentadilla en máquina Smith'],
+      '12': ['Prensa de pierna 45 grados','Extensión de cuádriceps','Curl femoral tumbado','Sentadilla hack','Abductora sentada','Aductora sentada','Elevación de pantorrilla en prensa','Sentadilla Smith','Curl femoral sentado','Prensa horizontal','Extensión lumbar en máquina','Leg press unilateral']
+    },
+    corporal: {
+      '6': ['Sentadilla profunda','Zancada inversa','Step-up en banco','Sentadilla isométrica en pared','Elevación de pantorrilla de pie','Sentadilla sumo'],
+      '8': ['Sentadilla búlgara','Zancada caminando','Step-up con rodilla elevada','Sentadilla isométrica en pared','Sentadilla pistol asistida','Zancada lateral','Elevación de pantorrilla unilateral','Sentadilla sumo profunda'],
+      '12': ['Sentadilla búlgara','Sentadilla pistol (libre)','Zancada caminando','Step-up con salto (explosivo)','Zancada lateral','Sentadilla isométrica prolongada','Elevación de pantorrilla unilateral','Sentadilla sumo profunda con pausa','Zancada inversa con rodilla al suelo','Sentadilla con salto','Step-up lateral','Elevación de talones en escalón']
+    }
+  },
+  superior: {
+    mancuerna: {
+      '6': ['Press de hombro con mancuernas sentado','Curl de bíceps con mancuernas','Extensión de tríceps sobre la cabeza','Remo con mancuerna a un brazo','Press de pecho con mancuernas en suelo','Crunch abdominal con mancuerna en el pecho'],
+      '8': ['Press de hombro con mancuernas de pie','Curl de bíceps alterno con mancuernas','Extensión de tríceps con mancuerna tras nuca','Remo inclinado con mancuernas','Press de pecho con mancuernas en banco plano','Elevación lateral de hombros','Giro ruso con mancuerna (oblicuos)','Sit-ups completos con mancuerna'],
+      '12': ['Press de hombro con mancuernas de pie','Curl de bíceps alterno','Extensión de tríceps sobre la cabeza','Remo inclinado con mancuernas','Press de pecho con mancuernas','Elevación lateral de hombros','Remo vertical (Upright row) con mancuernas','Press Arnold para hombros','Curl concentrado de bíceps','Press de pecho inclinado con mancuernas','V-ups con mancuerna (abdomen)','Giro ruso con mancuerna pesada (oblicuos)']
+    },
+    maquina: {
+      '6': ['Press de pecho en máquina','Remo en máquina sentado','Jalón al pecho en polea alta','Press de hombro en máquina','Extensión de tríceps en polea con cuerda','Crunch abdominal en polea alta'],
+      '8': ['Press de pecho en máquina sit-down','Remo en máquina agarre prono','Jalón al pecho en polea alta','Press de hombros en máquina articulada','Curl de bíceps en polea baja con barra recta','Extensión de tríceps en polea alta con cuerda','Cruce de poleas para pectoral mayor','Elevación de rodillas en torre de fondos (abdomen)'],
+      '12': ['Press de pecho en máquina unilateral','Remo en máquina con apoyo al pecho','Jalón al pecho agarre abierto en polea','Press de hombros Arnold en máquina Smith','Curl de bíceps en banco Scott','Extensión de tríceps sobre la cabeza en polea baja','Cruce de poleas altas (pectoral inferior)','Face pull con doble cuerda (estabilidad escapular)','Jalón al pecho con agarre supino y cerrado','Remo unilateral en polea baja para dorsal','Press inclinado en máquina Smith','Crunch abdominal en máquina de placas con carga pesada']
+    },
+    corporal: {
+      '6': ['Flexión de brazos (push-up) asistida','Fondos en banco para tríceps','Superman en suelo (espalda baja)','Pike push-up (hombros)','Plancha isométrica tradicional (abdomen)','Elevación de rodillas en suelo (abdomen inferior)'],
+      '8': ['Flexión de brazos (push-up) completa','Flexión diamante (tríceps)','Fondos en paralelas','Pull-up (dominada pronada)','Flexión pike para hombros','Plancha lateral dinámica (oblicuos)','Plancha isométrica con toque de hombros (estabilidad)','Tijeras de piernas tumbado (abdomen inferior)'],
+      '12': ['Flexión de brazos (push-up)','Flexión diamante para tríceps','Fondos en paralelas','Pull-up (dominada estricta)','Flexión pike para hombros','Flexión con rotación de torso','Flexión declinada (pies elevados)','Pull-up con agarre supino','Flexión explosiva (clapping push-up)','Elevación de piernas colgado en barra (abdomen inferior)','Plancha isométrica Hollow body (abdomen completo)','Abdominales bicicleta a alta velocidad (oblicuos)']
+    }
+  }
+};
+
+function construirPromptFitness(){
+  const g = S._fitG;
+  const e = S._fitE;
+  const n = S._fitN;
+  const m = S._fitM;
+  const lista = EJERCICIOS[g]?.[e]?.[n];
+  if(!lista || !lista.length){ console.warn('Sin lista para:', g, e, n); return null; }
+  const grupoLabel = g==='gluteo'?'glute':g==='pierna'?'leg':'upper body';
+  const equipoLabel = e==='mancuerna'?'dumbbells':e==='maquina'?'gym machines':'bodyweight only';
+  const nivelLabel  = n==='6'?'beginner':n==='8'?'intermediate':'advanced';
+  const motorLabel  = m==='masa'?'hypertrophy muscle building':m==='perder'?'fat loss high reps':'maintenance strength';
+  const listaPrompt = lista.map((ej,i)=>`${i+1}. ${ej}`).join(', ');
+  return `Professional fitness reference infographic grid on dark background showing exactly ${n} different ${grupoLabel} exercises with ${equipoLabel} for ${nivelLabel} level ${motorLabel} training. Each exercise in its own clearly separated numbered panel: ${listaPrompt}. Show correct body posture and form for each exercise, anatomical muscle activation highlighted in orange, numbered panels clearly labeled 1 to ${n}, clean professional layout, high detail 8k quality, no text overlapping.`;
+}
+
+async function analizarReferenciaConClaude(refB64){
+  const keyAnthropic = loadKey('anthropic');
+  if(!keyAnthropic){ console.warn('Sin clave Anthropic'); return null; }
+  setStatus('🔍 Claude Vision analizando imagen de referencia...','info');
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key': keyAnthropic,'anthropic-version':'2023-06-01'},
+      body: JSON.stringify({model: 'claude-opus-4-5',max_tokens: 400,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data: refB64}},{type:'text',text:'Analiza esta imagen de referencia técnica. Describe con precisión: posturas corporales, ángulos, líneas geométricas, composición espacial, distribución de elementos, proporciones y estructura visual. Devuelve SOLO la descripción técnica en inglés, sin explicaciones, máximo 120 palabras, para usarla como prompt de generación de imágenes.'}]}]})
+    });
+    const d = await r.json();
+    if(d.error) throw new Error(d.error.message);
+    return d.content?.[0]?.text?.trim() || null;
+  } catch(e){ console.warn('Claude Vision error:', e.message); return null; }
+}
+
+// ════════════════════════════════════════════════════════════
+// CARGA ROBUSTA POLLINATIONS (motor gratis)
+// Lee el código HTTP real y el mensaje JSON de error. Reintenta el
+// 402 «cola llena» / 429 «límite» (en una IP propia se libera al
+// terminar la generación anterior). Devuelve un blob: URL para que
+// el canvas pueda exportar/editar sin contaminarse (CORS).
+// Si se agotan los reintentos lanza POLLINATIONS_LIMIT con detalle.
+// ════════════════════════════════════════════════════════════
+async function fetchPollinationsImage(url, token){
+  // El token viaja en la URL (?token=) — NO en cabecera Authorization, porque
+  // la cabecera dispara un preflight CORS que se bloquea al abrir con file://.
+  const maxRetries = token ? 4 : 5;
+  let lastStatus = 0, lastMsg = '';
+  for(let attempt = 0; attempt < maxRetries; attempt++){
+    let r;
+    try {
+      r = await fetch(url, { cache: 'no-store' });
+    } catch(e){
+      // Error de red/CORS: como último recurso devolvemos la URL directa
+      // para que la etiqueta <img> intente mostrarla.
+      lastMsg = (e && e.message) || 'red/CORS';
+      if(attempt === maxRetries - 1) return url;
+      await new Promise(res => setTimeout(res, 1500));
+      continue;
+    }
+    lastStatus = r.status;
+    if(r.ok){
+      const blob = await r.blob();
+      if(blob && blob.size > 1024 && /image\//.test(blob.type)){
+        return URL.createObjectURL(blob);
+      }
+      lastMsg = 'respuesta vacía';
+      await new Promise(res => setTimeout(res, 1500));
+      continue;
+    }
+    // Intentar leer el mensaje de error que devuelve la API
+    try { const j = await r.clone().json(); lastMsg = j.error || JSON.stringify(j).slice(0,140); } catch(_){ lastMsg = 'HTTP ' + r.status; }
+    if(r.status === 402 || r.status === 429){
+      // Cola llena / límite: en una IP propia se libera al terminar la anterior.
+      const wait = 15000;
+      setStatus(`⏳ Pollinations ocupado (cola/límite gratuito). Reintentando en ${Math.round(wait/1000)}s… (${attempt+1}/${maxRetries})`,'info');
+      await new Promise(res => setTimeout(res, wait));
+      continue;
+    }
+    if(r.status >= 500){
+      const wait = 2500 * (attempt + 1);
+      setStatus(`⚠️ Servidor Pollinations (${r.status}). Reintentando en ${Math.round(wait/1000)}s…`,'info');
+      await new Promise(res => setTimeout(res, wait));
+      continue;
+    }
+    break; // otros errores: no tiene sentido reintentar
+  }
+  const err = new Error('POLLINATIONS_LIMIT');
+  err.pollinationsStatus = lastStatus;
+  err.pollinationsMsg = lastMsg;
+  throw err;
+}
+
+// Revela y enfoca el campo del token de Pollinations (panel izquierdo)
+function mostrarAyudaPollinations(){
+  const inp = document.getElementById('key-pollinations');
+  if(inp){ inp.classList.add('show'); try{ inp.focus(); }catch(_){} }
+}
+
+async function callEngine(engine, prompt, seed, refB64){
+  const intensity = parseInt(document.getElementById('refIntSl').value) / 100;
+
+  if(engine === 'flux' || engine === 'turbo'){
+    let promptFinal = prompt;
+    // Solo enriquecemos con la referencia si hay clave de Claude Vision.
+    // (El motor gratis no recibe la imagen; sin clave, se usa el prompt tal cual.)
+    if(refB64){
+      const descripcion = await analizarReferenciaConClaude(refB64);
+      if(descripcion){ promptFinal = `${descripcion}. Apply this style and content: ${prompt}`; setStatus('✅ Claude Vision: referencia analizada e integrada al prompt','ok'); }
+    }
+    // CAP de longitud: Pollinations falla con URLs muy largas ("Error al cargar imagen").
+    if(promptFinal.length > 700) promptFinal = promptFinal.slice(0, 700);
+    const model = engine === 'flux' ? 'flux' : 'turbo';
+    // Pollinations cambió su API (jun-2026): ya no hay anónimo fiable, pide token/referrer.
+    // · referrer = tu dominio (registrable gratis en enter.pollinations.ai)
+    // · key = token pk_... opcional para tier estable
+    const pkey = loadKey('pollinations');
+    let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptFinal)}?model=${model}&seed=${seed}&width=1024&height=1024&referrer=fatimahairstudio082.com`;
+    if(pkey) url += `&token=${encodeURIComponent(pkey)}`; // token también en URL (respaldo <img>)
+    // Carga robusta: lee estado HTTP, reintenta cola/límite y respeta el límite anónimo.
+    return await fetchPollinationsImage(url, pkey || null);
+  }
+
+  const key = loadKey(engine);
+  if(!key) throw new Error(`Clave no configurada para ${engine} · Haz clic en el motor → pega tu clave → Enter`);
+
+  if(engine === 'stability'){
+    if(refB64){
+      const bs  = atob(refB64);
+      const arr = new Uint8Array(bs.length);
+      for(let i=0;i<bs.length;i++) arr[i]=bs.charCodeAt(i);
+      const imgBlob = new Blob([arr],{type:'image/jpeg'});
+      const fd = new FormData();
+      fd.append('image', imgBlob, 'reference.jpg');
+      fd.append('prompt', prompt);
+      fd.append('strength', String(Math.round((1 - intensity) * 0.6 + 0.1)));
+      fd.append('output_format', 'jpeg');
+      let r = await fetch('https://api.stability.ai/v2beta/stable-image/generate/sd3',{method:'POST',headers:{'Authorization':'Bearer '+key,'Accept':'application/json'},body: fd});
+      let d = await r.json();
+      if(d.image) return 'data:image/jpeg;base64,'+d.image;
+      const fd2 = new FormData();
+      fd2.append('init_image', imgBlob, 'reference.jpg');
+      fd2.append('text_prompts[0][text]', prompt);
+      fd2.append('text_prompts[0][weight]', '1');
+      fd2.append('image_strength', String(1 - intensity));
+      fd2.append('cfg_scale', '7');
+      fd2.append('samples', '1');
+      r = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/image-to-image',{method:'POST',headers:{'Authorization':'Bearer '+key,'Accept':'application/json'},body: fd2});
+      d = await r.json();
+      if(d.message) throw new Error(d.message);
+      if(d.artifacts?.[0]?.base64) return 'data:image/png;base64,'+d.artifacts[0].base64;
+      throw new Error('Stability i2i: sin resultado');
+    } else {
+      const fd = new FormData();
+      fd.append('prompt', prompt);
+      fd.append('output_format','webp');
+      const r = await fetch('https://api.stability.ai/v2beta/stable-image/generate/ultra',{method:'POST',headers:{'Authorization':'Bearer '+key,'Accept':'application/json'},body: fd});
+      const d = await r.json();
+      if(d.message) throw new Error(d.message);
+      return d.image ? 'data:image/webp;base64,'+d.image : null;
+    }
+  }
+
+  if(engine === 'dalle'){
+    if(refB64){
+      const descripcion = await analizarReferenciaConClaude(refB64);
+      const promptFinal = descripcion ? `${descripcion}. Apply this creative direction: ${prompt}` : `${prompt}, following the exact composition structure and proportions of the reference`;
+      const r = await fetch('https://api.openai.com/v1/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body: JSON.stringify({model:'dall-e-3', prompt:promptFinal, n:1, size:'1024x1024'})});
+      const d = await r.json();
+      if(d.error) throw new Error(d.error.message);
+      return d.data?.[0]?.url || null;
+    } else {
+      const r = await fetch('https://api.openai.com/v1/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body: JSON.stringify({model:'dall-e-3', prompt, n:1, size:'1024x1024'})});
+      const d = await r.json();
+      if(d.error) throw new Error(d.error.message);
+      return d.data?.[0]?.url || null;
+    }
+  }
+
+  if(engine === 'hf'){
+    const promptFinal = refB64 ? `${prompt}, following exact reference image composition and structure` : prompt;
+    // Endpoint nuevo (2025+): el antiguo api-inference.huggingface.co fue reemplazado por router.huggingface.co
+    const r = await fetch('https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-dev',{method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},body: JSON.stringify({inputs: promptFinal})});
+    if(!r.ok){
+      let msg = 'HTTP '+r.status;
+      try { const e = await r.json(); msg = e.error || msg; } catch(_){}
+      throw new Error('HuggingFace: '+msg+(r.status===404?' · el modelo ya no está en inference gratuita, usa Pollinations o una clave de pago':''));
+    }
+    const blob = await r.blob();
+    if(!/image\//.test(blob.type)) throw new Error('HuggingFace: respuesta no válida (modelo posiblemente sin inference gratuita)');
+    return URL.createObjectURL(blob);
+  }
+
+  if(engine === 'together'){
+    const promptFinal = refB64 ? `${prompt}, following exact reference image composition and structure` : prompt;
+    const r = await fetch('https://api.together.xyz/v1/images/generations',{method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},body: JSON.stringify({model:'black-forest-labs/FLUX.1-pro', prompt:promptFinal, width:1024, height:1024, steps:20, n:1})});
+    const d = await r.json();
+    if(d.error) throw new Error(d.error.message||JSON.stringify(d.error));
+    return d.data?.[0]?.url || null;
+  }
+
+  if(engine === 'replicate'){
+    // Replicate · FLUX schnell · vía puente Netlify (esquiva el bloqueo CORS)
+    const PROXY = window.REPLICATE_PROXY || (location.origin + '/.netlify/functions/replicate');
+    const base = PROXY + '/v1/models/black-forest-labs/flux-schnell/predictions';
+    const promptFinal = refB64 ? `${prompt}, following exact reference image composition and structure` : prompt;
+    const r = await fetch(base,{method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json','Prefer':'wait'},
+      body: JSON.stringify({ input:{prompt:promptFinal, aspect_ratio:'1:1', output_format:'jpg', num_outputs:1}})});
+    let d = await r.json();
+    if(d.error) throw new Error(typeof d.error==='string'?d.error:JSON.stringify(d.error));
+    // polling si no vino con Prefer:wait
+    let intentos=0;
+    while(d.status && d.status!=='succeeded' && d.status!=='failed' && intentos<40){
+      await new Promise(res=>setTimeout(res,1500));
+      const pr = await fetch(PROXY+'/v1/predictions/'+d.id,{headers:{'Authorization':'Bearer '+key}});
+      d = await pr.json(); intentos++;
+    }
+    if(d.status==='failed') throw new Error('Replicate: generación fallida');
+    const out = Array.isArray(d.output)?d.output[0]:d.output;
+    if(!out) throw new Error('Replicate: sin resultado (revisa el puente)');
+    return out;
+  }
+
+  throw new Error('Motor no reconocido: '+engine);
+}
+
+// ════════════════════════════════════════════════════════════
+// BANDAS
+// ════════════════════════════════════════════════════════════
+function setBandaColor(c, el){
+  S.bandaColor = c;
+  document.querySelectorAll('.bc').forEach(b=>b.classList.remove('sel'));
+  if(el) el.classList.add('sel');
+  document.getElementById('bandaSwatch').style.background = c;
+  if(S.currentImage) renderCanvas();
+}
+
+function setBandaPos(pos, el){
+  S.bandaPos = pos;
+  document.querySelectorAll('.bp-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  if(S.currentImage) renderCanvas();
+}
+
+function resolveColor(color, opacity){
+  if(color.startsWith('rgba')) return color.replace(/[\d.]+\)$/,opacity+')');
+  if(color.startsWith('rgb(')) return color.replace('rgb(','rgba(').replace(')',`,${opacity})`);
+  let h = color.replace('#','');
+  if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  const n = parseInt(h,16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${opacity})`;
+}
+
+// ════════════════════════════════════════════════════════════
+// CANVAS RENDER
+// ════════════════════════════════════════════════════════════
+function renderCanvas(){
+  if(!S.currentImage) return;
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const f = S.filters;
+  ctx.filter=`brightness(${f.brightness}%) contrast(${f.contrast}%) saturate(${f.saturate}%)`;
+  const sc=f.scale/100;
+  ctx.save();ctx.translate(W/2,H/2);ctx.scale(sc,sc);ctx.drawImage(S.currentImage,-W/2,-H/2,W,H);ctx.restore();
+  ctx.filter='none';
+  const bC = resolveColor(S.bandaColor, S.bandaOp);
+  const bH = Math.round(H*.12);
+  const bW = Math.round(W*.22);
+  const p  = S.bandaPos;
+  ctx.save();
+  if(p==='top'||p==='both')      { ctx.fillStyle=bC; ctx.fillRect(0,0,W,bH); }
+  if(p==='bottom'||p==='both')   { ctx.fillStyle=bC; ctx.fillRect(0,H-bH,W,bH); }
+  if(p==='left'||p==='lr')       { ctx.fillStyle=bC; ctx.fillRect(0,0,bW,H); }
+  if(p==='right'||p==='lr')      { ctx.fillStyle=bC; ctx.fillRect(W-bW,0,bW,H); }
+  if(p==='center')               { ctx.fillStyle=bC; ctx.fillRect(0,Math.round(H*.35),W,Math.round(H*.3)); }
+  if(p==='solid')                { ctx.fillStyle=bC; ctx.fillRect(0,0,W,H); }
+  ctx.restore();
+  ED.els.forEach(el=>{
+    if(el.type==='text')       renderText(el);
+    else if(el.type==='paint') renderPaint(el);
+    else if(el.type==='rect')  renderRect(el);
+    else if(el.type==='line')  renderLine(el);
+  });
+  renderSel();
+}
+
+function renderText(el){ ctx.save();ctx.textBaseline='top';ctx.font=`${el.bold?'bold ':''}${el.size}px ${el.font||'monospace'}`;ctx.fillStyle=el.color;ctx.shadowColor='rgba(0,0,0,.85)';ctx.shadowBlur=8;ctx.fillText(el.text,el.x,el.y);ctx.shadowBlur=0;ctx.restore(); }
+function renderPaint(el){ if(!el.pts||el.pts.length<2)return;ctx.save();ctx.strokeStyle=el.color;ctx.lineWidth=el.size;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(el.pts[0].x,el.pts[0].y);el.pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.stroke();ctx.restore(); }
+function renderRect(el){ ctx.save();ctx.strokeStyle=el.color;ctx.lineWidth=el.size;ctx.strokeRect(el.x,el.y,el.w,el.h);ctx.restore(); }
+function renderLine(el){ ctx.save();ctx.strokeStyle=el.color;ctx.lineWidth=el.size;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(el.x,el.y);ctx.lineTo(el.x2,el.y2);ctx.stroke();ctx.restore(); }
+function renderSel(){ const el=ED.els.find(e=>e.id===ED.selId);if(!el||el.type!=='text')return;ctx.save();ctx.font=`${el.bold?'bold ':''}${el.size}px ${el.font||'monospace'}`;const tw=ctx.measureText(el.text).width;const pad=6;ctx.strokeStyle='rgba(201,168,76,.8)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.strokeRect(el.x-pad,el.y-pad,tw+pad*2,el.size+pad*2);ctx.setLineDash([]);ctx.restore(); }
+
+// ════════════════════════════════════════════════════════════
+// TEXTO FORMULARIO → CANVAS
+// ════════════════════════════════════════════════════════════
+function addFormTexts(){
+  const W=ED.W,H=ED.H;
+  const titulo  = document.getElementById('txtTitulo').value.trim();
+  const sub     = document.getElementById('txtSubtitulo').value.trim();
+  const rec     = document.getElementById('txtRec').value.trim();
+  const p1      = document.getElementById('txtPaso1').value.trim();
+  const p2      = document.getElementById('txtPaso2').value.trim();
+  const p3      = document.getElementById('txtPaso3').value.trim();
+  if(titulo) ED.els.push({id:nid(),type:'text',x:Math.round(W*.04),y:Math.round(H*.03),text:titulo,size:Math.round(W*.045),color:'#C9A84C',font:'monospace',bold:true});
+  if(sub)    ED.els.push({id:nid(),type:'text',x:Math.round(W*.04),y:Math.round(H*.11),text:sub,size:Math.round(W*.025),color:'rgba(232,224,208,0.9)',font:'monospace',bold:false});
+  if(rec)    ED.els.push({id:nid(),type:'text',x:Math.round(W*.04),y:Math.round(H*.55),text:'📋 '+rec,size:Math.round(W*.022),color:'rgba(232,224,208,0.95)',font:'monospace',bold:false});
+  [p1,p2,p3].filter(Boolean).forEach((p,i)=>ED.els.push({id:nid(),type:'text',x:Math.round(W*.04),y:Math.round(H*.78)+i*Math.round(W*.032),text:`Paso ${i+1}: ${p}`,size:Math.round(W*.02),color:'rgba(201,168,76,0.9)',font:'monospace',bold:false}));
+  ED.els.push({id:nid(),type:'text',x:Math.round(W*.58),y:Math.round(H*.96),text:'✦ FÁTIMA CALDEA ESTUDIO',size:Math.round(W*.018),color:'rgba(201,168,76,0.8)',font:'monospace',bold:false});
+}
+
+// ════════════════════════════════════════════════════════════
+// HERRAMIENTAS EDITOR
+// ════════════════════════════════════════════════════════════
+function setTool(t, btn){
+  ED.tool=t;
+  document.querySelectorAll('.ctool').forEach(c=>c.classList.remove('act'));
+  btn.classList.add('act');
+  canvas.className = t==='move'?'cur-move':t==='text'?'cur-text':'cur-cross';
+  const show = t==='text';
+  ['fontLbl','fontSel','boldChk','boldLbl'].forEach(id=>{ const e=document.getElementById(id); if(e)e.style.display=show?'':'none'; });
+  document.getElementById('toolHint').textContent = ({
+    move:'↖ Arrastra textos · Clic para seleccionar · Supr=eliminar',
+    text:'T Clic en canvas para colocar texto',
+    paint:'✏️ Arrastra para pintar libremente',
+    erase:'⬜ Arrastra para borrar',
+    rect:'▭ Arrastra para rectángulo',
+    line:'╱ Arrastra de inicio a fin'
+  })[t]||'';
+  if(t!=='move') deselect();
+}
+
+function csc(){ const r=canvas.getBoundingClientRect(); return {sx:canvas.width/r.width,sy:canvas.height/r.height}; }
+function cpos(e){ const r=canvas.getBoundingClientRect(),sc=csc(); return {x:(e.clientX-r.left)*sc.sx,y:(e.clientY-r.top)*sc.sy}; }
+
+function hitText(x,y){
+  for(let i=ED.els.length-1;i>=0;i--){
+    const el=ED.els[i]; if(el.type!=='text')continue;
+    ctx.save();ctx.font=`${el.bold?'bold ':''}${el.size}px ${el.font||'monospace'}`;
+    const tw=ctx.measureText(el.text).width;ctx.restore();
+    if(x>=el.x-8&&x<=el.x+tw+8&&y>=el.y-8&&y<=el.y+el.size+8)return el;
+  }return null;
+}
+function noOverlap(moved){
+  ED.els.forEach(el=>{
+    if(el.id===moved.id||el.type!=='text')return;
+    if(moved.y<el.y+el.size+4&&moved.y+moved.size+4>el.y)
+      el.y+=moved.y+moved.size+4-el.y;
+  });
+}
+
+canvas.addEventListener('mousedown',e=>{
+  if(!S.currentImage)return; pushUndo();
+  const pos=cpos(e);
+  if(ED.tool==='move'){ const h=hitText(pos.x,pos.y); if(h){ED.dragEl=h;ED.selId=h.id;ED.dragOffX=pos.x-h.x;ED.dragOffY=pos.y-h.y;showTextPanel(h);}else deselect(); return; }
+  if(ED.tool==='text'){ const c=document.getElementById('paintColor').value,sz=parseInt(document.getElementById('paintSize').value)||36,fn=document.getElementById('fontSel').value||'monospace',bd=document.getElementById('boldChk').checked; const el={id:nid(),type:'text',x:pos.x,y:pos.y,text:'Tu texto aquí',size:sz,color:c,font:fn,bold:bd}; ED.els.push(el);ED.selId=el.id;showTextPanel(el);renderCanvas();return; }
+  if(ED.tool==='paint'){ ED.painting=true; const el={id:nid(),type:'paint',color:document.getElementById('paintColor').value,size:parseInt(document.getElementById('paintSize').value)||6,pts:[{x:pos.x,y:pos.y}]}; ED.els.push(el);ED.paintId=el.id;return; }
+  if(ED.tool==='erase'){ED.painting=true;return;}
+  if(ED.tool==='rect'||ED.tool==='line'){ED.drawStart={x:pos.x,y:pos.y,color:document.getElementById('paintColor').value,size:parseInt(document.getElementById('paintSize').value)||4};ED.painting=true;return;}
+});
+canvas.addEventListener('mousemove',e=>{
+  if(!S.currentImage)return; const pos=cpos(e);
+  if(ED.tool==='move'&&ED.dragEl){ED.dragEl.x=Math.max(0,Math.min(ED.W-20,pos.x-ED.dragOffX));ED.dragEl.y=Math.max(0,Math.min(ED.H-ED.dragEl.size,pos.y-ED.dragOffY));noOverlap(ED.dragEl);renderCanvas();return;}
+  if(ED.tool==='paint'&&ED.painting){const el=ED.els.find(e=>e.id===ED.paintId);if(el)el.pts.push({x:pos.x,y:pos.y});renderCanvas();return;}
+  if(ED.tool==='erase'&&ED.painting){const sz=(parseInt(document.getElementById('paintSize').value)||6)*3;ctx.save();ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(pos.x,pos.y,sz,0,Math.PI*2);ctx.fill();ctx.restore();return;}
+  if((ED.tool==='rect'||ED.tool==='line')&&ED.painting&&ED.drawStart){renderCanvas();const s=ED.drawStart;ctx.save();ctx.strokeStyle=s.color;ctx.lineWidth=s.size;if(ED.tool==='rect')ctx.strokeRect(s.x,s.y,pos.x-s.x,pos.y-s.y);else{ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(pos.x,pos.y);ctx.stroke();}ctx.restore();return;}
+});
+canvas.addEventListener('mouseup',e=>{
+  const pos=cpos(e);
+  if(ED.tool==='move'){ED.dragEl=null;renderCanvas();return;}
+  if(ED.tool==='paint'){ED.painting=false;ED.paintId=null;return;}
+  if(ED.tool==='erase'){ED.painting=false;return;}
+  if((ED.tool==='rect'||ED.tool==='line')&&ED.painting&&ED.drawStart){
+    ED.painting=false;const s=ED.drawStart;
+    if(ED.tool==='rect')ED.els.push({id:nid(),type:'rect',x:s.x,y:s.y,w:pos.x-s.x,h:pos.y-s.y,color:s.color,size:s.size});
+    else ED.els.push({id:nid(),type:'line',x:s.x,y:s.y,x2:pos.x,y2:pos.y,color:s.color,size:s.size});
+    ED.drawStart=null;renderCanvas();
+  }
+});
+canvas.addEventListener('mouseleave',()=>{ED.painting=false;ED.dragEl=null;});
+canvas.addEventListener('touchstart',e=>{e.preventDefault();canvas.dispatchEvent(new MouseEvent('mousedown',{clientX:e.touches[0].clientX,clientY:e.touches[0].clientY}));},{passive:false});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();canvas.dispatchEvent(new MouseEvent('mousemove',{clientX:e.touches[0].clientX,clientY:e.touches[0].clientY}));},{passive:false});
+canvas.addEventListener('touchend',e=>{e.preventDefault();canvas.dispatchEvent(new MouseEvent('mouseup',{clientX:e.changedTouches[0].clientX,clientY:e.changedTouches[0].clientY}));},{passive:false});
+
+function showTextPanel(el){
+  document.getElementById('textPanel').classList.add('vis');
+  document.getElementById('tp-text').value=el.text;
+  document.getElementById('tp-size').value=el.size;
+  document.getElementById('tp-color').value=el.color.startsWith('rgba')?'#C9A84C':el.color;
+  document.getElementById('tp-font').value=el.font||'monospace';
+  document.getElementById('tp-bold').checked=el.bold||false;
+}
+function hideTextPanel(){ document.getElementById('textPanel').classList.remove('vis'); }
+function updateSelText(){
+  const el=ED.els.find(e=>e.id===ED.selId);if(!el)return;
+  el.text=document.getElementById('tp-text').value;
+  el.size=parseInt(document.getElementById('tp-size').value)||el.size;
+  el.color=document.getElementById('tp-color').value;
+  el.font=document.getElementById('tp-font').value;
+  el.bold=document.getElementById('tp-bold').checked;
+  renderCanvas();
+}
+function deselect(){ ED.selId=null;ED.dragEl=null;hideTextPanel();if(S.currentImage)renderCanvas(); }
+function delSel(){ ED.els=ED.els.filter(e=>e.id!==ED.selId);ED.selId=null;hideTextPanel();renderCanvas(); }
+function dupSel(){ const el=ED.els.find(e=>e.id===ED.selId);if(!el)return;const c={...el,id:nid(),x:el.x+20,y:el.y+20};ED.els.push(c);ED.selId=c.id;showTextPanel(c);renderCanvas(); }
+
+function pushUndo(){ ED.undoStack.push(JSON.parse(JSON.stringify(ED.els)));if(ED.undoStack.length>20)ED.undoStack.shift();ED.redoStack=[]; }
+function undo(){ if(!ED.undoStack.length){setStatus('Sin pasos para deshacer');return;} ED.redoStack.push(JSON.parse(JSON.stringify(ED.els)));ED.els=ED.undoStack.pop();ED.selId=null;hideTextPanel();renderCanvas();setStatus('↩ Deshecho','ok'); }
+function redo(){ if(!ED.redoStack.length){setStatus('Sin pasos para rehacer');return;} ED.undoStack.push(JSON.parse(JSON.stringify(ED.els)));ED.els=ED.redoStack.pop();renderCanvas();setStatus('↪ Rehecho','ok'); }
+function clearEdits(){ pushUndo();ED.els=[];ED.selId=null;hideTextPanel();renderCanvas();setStatus('Ediciones limpiadas','ok'); }
+function clearCanvas(){ S.currentImage=null;ED.els=[];ED.selId=null;ED.undoStack=[];ED.redoStack=[];hideTextPanel();ctx.clearRect(0,0,canvas.width,canvas.height);canvas.style.display='none';ph.style.display='flex';setStatus('Canvas limpiado'); }
+
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='y'){e.preventDefault();redo();}
+  if(e.key==='Delete'&&ED.selId)delSel();
+});
+
+// ════════════════════════════════════════════════════════════
+// GALERÍA
+// ════════════════════════════════════════════════════════════
+function loadGallery(){ try{const d=localStorage.getItem('fc_m1_gal');if(d)S.gallery=JSON.parse(d);}catch(e){} renderGalGrid(); }
+function saveGallery(){ try{localStorage.setItem('fc_m1_gal',JSON.stringify(S.gallery));}catch(e){setStatus('⚠ Storage lleno','err');} }
+
+function resolverEtiqueta(){
+  const esLibre   = document.getElementById('swPromptLibre').checked;
+  const esFitness = document.getElementById('swFitness').checked;
+  const txtLibre  = document.getElementById('txtPrompt').value.trim();
+  if(esLibre && txtLibre){ const tit = document.getElementById('txtTitulo').value.trim(); return tit || 'libre_'+Date.now(); }
+  if(esFitness) return S._fitEtiqueta || 'fit_'+Date.now();
+  const cat = CATS[S.catIdx];
+  return cat ? cat.id+'_'+S.variant : 'imagen_'+Date.now();
+}
+
+function addToGallery(){
+  if(!S.currentImage) return;
+  deselect(); renderCanvas();
+  const tmp=document.createElement('canvas');tmp.width=800;tmp.height=800;
+  tmp.getContext('2d').drawImage(canvas,0,0,800,800);
+  const dataUrl=tmp.toDataURL('image/jpeg',.78);
+  const esLibre   = document.getElementById('swPromptLibre').checked;
+  const esFitness = document.getElementById('swFitness').checked;
+  const txtLibre  = document.getElementById('txtPrompt').value.trim();
+  const etiquetaFit = (!esLibre || !txtLibre) && esFitness ? S._fitEtiqueta : null;
+  const label       = resolverEtiqueta();
+  S.gallery.unshift({
+    id:'g'+Date.now(),dataUrl,label,seed:S.lastSeed,engine:S.engine,
+    fecha:new Date().toLocaleDateString('es-ES'),fitEtiqueta:etiquetaFit,
+    modoLibre:esLibre&&!!txtLibre,promptUsado:txtLibre||null,
+    titulo:document.getElementById('txtTitulo').value.trim(),
+    subtitulo:document.getElementById('txtSubtitulo').value.trim(),
+    rec:document.getElementById('txtRec').value.trim(),
+    pasos:[document.getElementById('txtPaso1').value.trim(),document.getElementById('txtPaso2').value.trim(),document.getElementById('txtPaso3').value.trim()].filter(Boolean)
+  });
+  if(S.gallery.length>50) S.gallery.pop();
+  saveGallery();
+  document.getElementById('ftGal').textContent=S.gallery.length;
+  renderGalGrid();
+}
+
+function guardar(){
+  if(!S.currentImage){setStatus('Genera una imagen primero','err');return;}
+  addToGallery();
+  setStatus('✓ Guardada · '+resolverEtiqueta()+' · '+S.gallery.length+' imágenes','ok');
+}
+
+function renderBulkBar(){
+  const n=S.imagenesSeleccionadas.length;
+  let bar=document.getElementById('bulkBar');
+  if(!bar){
+    bar=document.createElement('div');bar.id='bulkBar';
+    bar.style.cssText='display:none;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:4px;padding:6px 8px;margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:7px;';
+    document.getElementById('galGrid').before(bar);
+  }
+  if(!n){bar.style.display='none';return;}
+  bar.style.display='flex';
+  const bsty=c=>`padding:3px 8px;background:transparent;border:1px solid ${c};border-radius:3px;color:${c};cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:7px;`;
+  bar.innerHTML=`
+    <span style="color:var(--gold);font-weight:700;">${n} seleccionada${n>1?'s':''}</span>
+    <button onclick="bulkJPG()"      style="${bsty('#27AE60')}">📥 JPG</button>
+    <button onclick="bulkPDF()"      style="${bsty('#2980B9')}">📄 PDF</button>
+    <button onclick="bulkCarpetaM4()" style="${bsty('#00bcd4')}">📁 → M4</button>
+    <button onclick="bulkFirebase()" style="${bsty('#C9A84C')}">☁️ Firebase</button>
+    <button onclick="bulkEliminar()" style="${bsty('#E74C3C')}">🗑️ Eliminar</button>
+    <button onclick="deselAll()"     style="${bsty('#4a4535')}">✕ Cancelar</button>
+    <span style="margin-left:auto;color:var(--muted);">Seleccionados: ${S.imagenesSeleccionadas.map(id=>S.gallery.find(g=>g.id===id)?.label||id).join(' · ')}</span>
+  `;
+}
+
+function toggleSel(id){ const idx=S.imagenesSeleccionadas.indexOf(id); if(idx>-1)S.imagenesSeleccionadas.splice(idx,1); else S.imagenesSeleccionadas.push(id); renderGalGrid(); renderBulkBar(); }
+function deselAll(){ S.imagenesSeleccionadas=[];renderGalGrid();renderBulkBar(); }
+function selAll(){   S.imagenesSeleccionadas=S.gallery.map(g=>g.id);renderGalGrid();renderBulkBar(); }
+function bulkJPG(){ const items=S.gallery.filter(g=>S.imagenesSeleccionadas.includes(g.id)); items.forEach(item=>{const a=document.createElement('a');a.download=`fatima-${item.label}.jpg`;a.href=item.dataUrl;a.click();}); setStatus(`✓ ${items.length} JPG descargados`,'ok'); }
+async function bulkPDF(){ const items=S.gallery.filter(g=>S.imagenesSeleccionadas.includes(g.id)); if(!items.length)return; const W=window.open('','_blank'); if(!W){setStatus('Permite ventanas emergentes','err');return;} const imgs=items.map(it=>`<div style="page-break-after:always;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="${it.dataUrl}" style="max-width:100%;max-height:100%;"><div style="position:absolute;bottom:10px;left:10px;font-size:9pt;color:#C9A84C;font-family:monospace;">${it.label} · ${it.fecha}</div></div>`).join(''); W.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;margin:0;padding:0;}body{background:#fff;}div{position:relative;}@media print{@page{size:A4;margin:8mm;}}</style></head><body>${imgs}</body></html>`); W.document.close(); const _p=()=>{try{W.focus();W.print();}catch(e){}};if(W.document.readyState==='complete')setTimeout(_p,500);else W.onload=_p; setStatus(`✓ PDF generado`,'ok'); }
+function bulkCarpetaM4(){ const items=S.gallery.filter(g=>S.imagenesSeleccionadas.includes(g.id)); if(!items.length){setStatus('Selecciona imágenes primero','err');return;} const queue=JSON.parse(localStorage.getItem('fc_carpeta_queue')||'[]'); items.forEach(item=>{queue.push({tipo:'img',dataUrl:item.dataUrl,label:item.label+'.jpg',fecha:item.fecha,size:item.dataUrl.length});}); localStorage.setItem('fc_carpeta_queue',JSON.stringify(queue)); setStatus('✓ '+items.length+' imagen(es) enviadas a Carpeta M4','ok'); if(confirm('¿Abrir Carpeta M4 ahora?'))window.open('modulo4_carpeta.html','_blank'); }
+function bulkFirebase(){ const items=S.gallery.filter(g=>S.imagenesSeleccionadas.includes(g.id)); setStatus(`☁️ ${items.length} lista(s) · Firebase en Módulo 5`,'info'); console.log('BULK FIREBASE:', items.map(i=>({id:i.id,label:i.label,fitEtiqueta:i.fitEtiqueta}))); }
+function bulkEliminar(){ if(!confirm(`¿Eliminar ${S.imagenesSeleccionadas.length} imagen(es)?`))return; S.gallery=S.gallery.filter(g=>!S.imagenesSeleccionadas.includes(g.id)); S.imagenesSeleccionadas=[]; saveGallery(); document.getElementById('ftGal').textContent=S.gallery.length; renderGalGrid(); renderBulkBar(); setStatus('✓ Eliminadas','ok'); }
+
+function renderGalGrid(){
+  const g=document.getElementById('galGrid');
+  if(!S.gallery.length){g.innerHTML='<div style="font-size:7px;color:var(--muted);padding:4px;">Sin imágenes aún</div>';renderBulkBar();return;}
+  const ctrl=`<div style="display:flex;gap:4px;margin-bottom:4px;align-items:center;">
+    <button onclick="selAll()"   style="padding:3px 8px;background:transparent;border:1px solid rgba(201,168,76,.3);border-radius:3px;color:var(--gold2);cursor:pointer;font-size:7px;">☑ Todas</button>
+    <button onclick="deselAll()" style="padding:3px 8px;background:transparent;border:1px solid var(--border);border-radius:3px;color:var(--gold2);cursor:pointer;font-size:7px;">☐ Ninguna</button>
+    <span style="font-size:6.5px;color:var(--muted);margin-left:4px;">Clic en miniatura = seleccionar · Doble clic = restaurar al canvas</span>
+  </div>`;
+  g.innerHTML = ctrl + '<div id="galThumbGrid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:3px;"></div>';
+  const tg=document.getElementById('galThumbGrid');
+  S.gallery.forEach((item,i)=>{
+    const sel=S.imagenesSeleccionadas.includes(item.id);
+    const d=document.createElement('div');
+    d.className='qg-thumb';
+    if(sel)d.style.outline='2px solid var(--gold)';
+    const im=document.createElement('img');im.src=item.dataUrl;im.loading='lazy';
+    const badge=document.createElement('div');
+    badge.style.cssText='position:absolute;top:2px;left:2px;font-size:5px;padding:1px 3px;border-radius:2px;background:'+(item.modoLibre?'rgba(201,168,76,.85)':item.fitEtiqueta?'rgba(59,130,246,.85)':'rgba(39,174,96,.85)')+';color:#000;font-weight:700;';
+    badge.textContent=item.modoLibre?'LIBRE':item.fitEtiqueta?'FIT':'PEL';
+    const chk=document.createElement('div');
+    chk.style.cssText=`position:absolute;top:2px;right:2px;width:12px;height:12px;background:${sel?'var(--gold)':'rgba(0,0,0,.7)'};border:1px solid var(--gold);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#000;`;
+    chk.textContent=sel?'✓':'';
+    const lbl=document.createElement('div');lbl.className='qg-lbl';lbl.textContent=item.label;
+    const del=document.createElement('button');del.className='qg-del';del.textContent='✕';
+    del.onclick=ev=>{ev.stopPropagation();S.gallery.splice(i,1);const si=S.imagenesSeleccionadas.indexOf(item.id);if(si>-1)S.imagenesSeleccionadas.splice(si,1);saveGallery();document.getElementById('ftGal').textContent=S.gallery.length;renderGalGrid();renderBulkBar();};
+    d.appendChild(im);d.appendChild(badge);d.appendChild(chk);d.appendChild(lbl);d.appendChild(del);
+    d.addEventListener('click',  ev=>{ ev.stopPropagation(); toggleSel(item.id); });
+    d.addEventListener('dblclick',ev=>{ ev.stopPropagation(); restoreGalItem(item); setStatus('✓ Imagen restaurada al canvas · '+item.label,'ok'); });
+    tg.appendChild(d);
+  });
+}
+
+function restoreGalItem(item){ const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{S.currentImage=img;canvas.width=ED.W=1024;canvas.height=ED.H=1024;ED.els=[];ED.selId=null;if(item.promptUsado)document.getElementById('txtPrompt').value=item.promptUsado;addFormTexts();renderCanvas();canvas.style.display='block';ph.style.display='none';setStatus('✓ Imagen restaurada · '+item.label,'ok');};img.src=item.dataUrl; }
+
+// ════════════════════════════════════════════════════════════
+// EXPORTAR
+// ════════════════════════════════════════════════════════════
+function getExportCanvas(){ deselect();renderCanvas();return canvas; }
+function exportJPG(){ if(!S.currentImage){setStatus('Genera una imagen primero','err');return;} const c=getExportCanvas();const a=document.createElement('a');a.download=`fatima-studio-${S._fitEtiqueta||Date.now()}.jpg`;a.href=c.toDataURL('image/jpeg',.95);a.click();setStatus('✓ JPG exportado','ok'); }
+function exportPDF(){ if(!S.currentImage){setStatus('Genera una imagen primero','err');return;} const dataUrl=getExportCanvas().toDataURL('image/jpeg',.95);const w=window.open('','_blank');if(!w){setStatus('Permite ventanas emergentes','err');return;} w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;}img{max-width:210mm;max-height:297mm;object-fit:contain;}@media print{@page{size:A4;margin:10mm;}body{display:block;}img{width:100%;}}</style></head><body><img src="${dataUrl}" alt=""></body></html>`);w.document.close();const _p=()=>{try{w.focus();w.print();}catch(e){}};if(w.document.readyState==='complete')setTimeout(_p,400);else w.onload=_p;setStatus('✓ PDF abierto','ok'); }
+
+// ════════════════════════════════════════════════════════════
+// API PANEL / STATUS
+// ════════════════════════════════════════════════════════════
+function openApiPanel(){ document.getElementById('key-dalle').classList.toggle('show'); setStatus('⚙️ Claves guardadas en localStorage · privadas · nunca salen del navegador','info'); }
+function setStatus(msg,type=''){ if(!sb)return; sb.innerHTML = type==='ok'?`<span class="s-ok">✓ ${msg}</span>`:type==='err'?`<span class="s-err">⚠ ${msg}</span>`:type==='info'?`<span class="s-info">ℹ ${msg}</span>`:msg; }
+
+// Cargar claves guardadas al inicio + guardar al hacer clic fuera (no solo Enter)
+['dalle','stability','hf','together','replicate','pollinations','anthropic'].forEach(k=>{
+  const inp = document.getElementById('key-'+k);
+  if(loadKey(k)){
+    const dot = document.getElementById('dot-'+k); if(dot) dot.className='api-dot dot-on';
+    if(inp) inp.placeholder='✓ Guardado · escribe para actualizar';
+  }
+  if(inp) inp.addEventListener('blur', ()=>saveKeyBlur(k));
+});
+
+window._FIT_IMGS = window._FIT_IMGS || {};
+</script>
+
+<!-- ════════ MOTOR BRIDGE — biblioteca de las 360 clases ════════ -->
+<script src="motor_p1_bioseg_balayage.js"></script>
+<script src="motor_p2_queratina_elevaciones.js"></script>
+<script src="motor_p3_morfologia_alertas.js"></script>
+<script src="motor_helper.js"></script>
+<script src="m1_motor_bridge.js"></script>
+
+</body>
+</html>

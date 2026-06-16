@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Fátima Pro · Centro de Administración</title>
+<style>
+  :root{
+    --oro:#c9a84c; --oro2:#e6c97d; --bg:#070a10; --bg2:#0d1018;
+    --pan:#11141d; --linea:rgba(201,168,76,.22); --txt:#e8e8f0; --txt2:#8a90a0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);
+    height:100vh;display:flex;flex-direction:column;overflow:hidden;
+  }
+
+  /* ── Topbar ── */
+  .topbar{
+    display:flex;align-items:center;gap:14px;padding:12px 20px;
+    background:linear-gradient(180deg,#0d1018,#0a0c12);
+    border-bottom:1px solid var(--linea);flex-shrink:0;
+  }
+  .ring{
+    width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:18px;
+    border:2px solid var(--oro);background:rgba(201,168,76,.08);box-shadow:0 0 18px rgba(201,168,76,.25);
+  }
+  .ttl{display:flex;flex-direction:column;line-height:1.25;}
+  .ttl b{font-size:14px;letter-spacing:2px;color:var(--oro);font-weight:700;}
+  .ttl span{font-size:9.5px;letter-spacing:1.5px;color:var(--txt2);text-transform:uppercase;}
+  .tb-sp{flex:1;}
+  .tb-user{font-size:10px;color:var(--txt2);text-align:right;line-height:1.4;}
+  .tb-user b{color:var(--oro2);display:block;font-size:11px;}
+  .hub-link{
+    text-decoration:none;font-size:10px;letter-spacing:.5px;font-weight:700;
+    color:#0a0c12;background:linear-gradient(135deg,#d9bd5e,#b3922f);
+    padding:9px 14px;border-radius:8px;transition:filter .12s,transform .12s;white-space:nowrap;
+  }
+  .hub-link:hover{filter:brightness(1.08);transform:translateY(-1px);}
+
+  /* ── Tabs ── */
+  .tabs{
+    display:flex;gap:6px;padding:10px 16px;background:var(--bg2);
+    border-bottom:1px solid var(--linea);overflow-x:auto;flex-shrink:0;
+  }
+  .tabs::-webkit-scrollbar{height:0;}
+  .tab{
+    display:flex;align-items:center;gap:8px;border:1px solid var(--linea);
+    background:rgba(255,255,255,.02);border-radius:10px;padding:10px 16px;cursor:pointer;
+    font-size:11px;letter-spacing:.4px;color:var(--txt2);font-weight:600;white-space:nowrap;
+    transition:all .14s;font-family:inherit;
+  }
+  .tab .ic{font-size:15px;}
+  .tab:hover{border-color:var(--oro);color:var(--txt);}
+  .tab.active{background:rgba(201,168,76,.13);border-color:var(--oro);color:var(--oro2);
+    box-shadow:0 0 0 1px rgba(201,168,76,.25);}
+  .tab small{font-size:8.5px;color:var(--txt2);font-weight:500;letter-spacing:0;display:block;}
+  .tab.active small{color:rgba(230,201,125,.7);}
+
+  /* ── Stage ── */
+  .stage{position:relative;flex:1;background:#000;}
+  .frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);
+    opacity:0;pointer-events:none;transition:opacity .2s;}
+  .frame.active{opacity:1;pointer-events:auto;}
+  .ph{
+    position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;color:var(--txt2);
+  }
+  .ph.show{display:flex;}
+  .ph .spin{width:34px;height:34px;border:3px solid rgba(201,168,76,.2);border-top-color:var(--oro);
+    border-radius:50%;animation:sp .8s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+  .ph div.t{font-size:12px;letter-spacing:1px;}
+
+  @media(max-width:680px){
+    .ttl span{display:none;}
+    .tab small{display:none;}
+    .tab{padding:9px 12px;}
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="ring">✨</div>
+    <div class="ttl"><b>FÁTIMA PRO</b><span>Centro de Administración</span></div>
+    <div class="tb-sp"></div>
+    <div class="tb-user" id="userBox"><b id="uName">—</b><span id="uMail">no conectada</span></div>
+    <a class="hub-link" href="fatima_hub.html" target="_blank" rel="noopener">🌐 Ver Hub público</a>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="stage" id="stage">
+    <div class="ph show" id="ph"><div class="spin"></div><div class="t">Selecciona un panel…</div></div>
+  </div>
+
+<script>
+/* ════ Herramientas del centro de administración ════ */
+const TOOLS = [
+  {id:'clases',   ic:'🔑', nom:'Clases & Accesos',    sub:'Asignar/bloquear clases', src:'admin_motores.html'},
+  {id:'creditos', ic:'💳', nom:'Créditos & Alumnas',  sub:'Recargar · activar/desactivar', src:'panel_admin.html'},
+  {id:'biblio',   ic:'📚', nom:'Biblioteca',          sub:'Videos · imágenes · tarjetas · noticias', src:'biblioteca.html'},
+  {id:'estudio',  ic:'🎬', nom:'Estudio',             sub:'Centro de control', src:'estudio.html'},
+  {id:'imagen',   ic:'🖼️', nom:'Generador Imagen',    sub:'Módulo 1 · IA', src:'modulo1_imagen.html'},
+  {id:'drive',    ic:'🪄', nom:'Conversor Drive',      sub:'Enlaces → URL directa', src:'conversor_drive.html'},
+];
+
+const stage = document.getElementById('stage');
+const tabsEl = document.getElementById('tabs');
+const ph = document.getElementById('ph');
+const loaded = {};
+let activo = null;
+
+/* Construir pestañas */
+TOOLS.forEach(t=>{
+  const b = document.createElement('button');
+  b.className = 'tab';
+  b.id = 'tab-'+t.id;
+  b.innerHTML = `<span class="ic">${t.ic}</span><span>${t.nom}<small>${t.sub}</small></span>`;
+  b.onclick = ()=>abrir(t.id);
+  tabsEl.appendChild(b);
+});
+
+function abrir(id){
+  const t = TOOLS.find(x=>x.id===id); if(!t) return;
+  // Cargar el iframe la primera vez (perezoso)
+  if(!loaded[id]){
+    const f = document.createElement('iframe');
+    f.className = 'frame';
+    f.id = 'frame-'+id;
+    f.src = t.src;
+    f.setAttribute('allow','clipboard-write; clipboard-read; microphone; camera');
+    stage.appendChild(f);
+    loaded[id] = f;
+  }
+  // Activar pestaña + frame
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.querySelectorAll('.frame').forEach(el=>el.classList.remove('active'));
+  loaded[id].classList.add('active');
+  ph.classList.remove('show');
+  activo = id;
+  try{ localStorage.setItem('fc_admin_tab', id); }catch(_){}
+}
+
+/* Sesión (compartida con todas las herramientas del mismo dominio) */
+(function escucharSesion(){
+  function pintar(u){
+    document.getElementById('uName').textContent = u ? (u.displayName || (u.email||'').split('@')[0] || 'Admin') : '—';
+    document.getElementById('uMail').textContent = u ? u.email : 'no conectada';
+  }
+  // Cargar firebase-compat solo para mostrar quién está conectada
+  function load(src){return new Promise(r=>{const s=document.createElement('script');s.src=src;s.onload=r;s.onerror=r;document.head.appendChild(s);});}
+  (async()=>{
+    try{
+      await load('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+      await load('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');
+      if(!window.firebase) return;
+      if(!firebase.apps.length) firebase.initializeApp({
+        apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",
+        authDomain:"aprendisajefatima.firebaseapp.com",
+        projectId:"aprendisajefatima",
+        storageBucket:"aprendisajefatima.firebasestorage.app",
+        messagingSenderId:"744176967394",
+        appId:"1:744176967394:web:1db2edfd2498ddbaa7c8bb"
+      });
+      firebase.auth().onAuthStateChanged(pintar);
+    }catch(_){}
+  })();
+})();
+
+/* Abrir la última pestaña usada (o la primera) */
+let inicial = 'clases';
+try{ const g = localStorage.getItem('fc_admin_tab'); if(g && TOOLS.some(t=>t.id===g)) inicial = g; }catch(_){}
+abrir(inicial);
+</script>
+</body>
+</html>

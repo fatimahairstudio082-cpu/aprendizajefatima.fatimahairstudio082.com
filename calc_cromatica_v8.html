@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="es" id="html-root">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculadora Científica Cromática — Fátima Hair Studio</title>
+  <meta name="description" content="Calculadora profesional de colorimetría capilar basada en la Teoría de Howard."/>
+  <meta name="theme-color" content="#09090f"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✂️</text></svg>"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+  <script>
+  (function(){
+    document.addEventListener('contextmenu',function(e){e.preventDefault();return false;});
+    document.addEventListener('keydown',function(e){
+      if(e.key==='F12'){e.preventDefault();return false;}
+      if(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='J'||e.key==='C')){e.preventDefault();return false;}
+      if(e.ctrlKey&&(e.key==='U'||e.key==='u')){e.preventDefault();return false;}
+      if(e.ctrlKey&&(e.key==='S'||e.key==='s')){e.preventDefault();return false;}
+      if(e.ctrlKey&&(e.key==='P'||e.key==='p')){e.preventDefault();return false;}
+    });
+    document.addEventListener('dragstart',function(e){e.preventDefault();});
+    document.addEventListener('selectstart',function(e){
+      if(e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA')e.preventDefault();
+    });
+  })();
+  </script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#09090f;color:#e8eaf0;font-family:'Inter',sans-serif;min-height:100vh;}
+
+    /* BARRA CRÉDITOS */
+    .cr-badge{position:fixed;top:0;left:0;right:0;z-index:9998;background:rgba(9,9,15,.97);border-bottom:.5px solid rgba(0,212,255,.15);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+    .cr-badge-left{display:flex;align-items:center;gap:10px;}
+    .cr-pill{display:flex;align-items:center;gap:6px;background:rgba(0,212,255,.08);border:.5px solid rgba(0,212,255,.25);border-radius:20px;padding:4px 12px;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:700;transition:all .3s;}
+    .cr-pill span{color:#00d4ff;}
+    .btn-salir-crom{background:transparent;border:.5px solid rgba(255,255,255,.15);border-radius:8px;padding:.3rem .7rem;color:#888;font-size:.72rem;cursor:pointer;font-family:'Orbitron',monospace;letter-spacing:.06em;transition:all .2s;}
+    .btn-salir-crom:hover{border-color:#ff6b6b;color:#ff6b6b;}
+
+    /* WAF */
+    .waf-wrap{position:fixed;bottom:22px;right:22px;z-index:9990;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+    .waf-menu{display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+    .waf-opt{display:flex;align-items:center;gap:10px;background:rgba(12,15,28,.97);border:.5px solid rgba(37,211,102,.3);border-radius:12px;padding:9px 14px;cursor:pointer;text-decoration:none;transition:all .2s;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+    .waf-opt:hover{border-color:#25d366;background:rgba(37,211,102,.08);}
+    .waf-opt-icon{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#075e54,#25d366);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+    .waf-opt-txt{text-align:left;}
+    .waf-opt-name{font-size:11px;font-weight:600;color:#e8eaf0;font-family:'Orbitron',monospace;letter-spacing:.04em;}
+    .waf-opt-sub{font-size:9px;color:rgba(232,234,240,.45);margin-top:1px;}
+    .waf-fab{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#075e54,#25d366);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 20px rgba(37,211,102,.4);transition:transform .2s;}
+    .waf-fab:hover{transform:scale(1.08);}
+    .waf-label{font-size:8px;font-family:'Orbitron',monospace;color:rgba(232,234,240,.4);text-align:center;letter-spacing:.1em;margin-top:2px;}
+
+    /* ═══════════════════════════════════════
+       CHATBOX INTELIGENTE PRO
+    ═══════════════════════════════════════ */
+    #chat-fab{
+      position:fixed;bottom:90px;right:22px;z-index:9991;
+      width:54px;height:54px;border-radius:50%;
+      background:linear-gradient(135deg,#7c3aed,#f472b6);
+      border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-size:22px;box-shadow:0 4px 24px rgba(244,114,182,.5);
+      transition:transform .2s,box-shadow .2s;
+    }
+    #chat-fab:hover{transform:scale(1.1);box-shadow:0 6px 32px rgba(244,114,182,.7);}
+    #chat-fab .chat-badge{
+      position:absolute;top:-4px;right:-4px;width:18px;height:18px;
+      background:#f87171;border-radius:50%;font-size:9px;font-weight:700;
+      color:#fff;display:flex;align-items:center;justify-content:center;
+      font-family:'Orbitron',monospace;
+    }
+    #chat-panel{
+      position:fixed;bottom:160px;right:16px;z-index:9992;
+      width:340px;max-width:calc(100vw - 32px);
+      background:rgba(10,10,20,.98);
+      border:1px solid rgba(244,114,182,.35);
+      border-radius:18px;
+      box-shadow:0 12px 48px rgba(0,0,0,.8),0 0 40px rgba(244,114,182,.12);
+      display:none;flex-direction:column;overflow:hidden;
+      max-height:520px;
+    }
+    #chat-panel.open{display:flex;}
+    .chat-hdr{
+      background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(244,114,182,.2));
+      border-bottom:.5px solid rgba(244,114,182,.2);
+      padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;
+    }
+    .chat-hdr-avatar{
+      width:36px;height:36px;border-radius:50%;
+      background:linear-gradient(135deg,#7c3aed,#f472b6);
+      display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+    }
+    .chat-hdr-info{flex:1;}
+    .chat-hdr-name{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#f472b6;letter-spacing:.08em;}
+    .chat-hdr-status{font-size:9px;color:rgba(232,234,240,.45);margin-top:1px;display:flex;align-items:center;gap:4px;}
+    .chat-hdr-status::before{content:'';width:6px;height:6px;border-radius:50%;background:#4ade80;flex-shrink:0;}
+    .chat-tts-btn{
+      background:rgba(0,212,255,.1);border:.5px solid rgba(0,212,255,.3);
+      border-radius:6px;padding:4px 8px;cursor:pointer;font-size:9px;
+      color:#00d4ff;font-family:'Orbitron',monospace;transition:all .2s;
+    }
+    .chat-tts-btn:hover{background:rgba(0,212,255,.2);}
+    .chat-close-btn{
+      background:transparent;border:none;color:rgba(232,234,240,.4);
+      font-size:18px;cursor:pointer;padding:0 4px;transition:color .2s;
+      line-height:1;
+    }
+    .chat-close-btn:hover{color:#f87171;}
+    .chat-msgs{
+      flex:1;overflow-y:auto;padding:12px;
+      display:flex;flex-direction:column;gap:8px;
+      scrollbar-width:thin;scrollbar-color:rgba(244,114,182,.3) transparent;
+    }
+    .chat-msg{display:flex;gap:8px;align-items:flex-end;}
+    .chat-msg.user{flex-direction:row-reverse;}
+    .chat-msg-avatar{
+      width:26px;height:26px;border-radius:50%;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;font-size:13px;
+    }
+    .chat-msg-avatar.bot{background:linear-gradient(135deg,#7c3aed,#f472b6);}
+    .chat-msg-avatar.user{background:rgba(0,212,255,.15);border:.5px solid rgba(0,212,255,.3);}
+    .chat-bubble{
+      max-width:82%;padding:9px 12px;border-radius:14px;font-size:11px;line-height:1.55;
+    }
+    .chat-bubble.bot{
+      background:rgba(124,58,237,.15);border:.5px solid rgba(244,114,182,.2);
+      border-bottom-left-radius:4px;color:#e8eaf0;
+    }
+    .chat-bubble.user{
+      background:rgba(0,212,255,.12);border:.5px solid rgba(0,212,255,.25);
+      border-bottom-right-radius:4px;color:#e8eaf0;text-align:right;
+    }
+    .chat-bubble.bot.speaking{
+      border-color:#f472b6;
+      box-shadow:0 0 12px rgba(244,114,182,.25);
+    }
+    .chat-bubble .tts-play{
+      display:inline-flex;align-items:center;gap:3px;margin-top:5px;
+      background:rgba(0,212,255,.08);border:.5px solid rgba(0,212,255,.2);
+      border-radius:5px;padding:3px 7px;font-size:8px;color:#00d4ff;
+      cursor:pointer;font-family:'Orbitron',monospace;
+    }
+    .chat-bubble .tts-play:hover{background:rgba(0,212,255,.18);}
+    .chat-typing{display:flex;align-items:center;gap:3px;padding:10px 14px;}
+    .chat-typing span{width:6px;height:6px;border-radius:50%;background:#f472b6;animation:typing .9s ease-in-out infinite alternate;}
+    .chat-typing span:nth-child(2){animation-delay:.2s;}
+    .chat-typing span:nth-child(3){animation-delay:.4s;}
+    @keyframes typing{from{opacity:.3;transform:translateY(0);}to{opacity:1;transform:translateY(-4px);}}
+    .chat-options{display:flex;flex-wrap:wrap;gap:5px;padding:0 12px 6px;}
+    .chat-opt-btn{
+      padding:5px 10px;border:.5px solid rgba(244,114,182,.3);
+      border-radius:20px;background:rgba(244,114,182,.06);
+      color:#f472b6;font-size:9px;cursor:pointer;
+      font-family:'Orbitron',monospace;letter-spacing:.05em;transition:all .2s;
+    }
+    .chat-opt-btn:hover{background:rgba(244,114,182,.15);border-color:#f472b6;}
+    .chat-input-row{
+      display:flex;gap:6px;padding:10px 12px;
+      border-top:.5px solid rgba(255,255,255,.07);flex-shrink:0;
+    }
+    .chat-input{
+      flex:1;background:rgba(255,255,255,.04);
+      border:.5px solid rgba(255,255,255,.1);border-radius:20px;
+      padding:8px 14px;color:#e8eaf0;font-size:11px;
+      font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;
+    }
+    .chat-input:focus{border-color:rgba(244,114,182,.4);}
+    .chat-send-btn{
+      width:34px;height:34px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(135deg,#7c3aed,#f472b6);
+      border:none;cursor:pointer;display:flex;align-items:center;
+      justify-content:center;font-size:14px;transition:transform .15s;
+    }
+    .chat-send-btn:hover{transform:scale(1.1);}
+    .chat-audio-bar{
+      display:flex;align-items:center;gap:6px;padding:6px 12px;
+      background:rgba(0,212,255,.05);border-top:.5px solid rgba(0,212,255,.1);
+      flex-shrink:0;
+    }
+    .chat-audio-label{font-size:8px;color:#00d4ff;font-family:'Orbitron',monospace;letter-spacing:.1em;}
+    .chat-audio-pulse{display:flex;align-items:center;gap:2px;}
+    .chat-audio-pulse span{width:3px;background:#00d4ff;border-radius:2px;animation:apulse .7s ease-in-out infinite alternate;}
+    .chat-audio-pulse span:nth-child(1){height:6px;animation-delay:0s;}
+    .chat-audio-pulse span:nth-child(2){height:10px;animation-delay:.15s;}
+    .chat-audio-pulse span:nth-child(3){height:7px;animation-delay:.3s;}
+    @keyframes apulse{from{transform:scaleY(.6);opacity:.5;}to{transform:scaleY(1.2);opacity:1;}}
+    .chat-stop-btn{
+      background:rgba(248,113,113,.1);border:.5px solid rgba(248,113,113,.3);
+      border-radius:6px;padding:3px 8px;cursor:pointer;font-size:8px;
+      color:#f87171;font-family:'Orbitron',monospace;margin-left:auto;
+    }
+
+    /* AUDIO PANELS */
+    .audio-pro-panel{background:linear-gradient(135deg,rgba(20,8,4,.98),rgba(28,12,6,.98));border:.5px solid rgba(251,146,60,.4);border-radius:14px;padding:1.1rem;margin:.875rem 0;position:relative;overflow:hidden;}
+    .audio-pro-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#fb923c,transparent);}
+    .audio-pro-title{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;color:#fb923c;letter-spacing:.14em;margin-bottom:.75rem;}
+    .audio-btn{display:flex;align-items:flex-start;gap:10px;width:100%;background:rgba(255,255,255,.03);border:.5px solid rgba(251,146,60,.2);border-radius:10px;padding:10px 12px;cursor:pointer;margin-bottom:8px;transition:all .2s;text-align:left;}
+    .audio-btn:hover{border-color:#fb923c;background:rgba(251,146,60,.07);}
+    .audio-btn-icon{font-size:1.4rem;flex-shrink:0;margin-top:2px;}
+    .audio-btn-content{flex:1;}
+    .audio-btn-label{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;color:#fb923c;letter-spacing:.1em;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+    .audio-btn-text{font-size:10px;color:rgba(232,234,240,.65);line-height:1.65;}
+    .audio-btn.playing{border-color:#fb923c;background:rgba(251,146,60,.12);box-shadow:0 0 16px rgba(251,146,60,.18);}
+    .audio-pulse{display:inline-flex;align-items:center;gap:2px;margin-left:6px;}
+    .audio-pulse span{width:3px;background:#fb923c;border-radius:2px;animation:apulse .7s ease-in-out infinite alternate;}
+    .audio-pulse span:nth-child(1){height:6px;}.audio-pulse span:nth-child(2){height:10px;animation-delay:.15s;}.audio-pulse span:nth-child(3){height:7px;animation-delay:.3s;}
+    .audio-green-panel{background:linear-gradient(135deg,rgba(4,20,8,.98),rgba(6,28,12,.98));border:.5px solid rgba(74,222,128,.35);border-radius:14px;padding:1.1rem;margin:.875rem 0;position:relative;overflow:hidden;}
+    .audio-green-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#4ade80,transparent);}
+    .audio-green-panel .audio-pro-title{color:#4ade80;}
+    .audio-green-panel .audio-btn{border-color:rgba(74,222,128,.2);}
+    .audio-green-panel .audio-btn:hover{border-color:#4ade80;background:rgba(74,222,128,.07);}
+    .audio-green-panel .audio-btn-label{color:#4ade80;}
+    .audio-green-panel .audio-btn.playing{border-color:#4ade80;background:rgba(74,222,128,.12);box-shadow:0 0 16px rgba(74,222,128,.18);}
+    .audio-green-panel .audio-pulse span{background:#4ade80;}
+
+    /* MUY MALTRATADO PANEL */
+    .muy-malt-panel{background:linear-gradient(135deg,rgba(20,4,4,.98),rgba(30,6,6,.98));border:1px solid rgba(248,113,113,.5);border-radius:16px;padding:1.25rem;margin:.875rem 0;position:relative;overflow:hidden;}
+    .muy-malt-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#f87171,#ef4444,transparent);}
+    .muy-malt-title{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#f87171;letter-spacing:.14em;margin-bottom:.875rem;display:flex;align-items:center;gap:8px;}
+    .malt-rec-item{display:flex;align-items:flex-start;gap:10px;background:rgba(0,0,0,.3);border:.5px solid rgba(248,113,113,.15);border-radius:10px;padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:all .2s;}
+    .malt-rec-item:hover{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.06);}
+    .malt-rec-item.playing{border-color:#f87171;background:rgba(248,113,113,.1);box-shadow:0 0 16px rgba(248,113,113,.2);}
+    .malt-rec-icon{font-size:1.5rem;flex-shrink:0;margin-top:2px;}
+    .malt-rec-content{flex:1;}
+    .malt-rec-title{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;color:#f87171;letter-spacing:.1em;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+    .malt-rec-text{font-size:10px;color:rgba(232,234,240,.65);line-height:1.65;}
+    .malt-rec-pulse span{background:#f87171;}
+  </style>
+<style id="hub-responsive-fix">
+/* Red de seguridad responsive (solo móvil <=680px) — no afecta desktop */
+@media (max-width: 680px){
+  html,body{max-width:100%;overflow-x:hidden;}
+  img,svg,video{max-width:100%;height:auto;}
+  /* colapsar rejillas multi-columna definidas inline */
+  [style*="grid-template-columns:1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"],
+  [style*="grid-template-columns:repeat(2"],
+  [style*="grid-template-columns:repeat(3"],
+  [style*="grid-template-columns:repeat(4"]{
+    grid-template-columns: 1fr !important;
+  }
+  /* colapsar utilidades Tailwind de columnas fijas */
+  .grid-cols-2,.grid-cols-3,.grid-cols-4,
+  .md\:grid-cols-2,.md\:grid-cols-3,.md\:grid-cols-4,
+  .lg\:grid-cols-3,.lg\:grid-cols-4{
+    grid-template-columns: 1fr !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="cr-badge" id="cr-badge">
+  <div class="cr-badge-left">
+    <div class="cr-pill" id="cr-pill">
+      <span id="cr-icon">⚡</span>
+      <span id="cr-num">—</span>
+      <span style="color:rgba(232,234,240,.5);font-size:.65rem;">cr.</span>
+    </div>
+    <span style="font-size:.65rem;color:rgba(232,234,240,.35);font-family:'Orbitron',monospace;letter-spacing:.08em;">CROMÁTICA v8</span>
+  </div>
+  <button class="btn-salir-crom" onclick="salirAlHub()">⬅ SALIR</button>
+</div>
+
+<div style="height:44px;"></div>
+<div id="root-calc"></div>
+
+<!-- CHATBOX FAB -->
+<button id="chat-fab" onclick="toggleChat()" title="Asistente IA Capilar">
+  💬
+  <span class="chat-badge" id="chat-badge" style="display:none;">1</span>
+</button>
+
+<!-- CHATBOX PANEL -->
+<div id="chat-panel">
+  <div class="chat-hdr">
+    <div class="chat-hdr-avatar">💎</div>
+    <div class="chat-hdr-info">
+      <div class="chat-hdr-name">ASISTENTE FÁTIMA · IA CAPILAR</div>
+      <div class="chat-hdr-status">En línea · Especialista cromática</div>
+    </div>
+    <button class="chat-tts-btn" id="chat-tts-toggle" onclick="toggleChatTTS()" title="Activar/desactivar voz">🔊 VOZ</button>
+    <button class="chat-close-btn" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="chat-msgs" id="chat-msgs"></div>
+  <div id="chat-options-row" class="chat-options"></div>
+  <div class="chat-audio-bar" id="chat-audio-bar" style="display:none;">
+    <span class="chat-audio-label">🔊 HABLANDO</span>
+    <div class="chat-audio-pulse">
+      <span></span><span></span><span></span>
+    </div>
+    <button class="chat-stop-btn" onclick="stopChatTTS()">⏹ PARAR</button>
+  </div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chat-input" type="text" placeholder="Escribe tu consulta capilar..." onkeydown="if(event.key==='Enter')sendChatMsg()"/>
+    <button class="chat-send-btn" onclick="sendChatMsg()">➤</button>
+  </div>
+</div>
+
+<!-- WAF -->
+<div class="waf-wrap" id="waf">
+  <div class="waf-menu" id="waf-menu" style="display:none;">
+    <a class="waf-opt" id="waf-es" href="#" target="_blank" rel="noreferrer">
+      <div class="waf-opt-icon">💬</div>
+      <div class="waf-opt-txt">
+        <div class="waf-opt-name">España · Soporte</div>
+        <div class="waf-opt-sub">Responde en &lt;1h · ES/EN</div>
+      </div>
+    </a>
+    <a class="waf-opt" id="waf-ve" href="#" target="_blank" rel="noreferrer">
+      <div class="waf-opt-icon">💬</div>
+      <div class="waf-opt-txt">
+        <div class="waf-opt-name">Venezuela · Soporte</div>
+        <div class="waf-opt-sub">Responde en &lt;1h · ES</div>
+      </div>
+    </a>
+  </div>
+  <div style="position:relative;display:inline-block;">
+    <button class="waf-fab" onclick="toggleWaf()" title="Contactar por WhatsApp">💬</button>
+  </div>
+  <div class="waf-label">SOPORTE</div>
+</div>
+
+<script>
+// ═══ FIREBASE ═══════════════════════════════════════════════════════
+(function loadFirebase(cb){
+  const s1=document.createElement('script');
+  s1.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
+  s1.onload=()=>{
+    const s2=document.createElement('script');
+    s2.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js';
+    s2.onload=cb;document.head.appendChild(s2);
+  };document.head.appendChild(s1);
+})(initFirebase);
+const FB_CFG={apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",authDomain:"aprendisajefatima.firebaseapp.com",projectId:"aprendisajefatima",storageBucket:"aprendisajefatima.firebasestorage.app",messagingSenderId:"744176967394",appId:"1:744176967394:web:743b7c2a455e1e6ba7c8bb"};
+let _db=null,_uid='',_email='';
+function initFirebase(){try{if(!firebase.apps.length)firebase.initializeApp(FB_CFG);_db=firebase.firestore();}catch(e){}}
+window.addEventListener('message',e=>{
+  const d=e.data;if(!d||typeof d!=='object')return;
+  if(d.tipo==='hubSesion'||d.tipo==='session'){_uid=d.uid||'';_email=d.email||'';var _g=(d.creditos!==undefined?parseInt(d.creditos):(d.creditos_b7!==undefined?parseInt(d.creditos_b7):NaN));if(!isNaN(_g)){CR_STATE.credits=Math.max(0,_g);_saveCR();}_renderCR();}
+  else if(d.tipo==='sincronizarCreditos'&&d.creditos!==undefined){CR_STATE.credits=Math.max(0,parseInt(d.creditos)||0);_saveCR();_renderCR();}
+});
+async function _B7_gastarFirebase(n,accion){
+  if(!_db||!_uid)return;
+  try{await _db.collection('usuarios_bloques').doc(_uid).set({cr_b7:firebase.firestore.FieldValue.increment(-n)},{merge:true});
+  await _db.collection('registros_bloques').add({uid:_uid,email:_email,bloque:'B7_cromatica',accion,creditos_gastados:n,fecha:new Date()});}catch(e){}
+}
+
+// ═══ SALIR ═══════════════════════════════════════════════════════════
+function salirAlHub(){
+  if(window.speechSynthesis)window.speechSynthesis.cancel();
+  if(window.parent!==window){window.parent.postMessage({tipo:'salirBloque',destino:'index.html'},'*');}
+  else{window.location.href='index.html';}
+}
+
+// ═══ CRÉDITOS ════════════════════════════════════════════════════════
+const CR_COST=5;
+let CR_STATE={credits:10};
+const _WA_ES=atob("MzQ2MDQ4MjIyNjU=");
+const _WA_VE=atob("NTg0MTYzMTUxMTcw");
+function initCR(){
+  try{const s=JSON.parse(localStorage.getItem('_cr_b7')||'null');if(s&&typeof s.credits==='number'&&s.credits>=0)CR_STATE={credits:s.credits};else{CR_STATE={credits:10};_saveCR();}}catch(e){}
+  _renderCR();
+}
+function _saveCR(){localStorage.setItem('_cr_b7',JSON.stringify(CR_STATE));}
+function useCR(n,accion){
+  if(CR_STATE.credits<n){_showNoCR();return false;}
+  CR_STATE.credits=Math.max(0,CR_STATE.credits-n);_saveCR();_B7_gastarFirebase(n,accion);_renderCR();return true;
+}
+window.useCR=useCR;
+function _renderCR(){
+  const c=CR_STATE.credits;
+  const pill=document.getElementById('cr-pill'),num=document.getElementById('cr-num'),ic=document.getElementById('cr-icon');
+  if(!pill||!num)return;
+  const col=c<=0?'#f87171':c<=5?'#fb923c':'#00d4ff';
+  num.textContent=c;num.style.color=col;
+  if(ic)ic.textContent=c<=0?'⚠️':c<=5?'⚠️':'⚡';
+  pill.style.borderColor=c<=0?'rgba(248,113,113,.5)':c<=5?'rgba(251,146,60,.4)':'rgba(0,212,255,.25)';
+  pill.style.background=c<=0?'rgba(248,113,113,.1)':c<=5?'rgba(251,146,60,.08)':'rgba(0,212,255,.08)';
+}
+function _showNoCR(){
+  let m=document.getElementById('_nocr_modal');
+  if(!m){m=document.createElement('div');m.id='_nocr_modal';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';document.body.appendChild(m);}
+  m.innerHTML=`<div style="background:#0b0f1e;border:2px solid #f87171;border-radius:18px;padding:28px 22px;max-width:380px;width:100%;text-align:center;font-family:'Inter',sans-serif;">
+    <div style="font-size:2.5rem;margin-bottom:8px;">⚠️</div>
+    <div style="font-family:'Orbitron',monospace;font-size:1.2rem;color:#f87171;letter-spacing:.1em;margin-bottom:8px;">SIN CRÉDITOS</div>
+    <div style="font-size:.85rem;color:#e8eaf0;line-height:1.6;margin-bottom:16px;">Necesitas créditos para continuar.<br>Cada cálculo o descarga = 5 créditos.</div>
+    <button onclick="window.open('https://wa.me/${_WA_ES}?text='+encodeURIComponent('Hola! Necesito recargar créditos de la Calculadora Cromática.'),'_blank')" style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:10px;padding:11px;cursor:pointer;font-family:'Orbitron',monospace;font-size:.8rem;letter-spacing:.1em;width:100%;margin-bottom:7px;">📱 RECARGAR — ESPAÑA</button>
+    <button onclick="window.open('https://wa.me/${_WA_VE}?text='+encodeURIComponent('Hola! Necesito recargar créditos de la Calculadora Cromática.'),'_blank')" style="background:linear-gradient(135deg,#25D366,#0e7a43);color:#fff;border:none;border-radius:10px;padding:11px;cursor:pointer;font-family:'Orbitron',monospace;font-size:.8rem;letter-spacing:.1em;width:100%;margin-bottom:10px;">📱 RECARGAR — VENEZUELA</button>
+    <button onclick="document.getElementById('_nocr_modal').style.display='none'" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#aaa;border-radius:10px;padding:9px;cursor:pointer;font-family:'Orbitron',monospace;font-size:.75rem;width:100%;">✕ CERRAR</button>
+  </div>`;
+  m.style.display='flex';
+}
+
+// ═══ WAF ══════════════════════════════════════════════════════════════
+(function(){
+  var msg=encodeURIComponent("Hola Fátima, te contacto desde la calculadora cromática. Necesito ayuda.");
+  var esEl=document.getElementById('waf-es'),veEl=document.getElementById('waf-ve');
+  if(esEl)esEl.href="https://wa.me/"+atob("MzQ2MDQ4MjIyNjU=")+"?text="+msg;
+  if(veEl)veEl.href="https://wa.me/"+atob("NTg0MTYzMTUxMTcw")+"?text="+msg;
+})();
+function toggleWaf(){var m=document.getElementById('waf-menu');m.style.display=m.style.display==='none'?'flex':'none';}
+document.addEventListener('click',function(e){if(!document.getElementById('waf').contains(e.target))document.getElementById('waf-menu').style.display='none';});
+
+// ═══════════════════════════════════════════════════════════════════════
+// CHATBOX INTELIGENTE PRO — TTS INTEGRADO
+// ═══════════════════════════════════════════════════════════════════════
+let chatTTSEnabled = true;
+let chatOpen = false;
+let chatSpeaking = false;
+let chatInitDone = false;
+
+const CHAT_KNOWLEDGE = {
+  bienvenida: `¡Hola! Soy el asistente de Fátima Caldea, especialista en colorimetría capilar con 19 años de experiencia. ¿En qué te puedo ayudar hoy? Puedo orientarte sobre el estado de tu cabello, procesos químicos, cuidados o cómo usar la calculadora.`,
+  muyMaltratado: `Con cabello muy maltratado, los procesos químicos como decoloración están totalmente contraindicados. El cabello necesita recuperarse primero. Te recomiendo: primero, hidratación profunda con productos naturales como clara de huevo con aceite de oliva durante 30 minutos, retirando siempre con agua fría. Segundo, cortes de puntas cada 15 días para que el cabello respire y crezca fuerte. Tercero, evitar completamente el calor. Este proceso de recuperación puede tomar varios meses. ¿Quieres que te explique el protocolo de hidratación natural completo?`,
+  maltratado: `Con cabello maltratado, puedes aplicar tinte con oxidante de máximo 20 volúmenes, pero la decoloración no está recomendada. Es importante hacer prueba de mechón antes de cualquier proceso. Hidrata profundamente antes y después del servicio.`,
+  mechon: `La prueba de mechón es fundamental antes de cualquier proceso químico. Toma un mechón pequeño en zona poco visible, aplica 30 gramos de polvo decolorante con agua oxigenada de 30 volúmenes durante 20 minutos. Si la fibra se pone chiclosa, elástica o se rompe, no procedas con la decoloración. Si el mechón aclaró correctamente y la fibra quedó íntegra, puedes proceder con precaución.`,
+  hidratacion: `Para hidratar cabello maltratado con productos naturales: mezcla una clara de huevo con una cucharada de aceite de oliva. Aplica en todo el cabello durante 30 minutos. Retira siempre con agua fría, nunca tibia ni caliente, ya que el agua tibia abre la fibra capilar y causa más daño. Repite cada semana para mejores resultados. Recuerda que el cabello respira por las puntas, así que los cortes mensuales son esenciales.`,
+  decoloracion: `Para la decoloración correcta, primero verifica el estado estructural de tu cabello. Con cabello virgen o sano, puedes usar hasta 30 o 40 volúmenes. Con color previo, máximo 20 volúmenes. Con cabello maltratado, solo tinte, sin decoloración. Con cabello muy maltratado, ningún proceso químico. Siempre realiza prueba de mechón previa.`,
+  tinte: `El módulo A de la calculadora te ayuda con el tinte profesional. Selecciona el largo de tu cabello, el nivel actual y el nivel deseado. La calculadora te indica la fórmula exacta, los gramos necesarios, el oxidante recomendado y el presupuesto completo. ¿Quieres que te explique cómo funciona cada sección?`,
+  modA: `El Módulo A es para Tinte Profesional. Funciona así: primero selecciona el largo del cabello, luego el nivel actual con la barra de colores, después el nivel objetivo deseado. La calculadora aplica la Teoría de Howard para indicar el pigmento residual y el corrector necesario. Luego selecciona las zonas: raíces, medios o puntas. Elige el color con la paleta completa, configura el oxidante y el precio. Al calcular, obtienes la fórmula exacta, gramos, tubos y presupuesto completo.`,
+  modB: `El Módulo B es para Decoloración. Disponible para cabello virgen, sano con color o con procesos químicos leves. Selecciona la técnica: total, mechas, balayaje, ombré, babylights, highlights, solo raíces o puntas. Indica nivel actual y objetivo, la calculadora calcula automáticamente los tonos a levantar y las sesiones necesarias. Si el lift es mayor a 6 niveles, el plan multi-sesión es obligatorio.`,
+  modE: `El Módulo E es para Colores Fantasía. La paleta incluye más de 30 colores: rosas, azules, verdes, violetas, mermaid, galaxy, y más. La calculadora verifica automáticamente si necesitas pre-aclarado y cuántos niveles te faltan. Muy importante: los colores fantasía requieren base muy clara, generalmente nivel 9 o 10, para que el color se vea intenso y verdadero.`,
+  modF: `El Módulo F es para Corrección de Color. Detecta 10 tipos de errores comunes: demasiado cálido, bandas, sub-proceso, efecto verde, demasiado frío, sobre-proceso, oxidación prematura, efecto morado, cobertura de canas y color fantasía residual. Para cada error te indica el corrector exacto y el protocolo de aplicación basado en la Teoría de Howard.`,
+  canas: `Para la cobertura de canas, usa tinte oxidativo de 20 volúmenes con base de cobertura. El tiempo de exposición debe ser de 45 minutos. Si tienes más del 50 por ciento de canas, usa el módulo A con el selector de porcentaje de canas que aparece en la sección de raíces. La calculadora ajusta la fórmula automáticamente.`,
+  default: `Entiendo tu consulta. Para darte la mejor orientación, ¿podrías decirme el estado actual de tu cabello? Por ejemplo: si es virgen, si tiene color previo, si ha tenido procesos químicos, o si está maltratado. Con esa información puedo guiarte mejor sobre qué proceso es adecuado para ti.`
+};
+
+const CHAT_QUICK_OPTIONS = [
+  {label:"🔴 Cabello muy maltratado", key:"muyMaltratado"},
+  {label:"🧪 Prueba de mechón", key:"mechon"},
+  {label:"🌿 Hidratación natural", key:"hidratacion"},
+  {label:"🎨 Decoloración", key:"decoloracion"},
+  {label:"✂ Módulo A · Tinte", key:"modA"},
+  {label:"💜 Colores Fantasía", key:"modE"},
+  {label:"🔧 Corrección de color", key:"modF"},
+  {label:"🩶 Cobertura de canas", key:"canas"},
+];
+
+function getChatResponse(txt) {
+  const t = txt.toLowerCase();
+  if(t.includes('muy malt') || t.includes('muy dañ') || t.includes('calva') || t.includes('rompe') || t.includes('quemado')) return 'muyMaltratado';
+  if(t.includes('malt') || t.includes('dañ')) return 'maltratado';
+  if(t.includes('mechon') || t.includes('mechón') || t.includes('prueba')) return 'mechon';
+  if(t.includes('hidrat') || t.includes('natural') || t.includes('huevo') || t.includes('aceite')) return 'hidratacion';
+  if(t.includes('decol') || t.includes('decoloración') || t.includes('aclar')) return 'decoloracion';
+  if(t.includes('tinte') || t.includes('mod a') || t.includes('módulo a')) return 'modA';
+  if(t.includes('fantasia') || t.includes('fantasía') || t.includes('mod e') || t.includes('rosa') || t.includes('azul') || t.includes('mermaid')) return 'modE';
+  if(t.includes('correc') || t.includes('mod f') || t.includes('error')) return 'modF';
+  if(t.includes('cana') || t.includes('blanco')) return 'canas';
+  if(t.includes('como') || t.includes('cómo') || t.includes('mod b') || t.includes('decol')) return 'modB';
+  return 'default';
+}
+
+function speakChat(text) {
+  if(!chatTTSEnabled || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'es-ES'; utt.rate = 0.91; utt.pitch = 1.06; utt.volume = 1.0;
+  const voces = window.speechSynthesis.getVoices();
+  const voz = voces.find(v=>v.name.toLowerCase().includes('google')&&v.lang==='es-ES')
+    || voces.find(v=>v.lang==='es-ES')
+    || voces.find(v=>v.lang.startsWith('es')) || null;
+  if(voz) utt.voice = voz;
+  utt.onstart = () => {
+    chatSpeaking = true;
+    const bar = document.getElementById('chat-audio-bar');
+    if(bar) bar.style.display = 'flex';
+  };
+  utt.onend = utt.onerror = () => {
+    chatSpeaking = false;
+    const bar = document.getElementById('chat-audio-bar');
+    if(bar) bar.style.display = 'none';
+  };
+  window.speechSynthesis.speak(utt);
+}
+
+function stopChatTTS() {
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  chatSpeaking = false;
+  const bar = document.getElementById('chat-audio-bar');
+  if(bar) bar.style.display = 'none';
+}
+
+function toggleChatTTS() {
+  chatTTSEnabled = !chatTTSEnabled;
+  const btn = document.getElementById('chat-tts-toggle');
+  if(btn) {
+    btn.textContent = chatTTSEnabled ? '🔊 VOZ' : '🔇 MUDO';
+    btn.style.borderColor = chatTTSEnabled ? 'rgba(0,212,255,.3)' : 'rgba(248,113,113,.3)';
+    btn.style.color = chatTTSEnabled ? '#00d4ff' : '#f87171';
+  }
+  if(!chatTTSEnabled) stopChatTTS();
+}
+
+function addChatMsg(text, who, key) {
+  const msgs = document.getElementById('chat-msgs');
+  if(!msgs) return;
+  const msgEl = document.createElement('div');
+  msgEl.className = `chat-msg ${who}`;
+  const avatar = document.createElement('div');
+  avatar.className = `chat-msg-avatar ${who}`;
+  avatar.textContent = who === 'bot' ? '💎' : '👤';
+  const bubble = document.createElement('div');
+  bubble.className = `chat-bubble ${who}`;
+  bubble.innerHTML = text.replace(/\n/g,'<br>');
+  if(who === 'bot') {
+    const ttsBtn = document.createElement('div');
+    ttsBtn.className = 'tts-play';
+    ttsBtn.innerHTML = '🔊 Escuchar';
+    const msgText = text;
+    ttsBtn.onclick = () => speakChat(msgText);
+    bubble.appendChild(document.createElement('br'));
+    bubble.appendChild(ttsBtn);
+  }
+  msgEl.appendChild(avatar);
+  msgEl.appendChild(bubble);
+  msgs.appendChild(msgEl);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping(cb, delay=1100) {
+  const msgs = document.getElementById('chat-msgs');
+  const typing = document.createElement('div');
+  typing.className = 'chat-msg bot';
+  typing.id = 'chat-typing-indicator';
+  typing.innerHTML = `<div class="chat-msg-avatar bot">💎</div><div class="chat-bubble bot"><div class="chat-typing"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
+  setTimeout(() => {
+    const t = document.getElementById('chat-typing-indicator');
+    if(t) t.remove();
+    cb();
+  }, delay);
+}
+
+function showChatOptions(keys) {
+  const row = document.getElementById('chat-options-row');
+  if(!row) return;
+  row.innerHTML = '';
+  const filtered = keys ? CHAT_QUICK_OPTIONS.filter(o=>keys.includes(o.key)) : CHAT_QUICK_OPTIONS;
+  filtered.slice(0,4).forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'chat-opt-btn';
+    btn.textContent = opt.label;
+    btn.onclick = () => {
+      addChatMsg(opt.label, 'user');
+      row.innerHTML = '';
+      showTyping(() => {
+        const resp = CHAT_KNOWLEDGE[opt.key] || CHAT_KNOWLEDGE.default;
+        addChatMsg(resp, 'bot', opt.key);
+        speakChat(resp);
+        showChatOptions();
+      });
+    };
+    row.appendChild(btn);
+  });
+}
+
+function sendChatMsg() {
+  const inp = document.getElementById('chat-input');
+  if(!inp || !inp.value.trim()) return;
+  const txt = inp.value.trim();
+  inp.value = '';
+  addChatMsg(txt, 'user');
+  const row = document.getElementById('chat-options-row');
+  if(row) row.innerHTML = '';
+  showTyping(() => {
+    const key = getChatResponse(txt);
+    const resp = CHAT_KNOWLEDGE[key];
+    addChatMsg(resp, 'bot');
+    speakChat(resp);
+    showChatOptions();
+  }, 900);
+}
+
+function toggleChat() {
+  const panel = document.getElementById('chat-panel');
+  const badge = document.getElementById('chat-badge');
+  chatOpen = !chatOpen;
+  if(chatOpen) {
+    panel.classList.add('open');
+    if(badge) badge.style.display = 'none';
+    if(!chatInitDone) {
+      chatInitDone = true;
+      // Mensaje de bienvenida automático con TTS
+      setTimeout(() => {
+        showTyping(() => {
+          addChatMsg(CHAT_KNOWLEDGE.bienvenida, 'bot');
+          speakChat(CHAT_KNOWLEDGE.bienvenida);
+          showChatOptions();
+        }, 600);
+      }, 300);
+    }
+  } else {
+    panel.classList.remove('open');
+    stopChatTTS();
+  }
+}
+
+// Mostrar badge al inicio para llamar la atención
+setTimeout(() => {
+  const badge = document.getElementById('chat-badge');
+  if(badge && !chatOpen) badge.style.display = 'flex';
+}, 2000);
+
+// Precargar voces
+if(window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+document.addEventListener('DOMContentLoaded', () => { initCR(); });
+</script>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+const {useState,useMemo,useRef,useCallback,useEffect} = React;
+
+// ═══ TEXTOS TTS PROFESIONALES ════════════════════════════════════════
+const TEXTO_MECHON = "Antes de realizarte un proceso químico, es fundamental que realices una prueba de mechón para verificar si tu cabello lo soporta. Toma un mechón pequeño en una zona poco visible, aplica 30 gramos de polvo decolorante con agua oxigenada de 30 volúmenes durante 20 minutos. Observa el resultado: si el mechón aclaró correctamente y la fibra capilar se mantiene íntegra y resistente, puedes proceder con precaución. Si la fibra capilar se puso chiclosa, elástica, blanda o se rompió con facilidad, te recomiendo no proceder con procesos químicos de decoloración. La salud de tu cabello siempre es lo primero.";
+
+const TEXTO_HIDRATACION = "Se recomienda hidratación profunda con productos naturales que tienes en casa. Prepara una mascarilla con una clara de huevo y una cucharada de aceite de oliva, aplícala en todo el cabello durante 30 minutos y retira con abundante agua fría. Nunca uses agua tibia ni caliente, ya que el agua tibia abre la fibra capilar y puede causar más daño. Se recomienda también realizarse un corte de puntas para mejorar la salud del cabello, ya que el cabello respira por las puntas. En cabellos maltratados con altos procesos químicos, se recomienda realizar cortes mensuales para que el cabello respire, y aplicar hidrataciones profundas con productos naturales de forma regular. Recuerda, el cuidado constante es la clave de un cabello sano y hermoso. Atentamente, Fátima Caldea.";
+
+const TEXTO_MUY_MALTRATADO_INTRO = "Cabello muy maltratado detectado. Atención: no se recomienda ningún proceso químico en este momento. El cabello necesita recuperación completa antes de cualquier coloración o decoloración. Sigue el protocolo de recuperación que te presento a continuación.";
+
+const TEXTO_CORTE_PUNTAS = "El corte de puntas cada 15 días es fundamental para el crecimiento saludable del cabello muy maltratado. El cabello respira y crece desde las puntas. Eliminando las puntas dañadas, el cabello puede absorber mejor los nutrientes, ganar fuerza y crecer con más vitalidad. Este proceso, combinado con hidrataciones naturales, puede transformar tu cabello en pocos meses. Recuerda: paciencia y constancia son la clave. Atentamente, Fátima Caldea, tu colorimetrista profesional.";
+
+// ═══ TTS GLOBAL ═══════════════════════════════════════════════════════
+function speakPro(texto, onEnd){
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(texto);
+  utt.lang='es-ES'; utt.rate=0.93; utt.pitch=1.05; utt.volume=1.0;
+  const voces=window.speechSynthesis.getVoices();
+  const voz=voces.find(v=>v.name.toLowerCase().includes('google')&&v.lang==='es-ES')
+    ||voces.find(v=>v.lang==='es-ES')||voces.find(v=>v.lang.startsWith('es'))||null;
+  if(voz)utt.voice=voz;
+  if(onEnd)utt.onend=onEnd;
+  window.speechSynthesis.speak(utt);
+}
+
+// ═══ PANEL MUY MALTRATADO — COMPONENTE NUEVO ═════════════════════════
+function MuyMaltratadoPanel(){
+  const [playingIdx, setPlayingIdx] = useState(-1);
+  const waUrl = `https://wa.me/${atob("MzQ2MDQ4MjIyNjU=")}?text=${encodeURIComponent("Hola Fátima, necesito asesoría personalizada para cabello muy maltratado.")}`;
+
+  const items = [
+    {
+      icon:"⊘",
+      title:"NO PROCESOS QUÍMICOS",
+      text:"Con cabello muy maltratado NO se realizan decoloraciones ni tintes con oxidante alto. Hacerlo puede causar caída severa o calvicie. El cabello necesita recuperación completa primero.",
+      audio: TEXTO_MUY_MALTRATADO_INTRO,
+      color:"#f87171"
+    },
+    {
+      icon:"🌿",
+      title:"HIDRATACIÓN PROFUNDA NATURAL",
+      text:"Clara de huevo + aceite de oliva · 30 min · Agua fría. Nunca caliente. Sin cosméticos agresivos. Solo productos naturales por varios meses hasta recuperar la estructura capilar.",
+      audio: TEXTO_HIDRATACION,
+      color:"#4ade80"
+    },
+    {
+      icon:"✂",
+      title:"CORTES DE PUNTAS CADA 15 DÍAS",
+      text:"El cabello respira y crece por las puntas. Cortes frecuentes eliminan la fibra dañada, dan fuerza al crecimiento y permiten que el cabello se recupere más rápido.",
+      audio: TEXTO_CORTE_PUNTAS,
+      color:"#fb923c"
+    },
+    {
+      icon:"⏳",
+      title:"PROTOCOLO DE RECUPERACIÓN",
+      text:"Este proceso requiere varios meses de constancia: hidrataciones semanales + cortes cada 15 días. Solo después de la recuperación estructural completa se pueden considerar procesos químicos suaves.",
+      audio: "El protocolo de recuperación para cabello muy maltratado requiere constancia y paciencia. Semana uno y dos: hidratación con clara de huevo y aceite de oliva, y primer corte de puntas. Semana tres y cuatro: segunda hidratación y segundo corte. Este ciclo se repite durante tres a seis meses dependiendo del daño. Solo cuando la fibra capilar recupere su elasticidad y resistencia normal, se puede considerar un tinte suave con oxidante de diez volúmenes. Fátima Caldea estará disponible para hacer el diagnóstico cuando estés lista.",
+      color:"#00d4ff"
+    }
+  ];
+
+  const playItem = (idx) => {
+    if(playingIdx === idx) {
+      window.speechSynthesis.cancel();
+      setPlayingIdx(-1);
+      return;
+    }
+    setPlayingIdx(idx);
+    speakPro(items[idx].audio, () => setPlayingIdx(-1));
+  };
+
+  // Auto-play intro al montar
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPlayingIdx(0);
+      speakPro(TEXTO_MUY_MALTRATADO_INTRO, () => setPlayingIdx(-1));
+    }, 400);
+    return () => { clearTimeout(timer); window.speechSynthesis.cancel(); };
+  }, []);
+
+  return React.createElement("div", {className:"muy-malt-panel"},
+    React.createElement("div", {className:"muy-malt-title"},
+      "⊘ CABELLO MUY MALTRATADO — PROTOCOLO DE RECUPERACIÓN",
+      React.createElement("span", {style:{fontSize:8,color:"rgba(248,113,113,.6)",fontWeight:400}}, "Toca cada bloque para escuchar")
+    ),
+    items.map((item, idx) =>
+      React.createElement("div", {
+        key:idx,
+        className:`malt-rec-item${playingIdx===idx?" playing":""}`,
+        onClick: () => playItem(idx)
+      },
+        React.createElement("div", {className:"malt-rec-icon"}, item.icon),
+        React.createElement("div", {className:"malt-rec-content"},
+          React.createElement("div", {className:"malt-rec-title", style:{color:item.color}},
+            playingIdx===idx
+              ? React.createElement(React.Fragment, null,
+                  "🔊 REPRODUCIENDO",
+                  React.createElement("span", {className:"audio-pulse malt-rec-pulse"},
+                    React.createElement("span"), React.createElement("span"), React.createElement("span")
+                  )
+                )
+              : React.createElement(React.Fragment, null, "▶ ", item.title)
+          ),
+          React.createElement("div", {className:"malt-rec-text"}, item.text)
+        )
+      )
+    ),
+    React.createElement("div", {
+      style:{display:"flex",alignItems:"center",gap:8,background:"rgba(0,212,255,.05)",border:".5px solid rgba(0,212,255,.15)",borderRadius:10,padding:"10px 14px",marginTop:8}
+    },
+      React.createElement("span",{style:{fontSize:12}},"💡"),
+      React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.5)",fontFamily:"Orbitron,monospace",letterSpacing:".06em",lineHeight:1.5}},
+        "Para asesoría personalizada accede desde el menú principal del sistema."
+      )
+    )
+  );
+}
+
+// ═══ AUDIO PRO PANEL ════════════════════════════════════════════════
+function AudioProPanel({diagIdx}){
+  const [playingMechon, setPlayingMechon] = useState(false);
+  const [playingHidrat, setPlayingHidrat] = useState(false);
+  const playMechon = () => {setPlayingMechon(true);setPlayingHidrat(false);speakPro(TEXTO_MECHON,()=>setPlayingMechon(false));};
+  const playHidrat = () => {setPlayingHidrat(true);setPlayingMechon(false);speakPro(TEXTO_HIDRATACION,()=>setPlayingHidrat(false));};
+  const stopAll = () => {window.speechSynthesis&&window.speechSynthesis.cancel();setPlayingMechon(false);setPlayingHidrat(false);};
+  if(diagIdx<1)return null;
+  return React.createElement(React.Fragment,null,
+    diagIdx>=1&&React.createElement("div",{className:"audio-pro-panel"},
+      React.createElement("div",{className:"audio-pro-title"},"🧪 CONSEJO PROFESIONAL — PRUEBA DE MECHÓN",
+        (playingMechon||playingHidrat)&&React.createElement("span",{style:{marginLeft:8,fontSize:8,color:"#fb923c",cursor:"pointer"},onClick:stopAll},"⏹ PARAR")
+      ),
+      React.createElement("button",{className:`audio-btn${playingMechon?" playing":""}`,onClick:playMechon},
+        React.createElement("div",{className:"audio-btn-icon"},"🧪"),
+        React.createElement("div",{className:"audio-btn-content"},
+          React.createElement("div",{className:"audio-btn-label"},
+            playingMechon?React.createElement(React.Fragment,null,"🔊 REPRODUCIENDO",React.createElement("span",{className:"audio-pulse"},React.createElement("span"),React.createElement("span"),React.createElement("span"))):React.createElement(React.Fragment,null,"▶ PRUEBA DE MECHÓN — Toca para escuchar")
+          ),
+          React.createElement("div",{className:"audio-btn-text"},"Antes de cualquier proceso químico, aplica 30g de polvo decolorante con oxidante 30 Vol durante 20 min en un mechón pequeño. Si la fibra se pone chiclosa o elástica, ",React.createElement("strong",{style:{color:"#f87171"}},"no procedas"),"."))
+      )
+    ),
+    diagIdx>=2&&React.createElement("div",{className:"audio-green-panel"},
+      React.createElement("div",{className:"audio-pro-title"},"🌿 CUIDADOS PROFESIONALES — HIDRATACIÓN NATURAL"),
+      React.createElement("button",{className:`audio-btn${playingHidrat?" playing":""}`,onClick:playHidrat},
+        React.createElement("div",{className:"audio-btn-icon"},"🌿"),
+        React.createElement("div",{className:"audio-btn-content"},
+          React.createElement("div",{className:"audio-btn-label"},
+            playingHidrat?React.createElement(React.Fragment,null,"🔊 REPRODUCIENDO",React.createElement("span",{className:"audio-pulse"},React.createElement("span"),React.createElement("span"),React.createElement("span"))):React.createElement(React.Fragment,null,"▶ HIDRATACIÓN & CUIDADOS — Toca para escuchar")
+          ),
+          React.createElement("div",{className:"audio-btn-text"},"Clara de huevo + aceite de oliva, 30 min con agua fría. Corte de puntas mensual. El cabello ",React.createElement("strong",{style:{color:"#4ade80"}},"respira por las puntas"),". — Fátima Caldea"))
+      )
+    )
+  );
+}
+
+// ═══ TTS ENGINE ═══════════════════════════════════════════════════════
+function useTTS(){
+  const [playing,setPlaying]=useState(false);const [paused,setPaused]=useState(false);
+  const [txt,setTxt]=useState("");const [spd,setSpd]=useState(0.95);
+  const [voices,setVoices]=useState([]);const [vIdx,setVIdx]=useState(0);
+  useEffect(()=>{
+    const load=()=>{const all=window.speechSynthesis.getVoices();const es=all.filter(v=>v.lang.toLowerCase().startsWith('es'));setVoices(es.length?es:all);};
+    load();window.speechSynthesis.onvoiceschanged=load;return()=>{window.speechSynthesis.cancel();};
+  },[]);
+  const speak=useCallback((text)=>{
+    if(!text)return;window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);u.lang='es-ES';u.rate=spd;u.pitch=1.05;
+    if(voices[vIdx])u.voice=voices[vIdx];
+    u.onstart=()=>{setPlaying(true);setPaused(false);};
+    u.onend=u.onerror=()=>{setPlaying(false);setPaused(false);setTxt("");};
+    window.speechSynthesis.speak(u);setTxt(text.slice(0,110)+(text.length>110?"…":""));
+  },[spd,voices,vIdx]);
+  const pause=()=>{window.speechSynthesis.pause();setPlaying(false);setPaused(true);};
+  const resume=()=>{window.speechSynthesis.resume();setPlaying(true);setPaused(false);};
+  const stop=()=>{window.speechSynthesis.cancel();setPlaying(false);setPaused(false);setTxt("");};
+  return{playing,paused,txt,spd,setSpd,voices,vIdx,setVIdx,speak,pause,resume,stop};
+}
+const fbtn=col=>({flex:1,background:`${col}15`,border:`.5px solid ${col}50`,color:col,borderRadius:7,padding:"6px 8px",fontSize:9,fontWeight:700,fontFamily:"Orbitron,monospace",letterSpacing:".08em",cursor:"pointer"});
+
+function TTSFloat({t}){
+  const [open,setOpen]=useState(false);const [manual,setManual]=useState("");
+  const col=t.playing?"#00d4ff":t.paused?"#fb923c":"#8b5cf6";
+  return React.createElement(React.Fragment,null,
+    React.createElement("div",{style:{position:"fixed",bottom:22,right:88,zIndex:9500,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:10}},
+      open&&React.createElement("div",{style:{background:"rgba(10,12,24,.98)",border:`1px solid ${col}45`,borderRadius:14,padding:"1rem",width:288,boxShadow:`0 8px 32px rgba(0,0,0,.7),0 0 24px ${col}18`}},
+        React.createElement("div",{style:{fontFamily:"Orbitron,monospace",fontSize:9,color:col,letterSpacing:".14em",marginBottom:10}},"🔊 MÓDULO VOZ · TTS ENGINE"),
+        t.txt&&React.createElement("div",{style:{background:`${col}0e`,border:`.5px solid ${col}30`,borderRadius:8,padding:"7px 10px",marginBottom:10,fontSize:9,color:"rgba(232,234,240,.75)",lineHeight:1.6}},
+          React.createElement("div",{style:{fontSize:7,color:col,fontFamily:"Orbitron,monospace",marginBottom:3}},"● EN CURSO"),t.txt),
+        React.createElement("div",{style:{display:"flex",gap:6,marginBottom:10}},
+          t.playing&&React.createElement("button",{onClick:t.pause,style:fbtn("#fb923c")},"⏸ PAUSAR"),
+          t.paused&&React.createElement("button",{onClick:t.resume,style:fbtn("#4ade80")},"▶ SEGUIR"),
+          React.createElement("button",{onClick:t.stop,style:{...fbtn("#f87171"),flex:1}},"⏹ STOP")
+        ),
+        React.createElement("div",{style:{marginBottom:10}},
+          React.createElement("div",{style:{fontSize:7,color:"rgba(232,234,240,.4)",fontFamily:"Orbitron,monospace",letterSpacing:".12em",marginBottom:4}},"VELOCIDAD · ",t.spd,"×"),
+          React.createElement("input",{type:"range",min:0.5,max:2,step:0.05,value:t.spd,onChange:e=>t.setSpd(+e.target.value),style:{width:"100%",accentColor:col}})
+        ),
+        t.voices.length>0&&React.createElement("div",{style:{marginBottom:10}},
+          React.createElement("div",{style:{fontSize:7,color:"rgba(232,234,240,.4)",fontFamily:"Orbitron,monospace",letterSpacing:".12em",marginBottom:4}},"VOZ"),
+          React.createElement("select",{value:t.vIdx,onChange:e=>t.setVIdx(+e.target.value),style:{width:"100%",background:"rgba(0,0,0,.5)",border:".5px solid rgba(255,255,255,.12)",borderRadius:6,padding:"5px 8px",color:"#e8eaf0",fontSize:9,outline:"none"}},
+            t.voices.map((v,i)=>React.createElement("option",{key:i,value:i},v.name," (",v.lang,")"))
+          )
+        ),
+        React.createElement("div",{style:{fontSize:7,color:"rgba(232,234,240,.4)",fontFamily:"Orbitron,monospace",letterSpacing:".12em",marginBottom:4}},"TEXTO MANUAL"),
+        React.createElement("textarea",{rows:2,value:manual,onChange:e=>setManual(e.target.value),placeholder:"Escribe texto para leer...",style:{width:"100%",background:"rgba(0,0,0,.4)",border:".5px solid rgba(255,255,255,.08)",borderRadius:6,padding:"6px 8px",color:"#e8eaf0",fontSize:9,resize:"vertical",outline:"none",fontFamily:"Inter,sans-serif"}}),
+        React.createElement("button",{onClick:()=>manual&&t.speak(manual),style:{...fbtn(col),width:"100%",marginTop:5,padding:"7px",display:"block",textAlign:"center"}},"🔊 LEER AHORA")
+      ),
+      React.createElement("button",{onClick:()=>setOpen(o=>!o),style:{width:50,height:50,borderRadius:"50%",border:`2px solid ${col}`,background:t.playing?`radial-gradient(circle,${col}28,rgba(10,12,24,.98))`:"rgba(10,12,24,.98)",color:"#fff",fontSize:22,cursor:"pointer",transition:"all .3s",boxShadow:t.playing?`0 0 24px ${col}70`:"0 4px 16px rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center"}},
+        t.playing?"🔊":t.paused?"⏸":open?"✕":"🔈"
+      )
+    )
+  );
+}
+
+// ═══ TTS READ FUNCTIONS ══════════════════════════════════════════════
+const readA=r=>`Módulo A, Tinte Profesional. Fórmula: ${r.formula}. Total ${r.grams} gramos, ${r.tubos} tubos. Oxidante ${r.vol}. Precio al cliente ${r.clientPrice}. Ganancia neta ${r.profit}.`;
+const readB=r=>`Módulo B, Decoloración. Técnica ${r.tecnica}. Levantar ${r.tonos} tonos en ${r.sesiones} sesiones. Polvo ${r.polvo} gramos, oxidante ${r.oxidante} mililitros. Oxidante ${r.vol}. Precio ${r.clientPrice}. Ganancia ${r.profit}.`;
+const readC=r=>`Módulo C, Super Mezcla. ${r.mezcla}. Proporción ${r.prop} y ${100-r.prop} por ciento. Oxidante ${r.vol}. Precio ${r.clientPrice}. Ganancia ${r.profit}.`;
+const readE=r=>`Módulo E, Colores Fantasía. Color ${r.color.n}. ${r.grams} gramos. ${r.faltan===0?"Pre-aclarado no necesario":"Atención, pre-aclarado requerido, faltan "+r.faltan+" niveles"}. Oxidante ${r.vol}. Precio ${r.clientPrice}. Ganancia ${r.profit}.`;
+const readF=r=>`Módulo F, Corrección de Color. Error detectado: ${r.error.l}. Corrector sugerido: ${r.error.cor}. Protocolo: ${r.error.regla}. Oxidante ${r.vol}. Precio ${r.clientPrice}. Ganancia ${r.profit}.`;
+const readG=r=>`Módulo G, Super Aclarante. Lift total ${r.lift} niveles, ${r.sesiones} sesiones requeridas. Método ${r.tecnica}. Polvo ${r.polvo} gramos, oxidante ${r.oxidante} mililitros por sesión. Oxidante ${r.vol}. Precio total ${r.clientPrice}. Ganancia ${r.profit}.`;
+
+// ═══ DATOS ═══════════════════════════════════════════════════════════
+const NIVELES=[{l:1,h:"#0d0400"},{l:2,h:"#1e0a00"},{l:3,h:"#3d1800"},{l:4,h:"#5c2800"},{l:5,h:"#7a3c10"},{l:6,h:"#9a5a28"},{l:7,h:"#b87840"},{l:8,h:"#d09858"},{l:9,h:"#e8ba70"},{l:10,h:"#f8d888"}];
+const COLORES={
+  Natural:[{n:"Negro 1.0",c:"1.0",h:"#0d0400",l:1},{n:"Castaño Muy Oscuro 2.0",c:"2.0",h:"#1e0a00",l:2},{n:"Castaño Oscuro 3.0",c:"3.0",h:"#3d1800",l:3},{n:"Castaño 4.0",c:"4.0",h:"#5c2800",l:4},{n:"Castaño Claro 5.0",c:"5.0",h:"#7a3c10",l:5},{n:"Rubio Oscuro 6.0",c:"6.0",h:"#9a5a28",l:6},{n:"Rubio 7.0",c:"7.0",h:"#b87840",l:7},{n:"Rubio Claro 8.0",c:"8.0",h:"#d09858",l:8},{n:"Rubio Muy Claro 9.0",c:"9.0",h:"#e8ba70",l:9},{n:"Extra Claro 10.0",c:"10.0",h:"#f8d888",l:10},{n:"Castaño Ceniza 4.01",c:"4.01",h:"#5a3020",l:4},{n:"Castaño Dorado 4.3",c:"4.3",h:"#6a3810",l:4},{n:"Castaño Cobre 5.4",c:"5.4",h:"#8a3818",l:5},{n:"Castaño Caoba 5.5",c:"5.5",h:"#7a2010",l:5},{n:"Rubio Ceniza 7.01",c:"7.01",h:"#a87848",l:7},{n:"Rubio Dorado 7.3",c:"7.3",h:"#c08030",l:7},{n:"Rubio Beige 8.13",c:"8.13",h:"#d4a868",l:8},{n:"Rubio Claro Nat 8.00",c:"8.00",h:"#d4a060",l:8},{n:"Extra Claro Nat 10.00",c:"10.00",h:"#f8d880",l:10},{n:"Rubio Irisado 9.2",c:"9.2",h:"#ddc8d8",l:9}],
+  Rubios:[{n:"Rubio Dorado 7.3",c:"7.3",h:"#c08030",l:7},{n:"Rubio Dorado Claro 8.3",c:"8.3",h:"#d49040",l:8},{n:"Rubio Miel 7.34",c:"7.34",h:"#c07828",l:7},{n:"Rubio Miel 8.34",c:"8.34",h:"#d48838",l:8},{n:"Rubio Ceniza 7.1",c:"7.1",h:"#b08858",l:7},{n:"Rubio Ceniza 8.1",c:"8.1",h:"#c89868",l:8},{n:"Rubio Ceniza 9.1",c:"9.1",h:"#dca878",l:9},{n:"Rubio Platino 10.1",c:"10.1",h:"#f0d090",l:10},{n:"Rubio Perla 10.01",c:"10.01",h:"#f4dca8",l:10},{n:"Rubio Irisado 8.2",c:"8.2",h:"#c8a0b8",l:8},{n:"Rubio Avellana 7.35",c:"7.35",h:"#b86828",l:7},{n:"Rubio Caramelo 6.34",c:"6.34",h:"#a86020",l:6},{n:"Superclaro 12.0",c:"12.0",h:"#fce8a8",l:10},{n:"Superclaro Ceniza 12.1",c:"12.1",h:"#fce8c0",l:10},{n:"Superclaro Dorado 12.3",c:"12.3",h:"#fce0a0",l:10},{n:"Platino Irisado 10.12",c:"10.12",h:"#f0d8c8",l:10},{n:"Rubio Extra Claro 10.3",c:"10.3",h:"#f8c060",l:10},{n:"Rubio Cobre Dorado 8.43",c:"8.43",h:"#d49040",l:8}],
+  Frios:[{n:"Ceniza 3.1",c:"3.1",h:"#302820",l:3},{n:"Ceniza 4.1",c:"4.1",h:"#5a4030",l:4},{n:"Ceniza 5.1",c:"5.1",h:"#785050",l:5},{n:"Ceniza 6.1",c:"6.1",h:"#987060",l:6},{n:"Ceniza 7.1",c:"7.1",h:"#b09070",l:7},{n:"Ceniza 8.1",c:"8.1",h:"#c8a880",l:8},{n:"Ceniza 9.1",c:"9.1",h:"#dcc090",l:9},{n:"Platino 10.1",c:"10.1",h:"#f0d8a0",l:10},{n:"Irisado 5.2",c:"5.2",h:"#686080",l:5},{n:"Irisado 6.2",c:"6.2",h:"#8878a0",l:6},{n:"Irisado 7.2",c:"7.2",h:"#a898b8",l:7},{n:"Irisado 8.2",c:"8.2",h:"#c8b0d0",l:8},{n:"Irisado 9.2",c:"9.2",h:"#dcc8e0",l:9},{n:"Mat 5.81",c:"5.81",h:"#705850",l:5},{n:"Mat 6.81",c:"6.81",h:"#907060",l:6},{n:"Mat 7.81",c:"7.81",h:"#b09070",l:7},{n:"Gris Perla 9.11",c:"9.11",h:"#dcd0c8",l:9},{n:"Lila 8.21",c:"8.21",h:"#c0a8c0",l:8},{n:"Platino Irisado 10.2",c:"10.2",h:"#e8d8e8",l:10},{n:"Ceniza Irisado 7.12",c:"7.12",h:"#a898a8",l:7},{n:"Lila Claro 9.21",c:"9.21",h:"#d8c0d8",l:9},{n:"Beige Irisado 8.12",c:"8.12",h:"#c0a8b0",l:8},{n:"Platino Beige 10.13",c:"10.13",h:"#f4e0b0",l:10},{n:"Rubio Gris 8.11",c:"8.11",h:"#c8b890",l:8}],
+  Calidos:[{n:"Cobre 4.4",c:"4.4",h:"#8a3010",l:4},{n:"Cobre 5.4",c:"5.4",h:"#a84020",l:5},{n:"Cobre 6.4",c:"6.4",h:"#c05030",l:6},{n:"Cobre 7.4",c:"7.4",h:"#d06040",l:7},{n:"Cobre 8.4",c:"8.4",h:"#e07050",l:8},{n:"Dorado 5.3",c:"5.3",h:"#985020",l:5},{n:"Dorado 6.3",c:"6.3",h:"#b06828",l:6},{n:"Dorado 7.3",c:"7.3",h:"#c07828",l:7},{n:"Dorado 8.3",c:"8.3",h:"#d48838",l:8},{n:"Dorado 9.3",c:"9.3",h:"#e49848",l:9},{n:"Avellana 5.35",c:"5.35",h:"#904818",l:5},{n:"Avellana 7.35",c:"7.35",h:"#b86828",l:7},{n:"Caramelo 6.34",c:"6.34",h:"#aa5e22",l:6},{n:"Caramelo 7.34",c:"7.34",h:"#be6e2a",l:7},{n:"Miel 8.34",c:"8.34",h:"#d07e30",l:8},{n:"Miel 9.34",c:"9.34",h:"#e09040",l:9},{n:"Naranja 6.46",c:"6.46",h:"#b04820",l:6},{n:"Canela 7.44",c:"7.44",h:"#c06828",l:7},{n:"Toffee 8.44",c:"8.44",h:"#d07830",l:8},{n:"Cobre Intenso 5.45",c:"5.45",h:"#a03818",l:5},{n:"Bronce 6.0",c:"T6.0",h:"#a87040",l:6},{n:"Miel Claro 10.34",c:"10.34",h:"#f0a858",l:10}],
+  Rojos:[{n:"Rojo 4.6",c:"4.6",h:"#780808",l:4},{n:"Rojo 5.6",c:"5.6",h:"#901010",l:5},{n:"Rojo 6.6",c:"6.6",h:"#a81818",l:6},{n:"Rojo 7.6",c:"7.6",h:"#c02020",l:7},{n:"Rojo 8.6",c:"8.6",h:"#d83030",l:8},{n:"Rojo Intenso 4.66",c:"4.66",h:"#700000",l:4},{n:"Caoba 4.5",c:"4.5",h:"#6a1818",l:4},{n:"Caoba 5.5",c:"5.5",h:"#882020",l:5},{n:"Caoba 6.5",c:"6.5",h:"#a02828",l:6},{n:"Caoba 7.5",c:"7.5",h:"#b83030",l:7},{n:"Frambuesa 5.26",c:"5.26",h:"#802050",l:5},{n:"Frambuesa 6.26",c:"6.26",h:"#982858",l:6},{n:"Borgoña 4.65",c:"4.65",h:"#681018",l:4},{n:"Cereza 5.62",c:"5.62",h:"#880020",l:5},{n:"Rojo Cobrizo 6.45",c:"6.45",h:"#a02810",l:6},{n:"Rojo Vino 4.52",c:"4.52",h:"#680830",l:4},{n:"Rojo Fuego 7.66",c:"7.66",h:"#c01010",l:7},{n:"Caoba Nat 5.56",c:"5.56",h:"#8a1818",l:5},{n:"Rojo Violeta 5.52",c:"5.52",h:"#802040",l:5},{n:"Castaño Rojo 4.45",c:"4.45",h:"#6a1808",l:4}],
+  Irisados:[{n:"Irisado 5.2",c:"5.2",h:"#686080",l:5},{n:"Irisado 6.2",c:"6.2",h:"#8878a0",l:6},{n:"Irisado 7.2",c:"7.2",h:"#a898b8",l:7},{n:"Irisado 8.2",c:"8.2",h:"#c0b0d0",l:8},{n:"Irisado 9.2",c:"9.2",h:"#d8c8e0",l:9},{n:"Violeta 5.22",c:"5.22",h:"#684878",l:5},{n:"Violeta 6.22",c:"6.22",h:"#806090",l:6},{n:"Violeta 7.22",c:"7.22",h:"#9878a8",l:7},{n:"Violeta 8.22",c:"8.22",h:"#b098c0",l:8},{n:"Malva 6.20",c:"6.20",h:"#907088",l:6},{n:"Malva 7.20",c:"7.20",h:"#a888a0",l:7},{n:"Lila 8.21",c:"8.21",h:"#c0a8c0",l:8},{n:"Lila 9.21",c:"9.21",h:"#d8c0d8",l:9},{n:"Platino Violeta 10.22",c:"10.22",h:"#e8d0e0",l:10},{n:"Platino Irisado 10.2",c:"10.2",h:"#e8d8e8",l:10},{n:"Beige Irisado 8.12",c:"8.12",h:"#c0a8b0",l:8}],
+  Fantasia:[{n:"Rosa Bebé",c:"F.RBe",h:"#FFE4EC",l:10},{n:"Rosa Pastel",c:"F.RPa",h:"#FFB3C6",l:10},{n:"Rosa Intenso",c:"F.RI",h:"#E91E63",l:9},{n:"Fucsia",c:"F.Fu",h:"#FF0090",l:9},{n:"Magenta",c:"F.Mg",h:"#FF00FF",l:9},{n:"Coral",c:"F.Co",h:"#FF8A65",l:9},{n:"Lila Pastel",c:"F.LP",h:"#D7B8E8",l:10},{n:"Lila",c:"F.Li",h:"#C880E0",l:9},{n:"Violeta",c:"F.Vi",h:"#9B59B6",l:9},{n:"Lavanda",c:"F.La",h:"#E6CCFF",l:10},{n:"Azul Pastel",c:"F.AP",h:"#B3D4F0",l:10},{n:"Azul Cielo",c:"F.AC",h:"#87CEEB",l:10},{n:"Azul",c:"F.Az",h:"#2196F3",l:9},{n:"Azul Eléctrico",c:"F.AE",h:"#00B0FF",l:9},{n:"Turquesa",c:"F.Tu",h:"#00BCD4",l:9},{n:"Verde Menta",c:"F.VM",h:"#69F0AE",l:10},{n:"Verde Esmeralda",c:"F.VE",h:"#00C853",l:9},{n:"Naranja",c:"F.Na",h:"#FF9800",l:10},{n:"Rose Gold",c:"F.RG",h:"#E8B4B8",l:10},{n:"Champagne",c:"F.Cha",h:"#FAE0C0",l:10},{n:"Granate",c:"F.Gr",h:"#880E4F",l:9},{n:"Rojo Brillante",c:"F.RBr",h:"#FF1744",l:9},{n:"Plata",c:"F.Pl",h:"#A8A9AD",l:10},{n:"Dorado Metal",c:"F.DM",h:"#D4AF37",l:9},{n:"Galaxy",c:"F.Ga",h:"#2E0057",l:9},{n:"Unicornio",c:"F.Un",h:"#E040FB",l:10},{n:"Cotton Candy",c:"F.CC",h:"#FFB3DE",l:10},{n:"Mermaid",c:"F.Mr",h:"#00ACC1",l:10},{n:"Fresa",c:"F.Fr",h:"#FC5A8D",l:10},{n:"Zafiro",c:"F.Za",h:"#0F52BA",l:9},{n:"Amarillo Dorado",c:"F.AD",h:"#FFD700",l:10},{n:"Neon Mix",c:"F.NM",h:"#CCFF00",l:9}],
+  Grises:[{n:"Gris Claro",c:"G.1",h:"#d0d0d0",l:9},{n:"Gris Medio",c:"G.2",h:"#a8a8a8",l:7},{n:"Gris Oscuro",c:"G.3",h:"#707070",l:5},{n:"Gris Perla",c:"G.4",h:"#dcd0c8",l:9},{n:"Gris Azulado",c:"G.5",h:"#9098a8",l:7},{n:"Gris Plateado",c:"G.6",h:"#c0c8d0",l:9},{n:"Gris Cálido",c:"G.7",h:"#b8a898",l:7},{n:"Blanco Perla",c:"G.8",h:"#f0ece8",l:10},{n:"Platino Blanco",c:"G.9",h:"#f8f4f0",l:10},{n:"Blanco Hielo",c:"G.10",h:"#f4f8ff",l:10}],
+  Canas:[{n:"Cana Natural",c:"C.1",h:"#e8e0d8",l:9},{n:"Cana Perla",c:"C.2",h:"#f0e8e0",l:10},{n:"Cana Gris",c:"C.3",h:"#c8c0b8",l:8},{n:"Cana Plateada",c:"C.4",h:"#d8d4d0",l:9},{n:"Cobertura Total",c:"C.T",h:"#f4f0ec",l:10},{n:"Cobertura Parcial",c:"C.P",h:"#e0d8d0",l:9},{n:"Neutralizador Cana",c:"C.N",h:"#b8c0c8",l:8},{n:"Tónico Plata Cana",c:"C.TP",h:"#c8d0d8",l:9}],
+  Cobrizos:[{n:"Cobrizo Intenso 4",c:"Co.4",h:"#8a2808",l:4},{n:"Cobrizo 5",c:"Co.5",h:"#a03010",l:5},{n:"Cobrizo 6",c:"Co.6",h:"#b83818",l:6},{n:"Cobrizo 7",c:"Co.7",h:"#c84020",l:7},{n:"Cobrizo Dorado 6",c:"CoD.6",h:"#c05020",l:6},{n:"Cobrizo Dorado 7",c:"CoD.7",h:"#d06028",l:7},{n:"Cobrizo Oscuro 3",c:"Co.3",h:"#6a1808",l:3},{n:"Anaranjado 6",c:"An.6",h:"#d04010",l:6},{n:"Anaranjado 7",c:"An.7",h:"#e05018",l:7},{n:"Anaranjado Intenso",c:"An.I",h:"#e83000",l:6}],
+  Correctores:[{n:"Verde 0.07",c:"0.07",h:"#3CB371",l:0},{n:"Rojo 0.06",c:"0.06",h:"#DC143C",l:0},{n:"Violeta 0.02",c:"0.02",h:"#8B00FF",l:0},{n:"Azul 0.08",c:"0.08",h:"#1565C0",l:0},{n:"Naranja 0.04",c:"0.04",h:"#FF6D00",l:0},{n:"Amarillo 0.03",c:"0.03",h:"#FFD600",l:0},{n:"Ceniza 0.01",c:"0.01",h:"#9E9E9E",l:0},{n:"Rosado 0.05",c:"0.05",h:"#F48FB1",l:0},{n:"Dorado 0.33",c:"0.33",h:"#FFA000",l:0},{n:"Cobre 0.44",c:"0.44",h:"#E64A19",l:0},{n:"Irisado 0.22",c:"0.22",h:"#7B1FA2",l:0},{n:"Caoba 0.55",c:"0.55",h:"#880E4F",l:0},{n:"Neutraliz. Morado",c:"N.Mo",h:"#6A1B9A",l:0},{n:"Neutraliz. Azul",c:"N.Az",h:"#0D47A1",l:0},{n:"Neutraliz. Verde",c:"N.Ve",h:"#1B5E20",l:0},{n:"Tónico Plata",c:"T.Pl",h:"#B0BEC5",l:0},{n:"Tónico Violeta",c:"T.Vi",h:"#7B1FA2",l:0},{n:"Tónico Rosa",c:"T.Ro",h:"#F06292",l:0}]
+};
+const ERRORES_CORR=[{l:"Demasiado Cálido",s:"Tonos anaranjados no deseados",cor:"0.1 Ceniza",regla:"Ceniza neutraliza calidez. Aplicar sobre nivel objetivo."},{l:"Bandas de Color",s:"Coloración irregular, manchas",cor:"Tinte del nivel objetivo",regla:"Igualar con tinte del nivel base + corrector neutro."},{l:"Sub-proceso",s:"Color no tomó suficientemente",cor:"Repetir proceso + Vol correcto",regla:"Verificar oxidante. Repetir con 20 Vol. Tiempo completo."},{l:"Efecto Verde",s:"Reflejos verdosos post-ceniza",cor:"0.6 Corrector Rojo",regla:"Verde + Rojo = Neutro. Usar con precisión."},{l:"Demasiado Frío",s:"Tonos ceniza/verdosos excesivos",cor:"0.3 Dorado o 0.4 Cobre",regla:"Añadir calor al tono. Mezcla 1:3 con color base."},{l:"Sobre-proceso",s:"Cabello muy aclarado / dañado",cor:"Tinte nivel objetivo + 10 Vol",regla:"Usar oxidante suave. Hidratación previa. Tiempo reducido."},{l:"Oxidación Prematura",s:"Color se oxidó/cambió de tono",cor:"Corrector + tinte sellador",regla:"Sellar con tónico. Evaluar calidad del producto."},{l:"Efecto Morado",s:"Violeta excesivo post-tónico",cor:"0.3 Dorado",regla:"Dorado neutraliza violeta. Aplicar con 10 Vol."},{l:"Cobertura de Canas",s:"Canas sin cobertura total",cor:"Cobertura Cana + 20 Vol",regla:"Usar tinte oxidativo 20 Vol con base de cobertura. Tiempo 45 min."},{l:"Color Fantasía Residual",s:"Fantasía previo no eliminado",cor:"Decolorar + neutralizar",regla:"Decolorar con 20 Vol hasta base limpia. Aplicar corrector."}];
+const WHATSAPP_NUM=atob("MzQ2MDQ4MjIyNjU=");
+const lenNames=["Corto","Medio","Largo","Muy Largo"];
+const lenGramsArr=[40,80,120,160];
+const VOLS=["10 Vol","20 Vol","30 Vol","40 Vol"];
+const DIAG_LABELS=["Virgen / Natural","Sano con color","Procesos Químicos","Maltratado","Muy Maltratado"];
+const DIAG_COLORS=["#4ade80","#00d4ff","#fb923c","#f87171","#ef4444"];
+const DIAG_ICONS=["✓","●","!","⚠","⊘"];
+const getPigmentoResidual=lvl=>{
+  if(lvl>=9)return{pig:"Amarillo intenso",h:"#FFD700",cor:"0.22 Irisado Intenso",corH:"#9B59B6"};
+  if(lvl>=8)return{pig:"Amarillo dorado",h:"#DAA520",cor:"0.2 Violeta",corH:"#7D3C98"};
+  if(lvl>=7)return{pig:"Naranja dorado",h:"#E67E22",cor:"0.11 Ceniza Intenso",corH:"#7F8C8D"};
+  if(lvl>=6)return{pig:"Naranja",h:"#D35400",cor:"0.1 Ceniza",corH:"#95A5A6"};
+  if(lvl>=4)return{pig:"Rojo anaranjado",h:"#C0392B",cor:"0.7 Verde",corH:"#27AE60"};
+  return{pig:"Rojo profundo",h:"#922B21",cor:"0.3 Dorado",corH:"#F39C12"};
+};
+const getMaxVol=di=>di===3?0:di===2?1:3;
+const getVolRecomendado=(a,d,di,c)=>{
+  if(di===3)return"NO APLICAR";if(di===2)return"20 Vol máx.";if(c>70)return"20 Vol";
+  const diff=d-a;if(diff>2)return"30 Vol";if(diff>=0)return"20 Vol";return"10 Vol";
+};
+
+// ═══ CSS ══════════════════════════════════════════════════════════════
+const CSS=`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Inter',sans-serif;background:#09090f;color:#e8eaf0;scrollbar-width:thin;}.app{max-width:920px;margin:0 auto;padding:1rem 0.75rem 6rem;}.hdr{background:rgba(15,17,28,.97);border:.5px solid rgba(0,212,255,.15);border-radius:14px;padding:1rem 1.5rem;margin-bottom:1rem;position:relative;overflow:hidden;}.hdr::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#00d4ff,transparent);}.hdr-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:.08em;margin-top:6px;}.hdr-sys{font-family:'Orbitron',monospace;font-size:8px;color:#2ecc71;letter-spacing:.2em;background:rgba(46,204,113,.08);padding:3px 10px;border-radius:4px;border:.5px solid rgba(46,204,113,.25);}.hdr-sub{font-size:10px;color:rgba(232,234,240,.45);margin-top:2px;}.hdr-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}.pill{font-size:7px;font-family:'Orbitron',monospace;letter-spacing:.06em;padding:2px 7px;border-radius:4px;}.card{background:rgba(16,18,30,.97);border:.5px solid rgba(0,212,255,.1);border-radius:14px;padding:1.25rem;margin-bottom:.875rem;transition:border-color .3s;}.card:hover{border-color:rgba(139,92,246,.22);}.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;cursor:pointer;user-select:none;}.ch-static{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}.ch:hover .ct{color:#00d4ff;}.ctitle{display:flex;align-items:center;gap:10px;}.mb{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;flex-shrink:0;}.ct{font-family:'Orbitron',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;transition:color .2s;}.cs{font-size:10px;color:rgba(232,234,240,.42);margin-top:2px;}.arrow{font-size:10px;color:rgba(232,234,240,.4);transition:transform .25s;}.arrow.open{transform:rotate(180deg);}.lbl{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:.14em;color:rgba(232,234,240,.45);text-transform:uppercase;margin-bottom:6px;margin-top:.875rem;}.lbl:first-child{margin-top:0;}.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}.sbtn{padding:9px 7px;border:.5px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(255,255,255,.02);cursor:pointer;text-align:center;transition:all .2s;color:#e8eaf0;}.sbtn:hover{border-color:rgba(0,212,255,.3);background:rgba(0,212,255,.04);}.sbtn.on{border-color:#f472b6;background:rgba(244,114,182,.1);box-shadow:0 0 10px rgba(244,114,182,.1);}.sbtn-t{font-size:10px;font-weight:500;}.sbtn-s{font-size:9px;color:rgba(232,234,240,.42);margin-top:2px;}.lvbar{display:flex;gap:3px;}.lvcell{flex:1;height:36px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;border:2px solid transparent;transition:all .15s;font-size:9px;font-weight:600;}.lvcell:hover{opacity:.8;transform:scaleY(1.05);}.lvcell.on{border-color:rgba(255,255,255,.85);transform:scaleY(1.08);box-shadow:0 0 10px rgba(255,255,255,.12);}.ctabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}.ctab{padding:3px 9px;border-radius:20px;font-size:9px;cursor:pointer;border:.5px solid rgba(255,255,255,.1);background:transparent;color:rgba(232,234,240,.5);transition:all .2s;}.ctab:hover{color:#e8eaf0;border-color:rgba(255,255,255,.3);}.ctab.on{background:rgba(244,114,182,.18);color:#f472b6;border-color:#f472b6;}.srch{width:100%;background:rgba(0,0,0,.4);border:.5px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;color:#e8eaf0;font-size:11px;font-family:'Inter',sans-serif;margin-bottom:7px;outline:none;transition:border-color .2s;}.srch:focus{border-color:rgba(0,212,255,.4);}.cgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;max-height:130px;overflow-y:auto;scrollbar-width:thin;}.csw{aspect-ratio:1;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:all .15s;}.csw:hover{transform:scale(1.12);z-index:2;}.csw.on{border-color:white;box-shadow:0 0 8px rgba(255,255,255,.3);}.scrow{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.25);border-radius:8px;padding:7px 10px;margin-top:7px;border:.5px solid rgba(255,255,255,.06);}.sdot{width:22px;height:22px;border-radius:50%;flex-shrink:0;border:1.5px solid rgba(255,255,255,.2);}.vgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}.vbtn{padding:9px;border:.5px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(255,255,255,.02);cursor:pointer;text-align:center;font-size:11px;font-weight:500;color:rgba(232,234,240,.5);transition:all .2s;}.vbtn:hover{color:#00d4ff;border-color:rgba(0,212,255,.3);}.vbtn.on{border-color:#00d4ff;background:rgba(0,212,255,.07);color:#00d4ff;}.vbtn.blocked{opacity:.25;pointer-events:none;}.prow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:end;margin-top:.875rem;}.piw{position:relative;}.psym{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:rgba(232,234,240,.45);font-size:12px;}.pinput{width:100%;background:rgba(0,0,0,.4);border:.5px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 10px 9px 24px;color:#e8eaf0;font-size:16px;font-weight:500;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;}.pinput:focus{border-color:rgba(0,212,255,.4);}.mwrap{display:flex;align-items:center;gap:8px;}.mval{font-size:13px;font-weight:600;color:#f472b6;min-width:36px;text-align:right;font-family:'Orbitron',monospace;}input[type=range]{flex:1;accent-color:#f472b6;cursor:pointer;}.cbtn{width:100%;background:linear-gradient(90deg,#be185d,#f472b6,#e879a0);background-size:200% 100%;color:#fff;border:none;border-radius:10px;padding:13px;font-size:10px;font-weight:600;font-family:'Orbitron',monospace;letter-spacing:.12em;cursor:pointer;margin-top:.875rem;transition:all .3s;box-shadow:0 4px 20px rgba(244,114,182,.18);}.cbtn:hover{background-position:right;box-shadow:0 6px 28px rgba(244,114,182,.32);transform:translateY(-1px);}.cbtn.blue{background:linear-gradient(90deg,#1565c0,#60a5fa,#38bdf8);background-size:200% 100%;}.cbtn.teal{background:linear-gradient(90deg,#0f766e,#2dd4bf,#06b6d4);background-size:200% 100%;}.cbtn.violet{background:linear-gradient(90deg,#5b21b6,#a78bfa,#7c3aed);background-size:200% 100%;}.cbtn.gold{background:linear-gradient(90deg,#92400e,#fbbf24,#f59e0b);background-size:200% 100%;}.cbtn.green{background:linear-gradient(90deg,#14532d,#4ade80,#22c55e);background-size:200% 100%;}.dl-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:rgba(251,191,36,.08);border:.5px solid rgba(251,191,36,.3);color:#fbbf24;border-radius:8px;padding:10px;font-size:9px;font-weight:600;font-family:'Orbitron',monospace;letter-spacing:.1em;cursor:pointer;transition:all .2s;margin-top:8px;}.dl-btn:hover{background:rgba(251,191,36,.15);}.wa-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:rgba(37,211,102,.08);border:.5px solid rgba(37,211,102,.3);color:#25d366;border-radius:8px;padding:10px;font-size:9px;font-weight:600;font-family:'Orbitron',monospace;letter-spacing:.1em;cursor:pointer;transition:all .2s;margin-top:8px;text-decoration:none;}.wa-btn:hover{background:rgba(37,211,102,.15);}.tts-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,212,255,.08);border:.5px solid rgba(0,212,255,.25);border-radius:6px;padding:3px 8px;font-size:8px;color:#00d4ff;font-family:'Orbitron',monospace;letter-spacing:.1em;cursor:pointer;transition:all .2s;}.tts-badge:hover{background:rgba(0,212,255,.15);}.rp{background:linear-gradient(135deg,rgba(18,8,14,.98),rgba(24,12,20,.98));border:.5px solid rgba(244,114,182,.2);border-radius:12px;padding:1.25rem;margin-top:.875rem;position:relative;overflow:hidden;}.rp::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#f472b6,transparent);opacity:.4;}.rp.blue{border-color:rgba(96,165,250,.2);}.rp.blue::before{background:linear-gradient(90deg,transparent,#60a5fa,transparent);}.rp.teal{border-color:rgba(45,212,191,.2);}.rp.teal::before{background:linear-gradient(90deg,transparent,#2dd4bf,transparent);}.rp.violet{border-color:rgba(167,139,250,.25);}.rp.violet::before{background:linear-gradient(90deg,transparent,#a78bfa,transparent);}.rp.green{border-color:rgba(74,222,128,.2);}.rp.green::before{background:linear-gradient(90deg,transparent,#4ade80,transparent);}.rp.gold{border-color:rgba(251,191,36,.25);}.rp.gold::before{background:linear-gradient(90deg,transparent,#fbbf24,transparent);}.rcards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.875rem;}.rc{background:rgba(255,255,255,.04);border-radius:8px;padding:10px;text-align:center;border:.5px solid rgba(255,255,255,.06);}.rcv{font-size:18px;font-weight:600;font-family:'Orbitron',monospace;}.rcl{font-size:8px;color:rgba(232,234,240,.42);margin-top:3px;letter-spacing:.1em;text-transform:uppercase;}.rrow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:.5px solid rgba(255,255,255,.05);}.rrow:last-child{border-bottom:none;}.rl{font-size:10px;color:rgba(232,234,240,.5);letter-spacing:.05em;text-transform:uppercase;}.rv{font-size:12px;font-weight:500;}.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:1rem 0;}.stat{background:rgba(0,0,0,.22);border-radius:8px;padding:10px;text-align:center;border:.5px solid rgba(255,255,255,.06);}.statv{font-size:22px;font-weight:700;font-family:'Orbitron',monospace;}.statl{font-size:8px;color:rgba(232,234,240,.45);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;}.ntbl{width:100%;border-collapse:collapse;}.ntbl tr{border-bottom:.5px solid rgba(255,255,255,.05);}.ntbl tr:last-child{border-bottom:none;}.ntbl td{padding:8px 7px;font-size:11px;vertical-align:middle;}.nbadge{font-size:9px;color:rgba(232,234,240,.4);font-family:'Orbitron',monospace;letter-spacing:.05em;}.pdot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;}.cor-sug{display:flex;align-items:center;gap:10px;background:rgba(0,212,255,.05);border:.5px solid rgba(0,212,255,.2);border-radius:8px;padding:10px 12px;margin:10px 0;}.cor-sug-lbl{font-size:9px;color:#00d4ff;text-transform:uppercase;letter-spacing:.1em;font-family:'Orbitron',monospace;}.cor-sug-val{font-size:13px;font-weight:600;color:#00d4ff;}.cor-sug-rule{font-size:10px;color:rgba(232,234,240,.45);margin-top:2px;line-height:1.5;}.zona-edit-box{background:rgba(0,0,0,.2);border-radius:8px;padding:12px;margin-bottom:8px;border:.5px solid rgba(0,212,255,.1);}.proto{background:linear-gradient(135deg,rgba(10,8,20,.99),rgba(16,10,28,.99));border:.5px solid rgba(139,92,246,.3);border-radius:14px;padding:1.5rem;margin-top:1rem;position:relative;overflow:hidden;}.proto::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#8b5cf6,transparent);opacity:.6;}.proto-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#8b5cf6;letter-spacing:.12em;margin-bottom:.5rem;}.proto-sub{font-size:10px;color:rgba(232,234,240,.45);margin-bottom:1rem;}.proto-mod{margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:.5px solid rgba(255,255,255,.06);}.proto-mod:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}.proto-mod-title{font-family:'Orbitron',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;margin-bottom:.75rem;}.sesion{background:rgba(255,255,255,.03);border-radius:8px;padding:10px 12px;margin-bottom:8px;border:.5px solid rgba(255,255,255,.05);}.sesion-title{font-family:'Orbitron',monospace;font-size:9px;font-weight:600;color:#00d4ff;margin-bottom:5px;letter-spacing:.08em;}.sesion-line{font-size:11px;line-height:1.7;}.sesion-note{font-size:10px;color:rgba(232,234,240,.45);margin-top:4px;}.proto-total{display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;padding-top:1.25rem;border-top:.5px solid rgba(139,92,246,.25);}.proto-total-lbl{font-family:'Orbitron',monospace;font-size:11px;color:rgba(232,234,240,.5);letter-spacing:.1em;}.proto-total-val{font-family:'Orbitron',monospace;font-size:26px;font-weight:700;color:#8b5cf6;}.fadein{animation:fdin .3s ease;}@keyframes fdin{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}.presup-box{background:rgba(0,0,0,.3);border:.5px solid rgba(255,255,255,.08);border-radius:10px;padding:12px;margin-top:10px;}.presup-title{font-family:'Orbitron',monospace;font-size:9px;color:rgba(232,234,240,.5);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;}.presup-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid rgba(255,255,255,.04);}.presup-row:last-child{border-bottom:none;}.presup-lbl{font-size:10px;color:rgba(232,234,240,.55);}.presup-val{font-size:12px;font-weight:600;font-family:'Orbitron',monospace;}.adanger{background:rgba(248,113,113,.08);border:.5px solid rgba(248,113,113,.3);border-radius:8px;padding:9px 12px;margin-bottom:.875rem;font-size:11px;color:#f87171;line-height:1.5;}.awarn{background:rgba(251,146,60,.08);border:.5px solid rgba(251,146,60,.3);border-radius:8px;padding:9px 12px;margin-bottom:.875rem;font-size:11px;color:#fb923c;line-height:1.5;}.aok{background:rgba(74,222,128,.06);border:.5px solid rgba(74,222,128,.2);border-radius:8px;padding:9px 12px;margin-bottom:.875rem;font-size:11px;color:#4ade80;line-height:1.5;}`;
+
+// ═══ SUBCOMPONENTS ════════════════════════════════════════════════════
+function LvBar({value,onChange}){
+  return React.createElement("div",{className:"lvbar"},
+    NIVELES.map((n,i)=>React.createElement("div",{key:i,className:`lvcell${value===i?" on":""}`,style:{background:n.h},onClick:()=>onChange(i),title:`Nivel ${n.l}`},
+      React.createElement("span",{style:{color:i>=7?"#333":"#bbb"}},n.l)
+    ))
+  );
+}
+function ColorPalette({selectedCode,onSelect,tab,onTabChange,search,onSearchChange}){
+  const filtered=useMemo(()=>{const base=COLORES[tab]||[];if(!search)return base;const q=search.toLowerCase();return base.filter(c=>c.n.toLowerCase().includes(q)||c.c.toLowerCase().includes(q));},[tab,search]);
+  return React.createElement("div",null,
+    React.createElement("div",{className:"ctabs"},Object.keys(COLORES).map(t=>React.createElement("div",{key:t,className:`ctab${tab===t?" on":""}`,onClick:()=>{onTabChange(t);onSearchChange("");}},t,t!=="Natural"&&React.createElement("span",{style:{fontSize:7,opacity:.6}}," ",COLORES[t].length)))),
+    React.createElement("input",{className:"srch",placeholder:`Buscar en ${tab}...`,value:search,onChange:e=>onSearchChange(e.target.value)}),
+    React.createElement("div",{className:"cgrid"},filtered.map((c,i)=>React.createElement("div",{key:i,className:`csw${selectedCode===c.c?" on":""}`,style:{background:c.h},title:`${c.n} (${c.c})`,onClick:()=>onSelect(c)})))
+  );
+}
+function DiagSelect({value,onChange,label}){
+  return React.createElement("div",{style:{marginBottom:10}},
+    label&&React.createElement("div",{className:"lbl"},label),
+    React.createElement("div",{className:"g5"},
+      DIAG_LABELS.map((d,i)=>React.createElement("div",{key:i,style:{padding:"7px 4px",border:`.5px solid ${value===i?DIAG_COLORS[i]:"rgba(255,255,255,.07)"}`,borderRadius:8,background:value===i?`${DIAG_COLORS[i]}18`:"rgba(255,255,255,.02)",cursor:"pointer",textAlign:"center",transition:"all .2s"},onClick:()=>onChange(i)},
+        React.createElement("div",{style:{fontSize:12,marginBottom:3}},DIAG_ICONS[i]),
+        React.createElement("div",{style:{fontSize:8,fontWeight:500,color:value===i?DIAG_COLORS[i]:"rgba(232,234,240,.6)"}},d)
+      ))
+    )
+  );
+}
+
+// ═══ DiagAlert ACTUALIZADO — Muy Maltratado usa MuyMaltratadoPanel ══
+function DiagAlert({diagIdx}){
+  return React.createElement(React.Fragment,null,
+    diagIdx===4 && React.createElement(MuyMaltratadoPanel,null),
+    diagIdx===3 && React.createElement("div",{className:"adanger"},"⚠ Cabello MALTRATADO — No se recomienda decoloración ni procesos fuertes."),
+    diagIdx===2 && React.createElement("div",{className:"awarn"},"⚠ Procesos químicos detectados — Máximo 20 Vol. Prueba de mechón obligatoria."),
+    diagIdx===1 && React.createElement("div",{className:"awarn"},"⚠ Cabello con color previo — Verificar estado antes de procesos máximos."),
+    diagIdx===0 && React.createElement("div",{className:"aok"},"✓ Cabello virgen / natural — Todos los procesos permitidos."),
+    diagIdx < 4 && React.createElement(AudioProPanel,{diagIdx})
+  );
+}
+
+function VolSelector({value,onChange,diagIdx,label}){
+  const maxV=getMaxVol(diagIdx);
+  return React.createElement("div",null,
+    label&&React.createElement("div",{className:"lbl"},label),
+    React.createElement("div",{className:"vgrid"},
+      VOLS.map((v,i)=>{const blocked=i>maxV||diagIdx>=3;return React.createElement("div",{key:i,className:`vbtn${value===i?" on":""}${blocked?" blocked":""}`,onClick:()=>{if(!blocked)onChange(i);},title:blocked?`Bloqueado — máx. ${VOLS[maxV]}`:v},React.createElement("div",{style:{fontSize:11,fontWeight:600}},v),blocked&&React.createElement("div",{style:{fontSize:7,color:"#f87171",marginTop:2}},"bloqueado"));}))
+  );
+}
+function ZonaEditor({zonas,setZonas,colorActual,setColorActual,colorDeseado,setColorDeseado,canas,setCanas,zonaEdit,setZonaEdit,diagIdx}){
+  const [colorTab,setColorTab]=useState("Natural");const [colorSearch,setColorSearch]=useState("");
+  return React.createElement("div",null,
+    [["raices","Raíces"],["medios","Medios"],["puntas","Puntas"]].map(([k,label])=>
+      React.createElement("div",{key:k},
+        React.createElement("div",{className:"rrow",style:{paddingLeft:0,paddingRight:0}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,flex:1}},
+            React.createElement("div",{style:{width:18,height:18,borderRadius:4,border:`.5px solid ${zonas[k]?"#f472b6":"rgba(255,255,255,.18)"}`,background:zonas[k]?"#f472b6":"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff",transition:"all .2s"},onClick:()=>setZonas(z=>({...z,[k]:!z[k]}))},zonas[k]?"✓":""),
+            React.createElement("div",{style:{width:8,height:8,borderRadius:"50%",background:colorDeseado[k].h,flexShrink:0,border:"1px solid rgba(255,255,255,.2)"}}),
+            React.createElement("span",{style:{flex:1,fontSize:12,color:zonas[k]?"#e8eaf0":"rgba(232,234,240,.5)"}},label),
+            zonas[k]&&React.createElement(React.Fragment,null,
+              React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.4)",background:"rgba(255,255,255,.05)",padding:"2px 6px",borderRadius:4}},`Niv ${colorActual[k].l}`),
+              React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.4)",background:"rgba(255,255,255,.05)",padding:"2px 6px",borderRadius:4}},`→ ${colorDeseado[k].n}`),
+              k==="raices"&&canas>0&&React.createElement("span",{style:{fontSize:9,color:"#fbbf24",background:"rgba(251,191,36,.08)",padding:"2px 6px",borderRadius:4}},`${canas}% canas`),
+              React.createElement("span",{style:{fontSize:9,color:zonaEdit===k?"#00d4ff":"rgba(232,234,240,.4)",cursor:"pointer",padding:"2px 6px",borderRadius:4,border:`.5px solid ${zonaEdit===k?"rgba(0,212,255,.3)":"rgba(255,255,255,.08)"}`,background:zonaEdit===k?"rgba(0,212,255,.06)":"transparent"},onClick:e=>{e.stopPropagation();setZonaEdit(k);}},zonaEdit===k?"▼ editando":"▶ editar")
+            )
+          )
+        ),
+        zonas[k]&&zonaEdit===k&&React.createElement("div",{className:"zona-edit-box fadein"},
+          React.createElement("div",{className:"lbl"},`Nivel actual — ${label}`),
+          React.createElement(LvBar,{value:colorActual[k].l-1,onChange:v=>setColorActual(a=>({...a,[k]:NIVELES[v]}))}),
+          k==="raices"&&React.createElement(React.Fragment,null,
+            React.createElement("div",{className:"lbl",style:{marginTop:10}},"% de canas en raíces"),
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:5}},
+              React.createElement("input",{type:"range",min:0,max:100,step:10,value:canas,onChange:e=>setCanas(parseInt(e.target.value)),style:{flex:1,accentColor:"#fbbf24"}}),
+              React.createElement("span",{style:{fontSize:13,fontWeight:600,color:"#fbbf24",fontFamily:"Orbitron,monospace",minWidth:38}},`${canas}%`)
+            ),
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:5,marginBottom:6}},
+              [10,30,50,100].map(p=>React.createElement("div",{key:p,className:`sbtn${canas===p?" on":""}`,style:{padding:"5px 3px"},onClick:()=>setCanas(p)},React.createElement("div",{className:"sbtn-t",style:{fontSize:9}},`${p}%`),React.createElement("div",{className:"sbtn-s"},p===10?"Pocas":p===30?"Parcial":p===50?"Semibco":"Total")))
+            )
+          ),
+          React.createElement("div",{className:"lbl",style:{marginTop:10}},`Color deseado — ${label}`),
+          React.createElement(ColorPalette,{selectedCode:colorDeseado[k].c,onSelect:c=>setColorDeseado(d=>({...d,[k]:c})),tab:colorTab,onTabChange:setColorTab,search:colorSearch,onSearchChange:setColorSearch}),
+          React.createElement("div",{className:"scrow"},
+            React.createElement("div",{className:"sdot",style:{background:colorDeseado[k].h}}),
+            React.createElement("div",null,React.createElement("div",{style:{fontSize:11,fontWeight:500}},colorDeseado[k].n),React.createElement("div",{style:{fontSize:9,color:"rgba(232,234,240,.45)"}},`Código: ${colorDeseado[k].c} · Niv ${colorDeseado[k].l}`)),
+            React.createElement("div",{style:{marginLeft:"auto",textAlign:"right"}},React.createElement("div",{style:{fontSize:8,color:"rgba(232,234,240,.45)"}},"Vol recomendado"),React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"#00d4ff",fontFamily:"Orbitron,monospace"}},getVolRecomendado(colorActual[k].l,colorDeseado[k].l,diagIdx,k==="raices"?canas:0)))
+          ),
+          colorActual[k].l>colorDeseado[k].l&&React.createElement("div",{style:{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,marginTop:7,padding:"6px 10px",background:"rgba(0,0,0,.2)",borderRadius:7,border:".5px solid rgba(255,255,255,.06)"}},
+            React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.45)"}},"Pigmento residual (Howard):"),
+            React.createElement("span",{className:"pdot",style:{background:getPigmentoResidual(colorDeseado[k].l+1).h}}),
+            React.createElement("span",{style:{fontSize:10,fontWeight:600,color:getPigmentoResidual(colorDeseado[k].l+1).h}},getPigmentoResidual(colorDeseado[k].l+1).pig),
+            React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.3)"}},"→ corrector:"),
+            React.createElement("span",{className:"pdot",style:{background:getPigmentoResidual(colorDeseado[k].l+1).corH}}),
+            React.createElement("span",{style:{fontSize:10,color:getPigmentoResidual(colorDeseado[k].l+1).corH}},getPigmentoResidual(colorDeseado[k].l+1).cor)
+          )
+        )
+      )
+    )
+  );
+}
+function PresupBox({costo,precio,ganancia,color="#f472b6"}){
+  return React.createElement("div",{className:"presup-box"},
+    React.createElement("div",{className:"presup-title"},"Presupuesto del servicio"),
+    React.createElement("div",{className:"presup-row"},React.createElement("span",{className:"presup-lbl"},"Costo materiales"),React.createElement("span",{className:"presup-val",style:{color:"rgba(232,234,240,.7)"}},"$",costo)),
+    React.createElement("div",{className:"presup-row"},React.createElement("span",{className:"presup-lbl"},"Precio al cliente"),React.createElement("span",{className:"presup-val",style:{color}},"$",precio)),
+    React.createElement("div",{className:"presup-row"},React.createElement("span",{className:"presup-lbl"},"Ganancia neta"),React.createElement("span",{className:"presup-val",style:{color:"#4ade80"}},"+$",ganancia))
+  );
+}
+function DownloadBtn({label,contentRef}){
+  const download=useCallback(()=>{
+    if(!window.useCR(CR_COST,'download_'+label))return;
+    if(!contentRef.current)return;
+    const canvas=document.createElement("canvas");canvas.width=800;canvas.height=700;
+    const ctx=canvas.getContext("2d");ctx.fillStyle="#09090f";ctx.fillRect(0,0,800,700);
+    ctx.save();ctx.globalAlpha=0.15;ctx.fillStyle="#f472b6";ctx.font="bold 22px Arial";
+    ctx.translate(400,350);ctx.rotate(-30*Math.PI/180);
+    const waText="fatimahairstudio082.com  ©FÁTIMA CALDEA  ";
+    for(let row=-6;row<=6;row++)for(let col=-3;col<=3;col++)ctx.fillText(waText,col*340-340,row*60);
+    ctx.restore();
+    const grad=ctx.createLinearGradient(0,0,800,0);grad.addColorStop(0,"#7c3aed");grad.addColorStop(0.5,"#f472b6");grad.addColorStop(1,"#00d4ff");
+    ctx.fillStyle=grad;ctx.fillRect(0,0,800,4);
+    ctx.fillStyle="#f472b6";ctx.font="bold 17px Arial";ctx.fillText("✂ CALCULADORA CIENTÍFICA CROMÁTICA",40,32);
+    ctx.fillStyle="rgba(232,234,240,.5)";ctx.font="10px Arial";ctx.fillText("FÁTIMA CALDEA  ·  fatimahairstudio082.com  ·  "+new Date().toLocaleDateString("es-ES"),40,50);
+    ctx.strokeStyle="rgba(244,114,182,.35)";ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(40,62);ctx.lineTo(760,62);ctx.stroke();
+    ctx.fillStyle="#00d4ff";ctx.font="bold 11px Arial";ctx.fillText("MÓDULO: "+label.replace(/-/g," ").toUpperCase(),40,80);
+    ctx.strokeStyle="rgba(0,212,255,.2)";ctx.beginPath();ctx.moveTo(40,104);ctx.lineTo(760,104);ctx.stroke();
+    ctx.fillStyle="#e8eaf0";ctx.font="12px Arial";
+    const txt=contentRef.current.innerText||"";
+    const lines=txt.split("\n").filter(l=>l.trim()&&!l.trim().match(/^(⬇|DESCARGAR|CALCULAR|⊕|PROTOCOLO|GENERAR|OCULTAR|NUEVO|🗑|↩)/i)).slice(0,34);
+    lines.forEach((line,i)=>{
+      if(line.includes(":")){const parts=line.split(":");ctx.fillStyle="rgba(251,191,36,.75)";ctx.font="bold 11px Arial";ctx.fillText((parts[0]+":").substring(0,30),40,120+i*16);ctx.fillStyle="#e8eaf0";ctx.font="12px Arial";ctx.fillText(parts.slice(1).join(":").trim().substring(0,60),200,120+i*16);}
+      else{ctx.fillStyle="#e8eaf0";ctx.font="12px Arial";ctx.fillText(line.substring(0,90),40,120+i*16);}
+    });
+    ctx.strokeStyle="rgba(244,114,182,.25)";ctx.beginPath();ctx.moveTo(40,655);ctx.lineTo(760,655);ctx.stroke();
+    ctx.fillStyle="rgba(244,114,182,.6)";ctx.font="bold 9px Arial";ctx.fillText("© "+new Date().getFullYear()+" FÁTIMA CALDEA - Todos los derechos reservados",40,670);
+    ctx.fillStyle="rgba(232,234,240,.3)";ctx.font="9px Arial";ctx.fillText("Calculadora Científica Cromática v8.0  ·  fatimahairstudio082.com",40,684);
+    ctx.fillStyle=grad;ctx.fillRect(0,696,800,4);
+    const link=document.createElement("a");link.download=`${label}-${Date.now()}.jpg`;link.href=canvas.toDataURL("image/jpeg",.93);link.click();
+  },[contentRef,label]);
+  return React.createElement("button",{className:"dl-btn",onClick:download},"⬇ DESCARGAR FICHA JPG — ",label," (5 cr.)");
+}
+
+// ═══ APP PRINCIPAL ════════════════════════════════════════════════════
+function CalcApp(){
+  const tts=useTTS();
+  const [diagGlobal,setDiagGlobal]=useState(0);
+  const [openMods,setOpenMods]=useState({A:false,B:false,C:false,E:false,F:false,G:false});
+  const tog=k=>setOpenMods(m=>({...m,[k]:!m[k]}));
+
+  // MOD A
+  const [aLenIdx,setALenIdx]=useState(1);const aGrams=lenGramsArr[aLenIdx];
+  const [aZonas,setAZonas]=useState({raices:true,medios:false,puntas:false});
+  const [aColorActual,setAColorActual]=useState({raices:NIVELES[3],medios:NIVELES[3],puntas:NIVELES[3]});
+  const [aColorDeseado,setAColorDeseado]=useState({raices:{n:"Castaño Claro 5.0",c:"5.0",h:"#7a3c10",l:5},medios:{n:"Rubio 7.0",c:"7.0",h:"#b87840",l:7},puntas:{n:"Rubio Claro 8.0",c:"8.0",h:"#d09858",l:8}});
+  const [aCanas,setACanas]=useState(0);const [aZonaEdit,setAZonaEdit]=useState("raices");
+  const [aLvlActual,setALvlActual]=useState(3);const [aLvlDeseado,setALvlDeseado]=useState(6);
+  const pigResidualA=getPigmentoResidual(aLvlDeseado+1);
+  const [aTecnica,setATecnica]=useState(0);
+  const aTonos=Math.max(0,aLvlDeseado-aLvlActual);const aSesiones=aTonos<=2?1:aTonos<=4?2:3;
+  const [aVol,setAVol]=useState(1);const [aPrecio,setAPrecio]=useState(15);const [aMargen,setAMargen]=useState(60);
+  const [resultA,setResultA]=useState(null);const refA=useRef();
+  const calcA=()=>{
+    if(!window.useCR(CR_COST,'calc_mod_A'))return;
+    const tubos=aGrams/60,costo=tubos*aPrecio,precio=costo*(1+aMargen/100);
+    const activas=Object.entries(aZonas).filter(([,v])=>v).map(([k])=>k);
+    const formula=activas.map(z=>`${z.charAt(0).toUpperCase()+z.slice(1)}: ${aColorDeseado[z].n} (${aColorDeseado[z].c})`).join(" | ");
+    const r={formula,grams:aGrams,tubos:tubos.toFixed(1),vol:VOLS[Math.min(aVol,getMaxVol(diagGlobal))],cost:costo.toFixed(2),clientPrice:precio.toFixed(2),profit:(precio-costo).toFixed(2)};
+    setResultA(r);tts.speak(readA(r));
+  };
+
+  // MOD B
+  const [bLenIdx,setBLenIdx]=useState(1);const bGrams=lenGramsArr[bLenIdx];
+  const [bZonas,setBZonas]=useState({raices:true,medios:false,puntas:false});
+  const [bColorActual,setBColorActual]=useState({raices:NIVELES[3],medios:NIVELES[3],puntas:NIVELES[3]});
+  const [bColorDeseado,setBColorDeseado]=useState({raices:{n:"Castaño Claro 5.0",c:"5.0",h:"#7a3c10",l:5},medios:{n:"Rubio 7.0",c:"7.0",h:"#b87840",l:7},puntas:{n:"Rubio Claro 8.0",c:"8.0",h:"#d09858",l:8}});
+  const [bCanas,setBCanas]=useState(0);const [bZonaEdit,setBZonaEdit]=useState("raices");
+  const [bTecnica,setBTecnica]=useState(0);const [bLvlActual,setBLvlActual]=useState(3);const [bLvlDeseado,setBLvlDeseado]=useState(7);
+  const [bVol,setBVol]=useState(2);const [bPrecioPolvo,setBPrecioPolvo]=useState(20);const [bPrecioOxid,setBPrecioOxid]=useState(5);const [bMargen,setBMargen]=useState(60);
+  const [resultB,setResultB]=useState(null);const refB=useRef();
+  const decTecnicas=["Decoloración Total","Mechas Clásicas","Highlights","Balayaje","Babylights","Ombré / Sombré","Solo Raíces","Solo Puntas"];
+  const pigResidualB=getPigmentoResidual(bLvlDeseado+1);
+  const calcB=()=>{
+    if(diagGlobal>=3)return;
+    if(!window.useCR(CR_COST,'calc_mod_B'))return;
+    const tonos=bLvlDeseado-bLvlActual,sesiones=Math.max(1,Math.ceil(tonos/2));
+    const polvo=bGrams/2,oxidante=bGrams,costoPolvo=polvo/100*bPrecioPolvo,costoOxid=oxidante/1000*bPrecioOxid;
+    const costo=costoPolvo+costoOxid,precio=costo*(1+bMargen/100);
+    const activas=Object.entries(bZonas).filter(([,v])=>v).map(([k])=>k);
+    const formula=activas.map(z=>`${z.charAt(0).toUpperCase()+z.slice(1)}: ${bColorDeseado[z].n} (${bColorDeseado[z].c})`).join(" | ");
+    const r={sesiones,polvo,oxidante,tecnica:decTecnicas[bTecnica],tonos,formula,vol:VOLS[Math.min(bVol,getMaxVol(diagGlobal))],cost:costo.toFixed(2),clientPrice:precio.toFixed(2),profit:(precio-costo).toFixed(2)};
+    setResultB(r);tts.speak(readB(r));
+  };
+
+  // MOD C
+  const [cLenIdx,setCLenIdx]=useState(1);const cGrams=lenGramsArr[cLenIdx];
+  const [cZonas,setCZonas]=useState({raices:true,medios:false,puntas:false});
+  const [cColorActual,setCColorActual]=useState({raices:NIVELES[3],medios:NIVELES[3],puntas:NIVELES[3]});
+  const [cColorDeseado,setCColorDeseado]=useState({raices:{n:"Rubio Dorado 7.3",c:"7.3",h:"#c08030",l:7},medios:{n:"Rubio Miel 8.34",c:"8.34",h:"#d48838",l:8},puntas:{n:"Rubio Platino 10.1",c:"10.1",h:"#f0d090",l:10}});
+  const [cCanas,setCCanas]=useState(0);const [cZonaEdit,setCZonaEdit]=useState("raices");
+  const [cLvlActual,setCLvlActual]=useState(3);const [cLvlDeseado,setCLvlDeseado]=useState(7);
+  const pigResidualC=getPigmentoResidual(cLvlDeseado+1);
+  const [cColor1,setCColor1]=useState({n:"Rubio 7.0",c:"7.0",h:"#b87840",l:7});
+  const [cColor2,setCColor2]=useState({n:"Rubio Dorado 7.3",c:"7.3",h:"#c08030",l:7});
+  const [cProp,setCProp]=useState(50);
+  const [cTab1,setCTab1]=useState("Rubios");const [cSearch1,setCSearch1]=useState("");
+  const [cTab2,setCTab2]=useState("Rubios");const [cSearch2,setCSearch2]=useState("");
+  const [cVol,setCVol]=useState(1);const [cPrecio,setCPrecio]=useState(15);const [cMargen,setCMargen]=useState(60);
+  const [resultC,setResultC]=useState(null);const refC=useRef();
+  const cG1=Math.round(cGrams*cProp/100),cG2=cGrams-cG1;
+  const cCosto=(cG1/60+cG2/60)*cPrecio,cPrecioFinal=cCosto*(1+cMargen/100);
+  const calcC=()=>{
+    if(!window.useCR(CR_COST,'calc_mod_C'))return;
+    const activas=Object.entries(cZonas).filter(([,v])=>v).map(([k])=>k);
+    const formulaZonas=activas.map(z=>`${z.charAt(0).toUpperCase()+z.slice(1)}: ${cColorDeseado[z].n} (${cColorDeseado[z].c})`).join(" | ");
+    const r={formulaZonas,mezcla:`${cG1}g ${cColor1.n} + ${cG2}g ${cColor2.n}`,grams:cGrams,prop:cProp,vol:VOLS[Math.min(cVol,getMaxVol(diagGlobal))],cost:cCosto.toFixed(2),clientPrice:cPrecioFinal.toFixed(2),profit:(cPrecioFinal-cCosto).toFixed(2)};
+    setResultC(r);tts.speak(readC(r));
+  };
+
+  // MOD E
+  const [eLenIdx,setELenIdx]=useState(1);
+  const [eZonas,setEZonas]=useState({raices:true,medios:false,puntas:false});
+  const [eColorActual,setEColorActual]=useState({raices:NIVELES[3],medios:NIVELES[3],puntas:NIVELES[3]});
+  const [eColorDeseado,setEColorDeseado]=useState({raices:{n:"Rosa Bebé",c:"F.RBe",h:"#FFE4EC",l:10},medios:{n:"Lavanda",c:"F.La",h:"#E6CCFF",l:10},puntas:{n:"Azul Cielo",c:"F.AC",h:"#87CEEB",l:10}});
+  const [eCanas,setECanas]=useState(0);const [eZonaEdit,setEZonaEdit]=useState("raices");
+  const [eColor,setEColor]=useState(COLORES.Fantasia[0]);
+  const [eTab,setETab]=useState("Fantasia");const [eSearch,setESearch]=useState("");
+  const [eLvlActual,setELvlActual]=useState(4);const [eLvlDeseado,setELvlDeseado]=useState(9);
+  const pigResidualE=getPigmentoResidual(eLvlDeseado+1);
+  const [eVol,setEVol]=useState(1);const [ePrecio,setEPrecio]=useState(20);const [eMargen,setEMargen]=useState(60);
+  const [resultE,setResultE]=useState(null);const refE=useRef();
+  const eGrams=lenGramsArr[eLenIdx];
+  const eFaltan=Math.max(0,eColor.l-(eLvlActual+1));
+  const eCosto=eGrams/60*ePrecio,ePrecioFinal=eCosto*(1+eMargen/100);
+  const calcE=()=>{
+    if(!window.useCR(CR_COST,'calc_mod_E'))return;
+    const activas=Object.entries(eZonas).filter(([,v])=>v).map(([k])=>k);
+    const formulaZonas=activas.map(z=>`${z.charAt(0).toUpperCase()+z.slice(1)}: ${eColorDeseado[z].n}`).join(" | ");
+    const r={color:eColor,grams:eGrams,faltan:eFaltan,formulaZonas,vol:VOLS[Math.min(eVol,getMaxVol(diagGlobal))],cost:eCosto.toFixed(2),clientPrice:ePrecioFinal.toFixed(2),profit:(ePrecioFinal-eCosto).toFixed(2)};
+    setResultE(r);tts.speak(readE(r));
+  };
+
+  // MOD F
+  const [fLenIdx,setFLenIdx]=useState(1);const fGrams=lenGramsArr[fLenIdx];
+  const [fZonas,setFZonas]=useState({raices:true,medios:false,puntas:false});
+  const [fColorActual,setFColorActual]=useState({raices:NIVELES[4],medios:NIVELES[4],puntas:NIVELES[4]});
+  const [fColorDeseado,setFColorDeseado]=useState({raices:{n:"Castaño Claro 5.0",c:"5.0",h:"#7a3c10",l:5},medios:{n:"Rubio 7.0",c:"7.0",h:"#b87840",l:7},puntas:{n:"Rubio Claro 8.0",c:"8.0",h:"#d09858",l:8}});
+  const [fCanas,setFCanas]=useState(0);const [fZonaEdit,setFZonaEdit]=useState("raices");
+  const [fLvlActual,setFLvlActual]=useState(3);const [fLvlDeseado,setFLvlDeseado]=useState(6);
+  const pigResidualF=getPigmentoResidual(fLvlDeseado+1);
+  const [fVol,setFVol]=useState(1);const [fErrorIdx,setFErrorIdx]=useState(0);
+  const [fPrecio,setFPrecio]=useState(8);const [fMargen,setFMargen]=useState(60);
+  const [resultF,setResultF]=useState(null);const refF=useRef();
+  const calcF=()=>{
+    if(!window.useCR(CR_COST,'calc_mod_F'))return;
+    const activas=Object.entries(fZonas).filter(([,v])=>v).map(([k])=>k);
+    const formulaZonas=activas.map(z=>`${z.charAt(0).toUpperCase()+z.slice(1)}: Actual ${fColorActual[z].n} → Deseado ${fColorDeseado[z].n}`).join(" | ");
+    const costo=fPrecio,precio=costo*(1+fMargen/100);
+    const r={error:ERRORES_CORR[fErrorIdx],formulaZonas,vol:VOLS[Math.min(fVol,getMaxVol(diagGlobal))],cost:costo.toFixed(2),clientPrice:precio.toFixed(2),profit:(precio-costo).toFixed(2)};
+    setResultF(r);tts.speak(readF(r));
+  };
+
+  // MOD G
+  const [gDiag,setGDiag]=useState(0);const [gLenIdx,setGLenIdx]=useState(1);const gGrams=lenGramsArr[gLenIdx];
+  const [gZonas,setGZonas]=useState({raices:false,medios:false,puntas:true});
+  const [gColorActual,setGColorActual]=useState({raices:NIVELES[2],medios:NIVELES[3],puntas:NIVELES[3]});
+  const [gColorDeseado,setGColorDeseado]=useState({raices:{n:"Rubio Claro 8.0",c:"8.0",h:"#d09858",l:8},medios:{n:"Rubio Muy Claro 9.0",c:"9.0",h:"#e8ba70",l:9},puntas:{n:"Extra Claro 10.0",c:"10.0",h:"#f8d888",l:10}});
+  const [gCanas,setGCanas]=useState(0);const [gZonaEdit,setGZonaEdit]=useState("puntas");
+  const [gLvlActual,setGLvlActual]=useState(2);const [gLvlDeseado,setGLvlDeseado]=useState(9);
+  const [gMetodo,setGMetodo]=useState(0);const [gVol,setGVol]=useState(2);
+  const [gPrecioPolvo,setGPrecioPolvo]=useState(20);const [gPrecioOxid,setGPrecioOxid]=useState(5);const [gMargen,setGMargen]=useState(60);
+  const [resultG,setResultG]=useState(null);const refG=useRef();
+  const pigResidualG=getPigmentoResidual(gLvlDeseado+1);
+  const gLift=Math.max(0,gLvlDeseado-gLvlActual);const gSesiones=gLift<=2?1:gLift<=4?2:3;
+  const gLiftXSesion=gSesiones>0?(gLift/gSesiones).toFixed(1):0;
+  const gPolvo=gGrams/2,gOxidante=gGrams;
+  const gCostoPolvo=gPolvo/100*gPrecioPolvo,gCostoOxid=gOxidante/1000*gPrecioOxid;
+  const gCostoTotal=(gCostoPolvo+gCostoOxid)*gSesiones,gPrecioFinal=gCostoTotal*(1+gMargen/100);
+  const superMetodos=["Polvo Alto Rendimiento","Aceite Decolorante","Doble Proceso","Babylights Full","Balayaje","Mechas Sencillas","Highlights","Ombré / Sombré"];
+  const superMetodosDesc=["Hasta 8 tonos de lift","Aclarado suave continuo","Decoloración + tinte misma sesión","Aclarado total secciones finas","Difuminado natural degradado","Mechas clásicas tradicionales","Puntos de luz sutiles","Degradado oscuro a claro"];
+  const calcG=()=>{
+    if(gDiag>=3)return;
+    if(!window.useCR(CR_COST,'calc_mod_G'))return;
+    const activas=Object.entries(gZonas).filter(([,v])=>v).map(([k])=>k);
+    const formulaZonas=activas.map(z=>`${z.charAt(0).toUpperCase()+z.slice(1)}: Niv actual ${gColorActual[z].l} → Deseado ${gColorDeseado[z].n}`).join(" | ");
+    const r={lift:gLift,sesiones:gSesiones,liftXSesion:gLiftXSesion,polvo:gPolvo,oxidante:gOxidante,tecnica:superMetodos[gMetodo],vol:VOLS[Math.min(gVol,getMaxVol(gDiag))],formulaZonas,costoPolvo:gCostoPolvo.toFixed(2),costoOxid:gCostoOxid.toFixed(2),cost:gCostoTotal.toFixed(2),clientPrice:gPrecioFinal.toFixed(2),profit:(gPrecioFinal-gCostoTotal).toFixed(2)};
+    setResultG(r);tts.speak(readG(r));
+  };
+
+  // PROTOCOLO
+  const [showProto,setShowProto]=useState(false);const refProto=useRef();
+  const presupuesto=useMemo(()=>{
+    const items=[];
+    if(resultA)items.push({label:"MOD A — Tinte",precio:parseFloat(resultA.clientPrice),costo:parseFloat(resultA.cost)});
+    if(resultB)items.push({label:"MOD B — Decoloración",precio:parseFloat(resultB.clientPrice),costo:parseFloat(resultB.cost)});
+    if(resultC)items.push({label:"MOD C — Mezcla",precio:parseFloat(resultC.clientPrice),costo:parseFloat(resultC.cost)});
+    if(resultE)items.push({label:"MOD E — Fantasía",precio:parseFloat(resultE.clientPrice),costo:parseFloat(resultE.cost)});
+    if(resultF)items.push({label:"MOD F — Corrección",precio:parseFloat(resultF.clientPrice),costo:parseFloat(resultF.cost)});
+    if(resultG)items.push({label:"MOD G — Super Aclarante",precio:parseFloat(resultG.clientPrice),costo:parseFloat(resultG.cost)});
+    const tp=items.reduce((s,it)=>s+it.precio,0),tc=items.reduce((s,it)=>s+it.costo,0);
+    return{items,tp:tp.toFixed(2),tc:tc.toFixed(2),gan:(tp-tc).toFixed(2)};
+  },[resultA,resultB,resultC,resultE,resultF,resultG]);
+
+  const readProtocol=()=>{
+    const parts=["Protocolo técnico completo."];
+    if(resultA)parts.push(`Tinte: ${resultA.formula}. ${resultA.grams} gramos, ${resultA.vol}.`);
+    if(resultB)parts.push(`Decoloración: ${resultB.sesiones} sesiones, técnica ${resultB.tecnica}. ${resultB.vol}.`);
+    if(resultC)parts.push(`Mezcla: ${resultC.mezcla}. ${resultC.vol}.`);
+    if(resultE)parts.push(`Fantasía: ${resultE.color.n}. ${resultE.faltan===0?"Pre-aclarado OK":"Pre-aclarado requerido"}.`);
+    if(resultF)parts.push(`Corrección: ${resultF.error.l}. Corrector ${resultF.error.cor}.`);
+    if(resultG)parts.push(`Super Aclarante: ${resultG.lift} niveles, ${resultG.sesiones} sesiones, método ${resultG.tecnica}.`);
+    parts.push(`Total a cobrar: ${presupuesto.tp}. Ganancia neta: ${presupuesto.gan}.`);
+    tts.speak(parts.join(" "));
+  };
+
+  const rrow=(l,v,vs)=>React.createElement("div",{className:"rrow"},React.createElement("span",{className:"rl"},l),React.createElement("span",{className:"rv",style:vs||{}},v));
+  const ttsBtn=(fn)=>React.createElement("span",{className:"tts-badge",onClick:fn},"🔊 LEER");
+
+  return React.createElement(React.Fragment,null,
+    React.createElement("style",null,CSS),
+    React.createElement("div",{className:"app"},
+
+      // HEADER
+      React.createElement("div",{className:"hdr"},
+        React.createElement("div",null,
+          React.createElement("div",{className:"hdr-sys"},"● SYS.ONLINE v8.0 · TTS ACTIVO · CHATBOT IA · FIREBASE CONECTADO"),
+          React.createElement("div",{className:"hdr-title"},"CALCULADORA CIENTÍFICA CROMÁTICA"),
+          React.createElement("div",{className:"hdr-sub"},"FÁTIMA HAIR STUDIO · 2026–2030 · fatimahairstudio082.com"),
+          React.createElement("div",{className:"hdr-pills"},
+            [["A","#f472b6"],["B","#60a5fa"],["C","#4ade80"],["D","#fbbf24"],["E","#a78bfa"],["F","#2dd4bf"],["G","#fbbf24"]].map(([m,col])=>
+              React.createElement("span",{key:m,className:"pill",style:{color:col,background:`${col}18`,border:`.5px solid ${col}40`}},"MOD-",m)
+            ),
+            React.createElement("span",{className:"pill",style:{color:"#00d4ff",background:"rgba(0,212,255,.1)",border:".5px solid rgba(0,212,255,.3)"}},"🔊 TTS"),
+            React.createElement("span",{className:"pill",style:{color:"#f472b6",background:"rgba(244,114,182,.1)",border:".5px solid rgba(244,114,182,.3)"}},"💬 IA"),
+            React.createElement("span",{className:"pill",style:{color:"#fb923c",background:"rgba(251,146,60,.1)",border:".5px solid rgba(251,146,60,.3)"}},"🧪 MECHÓN"),
+            React.createElement("span",{className:"pill",style:{color:"#4ade80",background:"rgba(74,222,128,.1)",border:".5px solid rgba(74,222,128,.3)"}},"🌿 HIDRAT.")
+          )
+        )
+      ),
+
+      // DIAGNÓSTICO GLOBAL
+      React.createElement("div",{className:"card"},
+        React.createElement("div",{className:"ch-static"},
+          React.createElement("div",null,React.createElement("div",{className:"ct",style:{color:"#e8eaf0"}},"DIAGNÓSTICO ESTRUCTURAL GLOBAL"),React.createElement("div",{className:"cs"},"Define el estado · Activa restricciones y consejos profesionales automáticos")),
+          React.createElement("span",{style:{fontSize:8,color:"rgba(232,234,240,.4)",fontFamily:"Orbitron,monospace"}},"PASO 01")
+        ),
+        React.createElement(DiagSelect,{value:diagGlobal,onChange:setDiagGlobal}),
+        React.createElement(DiagAlert,{diagIdx:diagGlobal,waMsg:`Hola Fátima, consulta. Estado del cabello: ${DIAG_LABELS[diagGlobal]}`})
+      ),
+
+      // MOD A
+      React.createElement("div",{className:"card"},
+        React.createElement("div",{className:"ch",onClick:()=>tog('A')},
+          React.createElement("div",{className:"ctitle"},React.createElement("div",{className:"mb",style:{background:"rgba(244,114,182,.12)",color:"#f472b6"}},"A"),React.createElement("div",null,React.createElement("div",{className:"ct"},"TINTE PROFESIONAL"),React.createElement("div",{className:"cs"},"Raíces · Medios · Puntas · Paleta completa · Peróxido automático"))),
+          React.createElement("span",{className:`arrow${openMods.A?" open":""}`},"▼")
+        ),
+        openMods.A&&React.createElement("div",{className:"fadein"},
+          React.createElement(DiagAlert,{diagIdx:diagGlobal}),
+          React.createElement("div",{className:"lbl"},"Largo del cabello"),
+          React.createElement("div",{className:"g4"},lenNames.map((n,i)=>React.createElement("div",{key:i,className:`sbtn${aLenIdx===i?" on":""}`,onClick:()=>setALenIdx(i)},React.createElement("div",{className:"sbtn-t"},n),React.createElement("div",{className:"sbtn-s"},lenGramsArr[i],"g")))),
+          React.createElement("div",{className:"lbl",style:{marginTop:12}},"Nivel actual → Nivel objetivo"),
+          React.createElement("div",{style:{fontSize:8,color:"rgba(232,234,240,.45)",marginBottom:4}},"Nivel actual del cabello"),
+          React.createElement(LvBar,{value:aLvlActual,onChange:setALvlActual}),
+          React.createElement("div",{style:{fontSize:8,color:"rgba(232,234,240,.45)",marginTop:8,marginBottom:4}},"Nivel objetivo deseado"),
+          React.createElement(LvBar,{value:aLvlDeseado,onChange:setALvlDeseado}),
+          React.createElement("div",{style:{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,marginTop:8,padding:"7px 10px",background:"rgba(0,0,0,.2)",borderRadius:8,border:".5px solid rgba(255,255,255,.06)"}},
+            React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.5)"}},"Pigmento residual (Howard):"),
+            React.createElement("span",{className:"pdot",style:{background:pigResidualA.h}}),React.createElement("span",{style:{fontSize:10,fontWeight:600,color:pigResidualA.h}},pigResidualA.pig),
+            React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.3)"}},"→"),React.createElement("span",{className:"pdot",style:{background:pigResidualA.corH}}),React.createElement("span",{style:{fontSize:10,color:pigResidualA.corH}},pigResidualA.cor)
+          ),
+          React.createElement("div",{className:"lbl",style:{marginTop:12}},"Técnica de aplicación"),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}},
+            ["Tinte Global","Solo Raíces","Raíces+Medios","Raíces+Puntas"].map((t,i)=>React.createElement("div",{key:i,className:`sbtn${aTecnica===i?" on":""}`,onClick:()=>setATecnica(i),style:{padding:"7px 5px"}},React.createElement("div",{className:"sbtn-t",style:{fontSize:9}},t)))
+          ),
+          aTonos>0&&React.createElement("div",{className:"stats3",style:{marginTop:10}},
+            React.createElement("div",{className:"stat"},React.createElement("div",{className:"statv",style:{color:"#f472b6"}},aTonos," niv."),React.createElement("div",{className:"statl"},"Tonos")),
+            React.createElement("div",{className:"stat"},React.createElement("div",{className:"statv",style:{color:"#f472b6"}},aSesiones),React.createElement("div",{className:"statl"},"Sesiones est.")),
+            React.createElement("div",{className:"stat"},React.createElement("div",{className:"statv",style:{color:"#f472b6"}},aGrams,"g"),React.createElement("div",{className:"statl"},"Tinte total"))
+          ),
+          React.createElement("div",{className:"lbl",style:{marginTop:12}},"Color a aplicar por zona"),
+          React.createElement(ZonaEditor,{zonas:aZonas,setZonas:setAZonas,colorActual:aColorActual,setColorActual:setAColorActual,colorDeseado:aColorDeseado,setColorDeseado:setAColorDeseado,canas:aCanas,setCanas:setACanas,zonaEdit:aZonaEdit,setZonaEdit:setAZonaEdit,diagIdx:diagGlobal}),
+          React.createElement(VolSelector,{value:aVol,onChange:setAVol,diagIdx:diagGlobal,label:"Agua oxigenada (peróxido)"}),
+          React.createElement("div",{className:"prow"},
+            React.createElement("div",null,React.createElement("div",{className:"lbl"},"Precio / tubo ($)"),React.createElement("div",{className:"piw"},React.createElement("span",{className:"psym"},"$"),React.createElement("input",{type:"number",className:"pinput",value:aPrecio,min:1,onChange:e=>setAPrecio(parseFloat(e.target.value)||0)}))),
+            React.createElement("div",null,React.createElement("div",{className:"lbl"},"Margen (%)"),React.createElement("div",{className:"mwrap"},React.createElement("input",{type:"range",min:0,max:200,step:1,value:aMargen,onChange:e=>setAMargen(parseInt(e.target.value))}),React.createElement("span",{className:"mval"},aMargen,"%"))),
+            React.createElement("div",null,React.createElement("div",{className:"lbl"},"Resumen"),React.createElement("div",{style:{fontSize:10,color:"rgba(232,234,240,.45)",lineHeight:1.6}},"Costo: $",(aGrams/60*aPrecio).toFixed(2),React.createElement("br",null),"Cliente: $",(aGrams/60*aPrecio*(1+aMargen/100)).toFixed(2)))
+          ),
+          React.createElement("button",{className:"cbtn",onClick:calcA},"⊕ CALCULAR TINTE — 5 cr."),
+          resultA&&React.createElement("div",{ref:refA},
+            React.createElement("div",{className:"rp fadein"},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},React.createElement("span",{style:{fontSize:9,color:"#f472b6",fontFamily:"Orbitron,monospace"}},"RESULTADO"),ttsBtn(()=>tts.speak(readA(resultA)))),
+              React.createElement("div",{className:"rcards"},
+                React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#f472b6"}},resultA.grams,"g"),React.createElement("div",{className:"rcl"},"Tinte")),
+                React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#f472b6"}},resultA.grams,"g"),React.createElement("div",{className:"rcl"},"Oxidante")),
+                React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#f472b6"}},resultA.tubos),React.createElement("div",{className:"rcl"},"Tubos"))
+              ),
+              rrow("Técnica",["Tinte Global","Solo Raíces","Raíces+Medios","Raíces+Puntas"][aTecnica]),
+              rrow("Fórmula",resultA.formula,{fontSize:10,maxWidth:"60%",textAlign:"right",lineHeight:1.5}),
+              rrow("Peróxido",resultA.vol,{color:"#00d4ff"}),
+              rrow("Tiempo","35–45 min · Controlar cada 10 min",{color:"#fb923c"}),
+              React.createElement(PresupBox,{costo:resultA.cost,precio:resultA.clientPrice,ganancia:resultA.profit,color:"#f472b6"})
+            ),
+            React.createElement(DownloadBtn,{label:"MOD-A-Tinte",contentRef:refA})
+          )
+        )
+      ),
+
+      // MOD B
+      React.createElement("div",{className:"card"},
+        React.createElement("div",{className:"ch",onClick:()=>tog('B')},
+          React.createElement("div",{className:"ctitle"},React.createElement("div",{className:"mb",style:{background:"rgba(96,165,250,.12)",color:"#60a5fa"}},"B"),React.createElement("div",null,React.createElement("div",{className:"ct"},"DECOLORACIÓN"),React.createElement("div",{className:"cs"},"Raíces · Medios · Puntas · Técnicas · Pigmento Howard"))),
+          React.createElement("span",{className:`arrow${openMods.B?" open":""}`},"▼")
+        ),
+        openMods.B&&React.createElement("div",{className:"fadein"},
+          React.createElement(DiagAlert,{diagIdx:diagGlobal}),
+          diagGlobal>=3&&React.createElement("div",{className:"adanger"},"⊘ Decoloración NO recomendada con cabello en este estado."),
+          diagGlobal<3&&React.createElement(React.Fragment,null,
+            React.createElement("div",{className:"lbl"},"Técnica"),
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}},decTecnicas.map((t,i)=>React.createElement("div",{key:i,className:`sbtn${bTecnica===i?" on":""}`,onClick:()=>setBTecnica(i),style:{padding:"7px 5px"}},React.createElement("div",{className:"sbtn-t",style:{fontSize:9}},t)))),
+            React.createElement("div",{className:"lbl",style:{marginTop:12}},"Nivel actual → Nivel objetivo"),
+            React.createElement("div",{style:{fontSize:8,color:"rgba(232,234,240,.45)",marginBottom:4}},"Nivel actual"),
+            React.createElement(LvBar,{value:bLvlActual,onChange:setBLvlActual}),
+            React.createElement("div",{style:{fontSize:8,color:"rgba(232,234,240,.45)",marginTop:8,marginBottom:4}},"Nivel objetivo"),
+            React.createElement(LvBar,{value:bLvlDeseado,onChange:setBLvlDeseado}),
+            bLvlDeseado<=bLvlActual&&React.createElement("div",{className:"awarn",style:{marginTop:8}},"⚠ El nivel deseado debe ser mayor al actual."),
+            React.createElement("div",{style:{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,marginTop:8,padding:"7px 10px",background:"rgba(0,0,0,.2)",borderRadius:8,border:".5px solid rgba(255,255,255,.06)"}},
+              React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.5)"}},"Pigmento residual (Howard):"),
+              React.createElement("span",{className:"pdot",style:{background:pigResidualB.h}}),React.createElement("span",{style:{fontSize:10,fontWeight:600,color:pigResidualB.h}},pigResidualB.pig),
+              React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.3)"}},"→"),React.createElement("span",{className:"pdot",style:{background:pigResidualB.corH}}),React.createElement("span",{style:{fontSize:10,color:pigResidualB.corH}},pigResidualB.cor)
+            ),
+            React.createElement("div",{className:"lbl",style:{marginTop:12}},"Color por zona"),
+            React.createElement(ZonaEditor,{zonas:bZonas,setZonas:setBZonas,colorActual:bColorActual,setColorActual:setBColorActual,colorDeseado:bColorDeseado,setColorDeseado:setBColorDeseado,canas:bCanas,setCanas:setBCanas,zonaEdit:bZonaEdit,setZonaEdit:setBZonaEdit,diagIdx:diagGlobal}),
+            React.createElement("div",{className:"lbl",style:{marginTop:12}},"Largo"),
+            React.createElement("div",{className:"g4"},lenNames.map((n,i)=>React.createElement("div",{key:i,className:`sbtn${bLenIdx===i?" on":""}`,onClick:()=>setBLenIdx(i)},React.createElement("div",{className:"sbtn-t"},n),React.createElement("div",{className:"sbtn-s"},lenGramsArr[i],"g")))),
+            React.createElement("div",{className:"stats3"},
+              React.createElement("div",{className:"stat"},React.createElement("div",{className:"statv",style:{color:"#60a5fa"}},Math.max(0,bLvlDeseado-bLvlActual)),React.createElement("div",{className:"statl"},"Tonos")),
+              React.createElement("div",{className:"stat"},React.createElement("div",{className:"statv",style:{color:"#60a5fa"}},Math.max(1,Math.ceil(Math.max(0,bLvlDeseado-bLvlActual)/2))),React.createElement("div",{className:"statl"},"Sesiones")),
+              React.createElement("div",{className:"stat"},React.createElement("div",{className:"statv",style:{color:"#60a5fa"}},bGrams/2,"g"),React.createElement("div",{className:"statl"},"Polvo"))
+            ),
+            React.createElement(VolSelector,{value:bVol,onChange:setBVol,diagIdx:diagGlobal,label:"Agua oxigenada"}),
+            React.createElement("div",{className:"prow"},
+              React.createElement("div",null,React.createElement("div",{className:"lbl"},"Polvo/100g ($)"),React.createElement("div",{className:"piw"},React.createElement("span",{className:"psym"},"$"),React.createElement("input",{type:"number",className:"pinput",value:bPrecioPolvo,min:1,onChange:e=>setBPrecioPolvo(parseFloat(e.target.value)||0)}))),
+              React.createElement("div",null,React.createElement("div",{className:"lbl"},"Oxidante/L ($)"),React.createElement("div",{className:"piw"},React.createElement("span",{className:"psym"},"$"),React.createElement("input",{type:"number",className:"pinput",value:bPrecioOxid,min:1,onChange:e=>setBPrecioOxid(parseFloat(e.target.value)||0)}))),
+              React.createElement("div",null,React.createElement("div",{className:"lbl"},"Margen (%)"),React.createElement("div",{className:"mwrap"},React.createElement("input",{type:"range",min:0,max:200,step:1,value:bMargen,onChange:e=>setBMargen(parseInt(e.target.value))}),React.createElement("span",{className:"mval"},bMargen,"%")))
+            ),
+            React.createElement("button",{className:"cbtn blue",onClick:calcB},"⊕ CALCULAR DECOLORACIÓN — 5 cr."),
+            resultB&&React.createElement("div",{ref:refB},
+              React.createElement("div",{className:"rp blue fadein"},
+                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},React.createElement("span",{style:{fontSize:9,color:"#60a5fa",fontFamily:"Orbitron,monospace"}},"RESULTADO"),ttsBtn(()=>tts.speak(readB(resultB)))),
+                React.createElement("div",{className:"rcards"},
+                  React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#60a5fa"}},resultB.sesiones),React.createElement("div",{className:"rcl"},"Sesiones")),
+                  React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#60a5fa"}},resultB.polvo,"g"),React.createElement("div",{className:"rcl"},"Polvo")),
+                  React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#60a5fa"}},resultB.oxidante,"ml"),React.createElement("div",{className:"rcl"},"Oxidante"))
+                ),
+                rrow("Técnica",resultB.tecnica),rrow("Peróxido",resultB.vol,{color:"#00d4ff"}),
+                resultB.formula&&rrow("Por zona",resultB.formula,{fontSize:9,maxWidth:"60%",textAlign:"right",lineHeight:1.5}),
+                rrow("Tiempo/sesión","45–60 min · Revisar cada 15 min",{color:"#fb923c"}),
+                React.createElement(PresupBox,{costo:resultB.cost,precio:resultB.clientPrice,ganancia:resultB.profit,color:"#60a5fa"})
+              ),
+              React.createElement(DownloadBtn,{label:"MOD-B-Decoloracion",contentRef:refB})
+            )
+          )
+        )
+      ),
+
+      // MOD C
+      React.createElement("div",{className:"card"},
+        React.createElement("div",{className:"ch",onClick:()=>tog('C')},
+          React.createElement("div",{className:"ctitle"},React.createElement("div",{className:"mb",style:{background:"rgba(74,222,128,.1)",color:"#4ade80"}},"C"),React.createElement("div",null,React.createElement("div",{className:"ct"},"SUPER MEZCLAS CROMÁTICAS"),React.createElement("div",{className:"cs"},"Multi-fórmula · Tono actual/deseado · Proporción"))),
+          React.createElement("span",{className:`arrow${openMods.C?" open":""}`},"▼")
+        ),
+        openMods.C&&React.createElement("div",{className:"fadein"},
+          React.createElement(DiagAlert,{diagIdx:diagGlobal}),
+          React.createElement("div",{className:"lbl"},"Largo"),
+          React.createElement("div",{className:"g4"},lenNames.map((n,i)=>React.createElement("div",{key:i,className:`sbtn${cLenIdx===i?" on":""}`,onClick:()=>setCLenIdx(i)},React.createElement("div",{className:"sbtn-t"},n),React.createElement("div",{className:"sbtn-s"},lenGramsArr[i],"g")))),
+          React.createElement("div",{className:"lbl",style:{marginTop:8}},"Nivel actual → Nivel objetivo"),
+          React.createElement("div",{style:{fontSize:8,color:"rgba(232,234,240,.45)",marginBottom:4}},"Nivel actual"),
+          React.createElement(LvBar,{value:cLvlActual,onChange:setCLvlActual}),
+          React.createElement("div",{style:{fontSize:8,color:"rgba(232,234,240,.45)",marginTop:8,marginBottom:4}},"Nivel objetivo"),
+          React.createElement(LvBar,{value:cLvlDeseado,onChange:setCLvlDeseado}),
+          React.createElement("div",{style:{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,marginTop:8,padding:"7px 10px",background:"rgba(0,0,0,.2)",borderRadius:8,border:".5px solid rgba(255,255,255,.06)"}},
+            React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.5)"}},"Pigmento residual:"),
+            React.createElement("span",{className:"pdot",style:{background:pigResidualC.h}}),React.createElement("span",{style:{fontSize:10,fontWeight:600,color:pigResidualC.h}},pigResidualC.pig),
+            React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.3)"}},"→"),React.createElement("span",{className:"pdot",style:{background:pigResidualC.corH}}),React.createElement("span",{style:{fontSize:10,color:pigResidualC.corH}},pigResidualC.cor)
+          ),
+          React.createElement("div",{className:"lbl"},"Tono actual y deseado por zona"),
+          React.createElement(ZonaEditor,{zonas:cZonas,setZonas:setCZonas,colorActual:cColorActual,setColorActual:setCColorActual,colorDeseado:cColorDeseado,setColorDeseado:setCColorDeseado,canas:cCanas,setCanas:setCCanas,zonaEdit:cZonaEdit,setZonaEdit:setCZonaEdit,diagIdx:diagGlobal}),
+          React.createElement("div",{className:"lbl",style:{marginTop:12}},"Combinación de colores"),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+            React.createElement("div",null,React.createElement("div",{style:{fontSize:9,color:"rgba(232,234,240,.45)",marginBottom:6}},"Color base 1"),React.createElement("div",{className:"scrow",style:{marginBottom:7}},React.createElement("div",{className:"sdot",style:{background:cColor1.h}}),React.createElement("div",null,React.createElement("div",{style:{fontSize:11,fontWeight:500}},cColor1.n),React.createElement("div",{style:{fontSize:9,color:"rgba(232,234,240,.45)"}},cColor1.c))),React.createElement(ColorPalette,{selectedCode:cColor1.c,onSelect:setCColor1,tab:cTab1,onTabChange:setCTab1,search:cSearch1,onSearchChange:setCSearch1})),
+            React.createElement("div",null,React.createElement("div",{style:{fontSize:9,color:"rgba(232,234,240,.45)",marginBottom:6}},"Color base 2"),React.createElement("div",{className:"scrow",style:{marginBottom:7}},React.createElement("div",{className:"sdot",style:{background:cColor2.h}}),React.createElement("div",null,React.createElement("div",{style:{fontSize:11,fontWeight:500}},cColor2.n),React.createElement("div",{style:{fontSize:9,color:"rgba(232,234,240,.45)"}},cColor2.c))),React.createElement(ColorPalette,{selectedCode:cColor2.c,onSelect:setCColor2,tab:cTab2,onTabChange:setCTab2,search:cSearch2,onSearchChange:setCSearch2}))
+          ),
+          React.createElement("div",{className:"lbl",style:{marginTop:10}},"Proporción"),
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:7}},
+            React.createElement("span",{style:{fontSize:10,color:cColor1.h,fontWeight:600,minWidth:55}},"C1: ",cProp,"%"),
+            React.createElement("input",{type:"range",min:1,max:99,step:1,value:cProp,onChange:e=>setCProp(parseInt(e.target.value)),style:{flex:1,accentColor:"#4ade80"}}),
+            React.createElement("span",{style:{fontSize:10,color:cColor2.h,fontWeight:600,minWidth:55,textAlign:"right"}},"C2: ",100-cProp,"%")
+          ),
+          React.createElement("div",{style:{height:10,borderRadius:5,background:`linear-gradient(90deg,${cColor1.h} ${cProp}%,${cColor2.h} ${cProp}%)`,marginBottom:10}}),
+          React.createElement("div",{style:{background:"rgba(74,222,128,.06)",border:".5px solid rgba(74,222,128,.2)",borderRadius:8,padding:10,marginBottom:8}},
+            React.createElement("div",{style:{fontSize:9,color:"rgba(74,222,128,.7)",textTransform:"uppercase",letterSpacing:".09em",marginBottom:5}},"Fórmula (",cGrams,"g)"),
+            React.createElement("div",{style:{fontSize:12}},React.createElement("span",{style:{color:cColor1.h,fontWeight:600}},cG1,"g ",cColor1.n),React.createElement("span",{style:{color:"rgba(232,234,240,.4)"}}," + "),React.createElement("span",{style:{color:cColor2.h,fontWeight:600}},cG2,"g ",cColor2.n))
+          ),
+          React.createElement(VolSelector,{value:cVol,onChange:setCVol,diagIdx:diagGlobal,label:"Agua oxigenada"}),
+          React.createElement("div",{className:"prow"},
+            React.createElement("div",null,React.createElement("div",{className:"lbl"},"Precio/tubo ($)"),React.createElement("div",{className:"piw"},React.createElement("span",{className:"psym"},"$"),React.createElement("input",{type:"number",className:"pinput",value:cPrecio,min:1,onChange:e=>setCPrecio(parseFloat(e.target.value)||0)}))),
+            React.createElement("div",null,React.createElement("div",{className:"lbl"},"Margen (%)"),React.createElement("div",{className:"mwrap"},React.createElement("input",{type:"range",min:0,max:200,step:1,value:cMargen,onChange:e=>setCMargen(parseInt(e.target.value))}),React.createElement("span",{className:"mval"},cMargen,"%"))),
+            React.createElement("div",null,React.createElement("div",{className:"lbl"},"Precio cliente"),React.createElement("div",{style:{fontSize:18,fontWeight:700,color:"#4ade80",fontFamily:"Orbitron,monospace"}},"$",cPrecioFinal.toFixed(2)))
+          ),
+          React.createElement("button",{className:"cbtn green",onClick:calcC},"⊕ CALCULAR SUPER MEZCLA — 5 cr."),
+          resultC&&React.createElement("div",{ref:refC},
+            React.createElement("div",{className:"rp green fadein"},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},React.createElement("span",{style:{fontSize:9,color:"#4ade80",fontFamily:"Orbitron,monospace"}},"RESULTADO"),ttsBtn(()=>tts.speak(readC(resultC)))),
+              React.createElement("div",{className:"rcards"},
+                React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#4ade80"}},resultC.grams,"g"),React.createElement("div",{className:"rcl"},"Total")),
+                React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#4ade80"}},resultC.prop,"%"),React.createElement("div",{className:"rcl"},"C1")),
+                React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#4ade80"}},100-resultC.prop,"%"),React.createElement("div",{className:"rcl"},"C2"))
+              ),
+              rrow("Mezcla",resultC.mezcla,{fontSize:10,maxWidth:"60%",textAlign:"right"}),
+              rrow("Peróxido",resultC.vol,{color:"#00d4ff"}),rrow("Tiempo","35–45 min",{color:"#fb923c"}),
+              resultC.formulaZonas&&rrow("Por zona",resultC.formulaZonas,{fontSize:9,maxWidth:"60%",textAlign:"right",lineHeight:1.5}),
+              React.createElement(PresupBox,{costo:resultC.cost,precio:resultC.clientPrice,ganancia:resultC.profit,color:"#4ade80"})
+            ),
+            React.createElement(DownloadBtn,{label:"MOD-C-Mezcla",contentRef:refC})
+          )
+        )
+      ),
+
+      // MOD D HOWARD MATRIX
+      React.createElement("div",{className:"card"},
+        React.createElement("div",{className:"ch-static"},
+          React.createElement("div",{className:"ctitle"},React.createElement("div",{className:"mb",style:{background:"rgba(251,191,36,.1)",color:"#fbbf24"}},"D"),React.createElement("div",null,React.createElement("div",{className:"ct"},"ESTRELLA DE NEUTRALIZACIÓN"),React.createElement("div",{className:"cs"},"Howard Matrix · Pigmentos residuales · Referencia técnica"))),
+          React.createElement("span",{style:{fontSize:8,color:"rgba(232,234,240,.4)",fontFamily:"Orbitron,monospace"}},"HOWARD")
+        ),
+        React.createElement("div",{style:{fontSize:10,color:"rgba(232,234,240,.45)",marginBottom:10}},"Corrección de pigmentos residuales basada en la Teoría de Howard."),
+        React.createElement("table",{className:"ntbl"},React.createElement("tbody",null,
+          [{r:"NIV 9-10",p:"Amarillo intenso",ph:"#FFD700",c:"0.22 Irisado Intenso",ch:"#9B59B6"},{r:"NIV 8-9",p:"Amarillo dorado",ph:"#DAA520",c:"0.2 Violeta",ch:"#7D3C98"},{r:"NIV 7-8",p:"Naranja dorado",ph:"#E67E22",c:"0.11 Ceniza Intenso",ch:"#7F8C8D"},{r:"NIV 6-7",p:"Naranja",ph:"#D35400",c:"0.1 Ceniza",ch:"#95A5A6"},{r:"NIV 4-6",p:"Rojo anaranjado",ph:"#C0392B",c:"0.7 Verde",ch:"#27AE60"},{r:"NIV 1-4",p:"Rojo profundo",ph:"#922B21",c:"0.3 Dorado",ch:"#F39C12"}]
+          .map((n,i)=>React.createElement("tr",{key:i},
+            React.createElement("td",null,React.createElement("span",{className:"nbadge"},n.r)),
+            React.createElement("td",null,React.createElement("span",{className:"pdot",style:{background:n.ph}}),n.p),
+            React.createElement("td",{style:{textAlign:"center",color:"rgba(255,255,255,.2)",fontSize:12}},"→"),
+            React.createElement("td",null,React.createElement("span",{className:"pdot",style:{background:n.ch}}),React.createElement("span",{style:{color:n.ch}},n.c))
+          ))
+        ))
+      ),
+
+      // MOD E
+      React.createElement("div",{className:"card"},
+        React.createElement("div",{className:"ch",onClick:()=>tog('E')},
+          React.createElement("div",{className:"ctitle"},React.createElement("div",{className:"mb",style:{background:"rgba(167,139,250,.1)",color:"#a78bfa"}},"E"),React.createElement("div",null,React.createElement("div",{className:"ct"},"COLORES FANTASÍA"),React.createElement("div",{className:"cs"},"Pre-aclarado automático · Paleta completa · Raíces · Medios · Puntas"))),
+          React.createElement("span",{className:`arrow${openMods.E?" open":""}`},"▼")
+        ),
+        openMods.E&&React.createElement("div",{className:"fadein"},
+          React.createElement(DiagAlert,{diagIdx:diagGlobal}),
+          React.createElement("div",{className:"lbl"},"Largo"),
+          React.createElement("div",{className:"g4"},lenNames.map((n,i)=>React.createElement("div",{key:i,className:`sbtn${eLenIdx===i?" on":""}`,onClick:()=>setELenIdx(i)},React.createElement("div",{className:"sbtn-t"},n),React.createElement("div",{className:"sbtn-s"},lenGramsArr[i],"g")))),
+          React.createElement("div",{className:"lbl"},"Nivel actual"),
+          React.createElement(LvBar,{value:eLvlActual,onChange:setELvlActual}),
+          React.createElement("div",{style:{fontSize:8,color:"rgba(232,234,240,.45)",marginTop:8,marginBottom:4}},"Nivel objetivo"),
+          React.createElement(LvBar,{value:eLvlDeseado,onChange:setELvlDeseado}),
+          React.createElement("div",{style:{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,marginTop:8,marginBottom:8,padding:"7px 10px",background:"rgba(0,0,0,.2)",borderRadius:8,border:".5px solid rgba(255,255,255,.06)"}},
+            React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.5)"}},"Pigmento residual:"),
+            React.createElement("span",{className:"pdot",style:{background:pigResidualE.h}}),React.createElement("span",{style:{fontSize:10,fontWeight:600,color:pigResidualE.h}},pigResidualE.pig),
+            React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.3)"}},"→"),React.createElement("span",{className:"pdot",style:{background:pigResidualE.corH}}),React.createElement("span",{style:{fontSize:10,color:pigResidualE.corH}},pigResidualE.cor)
+          ),
+          eFaltan>0&&React.createElement("div",{className:"awarn",style:{marginTop:8}},"⚠ PRE-ACLARADO REQUERIDO — Faltan ",eFaltan," nivel(es) para ",eColor.n,"."),
+          React.createElement("div",{className:"lbl",style:{marginTop:10}},"Tono fantasía objetivo"),
+          React.createElement(ColorPalette,{selectedCode:eColor.c,onSelect:setEColor,tab:eTab,onTabChange:setETab,search:eSearch,onSearchChange:setESearch}),
+          React.createElement("div",{className:"scrow"},
+            React.createElement("div",{className:"sdot",style:{background:eColor.h}}),
+            React.createElement("div",null,React.createElement("div",{style:{fontSize:12,fontWeight:500}},eColor.n),React.createElement("div",{style:{fontSize:9,color:"rgba(232,234,240,.45)"}},"Pre-aclarado mínimo: Nivel ",eColor.l)),
+            React.createElement("div",{style:{marginLeft:"auto",fontSize:10,fontWeight:600,color:eFaltan>0?"#fb923c":"#4ade80"}},eFaltan>0?`Faltan ${eFaltan} niv.`:"✓ Listo")
+          ),
+          React.createElement("div",{className:"lbl",style:{marginTop:12}},"Por zona"),
+          React.createElement(ZonaEditor,{zonas:eZonas,setZonas:setEZonas,colorActual:eColorActual,setColorActual:setEColorActual,colorDeseado:eColorDeseado,setColorDeseado:setEColorDeseado,canas:eCanas,setCanas:setECanas,zonaEdit:eZonaEdit,setZonaEdit:setEZonaEdit,diagIdx:diagGlobal}),
+          React.createElement(VolSelector,{value:eVol,onChange:setEVol,diagIdx:diagGlobal,label:"Agua oxigenada"}),
+          React.createElement("div",{className:"prow"},
+            React.createElement("div",null,React.createElement("div",{className:"lbl"},"Precio color ($)"),React.createElement("div",{className:"piw"},React.createElement("span",{className:"psym"},"$"),React.createElement("input",{type:"number",className:"pinput",value:ePrecio,min:1,onChange:e=>setEPrecio(parseFloat(e.target.value)||0)}))),
+            React.createElement("div",null,React.createElement("div",{className:"lbl"},"Margen (%)"),React.createElement("div",{className:"mwrap"},React.createElement("input",{type:"range",min:0,max:200,step:1,value:eMargen,onChange:e=>setEMargen(parseInt(e.target.value))}),React.createElement("span",{className:"mval"},eMargen,"%"))),
+            React.createElement("div",null,React.createElement("div",{className:"lbl"},"Precio cliente"),React.createElement("div",{style:{fontSize:18,fontWeight:700,color:"#a78bfa",fontFamily:"Orbitron,monospace"}},"$",ePrecioFinal.toFixed(2)))
+          ),
+          React.createElement("button",{className:"cbtn violet",onClick:calcE},"⊕ CALCULAR FANTASÍA — 5 cr."),
+          resultE&&React.createElement("div",{ref:refE},
+            React.createElement("div",{className:"rp violet fadein"},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},React.createElement("span",{style:{fontSize:9,color:"#a78bfa",fontFamily:"Orbitron,monospace"}},"RESULTADO"),ttsBtn(()=>tts.speak(readE(resultE)))),
+              React.createElement("div",{className:"rcards"},
+                React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#a78bfa"}},resultE.grams,"g"),React.createElement("div",{className:"rcl"},"Total")),
+                React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#a78bfa"}},resultE.faltan===0?"✓":"⚠"),React.createElement("div",{className:"rcl"},"Pre-aclarado")),
+                React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#a78bfa"}},eColor.l),React.createElement("div",{className:"rcl"},"Niv mínimo"))
+              ),
+              rrow("Color",React.createElement("span",{style:{display:"flex",alignItems:"center",gap:6}},React.createElement("span",{style:{width:12,height:12,borderRadius:"50%",background:resultE.color.h,display:"inline-block"}}),resultE.color.n)),
+              rrow("Por zona",resultE.formulaZonas,{fontSize:9,maxWidth:"60%",textAlign:"right",lineHeight:1.5}),
+              rrow("Peróxido",resultE.vol,{color:"#00d4ff"}),rrow("Tiempo","30–45 min",{color:"#fb923c"}),
+              React.createElement(PresupBox,{costo:resultE.cost,precio:resultE.clientPrice,ganancia:resultE.profit,color:"#a78bfa"})
+            ),
+            React.createElement(DownloadBtn,{label:"MOD-E-Fantasia",contentRef:refE})
+          )
+        )
+      ),
+
+      // MOD F
+      React.createElement("div",{className:"card"},
+        React.createElement("div",{className:"ch",onClick:()=>tog('F')},
+          React.createElement("div",{className:"ctitle"},React.createElement("div",{className:"mb",style:{background:"rgba(45,212,191,.1)",color:"#2dd4bf"}},"F"),React.createElement("div",null,React.createElement("div",{className:"ct"},"CORRECCIÓN DE COLOR"),React.createElement("div",{className:"cs"},"Todos los colores · Canas · Fantasía · Cobrizos"))),
+          React.createElement("span",{className:`arrow${openMods.F?" open":""}`},"▼")
+        ),
+        openMods.F&&React.createElement("div",{className:"fadein"},
+          React.createElement(DiagAlert,{diagIdx:diagGlobal}),
+          React.createElement("div",{className:"lbl"},"Largo"),
+          React.createElement("div",{className:"g4"},lenNames.map((n,i)=>React.createElement("div",{key:i,className:`sbtn${fLenIdx===i?" on":""}`,onClick:()=>setFLenIdx(i)},React.createElement("div",{className:"sbtn-t"},n),React.createElement("div",{className:"sbtn-s"},lenGramsArr[i],"g")))),
+          React.createElement("div",{className:"lbl",style:{marginTop:8}},"Nivel actual → Nivel objetivo"),
+          React.createElement("div",{style:{fontSize:8,color:"rgba(232,234,240,.45)",marginBottom:4}},"Nivel actual"),
+          React.createElement(LvBar,{value:fLvlActual,onChange:setFLvlActual}),
+          React.createElement("div",{style:{fontSize:8,color:"rgba(232,234,240,.45)",marginTop:8,marginBottom:4}},"Nivel objetivo"),
+          React.createElement(LvBar,{value:fLvlDeseado,onChange:setFLvlDeseado}),
+          React.createElement("div",{style:{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,marginTop:8,marginBottom:8,padding:"7px 10px",background:"rgba(0,0,0,.2)",borderRadius:8,border:".5px solid rgba(255,255,255,.06)"}},
+            React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.5)"}},"Pigmento residual:"),
+            React.createElement("span",{className:"pdot",style:{background:pigResidualF.h}}),React.createElement("span",{style:{fontSize:10,fontWeight:600,color:pigResidualF.h}},pigResidualF.pig),
+            React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.3)"}},"→"),React.createElement("span",{className:"pdot",style:{background:pigResidualF.corH}}),React.createElement("span",{style:{fontSize:10,color:pigResidualF.corH}},pigResidualF.cor)
+          ),
+          React.createElement("div",{className:"lbl"},"Color actual y deseado por zona"),
+          React.createElement(ZonaEditor,{zonas:fZonas,setZonas:setFZonas,colorActual:fColorActual,setColorActual:setFColorActual,colorDeseado:fColorDeseado,setColorDeseado:setFColorDeseado,canas:fCanas,setCanas:setFCanas,zonaEdit:fZonaEdit,setZonaEdit:setFZonaEdit,diagIdx:diagGlobal}),
+          React.createElement("div",{className:"lbl",style:{marginTop:12}},"Tipo de error a corregir"),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:7}},
+            ERRORES_CORR.map((e,i)=>React.createElement("div",{key:i,className:`sbtn${fErrorIdx===i?" on":""}`,onClick:()=>setFErrorIdx(i)},React.createElement("div",{className:"sbtn-t"},e.l),React.createElement("div",{className:"sbtn-s"},e.s)))
+          ),
+          React.createElement("div",{className:"cor-sug"},
+            React.createElement("div",{style:{width:10,height:10,borderRadius:"50%",background:"#00d4ff",flexShrink:0}}),
+            React.createElement("div",null,React.createElement("div",{className:"cor-sug-lbl"},"Corrector sugerido"),React.createElement("div",{className:"cor-sug-val"},ERRORES_CORR[fErrorIdx].cor),React.createElement("div",{className:"cor-sug-rule"},"Regla: ",ERRORES_CORR[fErrorIdx].regla))
+          ),
+          React.createElement(VolSelector,{value:fVol,onChange:setFVol,diagIdx:diagGlobal,label:"Agua oxigenada"}),
+          React.createElement("div",{className:"prow"},
+            React.createElement("div",null,React.createElement("div",{className:"lbl"},"Costo corrector ($)"),React.createElement("div",{className:"piw"},React.createElement("span",{className:"psym"},"$"),React.createElement("input",{type:"number",className:"pinput",value:fPrecio,min:1,onChange:e=>setFPrecio(parseFloat(e.target.value)||0)}))),
+            React.createElement("div",null,React.createElement("div",{className:"lbl"},"Margen (%)"),React.createElement("div",{className:"mwrap"},React.createElement("input",{type:"range",min:0,max:200,step:1,value:fMargen,onChange:e=>setFMargen(parseInt(e.target.value))}),React.createElement("span",{className:"mval"},fMargen,"%")))
+          ),
+          React.createElement("button",{className:"cbtn teal",onClick:calcF},"⊕ CALCULAR CORRECCIÓN — 5 cr."),
+          resultF&&React.createElement("div",{ref:refF},
+            React.createElement("div",{className:"rp teal fadein"},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},React.createElement("span",{style:{fontSize:9,color:"#2dd4bf",fontFamily:"Orbitron,monospace"}},"RESULTADO"),ttsBtn(()=>tts.speak(readF(resultF)))),
+              React.createElement("div",{className:"rcards"},
+                React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#2dd4bf"}},fLvlActual+1),React.createElement("div",{className:"rcl"},"Niv actual")),
+                React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#2dd4bf"}},fLvlDeseado+1),React.createElement("div",{className:"rcl"},"Niv objetivo")),
+                React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#2dd4bf"}},fGrams,"g"),React.createElement("div",{className:"rcl"},"Total"))
+              ),
+              rrow("Error",resultF.error.l),rrow("Corrector",resultF.error.cor,{color:"#2dd4bf"}),
+              rrow("Protocolo",resultF.error.regla,{fontSize:10,maxWidth:"58%",textAlign:"right",lineHeight:1.5}),
+              rrow("Por zona",resultF.formulaZonas,{fontSize:9,maxWidth:"60%",textAlign:"right",lineHeight:1.5}),
+              rrow("Peróxido",resultF.vol,{color:"#00d4ff"}),rrow("Tiempo","20–35 min",{color:"#fb923c"}),
+              React.createElement(PresupBox,{costo:resultF.cost,precio:resultF.clientPrice,ganancia:resultF.profit,color:"#2dd4bf"})
+            ),
+            React.createElement(DownloadBtn,{label:"MOD-F-Correccion",contentRef:refF})
+          )
+        )
+      ),
+
+      // MOD G
+      React.createElement("div",{className:"card"},
+        React.createElement("div",{className:"ch",onClick:()=>tog('G')},
+          React.createElement("div",{className:"ctitle"},React.createElement("div",{className:"mb",style:{background:"rgba(251,191,36,.12)",color:"#fbbf24"}},"G"),React.createElement("div",null,React.createElement("div",{className:"ct"},"SUPER ACLARANTE"),React.createElement("div",{className:"cs"},"Raíces · Medios · Puntas · Multi-sesión · Lifting progresivo"))),
+          React.createElement("span",{className:`arrow${openMods.G?" open":""}`},"▼")
+        ),
+        openMods.G&&React.createElement("div",{className:"fadein"},
+          React.createElement(DiagSelect,{value:gDiag,onChange:setGDiag,label:"Estado del cabello — Super Aclarante"}),
+          React.createElement(DiagAlert,{diagIdx:gDiag}),
+          gDiag>=3&&React.createElement("div",{className:"adanger"},"⊘ Super Aclarante NO recomendado. Asesoría personalizada obligatoria."),
+          gDiag<3&&React.createElement(React.Fragment,null,
+            React.createElement("div",{className:"lbl"},"Método de aclarado"),
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}},superMetodos.map((m,i)=>React.createElement("div",{key:i,className:`sbtn${gMetodo===i?" on":""}`,onClick:()=>setGMetodo(i),style:{padding:"7px 5px"}},React.createElement("div",{className:"sbtn-t",style:{fontSize:9}},m),React.createElement("div",{className:"sbtn-s"},superMetodosDesc[i])))),
+            React.createElement("div",{className:"lbl",style:{marginTop:12}},"Nivel actual"),
+            React.createElement(LvBar,{value:gLvlActual,onChange:setGLvlActual}),
+            React.createElement("div",{className:"lbl",style:{marginTop:10}},"Nivel objetivo"),
+            React.createElement(LvBar,{value:gLvlDeseado,onChange:setGLvlDeseado}),
+            gLvlDeseado>gLvlActual&&React.createElement("div",{style:{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,marginTop:8,padding:"7px 10px",background:"rgba(0,0,0,.2)",borderRadius:8,border:".5px solid rgba(255,255,255,.06)"}},
+              React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.5)"}},"Pigmento residual:"),
+              React.createElement("span",{className:"pdot",style:{background:pigResidualG.h}}),React.createElement("span",{style:{fontSize:10,fontWeight:600,color:pigResidualG.h}},pigResidualG.pig),
+              React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.3)"}},"→"),React.createElement("span",{className:"pdot",style:{background:pigResidualG.corH}}),React.createElement("span",{style:{fontSize:10,color:pigResidualG.corH}},pigResidualG.cor)
+            ),
+            gLift>6&&React.createElement("div",{className:"awarn",style:{marginTop:8}},"⚠ Lift extremo (+6 niveles). Plan multi-sesión obligatorio."),
+            React.createElement("div",{className:"stats3"},
+              React.createElement("div",{className:"stat"},React.createElement("div",{className:"statv",style:{color:"#fbbf24"}},gLift," niv."),React.createElement("div",{className:"statl"},"Lift total")),
+              React.createElement("div",{className:"stat"},React.createElement("div",{className:"statv",style:{color:"#fbbf24"}},gSesiones),React.createElement("div",{className:"statl"},"Sesiones req.")),
+              React.createElement("div",{className:"stat"},React.createElement("div",{className:"statv",style:{color:"#fbbf24"}},gLiftXSesion),React.createElement("div",{className:"statl"},"Niv/sesión"))
+            ),
+            React.createElement("div",{className:"lbl"},"Zonas a tratar"),
+            React.createElement(ZonaEditor,{zonas:gZonas,setZonas:setGZonas,colorActual:gColorActual,setColorActual:setGColorActual,colorDeseado:gColorDeseado,setColorDeseado:setGColorDeseado,canas:gCanas,setCanas:setGCanas,zonaEdit:gZonaEdit,setZonaEdit:setGZonaEdit,diagIdx:gDiag}),
+            React.createElement("div",{className:"lbl",style:{marginTop:12}},"Largo"),
+            React.createElement("div",{className:"g4"},lenNames.map((n,i)=>React.createElement("div",{key:i,className:`sbtn${gLenIdx===i?" on":""}`,onClick:()=>setGLenIdx(i)},React.createElement("div",{className:"sbtn-t"},n),React.createElement("div",{className:"sbtn-s"},lenGramsArr[i],"g")))),
+            React.createElement(VolSelector,{value:gVol,onChange:setGVol,diagIdx:gDiag,label:"Agua oxigenada"}),
+            gDiag>=2&&React.createElement("div",{className:"awarn"},"⚠ Con procesos químicos: máximo 20 Vol."),
+            React.createElement("div",{className:"stats3",style:{marginTop:10}},
+              React.createElement("div",{className:"stat"},React.createElement("div",{className:"statv",style:{color:"#fbbf24"}},gPolvo,"g"),React.createElement("div",{className:"statl"},"Polvo/ses.")),
+              React.createElement("div",{className:"stat"},React.createElement("div",{className:"statv",style:{color:"#fbbf24"}},gOxidante,"ml"),React.createElement("div",{className:"statl"},"Oxidante/ses.")),
+              React.createElement("div",{className:"stat"},React.createElement("div",{className:"statv",style:{color:"#fbbf24"}},gSesiones),React.createElement("div",{className:"statl"},"Sesiones"))
+            ),
+            React.createElement("div",{className:"prow"},
+              React.createElement("div",null,React.createElement("div",{className:"lbl"},"Polvo/100g ($)"),React.createElement("div",{className:"piw"},React.createElement("span",{className:"psym"},"$"),React.createElement("input",{type:"number",className:"pinput",value:gPrecioPolvo,min:1,onChange:e=>setGPrecioPolvo(parseFloat(e.target.value)||0)}))),
+              React.createElement("div",null,React.createElement("div",{className:"lbl"},"Oxidante/L ($)"),React.createElement("div",{className:"piw"},React.createElement("span",{className:"psym"},"$"),React.createElement("input",{type:"number",className:"pinput",value:gPrecioOxid,min:1,onChange:e=>setGPrecioOxid(parseFloat(e.target.value)||0)}))),
+              React.createElement("div",null,React.createElement("div",{className:"lbl"},"Margen (%)"),React.createElement("div",{className:"mwrap"},React.createElement("input",{type:"range",min:0,max:200,step:1,value:gMargen,onChange:e=>setGMargen(parseInt(e.target.value))}),React.createElement("span",{className:"mval"},gMargen,"%")))
+            ),
+            React.createElement("button",{className:"cbtn gold",onClick:calcG},"⊕ CALCULAR SUPER ACLARANTE — 5 cr."),
+            resultG&&React.createElement("div",{ref:refG},
+              React.createElement("div",{className:"rp gold fadein"},
+                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},React.createElement("span",{style:{fontSize:9,color:"#fbbf24",fontFamily:"Orbitron,monospace"}},"RESULTADO"),ttsBtn(()=>tts.speak(readG(resultG)))),
+                React.createElement("div",{className:"rcards"},
+                  React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#fbbf24"}},resultG.lift," niv."),React.createElement("div",{className:"rcl"},"Lift total")),
+                  React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#fbbf24"}},resultG.sesiones),React.createElement("div",{className:"rcl"},"Sesiones")),
+                  React.createElement("div",{className:"rc"},React.createElement("div",{className:"rcv",style:{color:"#fbbf24"}},resultG.polvo,"g"),React.createElement("div",{className:"rcl"},"Polvo/ses."))
+                ),
+                rrow("Método",resultG.tecnica),rrow("Peróxido",resultG.vol,{color:"#00d4ff"}),
+                rrow("Oxidante/ses.",resultG.oxidante+"ml"),
+                resultG.formulaZonas&&rrow("Por zona",resultG.formulaZonas,{fontSize:9,maxWidth:"60%",textAlign:"right",lineHeight:1.5}),
+                rrow("Tiempo/sesión","45–60 min · Revisar cada 15 min",{color:"#fb923c"}),
+                React.createElement("div",{style:{background:"rgba(251,191,36,.06)",border:".5px solid rgba(251,191,36,.2)",borderRadius:7,padding:10,marginTop:8}},
+                  React.createElement("div",{style:{fontSize:9,color:"rgba(251,191,36,.7)",textTransform:"uppercase",letterSpacing:".1em",marginBottom:5}},"Plan de sesiones"),
+                  Array.from({length:resultG.sesiones},(_,si)=>{
+                    const lvS=gLvlActual+Math.floor(si*gLift/resultG.sesiones);
+                    const lvE=Math.min(gLvlDeseado,gLvlActual+Math.floor((si+1)*gLift/resultG.sesiones));
+                    return React.createElement("div",{key:si,style:{fontSize:10,color:"#e8eaf0",padding:"3px 0",borderBottom:si<resultG.sesiones-1?".5px solid rgba(255,255,255,.05)":"none"}},
+                      "Sesión ",si+1,": Niv ",lvS+1," → ",lvE+1," · Polvo ",resultG.polvo,"g · ",resultG.vol," · Oxidante ",resultG.oxidante,"ml",
+                      si<resultG.sesiones-1&&React.createElement("span",{style:{color:"rgba(232,234,240,.4)",fontSize:9}}," · Esperar 14-21 días")
+                    );
+                  })
+                ),
+                React.createElement(PresupBox,{costo:resultG.cost,precio:resultG.clientPrice,ganancia:resultG.profit,color:"#fbbf24"})
+              ),
+              React.createElement(DownloadBtn,{label:"MOD-G-SuperAclarante",contentRef:refG})
+            )
+          )
+        )
+      ),
+
+      // PROTOCOLO COMPLETO
+      (resultA||resultB||resultC||resultE||resultF||resultG)&&React.createElement("button",{className:"cbtn violet",style:{marginBottom:"1rem"},onClick:()=>setShowProto(p=>!p)},"⊕ ",showProto?"OCULTAR":"GENERAR"," PROTOCOLO TÉCNICO COMPLETO"),
+      showProto&&React.createElement("div",{className:"proto fadein",ref:refProto},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:".5rem"}},
+          React.createElement("div",{className:"proto-title"},"PROTOCOLO TÉCNICO COMPLETO"),
+          React.createElement("span",{className:"tts-badge",onClick:readProtocol},"🔊 LEER PROTOCOLO")
+        ),
+        React.createElement("div",{className:"proto-sub"},"Diagnóstico: ",React.createElement("span",{style:{color:"#00d4ff",fontWeight:600}},DIAG_LABELS[diagGlobal].toUpperCase())," · ",[resultA&&"TINTE",resultB&&"DECOLORACIÓN",resultC&&"MEZCLA",resultE&&"FANTASÍA",resultF&&"CORRECCIÓN",resultG&&"SUPER ACLARANTE"].filter(Boolean).join(" + ")),
+        resultA&&React.createElement("div",{className:"proto-mod"},React.createElement("div",{className:"proto-mod-title",style:{color:"#f472b6"}},"⊕ MOD A — TINTE"),React.createElement("div",{className:"sesion"},React.createElement("div",{className:"sesion-title"},"FÓRMULA"),React.createElement("div",{className:"sesion-line"},resultA.formula),React.createElement("div",{className:"sesion-line"},"Total: ",resultA.grams,"g · Peróxido: ",resultA.vol," · Tubos: ",resultA.tubos),React.createElement("div",{className:"sesion-note"},"Tiempo: 35-45 min."))),
+        resultB&&React.createElement("div",{className:"proto-mod"},React.createElement("div",{className:"proto-mod-title",style:{color:"#60a5fa"}},"⊕ MOD B — DECOLORACIÓN"),
+          Array.from({length:resultB.sesiones},(_,si)=>{const lvS=bLvlActual+si*2,lvE=Math.min(bLvlDeseado,lvS+2);return React.createElement("div",{key:si,className:"sesion"},React.createElement("div",{className:"sesion-title"},"SESIÓN ",si+1," · Niv ",lvS+1," → ",lvE+1),React.createElement("div",{className:"sesion-line"},"Técnica: ",resultB.tecnica," · Peróxido: ",resultB.vol),React.createElement("div",{className:"sesion-line"},"Polvo: ",resultB.polvo,"g · Oxidante: ",resultB.oxidante,"ml · 45-60 min"),resultB.formula&&React.createElement("div",{className:"sesion-line"},"Por zona: ",resultB.formula),si<resultB.sesiones-1&&React.createElement("div",{className:"sesion-note"},"✓ Esperar 14-21 días."));})
+        ),
+        resultC&&React.createElement("div",{className:"proto-mod"},React.createElement("div",{className:"proto-mod-title",style:{color:"#4ade80"}},"⊕ MOD C — SUPER MEZCLA"),React.createElement("div",{className:"sesion"},React.createElement("div",{className:"sesion-title"},"FÓRMULA"),React.createElement("div",{className:"sesion-line"},resultC.mezcla),React.createElement("div",{className:"sesion-line"},"Peróxido: ",resultC.vol," · Total: ",resultC.grams,"g"),resultC.formulaZonas&&React.createElement("div",{className:"sesion-line"},"Por zona: ",resultC.formulaZonas))),
+        resultE&&React.createElement("div",{className:"proto-mod"},React.createElement("div",{className:"proto-mod-title",style:{color:"#a78bfa"}},"⊕ MOD E — FANTASÍA"),React.createElement("div",{className:"sesion"},React.createElement("div",{className:"sesion-title"},"COLOR"),React.createElement("div",{className:"sesion-line"},resultE.color.n," · Nivel mínimo: ",resultE.color.l),React.createElement("div",{className:"sesion-line"},"Por zona: ",resultE.formulaZonas),React.createElement("div",{className:"sesion-line"},"Peróxido: ",resultE.vol),resultE.faltan>0&&React.createElement("div",{className:"sesion-note"},"⚠ Pre-aclarado: ",resultE.faltan," nivel(es)."))),
+        resultF&&React.createElement("div",{className:"proto-mod"},React.createElement("div",{className:"proto-mod-title",style:{color:"#2dd4bf"}},"⊕ MOD F — CORRECCIÓN"),React.createElement("div",{className:"sesion"},React.createElement("div",{className:"sesion-title"},"PROTOCOLO"),React.createElement("div",{className:"sesion-line"},"Error: ",resultF.error.l," · Corrector: ",resultF.error.cor),React.createElement("div",{className:"sesion-line"},resultF.error.regla),React.createElement("div",{className:"sesion-line"},"Por zona: ",resultF.formulaZonas))),
+        resultG&&React.createElement("div",{className:"proto-mod"},React.createElement("div",{className:"proto-mod-title",style:{color:"#fbbf24"}},"⊕ MOD G — SUPER ACLARANTE"),
+          Array.from({length:resultG.sesiones},(_,si)=>{const lvS=gLvlActual+Math.floor(si*gLift/resultG.sesiones),lvE=Math.min(gLvlDeseado,gLvlActual+Math.floor((si+1)*gLift/resultG.sesiones));return React.createElement("div",{key:si,className:"sesion"},React.createElement("div",{className:"sesion-title"},"SESIÓN ",si+1," · Niv ",lvS+1," → ",lvE+1),React.createElement("div",{className:"sesion-line"},"Método: ",resultG.tecnica," · Peróxido: ",resultG.vol),React.createElement("div",{className:"sesion-line"},"Polvo: ",resultG.polvo,"g · Oxidante: ",resultG.oxidante,"ml · 60 min"),resultG.formulaZonas&&React.createElement("div",{className:"sesion-line"},"Por zona: ",resultG.formulaZonas),si<resultG.sesiones-1&&React.createElement("div",{className:"sesion-note"},"✓ Esperar 14-21 días."));})
+        ),
+        presupuesto.items.length>0&&React.createElement("div",{style:{marginTop:"1rem",paddingTop:"1rem",borderTop:".5px solid rgba(139,92,246,.2)"}},
+          React.createElement("div",{style:{fontSize:9,color:"rgba(232,234,240,.45)",fontFamily:"Orbitron,monospace",letterSpacing:".12em",marginBottom:10}},"PRESUPUESTO TOTAL"),
+          presupuesto.items.map((item,i)=>React.createElement("div",{key:i,className:"rrow"},React.createElement("span",{className:"rl"},item.label),React.createElement("div",{style:{display:"flex",gap:14,alignItems:"center"}},React.createElement("span",{style:{fontSize:9,color:"rgba(232,234,240,.45)"}},"Costo: $",item.costo.toFixed(2)),React.createElement("span",{style:{fontSize:12,fontWeight:500}},"$",item.precio.toFixed(2)))))
+        ),
+        React.createElement("div",{className:"proto-total"},
+          React.createElement("div",null,React.createElement("div",{className:"proto-total-lbl"},"TOTAL A COBRAR"),React.createElement("div",{style:{fontSize:10,color:"rgba(232,234,240,.45)",marginTop:2}},"Costo: $",presupuesto.tc," · Ganancia: ",React.createElement("span",{style:{color:"#4ade80"}},"+$",presupuesto.gan))),
+          React.createElement("div",{className:"proto-total-val"},"$",presupuesto.tp)
+        ),
+        React.createElement(DownloadBtn,{label:"PROTOCOLO-COMPLETO",contentRef:refProto}),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:8}},
+          React.createElement("button",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"rgba(248,113,113,.08)",border:".5px solid rgba(248,113,113,.3)",color:"#f87171",borderRadius:8,padding:"10px",fontSize:9,fontWeight:600,fontFamily:"Orbitron,monospace",letterSpacing:".1em",cursor:"pointer"},onClick:()=>{setResultA(null);setResultB(null);setResultC(null);setResultE(null);setResultF(null);setResultG(null);setShowProto(false);}},"🗑 ELIMINAR PROTOCOLO"),
+          React.createElement("button",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"rgba(0,212,255,.06)",border:".5px solid rgba(0,212,255,.25)",color:"#00d4ff",borderRadius:8,padding:"10px",fontSize:9,fontWeight:600,fontFamily:"Orbitron,monospace",letterSpacing:".1em",cursor:"pointer"},onClick:()=>setShowProto(false)},"↩ NUEVO PROCEDIMIENTO")
+        )
+      )
+    ),
+    React.createElement(TTSFloat,{t:tts})
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root-calc')).render(React.createElement(CalcApp,null));
+}); // end DOMContentLoaded
+</script>
+<script src="hub_credito_bridge.js"></script>
+</body>
+</html>

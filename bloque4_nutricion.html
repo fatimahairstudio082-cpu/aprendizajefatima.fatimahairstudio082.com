@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEURAL NUTRITION v12</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#020617;color:#fff;font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#0f172a}::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+.font-display{font-family:'Barlow Condensed',sans-serif}
+.glass{background:rgba(15,23,42,0.9);border:1px solid rgba(255,255,255,0.07);border-radius:16px;backdrop-filter:blur(10px)}
+.input-field{width:100%;padding:11px 14px;background:#0f172a;border:1.5px solid #1e293b;border-radius:10px;color:#fff;font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.input-field:focus{border-color:#3b82f6}
+.field-label{display:block;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#475569;margin-bottom:4px}
+.btn{padding:13px 20px;border:none;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%}
+.btn:active{transform:scale(0.97)}
+.btn-blue{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff}
+.btn-green{background:linear-gradient(135deg,#065f46,#10b981);color:#fff}
+.btn-amber{background:linear-gradient(135deg,#92400e,#f59e0b);color:#fff}
+.btn-purple{background:linear-gradient(135deg,#581c87,#a855f7);color:#fff}
+.btn-red{background:linear-gradient(135deg,#7f1d1d,#ef4444);color:#fff}
+.macro-val{font-size:clamp(22px,4vw,32px);font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px}
+.meal-card{background:#0a0f1e;border:1.5px solid #1e293b;border-radius:14px;padding:14px;transition:border-color .2s}
+.meal-card:hover{border-color:#334155}
+.badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:#1e293b;color:#64748b}
+.tab-btn{padding:10px 16px;background:transparent;border:none;color:#475569;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab-btn.active{color:#fff;border-bottom-color:#3b82f6}
+.tab-content{display:none}.tab-content.active{display:block}
+.cal-wrap{overflow-x:auto}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;min-width:500px}
+.cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;border:1.5px solid transparent;transition:all .15s;font-size:11px;font-weight:700;position:relative}
+.cal-day:hover{transform:scale(1.08);z-index:2}
+.cal-day.masa{background:#0d1f3c;border-color:#1e3a5f;color:#60a5fa}
+.cal-day.masa:hover,.cal-day.masa.selected{background:#1e3a5f;border-color:#3b82f6;color:#93c5fd}
+.cal-day.perder{background:#1f0d0d;border-color:#5f1e1e;color:#f87171}
+.cal-day.perder:hover,.cal-day.perder.selected{background:#5f1e1e;border-color:#ef4444;color:#fca5a5}
+.cal-day.mantener{background:#0d1f15;border-color:#1e4a2a;color:#4ade80}
+.cal-day.mantener:hover,.cal-day.mantener.selected{background:#1e4a2a;border-color:#10b981;color:#6ee7b7}
+.cal-weekday{font-size:9px;font-weight:700;color:#334155;text-align:center;letter-spacing:1px;text-transform:uppercase;padding:4px 0}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.modal-box{background:#0a0f1e;border:1.5px solid #1e293b;border-radius:20px;padding:20px;max-width:580px;width:100%;max-height:92vh;overflow-y:auto}
+.prog-bar{height:6px;border-radius:3px;background:#1e293b;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.gender-btn{flex:1;padding:10px;background:#0f172a;border:1.5px solid #1e293b;border-radius:9px;color:#475569;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;text-align:center;transition:all .2s}
+.gender-btn.active-m{background:#0d1f3c;border-color:#3b82f6;color:#60a5fa}
+.gender-btn.active-f{background:#2d0a2a;border-color:#d946ef;color:#e879f9}
+.obj-btn{flex:1;padding:10px 8px;background:#0f172a;border:1.5px solid #1e293b;border-radius:9px;color:#475569;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.8px;cursor:pointer;text-align:center;transition:all .2s}
+.obj-btn.active-masa{background:#0d1f3c;border-color:#3b82f6;color:#60a5fa}
+.obj-btn.active-perder{background:#1f0d0d;border-color:#ef4444;color:#f87171}
+.obj-btn.active-mantener{background:#0d1f15;border-color:#10b981;color:#4ade80}
+.section-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
+/* BTN DESCARGA PEQUEÑO */
+.dl-btn{padding:7px 12px;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.dl-btn:active{transform:scale(0.96)}
+/* PRINT HIDDEN */
+@media print{body{background:#fff!important;color:#000!important}.no-print{display:none!important}}
+</style>
+<style id="hub-responsive-fix">
+/* Red de seguridad responsive (solo móvil <=680px) — no afecta desktop */
+@media (max-width: 680px){
+  html,body{max-width:100%;overflow-x:hidden;}
+  img,svg,video{max-width:100%;height:auto;}
+  /* colapsar rejillas multi-columna definidas inline */
+  [style*="grid-template-columns:1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"],
+  [style*="grid-template-columns:repeat(2"],
+  [style*="grid-template-columns:repeat(3"],
+  [style*="grid-template-columns:repeat(4"]{
+    grid-template-columns: 1fr !important;
+  }
+  /* colapsar utilidades Tailwind de columnas fijas */
+  .grid-cols-2,.grid-cols-3,.grid-cols-4,
+  .md\:grid-cols-2,.md\:grid-cols-3,.md\:grid-cols-4,
+  .lg\:grid-cols-3,.lg\:grid-cols-4{
+    grid-template-columns: 1fr !important;
+  }
+}
+</style>
+</head>
+<body class="p-3 md:p-5">
+
+<div class="text-center mb-5">
+  <h1 id="mainTitle" class="font-display text-4xl md:text-5xl font-black uppercase tracking-wide" style="color:#3b82f6">🧠 NEURAL NUTRITION v12</h1>
+  <p style="font-size:11px;color:#334155;letter-spacing:2px;text-transform:uppercase;margin-top:4px">MOTOR DIETÉTICO · 365 DÍAS · 3 OBJETIVOS · 6 INGESTAS · PDF · JPG · AUDIO</p>
+<div id="creditos-display" style="margin-top:8px;display:inline-block;background:#0f172a;border:1.5px solid #1e3a5f;border-radius:10px;padding:6px 16px;font-size:12px;color:#60a5fa;letter-spacing:1px">💳 <strong style="color:#facc15">10</strong> créditos</div>
+</div>
+
+<div style="display:flex;gap:0;border-bottom:1px solid #1e293b;margin-bottom:20px;overflow-x:auto">
+  <button class="tab-btn active" onclick="switchTab('plan')">📋 PLAN DIARIO</button>
+  <button class="tab-btn" onclick="switchTab('calendar')">📅 CALENDARIO 365</button>
+  <button class="tab-btn" onclick="switchTab('macros')">📊 MACROS</button>
+</div>
+
+<!-- ═══ TAB PLAN ═══ -->
+<div id="tab-plan" class="tab-content active">
+  <div class="glass p-4 mb-3">
+    <label class="field-label mb-2">Sexo biológico</label>
+    <div style="display:flex;gap:8px">
+      <div class="gender-btn active-m" id="btn-m" onclick="setGenero('m')">♂ HOMBRE</div>
+      <div class="gender-btn" id="btn-f" onclick="setGenero('f')">♀ MUJER</div>
+    </div>
+  </div>
+  <div class="glass p-4 mb-3">
+    <label class="field-label mb-3">Datos físicos</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div><label class="field-label">Peso (kg)</label><input id="peso" type="number" value="80" class="input-field"></div>
+      <div><label class="field-label">Estatura (cm)</label><input id="estatura" type="number" value="178" class="input-field"></div>
+      <div><label class="field-label">Edad (años)</label><input id="edad" type="number" value="28" class="input-field"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+      <div>
+        <label class="field-label">Factor Actividad</label>
+        <select id="actividad" class="input-field">
+          <option value="1.2">Sedentario (sin ejercicio)</option>
+          <option value="1.375">Ligero (1-2 días/semana)</option>
+          <option value="1.55" selected>Moderado (3-4 días/semana)</option>
+          <option value="1.725">Intenso (5-6 días/semana)</option>
+          <option value="1.9">Atleta / Élite (2x día)</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Nivel del Atleta</label>
+        <select id="nivelAlumno" class="input-field">
+          <option value="principiante">PRINCIPIANTE</option>
+          <option value="intermedio" selected>INTERMEDIO</option>
+          <option value="avanzado">AVANZADO</option>
+          <option value="elite">ÉLITE</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="glass p-4 mb-3">
+    <label class="field-label mb-2">Objetivo nutricional</label>
+    <div style="display:flex;gap:8px">
+      <div class="obj-btn active-masa" id="obj-masa" onclick="setObjetivo('masa')">💪 MASA MUSCULAR</div>
+      <div class="obj-btn" id="obj-perder" onclick="setObjetivo('perder')">🔥 PERDER GRASA</div>
+      <div class="obj-btn" id="obj-mantener" onclick="setObjetivo('mantener')">⚖️ MANTENER</div>
+    </div>
+  </div>
+  <div class="glass p-4 mb-3">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <label class="field-label">Día del plan (1–365)</label>
+        <input id="diaPlan" type="number" value="1" min="1" max="365" class="input-field" style="color:#facc15;font-weight:700;font-size:16px">
+      </div>
+      <div>
+        <label class="field-label">Tipo de dieta</label>
+        <select id="dieta" class="input-field">
+          <option value="omnivora">🥩 OMNÍVORA</option>
+          <option value="vegetariana">🌿 VEGETARIANA</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px">
+    <button onclick="generar()" class="btn btn-blue" style="grid-column:span 3;font-size:20px">🍎 GENERAR PLAN COMPLETO</button>
+    <button onclick="descargarPDF('plan-output')" class="btn btn-green">📥 PDF</button>
+    <button onclick="descargarJPG('plan-output','plan')" class="btn btn-amber">🖼️ JPG</button>
+    <button onclick="reproducirAudio()" class="btn btn-purple">🔊 AUDIO</button>
+  </div>
+  <div id="plan-output"></div>
+</div>
+
+<!-- ═══ TAB CALENDARIO ═══ -->
+<div id="tab-calendar" class="tab-content">
+  <div class="glass p-4 mb-4">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <p class="section-title" style="font-size:18px;margin-bottom:4px">CALENDARIO NUTRICIONAL 365 DÍAS</p>
+        <p style="font-size:10px;color:#475569;letter-spacing:1px">Clic en cualquier día → plan completo + descargas</p>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;border-radius:2px;background:#1e3a5f;border:1px solid #3b82f6"></div><span style="font-size:9px;color:#475569">MASA</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;border-radius:2px;background:#5f1e1e;border:1px solid #ef4444"></div><span style="font-size:9px;color:#475569">DÉFICIT</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;border-radius:2px;background:#1e4a2a;border:1px solid #10b981"></div><span style="font-size:9px;color:#475569">MANTENER</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="glass p-3 mb-4">
+    <label class="field-label mb-2">Objetivo del calendario</label>
+    <div style="display:flex;gap:8px">
+      <div class="obj-btn active-masa" id="cal-obj-masa" onclick="setCalObj('masa')">💪 MASA</div>
+      <div class="obj-btn" id="cal-obj-perder" onclick="setCalObj('perder')">🔥 DÉFICIT</div>
+      <div class="obj-btn" id="cal-obj-mantener" onclick="setCalObj('mantener')">⚖️ MANTENER</div>
+    </div>
+  </div>
+  <div id="calendarView" class="glass p-4"></div>
+</div>
+
+<!-- ═══ TAB MACROS ═══ -->
+<div id="tab-macros" class="tab-content">
+  <div id="macrosView">
+    <div style="text-align:center;color:#334155;padding:40px;font-size:13px">Genera un plan primero para ver el análisis de macros</div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modalOverlay" class="modal-overlay" style="display:none" onclick="closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div id="modalContent"></div>
+    <!-- BOTONES DESCARGA MODAL -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px">
+      <button onclick="descargarPDF('modal-plan-data')" class="btn btn-green" style="font-size:13px;padding:10px">📥 PDF</button>
+      <button onclick="descargarJPG('modal-plan-data','modal')" class="btn btn-amber" style="font-size:13px;padding:10px">🖼️ JPG</button>
+      <button onclick="audioModal()" class="btn btn-purple" style="font-size:13px;padding:10px">🔊 AUDIO</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button onclick="cargarDiaDesdeModal()" style="padding:10px;background:#0d1f3c;border:1.5px solid #3b82f6;border-radius:10px;color:#60a5fa;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer">→ USAR EN PLAN</button>
+      <button onclick="document.getElementById('modalOverlay').style.display='none'" style="padding:10px;background:#1e293b;border:none;border-radius:10px;color:#94a3b8;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer">✕ CERRAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// BASE DE DATOS
+// ══════════════════════════════════════
+const DB={
+omnivora:{
+  desayuno:[
+    {n:"Huevos enteros a la plancha",p:24,c:1,g:20,prep:"Plancha con spray aceite, sal y pimienta negra"},
+    {n:"Claras de huevo líquidas revueltas",p:33,c:2,g:0,prep:"Sartén antiadherente 2 min sin grasa"},
+    {n:"Avena entera cocida en agua",p:8,c:40,g:5,prep:"3 min microondas con canela y stevia"},
+    {n:"Tostadas de pan de centeno integral",p:6,c:32,g:2,prep:"Tostadora 2 min sin mantequilla"},
+    {n:"Tortilla de espinacas y pavo magro",p:28,c:4,g:8,prep:"Sartén 4 min, relleno salteado previo"},
+    {n:"Pan de molde integral con queso batido 0%",p:14,c:30,g:3,prep:"Sin tostar, queso batido frío"},
+    {n:"Gacha de avena con proteína en polvo",p:30,c:35,g:4,prep:"Mezcla en frío o caliente 2 min"},
+    {n:"Tortitas de arroz con mantequilla de almendra",p:5,c:26,g:9,prep:"Sin cocción, directo del paquete"},
+    {n:"Yogur griego 0% con nueces y miel",p:20,c:18,g:8,prep:"Bowl frío con 8g nueces y 5g miel"},
+    {n:"Batido de leche desnatada, plátano y cacao",p:16,c:36,g:2,prep:"Batidora 30 seg"},
+    {n:"Revuelto de champiñones con jamón serrano",p:22,c:3,g:10,prep:"Sartén 5 min, champiñones primero"},
+    {n:"Bowl de quinoa cocida con frutos rojos",p:10,c:38,g:3,prep:"Quinoa fría con frutas frescas"},
+    {n:"Crepes de avena con cottage y mermelada sin azúcar",p:18,c:28,g:4,prep:"2 huevos + avena molida en plancha"},
+    {n:"Smoothie bowl espinaca, proteína y banana",p:26,c:32,g:3,prep:"Batidora potente, decorar con semillas"},
+    {n:"Tostada integral con aguacate y huevo poché",p:15,c:28,g:14,prep:"Huevo 3 min en agua con vinagre"}
+  ],
+  preEntreno:[
+    {n:"Arroz blanco con atún al natural",p:28,c:38,g:2,prep:"Arroz microondas, atún escurrido"},
+    {n:"Plátano maduro + batido de proteína",p:26,c:30,g:1,prep:"Batido frío 30 min antes de entrenar"},
+    {n:"Tortitas de arroz con miel y queso batido",p:14,c:32,g:2,prep:"Miel en frío, queso batido 0%"},
+    {n:"Pasta integral con pechuga picada",p:32,c:45,g:4,prep:"Al dente 8 min, pollo salteado"},
+    {n:"Pan integral con mermelada sin azúcar",p:6,c:38,g:2,prep:"Sin tostar para IG moderado"},
+    {n:"Dátiles con mantequilla de cacahuete",p:5,c:28,g:7,prep:"3-4 dátiles + 1 cda mantequilla"},
+    {n:"Fruta fresca mixta + 1 scoop proteína",p:25,c:35,g:1,prep:"Batido con agua fría 20 min antes"},
+    {n:"Bagel integral con pavo y mostaza",p:22,c:40,g:3,prep:"Sin calentar, mostaza en grano"},
+    {n:"Bowl de avena instantánea con cacao puro",p:12,c:42,g:4,prep:"Microondas 90 seg con cacao puro"},
+    {n:"Zumo de remolacha + plátano (óxido nítrico)",p:4,c:34,g:0,prep:"Licuadora, tomar 45 min antes"}
+  ],
+  almuerzo:[
+    {n:"Pechuga de pollo limpia deshuesada",p:62,c:0,g:5,prep:"Plancha 6 min por lado con especias"},
+    {n:"Filete de ternera magra (solomillo)",p:58,c:0,g:12,prep:"Plancha 4 min por lado, punto medio"},
+    {n:"Arroz basmati o integral cocido",p:4,c:45,g:1,prep:"Olla 15 min, enfriar en nevera"},
+    {n:"Boniato al vapor con aceite de coco",p:3,c:38,g:4,prep:"Vapor 20 min, no hervir"},
+    {n:"Filete de pavo con quinoa real andina",p:45,c:35,g:4,prep:"Pavo plancha, quinoa 15 min"},
+    {n:"Pasta integral con carne picada de pollo",p:40,c:50,g:8,prep:"Al dente, carne con tomate natural"},
+    {n:"Contramuslo de pollo asado sin piel",p:38,c:0,g:14,prep:"Horno 180° 35 min hierbas provenzales"},
+    {n:"Merluza al vapor con patata cocida",p:36,c:28,g:2,prep:"Vapor 12 min, patata hervida"},
+    {n:"Ternera picada con arroz y verduras salteadas",p:42,c:40,g:10,prep:"Wok 8 min alto calor"},
+    {n:"Lomo de cerdo magro con puré de boniato",p:44,c:32,g:8,prep:"Horno 175° 30 min"},
+    {n:"Salmón a la plancha con quinoa y brócoli",p:46,c:28,g:18,prep:"Plancha 4 min por lado"},
+    {n:"Pechuga de pavo rellena de espinacas",p:50,c:4,g:5,prep:"Horno 180° 25 min"},
+    {n:"Atún fresco a la plancha con arroz negro",p:44,c:36,g:6,prep:"Plancha alta temperatura 2 min por lado"},
+    {n:"Pollo al limón con espárragos y cuscús",p:48,c:30,g:6,prep:"Marinado 30 min, horno 20 min 190°"},
+    {n:"Ternera con garbanzos y verduras de temporada",p:40,c:38,g:10,prep:"Cocido lento 45 min bajo en sal"}
+  ],
+  postEntreno:[
+    {n:"Batido aislado de proteína + leche desnatada",p:40,c:10,g:2,prep:"Shaker 300ml leche fría, agitar 30 seg"},
+    {n:"Arroz blanco cocido con pechuga picada",p:35,c:45,g:4,prep:"Post-workout directo, carbos rápidos"},
+    {n:"Yogur griego con avena y miel",p:24,c:32,g:6,prep:"Mix frío, consumir en 30 min post"},
+    {n:"Claras de huevo revueltas con arroz blanco",p:30,c:36,g:2,prep:"Sin grasa, máxima absorción"},
+    {n:"Pechuga de pollo con patata blanca hervida",p:42,c:34,g:5,prep:"Cocción rápida 20 min total"},
+    {n:"Salmón en lata con pan blanco tostado",p:30,c:38,g:10,prep:"Inmediato post-entreno"},
+    {n:"Requesón con plátano y miel",p:22,c:36,g:4,prep:"Mix frío, electrolitos naturales"},
+    {n:"Shake proteína con dátiles y canela",p:30,c:30,g:3,prep:"Batidora 300ml agua fría, 3 dátiles"},
+    {n:"Jamón york con tostadas de pan blanco",p:26,c:34,g:4,prep:"Sin grasa añadida, carbos rápidos"},
+    {n:"Batido de caseína con leche caliente (nocturno)",p:35,c:12,g:4,prep:"Ideal post-entreno nocturno"}
+  ],
+  merienda:[
+    {n:"Yogur griego desnatado con nueces",p:20,c:8,g:14,prep:"Bowl frío con 15g nueces troceadas"},
+    {n:"Queso fresco batido 0% con fruta",p:24,c:12,g:0,prep:"Bowl con kiwi o fresas troceadas"},
+    {n:"Almendras crudas o nueces California",p:6,c:4,g:18,prep:"Porción en bol, sin sal ni tostar"},
+    {n:"Crema de cacahuete 100% pura",p:7,c:5,g:14,prep:"1 cda con tortita de arroz"},
+    {n:"Batido de proteína con tortas de arroz",p:26,c:20,g:1,prep:"Shaker frío, 2 tortitas al lado"},
+    {n:"Queso cottage con manzana en láminas",p:18,c:15,g:6,prep:"Bowl frío, manzana sin pelar"},
+    {n:"Fiambre de pavo con nueces picadas",p:22,c:2,g:12,prep:"Rollitos de pavo con nueces"},
+    {n:"Atún al natural con pepino y olivas",p:20,c:4,g:6,prep:"Ensaladilla rápida sin mayonesa"},
+    {n:"Edamames hervidos con sal marina",p:14,c:9,g:5,prep:"Microondas 3 min congelados"},
+    {n:"Barrita casera de dátil y cacao",p:10,c:22,g:5,prep:"Mix 3 dátiles + cacao + proteína"}
+  ],
+  cena:[
+    {n:"Lomo de salmón noruego fresco",p:42,c:0,g:24,prep:"Horno 180° 15 min con limón y eneldo"},
+    {n:"Filete de merluza al vapor con verduras",p:38,c:8,g:2,prep:"Vapor 12 min, verduras salteadas"},
+    {n:"Ensalada mixta con pollo y aguacate",p:30,c:10,g:16,prep:"Cruda, AOVE 1 cda sin aliño comercial"},
+    {n:"Emperador a la plancha con espárragos",p:36,c:3,g:4,prep:"Plancha alta temperatura 4 min por lado"},
+    {n:"Tortilla de claras con gambas salteadas",p:32,c:1,g:3,prep:"6 claras, gambas con ajo"},
+    {n:"Atún al natural con canónigos y olivas",p:34,c:2,g:10,prep:"Directo de lata, ensalada cruda"},
+    {n:"Lubina al horno con hinojo y limón",p:40,c:2,g:6,prep:"Horno 190° 20 min con hierbas"},
+    {n:"Bacalao al pil-pil ligero",p:36,c:2,g:8,prep:"Cazuela baja temperatura 15 min"},
+    {n:"Pechuga de pollo al horno con espinacas",p:44,c:4,g:5,prep:"Horno 175° 22 min"},
+    {n:"Caballa a la plancha con ensalada verde",p:38,c:3,g:18,prep:"Plancha 3 min por lado, omega-3 alto"},
+    {n:"Dorada asada con verduras al horno",p:36,c:12,g:6,prep:"Horno 190° 25 min"},
+    {n:"Revuelto de espárragos, huevos y jamón",p:28,c:5,g:14,prep:"Sartén 3 min sin aceite excesivo"},
+    {n:"Pez espada marinado con ensalada de algas",p:40,c:4,g:8,prep:"Plancha 5 min, marinado 15 min previo"},
+    {n:"Sepia a la plancha con alioli ligero 0%",p:32,c:2,g:6,prep:"Plancha alta 3 min"},
+    {n:"Pollo al vapor con brócoli y semillas de lino",p:42,c:6,g:7,prep:"Vapor 18 min, semillas espolvoreadas"}
+  ]
+},
+vegetariana:{
+  desayuno:[
+    {n:"Tofu firme salteado con cúrcuma",p:26,c:3,g:14,prep:"Sartén 5 min, cúrcuma + pimienta negra"},
+    {n:"Proteína aislada de guisante con avena",p:35,c:32,g:2,prep:"Shaker frío o bowl caliente"},
+    {n:"Pan integral de masa madre con AOVE",p:8,c:36,g:6,prep:"Sin tostar, aceite de oliva virgen extra"},
+    {n:"Yogur de soja sin azúcar con chía y fruta",p:14,c:18,g:8,prep:"Bowl frío, 15g chía hidratada previa"},
+    {n:"Revoltijo de tofu con espinacas y tomate",p:22,c:5,g:12,prep:"Sartén 5 min, tomate cherry partido"},
+    {n:"Tostadas con hummus de garbanzo casero",p:10,c:28,g:6,prep:"Garbanzos + tahini + limón batidos"},
+    {n:"Smoothie bowl vegano con espirulina",p:16,c:38,g:4,prep:"Batidora, decorar con granola sin azúcar"},
+    {n:"Bowl de quinoa con frutas y semillas de cáñamo",p:12,c:40,g:5,prep:"Quinoa cocida fría con frutas"},
+    {n:"Crepes de harina de garbanzo con aguacate",p:14,c:30,g:12,prep:"Harina garbanzos + agua, plancha 3 min"},
+    {n:"Gachas de mijo con canela y manzana",p:8,c:42,g:3,prep:"Mijo 10 min en leche vegetal sin azúcar"}
+  ],
+  preEntreno:[
+    {n:"Plátano con mantequilla de almendra",p:5,c:36,g:9,prep:"30 min antes de entrenar"},
+    {n:"Batido proteína vegana con avena",p:28,c:38,g:3,prep:"Batidora, leche de avena, 20 min antes"},
+    {n:"Dátiles con semillas de calabaza",p:8,c:30,g:6,prep:"4 dátiles + 20g semillas"},
+    {n:"Arroz blanco con tofu marinado",p:20,c:40,g:6,prep:"Tofu marinado noche anterior"},
+    {n:"Pan integral con mermelada sin azúcar y semillas",p:7,c:36,g:4,prep:"Tostado, mermelada sin azúcar añadida"},
+    {n:"Fruta tropical mixta + proteína vegana",p:24,c:32,g:2,prep:"Batido frío mango + piña"},
+    {n:"Barritas de avena y cacao caseras",p:10,c:38,g:5,prep:"Mezcla fría refrigerada"},
+    {n:"Granola sin azúcar con leche de almendra",p:8,c:42,g:6,prep:"Bowl frío 50g granola + 200ml leche"},
+    {n:"Zumo de remolacha con manzana y jengibre",p:2,c:28,g:0,prep:"Licuadora, 45 min antes"},
+    {n:"Tortitas de arroz con crema de anacardos",p:6,c:30,g:8,prep:"Sin cocción, 2 tortitas + 1 cda crema"}
+  ],
+  almuerzo:[
+    {n:"Lentejas estofadas con verduras",p:18,c:42,g:2,prep:"Olla 25 min, zanahoria + apio + tomate"},
+    {n:"Tempeh salteado en wok con especias",p:38,c:14,g:22,prep:"Wok alto calor 6 min, tamari + jengibre"},
+    {n:"Seitán en tiras con cuscús integral",p:45,c:38,g:4,prep:"Seitán salteado, cuscús 5 min agua caliente"},
+    {n:"Soja texturizada con pasta de espelta",p:35,c:48,g:3,prep:"Hidrata soja 10 min, saltea con tomate"},
+    {n:"Alubias rojas con arroz integral y pimientos",p:16,c:48,g:1,prep:"Cocido 30 min, pimientos salteados"},
+    {n:"Garbanzos salteados con espinacas y arroz",p:14,c:44,g:4,prep:"Salteado 8 min, espinacas al final"},
+    {n:"Hamburguesa de lentejas con boniato asado",p:20,c:42,g:5,prep:"Horno 180° 15 min por lado"},
+    {n:"Curry de tofu con arroz basmati",p:28,c:40,g:12,prep:"Curry 15 min, coco light + garam masala"},
+    {n:"Bowl de buddha con quinoa y tahini",p:18,c:38,g:14,prep:"Quinoa + garbanzos + verduras + tahini"},
+    {n:"Pasta integral con boloñesa vegetal de soja",p:22,c:52,g:6,prep:"Soja texturizada + tomate natural"}
+  ],
+  postEntreno:[
+    {n:"Batido proteína vegana + leche de avena",p:36,c:28,g:4,prep:"Shaker post-entreno inmediato"},
+    {n:"Arroz blanco con tofu firme al wok",p:28,c:44,g:8,prep:"Carbos rápidos post-entreno"},
+    {n:"Yogur de soja con plátano y miel",p:16,c:36,g:4,prep:"Bowl frío 30 min post-entreno"},
+    {n:"Edamames con arroz blanco y tamari",p:22,c:40,g:5,prep:"Microondas 3 min edamames"},
+    {n:"Batido de cacao vegano con avena y dátiles",p:24,c:38,g:4,prep:"Batidora, 3 dátiles + cacao + proteína"},
+    {n:"Pan blanco con mermelada y proteína vegana",p:26,c:42,g:3,prep:"Post-workout, carbos rápidos"},
+    {n:"Smoothie de mango, proteína y avena",p:28,c:36,g:3,prep:"Batidora potente, agua de coco fría"},
+    {n:"Tostada de pan blanco con hummus",p:14,c:38,g:6,prep:"Carbos rápidos + proteína moderada"},
+    {n:"Soja texturizada salteada con arroz blanco",p:30,c:42,g:4,prep:"Cocción rápida 10 min total"},
+    {n:"Requesón vegano de anacardos con plátano",p:14,c:34,g:8,prep:"Anacardos batidos + plátano fresco"}
+  ],
+  merienda:[
+    {n:"Queso cottage vegano con fruta",p:16,c:14,g:6,prep:"Bowl frío con fresas o arándanos"},
+    {n:"Bebida de soja sin azúcar añadida",p:10,c:4,g:5,prep:"Directo del brick sin calentar"},
+    {n:"Nueces de anacardo crudas",p:5,c:9,g:14,prep:"Porción de 25g sin sal"},
+    {n:"Proteína vegana en shaker con avena",p:28,c:18,g:2,prep:"Shaker con leche vegetal fría"},
+    {n:"Edamames hervidos con sal marina",p:14,c:9,g:5,prep:"Microondas 3 min, sal marina"},
+    {n:"Crema de almendras con tiras de apio",p:6,c:6,g:15,prep:"Sin cocción, apio fresco"},
+    {n:"Hummus con palitos de zanahoria",p:8,c:16,g:6,prep:"Hummus casero, zanahoria fresca"},
+    {n:"Barritas de dátil y cacao 100%",p:5,c:24,g:4,prep:"Mix procesado frío refrigerado"},
+    {n:"Tostada de centeno con aguacate y semillas de cáñamo",p:7,c:22,g:12,prep:"Aguacate aplastado + semillas"},
+    {n:"Fruta fresca + 20g semillas de cáñamo",p:8,c:20,g:6,prep:"Sin preparación, nutrición rápida"}
+  ],
+  cena:[
+    {n:"Hamburguesa de seitán con ensalada verde",p:40,c:12,g:6,prep:"Plancha 4 min por lado"},
+    {n:"Tofu ahumado al horno con brócoli",p:28,c:8,g:12,prep:"Horno 185° 20 min, brócoli al vapor"},
+    {n:"Crema de verduras con semillas de lino",p:6,c:18,g:4,prep:"Batidora, calabaza + cebolla + coco"},
+    {n:"Falafel al horno con ensalada y tahini",p:15,c:26,g:8,prep:"Horno 190° 20 min sin freír"},
+    {n:"Micoproteína salteada con pimientos",p:24,c:6,g:4,prep:"Sartén 5 min sin aceite excesivo"},
+    {n:"Ensalada de garbanzos, espinacas y AOVE",p:14,c:28,g:10,prep:"Cruda, garbanzos en lata enjuagados"},
+    {n:"Sopa de miso con tofu y algas wakame",p:16,c:10,g:4,prep:"Caldo miso + tofu en cubos"},
+    {n:"Tempeh al vapor con salsa de soja y jengibre",p:32,c:12,g:14,prep:"Vapor 15 min, salsa al lado"},
+    {n:"Wrap de lechuga con soja texturizada y aguacate",p:22,c:14,g:14,prep:"Sin cocción, soja hidratada + especias"},
+    {n:"Nishime de verduras con tofu firme",p:20,c:16,g:8,prep:"Cocido lento 20 min estilo japonés"}
+  ]
+}};
+
+// ══════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════
+let genero='m', objetivo='masa', calObj='masa';
+let ultimoNutrientes=null, textoVoz='', textoVozModal='', diaModalActual=1;
+
+// ══════════════════════════════════════
+// UI
+// ══════════════════════════════════════
+function switchTab(t){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',['plan','calendar','macros'][i]===t);
+  });
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  if(t==='calendar') renderCalendar();
+}
+function setGenero(g){
+  genero=g;
+  document.getElementById('btn-m').className='gender-btn'+(g==='m'?' active-m':'');
+  document.getElementById('btn-f').className='gender-btn'+(g==='f'?' active-f':'');
+}
+function setObjetivo(o){
+  objetivo=o;
+  ['masa','perder','mantener'].forEach(x=>document.getElementById('obj-'+x).className='obj-btn'+(x===o?' active-'+x:''));
+  document.getElementById('mainTitle').style.color={masa:'#3b82f6',perder:'#ef4444',mantener:'#10b981'}[o];
+}
+function setCalObj(o){
+  calObj=o;
+  ['masa','perder','mantener'].forEach(x=>document.getElementById('cal-obj-'+x).className='obj-btn'+(x===o?' active-'+x:''));
+  renderCalendar();
+}
+function closeModal(e){if(e.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').style.display='none';}
+
+// ══════════════════════════════════════
+// CÁLCULO METABÓLICO
+// ══════════════════════════════════════
+function calcMacros(obj,peso,est,edad,act,gen,nivel){
+  let geb=gen==='m'?(10*peso)+(6.25*est)-(5*edad)+5:(10*peso)+(6.25*est)-(5*edad)-161;
+  let get=geb*act;
+  const nm={principiante:1.0,intermedio:1.05,avanzado:1.1,elite:1.15}[nivel]||1.0;
+  let kcal,pMult,gMult;
+  if(obj==='masa'){kcal=get*(gen==='m'?1.18:1.15)*nm;pMult=gen==='m'?2.2:2.0;gMult=gen==='m'?1.1:0.9;}
+  else if(obj==='perder'){kcal=get*(gen==='m'?0.76:0.78)*nm;pMult=gen==='m'?2.5:2.2;gMult=gen==='m'?0.8:0.7;}
+  else{kcal=get*nm;pMult=gen==='m'?2.0:1.8;gMult=gen==='m'?1.0:0.85;}
+  let pG=Math.round(peso*pMult),gG=Math.round(peso*gMult);
+  let cG=Math.max(40,Math.round((kcal-((pG*4)+(gG*9)))/4));
+  return{kcal:Math.round(kcal),proteina:pG,carbohidratos:cG,grasas:gG};
+}
+
+// ══════════════════════════════════════
+// MOTOR DE VARIACIÓN DIARIA
+// ══════════════════════════════════════
+function semilla(dia,off,extra){
+  let s=dia*2654435761+off*1013904223+extra*1664525;
+  s=((s>>>16)^s)*0x45d9f3b;s=((s>>>16)^s);return Math.abs(s);
+}
+function elegir(dia,off,pool){
+  const n=pool.length;
+  const i1=semilla(dia,off,7)%n;
+  let i2=semilla(dia,off+1,13)%n;
+  if(i2===i1)i2=(i1+1)%n;
+  return{a:pool[i1],b:pool[i2]};
+}
+function ingesta(dia,off,tP,tC,tG,pool){
+  const{a,b}=elegir(dia,off,pool);
+  const grA=Math.max(50,Math.round((tP/Math.max(a.p,1))*100));
+  const grB=Math.max(30,Math.round((tC/Math.max(b.c||b.p,1))*100));
+  return{a,b,grA,grB,
+    html:`Consumir <strong style="color:#facc15">${grA}g</strong> de <span style="color:#94a3b8">[${a.n}]</span> + <strong style="color:#facc15">${grB}g</strong> de <span style="color:#94a3b8">[${b.n}]</span>`,
+    plano:`${grA} gramos de ${a.n} junto con ${grB} gramos de ${b.n}`,
+    prep:a.prep
+  };
+}
+
+// ══════════════════════════════════════
+// BUILD INGESTAS
+// ══════════════════════════════════════
+function buildIngestas(dia,n,pool){
+  return{
+    d:  ingesta(dia,1,n.proteina*.20,n.carbohidratos*.25,n.grasas*.20,pool.desayuno),
+    pre:ingesta(dia,2,n.proteina*.10,n.carbohidratos*.25,n.grasas*.05,pool.preEntreno),
+    a:  ingesta(dia,3,n.proteina*.28,n.carbohidratos*.25,n.grasas*.25,pool.almuerzo),
+    pos:ingesta(dia,4,n.proteina*.18,n.carbohidratos*.12,n.grasas*.05,pool.postEntreno),
+    m:  ingesta(dia,5,n.proteina*.12,n.carbohidratos*.08,n.grasas*.20,pool.merienda),
+    c:  ingesta(dia,6,n.proteina*.22,n.carbohidratos*.15,n.grasas*.25,pool.cena)
+  };
+}
+
+// ══════════════════════════════════════
+// HTML DE UN PLAN COMPLETO
+// ══════════════════════════════════════
+function buildPlanHTML(dia,n,I,obj,peso,est,nivel,gen){
+  const ml={masa:{label:"MOTOR: GANAR MASA MUSCULAR",col:"#3b82f6"},perder:{label:"MOTOR: PERDER GRASA",col:"#ef4444"},mantener:{label:"MOTOR: MANTENER PESO",col:"#10b981"}}[obj];
+  const agua=(peso*35/1000).toFixed(2);
+  const ingestas=[
+    {icon:'🍳',lbl:'INGESTA 1: DESAYUNO',col:'#facc15',data:I.d},
+    {icon:'⚡',lbl:'INGESTA 2: PRE-ENTRENO',col:'#fb923c',data:I.pre},
+    {icon:'🍗',lbl:'INGESTA 3: ALMUERZO',col:'#3b82f6',data:I.a},
+    {icon:'💥',lbl:'INGESTA 4: POST-ENTRENO',col:'#a855f7',data:I.pos},
+    {icon:'🍇',lbl:'INGESTA 5: MERIENDA',col:'#ec4899',data:I.m},
+    {icon:'🐟',lbl:'INGESTA 6: CENA',col:'#10b981',data:I.c},
+  ];
+  return `
+  <div style="background:#020617;padding:16px;border-radius:14px;font-family:'Inter',sans-serif">
+    <div style="text-align:center;margin-bottom:14px">
+      <p style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;color:${ml.col};letter-spacing:2px">🧠 NEURAL NUTRITION v12</p>
+      <p style="font-size:10px;color:#475569;letter-spacing:1.5px;text-transform:uppercase">${ml.label} · DÍA ${dia} DE 365</p>
+    </div>
+    <div style="background:#0a1020;border:1.5px solid #1e3a5f;border-left:4px solid #eab308;border-radius:12px;padding:12px;margin-bottom:12px">
+      <p style="font-size:11px;color:#94a3b8">💧 Agua mínima: <strong style="color:#60a5fa">${agua} L</strong> · Género: <strong style="color:${gen==='m'?'#60a5fa':'#e879f9'}">${gen==='m'?'♂ Hombre':'♀ Mujer'}</strong> · Nivel: <strong style="color:#fff">${nivel.toUpperCase()}</strong></p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;text-align:center">
+      ${[{l:'CALORÍAS',v:n.kcal+'<small> kcal</small>',c:'#fff'},{l:'PROTEÍNA',v:n.proteina+'<small>g</small>',c:'#3b82f6'},{l:'CARBOS',v:n.carbohidratos+'<small>g</small>',c:'#facc15'},{l:'GRASAS',v:n.grasas+'<small>g</small>',c:'#10b981'}].map(m=>`
+        <div style="background:#0f172a;padding:8px;border-radius:10px;border-bottom:2px solid ${m.c}40">
+          <div style="font-size:8px;color:#475569;font-weight:700;letter-spacing:1px">${m.l}</div>
+          <div style="font-size:22px;font-weight:900;font-family:'Barlow Condensed',sans-serif;color:${m.c}">${m.v}</div>
+        </div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${ingestas.map(ig=>`
+        <div style="background:#0a0f1e;border:1.5px solid #1e293b;border-left:3px solid ${ig.col};border-radius:12px;padding:11px">
+          <p style="font-size:8px;font-weight:700;color:${ig.col};letter-spacing:1px;margin-bottom:5px">${ig.icon} ${ig.lbl}</p>
+          <p style="font-size:11px;color:#cbd5e1;line-height:1.5;margin-bottom:4px">${ig.data.html}</p>
+          <p style="font-size:9px;color:#334155;font-style:italic">📋 ${ig.data.prep}</p>
+        </div>`).join('')}
+    </div>
+    <div style="background:#0d1f15;border:1px solid #065f46;border-radius:10px;padding:10px;margin-top:12px;font-size:10px;color:#4ade80">
+      📊 Plan generado para ${peso}kg · ${est}cm · ${gen==='m'?'Hombre':'Mujer'} · ${nivel} → <strong>${n.kcal} kcal</strong> · <strong>${n.proteina}g proteína</strong> · Día ${dia}/365
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════
+// GENERAR PLAN (tab principal)
+// ══════════════════════════════════════
+function generar(){
+  const peso=parseFloat(document.getElementById('peso').value)||75;
+  const est=parseFloat(document.getElementById('estatura').value)||175;
+  const edad=parseInt(document.getElementById('edad').value)||28;
+  const act=parseFloat(document.getElementById('actividad').value)||1.55;
+  const nivel=document.getElementById('nivelAlumno').value;
+  const dia=parseInt(document.getElementById('diaPlan').value)||1;
+  const dieta=document.getElementById('dieta').value;
+
+  const n=calcMacros(objetivo,peso,est,edad,act,genero,nivel);
+  ultimoNutrientes={...n,objetivo,peso,est,dia,nivel,dieta,genero};
+
+  const I=buildIngestas(dia,n,DB[dieta]);
+  textoVoz=buildVoz(dia,n,I,objetivo,nivel);
+
+  document.getElementById('plan-output').innerHTML=buildPlanHTML(dia,n,I,objetivo,peso,est,nivel,genero);
+  renderMacros(n,objetivo);
+}
+
+// ══════════════════════════════════════
+// VOZ
+// ══════════════════════════════════════
+function buildVoz(dia,n,I,obj,nivel){
+  return`Plan Neural Nutrition día ${dia}, objetivo ${obj==='masa'?'ganar masa muscular':obj==='perder'?'perder grasa':'mantener peso'}, nivel ${nivel}. `+
+    `Calorías totales: ${n.kcal}. Proteína: ${n.proteina} gramos. `+
+    `Desayuno: ${I.d.plano}. Pre-entreno: ${I.pre.plano}. Almuerzo: ${I.a.plano}. `+
+    `Post-entreno: ${I.pos.plano}. Merienda: ${I.m.plano}. Cena: ${I.c.plano}. `+
+    `Agua mínima recomendada: ${(n.kcal*0.001).toFixed(1)} litros al día.`;
+}
+function reproducirAudio(){
+  if(!textoVoz){alert("Genera un plan primero.");return;}
+  speak(textoVoz);
+}
+function audioModal(){
+  if(!textoVozModal){alert("Abre un día del calendario primero.");return;}
+  speak(textoVozModal);
+}
+function speak(txt){
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(txt.replace(/<[^>]+>|\*\*|\[|\]/g,''));
+  u.lang='es-ES';u.rate=0.92;u.pitch=1.0;
+  window.speechSynthesis.speak(u);
+}
+
+// ══════════════════════════════════════
+// DESCARGA PDF (html2canvas + print trick)
+// ══════════════════════════════════════
+function descargarPDF(srcId){
+  const el=document.getElementById(srcId);
+  if(!el||el.innerHTML.trim()===''){alert("Genera o selecciona un plan primero.");return;}
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>
+      body{background:#020617;color:#fff;font-family:Inter,sans-serif;padding:20px;margin:0}
+      *{box-sizing:border-box}
+      small{font-size:60%}
+      @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+    </style>
+    </head><body>${el.innerHTML}<script>window.onload=function(){window.print();setTimeout(()=>window.close(),1000)}<\/script></body></html>`);
+  w.document.close();
+}
+
+// ══════════════════════════════════════
+// DESCARGA JPG via html2canvas
+// ══════════════════════════════════════
+function descargarJPG(srcId, prefix){
+  const el=document.getElementById(srcId);
+  if(!el||el.innerHTML.trim()===''){alert("Genera o selecciona un plan primero.");return;}
+  const dia=ultimoNutrientes?ultimoNutrientes.dia:diaModalActual;
+  const obj=ultimoNutrientes?ultimoNutrientes.objetivo:calObj;
+  // Crear div temporal con estilos embebidos para html2canvas
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:800px;background:#020617;padding:16px;font-family:Inter,sans-serif';
+  wrap.innerHTML=el.innerHTML;
+  document.body.appendChild(wrap);
+  html2canvas(wrap,{
+    backgroundColor:'#020617',scale:2,useCORS:true,
+    onclone:(doc)=>{
+      doc.querySelectorAll('small').forEach(s=>{s.style.fontSize='60%'});
+    }
+  }).then(canvas=>{
+    document.body.removeChild(wrap);
+    const a=document.createElement('a');
+    a.download=`NeuralNutrition_D${dia}_${obj.toUpperCase()}.jpg`;
+    a.href=canvas.toDataURL('image/jpeg',0.95);
+    a.click();
+  }).catch(()=>{document.body.removeChild(wrap);alert("Error al generar JPG. Intenta con PDF.");});
+}
+
+// ══════════════════════════════════════
+// MACROS TAB
+// ══════════════════════════════════════
+function renderMacros(n,obj){
+  const total=n.kcal;
+  const bars=[
+    {lbl:'Proteína',val:n.proteina,kcal:n.proteina*4,pct:Math.round(n.proteina*4/total*100),col:'#3b82f6'},
+    {lbl:'Carbohidratos',val:n.carbohidratos,kcal:n.carbohidratos*4,pct:Math.round(n.carbohidratos*4/total*100),col:'#facc15'},
+    {lbl:'Grasas',val:n.grasas,kcal:n.grasas*9,pct:Math.round(n.grasas*9/total*100),col:'#10b981'},
+  ];
+  const peso=parseFloat(document.getElementById('peso').value)||75;
+  const est=parseFloat(document.getElementById('estatura').value)||175;
+  const edad=parseInt(document.getElementById('edad').value)||28;
+  const act=parseFloat(document.getElementById('actividad').value)||1.55;
+  const niv=document.getElementById('nivelAlumno').value;
+  const comp=['masa','perder','mantener'].map(o=>{
+    const m=calcMacros(o,peso,est,edad,act,genero,niv);
+    const c={masa:'#3b82f6',perder:'#ef4444',mantener:'#10b981'}[o];
+    const l={masa:'💪 MASA',perder:'🔥 DÉFICIT',mantener:'⚖️ MANTENER'}[o];
+    return`<div style="background:#0f172a;border:1.5px solid ${c}30;border-radius:12px;padding:12px;text-align:center">
+      <div style="font-size:10px;font-weight:700;color:${c};letter-spacing:1px;margin-bottom:8px">${l}</div>
+      <div style="font-size:28px;font-weight:900;font-family:'Barlow Condensed',sans-serif;color:#fff">${m.kcal}<span style="font-size:12px"> kcal</span></div>
+      <div style="font-size:10px;color:#475569;margin-top:4px">P:${m.proteina}g · C:${m.carbohidratos}g · G:${m.grasas}g</div>
+    </div>`;
+  }).join('');
+  document.getElementById('macrosView').innerHTML=`
+    <div class="glass p-4 mb-4">
+      <p class="section-title">DISTRIBUCIÓN DE MACROS</p>
+      ${bars.map(b=>`<div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:600;color:#cbd5e1">${b.lbl}</span>
+          <span style="font-size:11px;color:${b.col}">${b.val}g · ${b.kcal}kcal · <strong>${b.pct}%</strong></span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${b.pct}%;background:${b.col}"></div></div>
+      </div>`).join('')}
+      <div style="font-size:11px;color:#475569;margin-top:4px">Total: <strong style="color:#fff">${total} kcal</strong></div>
+    </div>
+    <div class="glass p-4">
+      <p class="section-title">COMPARATIVA 3 OBJETIVOS</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">${comp}</div>
+    </div>`;
+}
+
+// ══════════════════════════════════════
+// CALENDARIO
+// ══════════════════════════════════════
+const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS_MES=[31,28,31,30,31,30,31,31,30,31,30,31];
+
+function renderCalendar(){
+  const cont=document.getElementById('calendarView');
+  let html='<div class="cal-wrap">';
+  let diaAnual=1;
+  const wd=['L','M','X','J','V','S','D'];
+  for(let m=0;m<12;m++){
+    html+=`<div style="margin-bottom:20px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;color:${{masa:'#3b82f6',perder:'#ef4444',mantener:'#10b981'}[calObj]};letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">${MESES[m]} <span style="font-size:10px;color:#334155">${DIAS_MES[m]} días</span></div>
+      <div class="cal-grid">`;
+    wd.forEach(d=>html+=`<div class="cal-weekday">${d}</div>`);
+    const first=(new Date(2025,m,1).getDay()+6)%7;
+    for(let e=0;e<first;e++) html+=`<div></div>`;
+    for(let d=0;d<DIAS_MES[m];d++){
+      const dn=diaAnual;
+      html+=`<div class="cal-day ${calObj}" onclick="abrirModal(${dn})" title="Día ${dn} — Clic para ver plan">
+        <span style="font-size:13px;font-weight:900">${d+1}</span>
+        <span style="font-size:7px;opacity:.55;margin-top:1px">D${dn}</span>
+      </div>`;
+      diaAnual++;
+    }
+    html+=`</div></div>`;
+  }
+  html+=`</div>`;
+  cont.innerHTML=html;
+}
+
+// ══════════════════════════════════════
+// MODAL DETALLE DÍA
+// ══════════════════════════════════════
+function abrirModal(dia){
+  diaModalActual=dia;
+  const peso=parseFloat(document.getElementById('peso').value)||75;
+  const est=parseFloat(document.getElementById('estatura').value)||175;
+  const edad=parseInt(document.getElementById('edad').value)||28;
+  const act=parseFloat(document.getElementById('actividad').value)||1.55;
+  const nivel=document.getElementById('nivelAlumno').value;
+  const dieta=document.getElementById('dieta').value;
+
+  const n=calcMacros(calObj,peso,est,edad,act,genero,nivel);
+  const I=buildIngestas(dia,n,DB[dieta]);
+  textoVozModal=buildVoz(dia,n,I,calObj,nivel);
+
+  const planHTML=buildPlanHTML(dia,n,I,calObj,peso,est,nivel,genero);
+
+  document.getElementById('modalContent').innerHTML=`
+    <div id="modal-plan-data">${planHTML}</div>`;
+
+  document.getElementById('modalOverlay').style.display='flex';
+}
+
+function cargarDiaDesdeModal(){
+  document.getElementById('diaPlan').value=diaModalActual;
+  setObjetivo(calObj);
+  document.getElementById('modalOverlay').style.display='none';
+  switchTab('plan');
+  generar();
+}
+
+// ══════════════════════════════════════
+// SISTEMA DE CRÉDITOS
+// ══════════════════════════════════════
+let creditos = 10;
+
+function initCreditos(){
+  const stored = sessionStorage.getItem('nn_creditos');
+  creditos = stored !== null ? parseInt(stored) : 10;
+  renderCreditos();
+}
+
+function renderCreditos(){
+  const el = document.getElementById('creditos-display');
+  if(el) el.innerHTML = `💳 <strong style="color:#facc15">${creditos}</strong> créditos`;
+}
+
+function gastarCredito(accion, cantidad){
+  if(creditos < cantidad){
+    mostrarSinCreditos(cantidad, accion);
+    return false;
+  }
+  creditos -= cantidad;
+  sessionStorage.setItem('nn_creditos', creditos.toString());
+  renderCreditos();
+  mostrarToast(`-${cantidad} crédito${cantidad>1?'s':''} · ${accion}`, creditos);
+  return true;
+}
+
+function mostrarToast(msg, restantes){
+  const t = document.createElement('div');
+  t.style.cssText='position:fixed;top:18px;right:18px;z-index:99999;background:#0a0f1e;border:1.5px solid #3b82f6;border-radius:12px;padding:12px 18px;font-family:Inter,sans-serif;font-size:11px;color:#60a5fa;box-shadow:0 8px 28px rgba(0,0,0,.8);animation:fadeToast 3.2s forwards';
+  t.innerHTML=`<div style="font-weight:700;margin-bottom:3px">✅ ${msg}</div><div style="color:#475569;font-size:9px">Créditos restantes: ${restantes}</div>`;
+  if(!document.getElementById('_toast_style')){
+    const s=document.createElement('style');s.id='_toast_style';
+    s.textContent='@keyframes fadeToast{0%{opacity:0;transform:translateY(-8px)}10%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}';
+    document.head.appendChild(s);
+  }
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 3200);
+}
+
+function mostrarSinCreditos(necesita, accion){
+  const o=document.createElement('div');
+  o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
+  o.innerHTML=`<div style="background:#0a0f1e;border:2px solid #ef4444;border-radius:18px;padding:28px;max-width:340px;text-align:center;font-family:Inter,sans-serif">
+    <div style="font-size:2rem;margin-bottom:10px">⚠️</div>
+    <div style="color:#ef4444;font-weight:700;font-size:14px;margin-bottom:8px">Créditos insuficientes</div>
+    <div style="color:#64748b;font-size:12px;margin-bottom:20px;line-height:1.8">Necesitas <strong style="color:#ef4444">${necesita} crédito${necesita>1?'s':''}</strong> para ${accion}.<br>Tienes: <strong style="color:#fff">${creditos} créditos</strong></div>
+    <button onclick="this.closest('div[style]').remove()" style="width:100%;padding:11px;background:#1e293b;border:none;border-radius:9px;color:#94a3b8;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer">CERRAR</button>
+  </div>`;
+  document.body.appendChild(o);
+}
+
+// ══════════════════════════════════════
+// OVERRIDE FUNCIONES CON CRÉDITOS
+// ══════════════════════════════════════
+const _generarOriginal = generar;
+generar = function(){
+  if(!gastarCredito('Generar plan', 2)) return;
+  _generarOriginal();
+};
+
+const _pdfOriginal = descargarPDF;
+descargarPDF = function(id){
+  if(!gastarCredito('Descargar PDF', 3)) return;
+  _pdfOriginal(id);
+};
+
+const _jpgOriginal = descargarJPG;
+descargarJPG = function(id, prefix){
+  if(!gastarCredito('Descargar JPG', 2)) return;
+  _jpgOriginal(id, prefix);
+};
+
+const _audioOriginal = reproducirAudio;
+reproducirAudio = function(){
+  if(!gastarCredito('Escuchar audio', 1)) return;
+  _audioOriginal();
+};
+
+const _audioModalOriginal = audioModal;
+audioModal = function(){
+  if(!gastarCredito('Escuchar audio', 1)) return;
+  _audioModalOriginal();
+};
+
+// INIT
+setGenero('m');
+setObjetivo('masa');
+renderCalendar();
+initCreditos();
+</script>
+<script src="hub_credito_bridge.js"></script>
+</body>
+</html>

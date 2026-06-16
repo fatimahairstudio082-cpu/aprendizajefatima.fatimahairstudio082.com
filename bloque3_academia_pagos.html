@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academia Fátima Caldea — Masterclass</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root{
+  --bg:#060708;--bg2:#0c0d10;--bg3:#111317;--bg4:#16181d;
+  --oro:#C9A84C;--oro2:#F0D080;--oro3:rgba(201,168,76,0.13);
+  --borde:#202328;--borde2:rgba(201,168,76,0.22);
+  --txt:#ffffff;--txt2:#8a939e;--txt3:#d4dce8;
+  --verde:#52c41a;--rojo:#ff4d4f;--azul:#1890ff;--mora:#b37feb;
+  --f:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--txt);font-family:var(--f);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:#0a0b0e;}
+::-webkit-scrollbar-thumb{background:#2a2d35;border-radius:4px;}
+
+/* ── MODAL ── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:9999;display:flex;justify-content:center;align-items:center;backdrop-filter:blur(8px);}
+.modal-box{background:var(--bg3);border:1px solid var(--oro);padding:3rem 2.5rem;border-radius:18px;width:440px;text-align:center;box-shadow:0 0 80px rgba(201,168,76,.12);}
+.modal-logo{font-size:3rem;margin-bottom:1rem;}
+.modal-box h2{font-size:1.4rem;margin-bottom:.5rem;background:linear-gradient(135deg,var(--oro),var(--oro2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.modal-box p{font-size:.8rem;color:var(--txt2);margin-bottom:2rem;line-height:1.6;}
+.modal-inp{width:100%;padding:14px;background:#07080a;border:1px solid var(--borde);border-radius:8px;color:#fff;font-size:.95rem;text-align:center;margin-bottom:1rem;transition:.2s;}
+.modal-inp:focus{border-color:var(--oro);outline:none;}
+.modal-btn{width:100%;background:linear-gradient(135deg,var(--oro),var(--oro2));color:#000;border:none;padding:14px;border-radius:8px;font-weight:800;font-size:.95rem;cursor:pointer;letter-spacing:1px;}
+.modal-btn:hover{filter:brightness(1.1);}
+.modal-feats{display:flex;justify-content:center;gap:1.5rem;margin-top:1.5rem;flex-wrap:wrap;}
+.modal-feat{font-size:.7rem;color:var(--txt2);display:flex;flex-direction:column;align-items:center;gap:4px;}
+.modal-feat span{font-size:1.2rem;}
+
+/* ── PDF MODAL ── */
+.pdf-ov{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:9990;display:none;justify-content:center;align-items:center;padding:16px;}
+.pdf-ov.show{display:flex;}
+.pdf-box{background:var(--bg3);border:1px solid var(--borde2);border-radius:16px;width:700px;max-width:100%;max-height:90vh;overflow-y:auto;padding:2rem;}
+.pdf-topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;}
+.pdf-close{background:none;border:1px solid var(--borde);color:var(--txt2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;}
+.pdf-preview-img{width:100%;max-height:260px;object-fit:cover;border-radius:10px;margin-bottom:1.25rem;border:1px solid var(--borde);}
+.pdf-content{font-size:.87rem;line-height:1.8;color:var(--txt3);}
+.pdf-content strong{color:#1a1a1a;background:var(--oro2);padding:1px 5px;border-radius:3px;}
+.pdf-content .alerta{background:rgba(255,77,79,.07);border-left:3px solid var(--rojo);padding:10px 14px;border-radius:0 8px 8px 0;margin:10px 0;font-size:.82rem;color:#ffb3b4;}
+.pdf-content .tip{background:rgba(82,196,26,.07);border-left:3px solid var(--verde);padding:10px 14px;border-radius:0 8px 8px 0;margin:10px 0;font-size:.82rem;color:#b7eb8f;}
+.pdf-content .importante{background:rgba(201,168,76,.07);border-left:3px solid var(--oro);padding:10px 14px;border-radius:0 8px 8px 0;margin:10px 0;font-size:.82rem;color:var(--oro2);}
+.pdf-content .punto{display:flex;gap:10px;margin:8px 0;align-items:flex-start;}
+.pdf-content .punto-num{color:var(--oro);font-weight:800;font-size:.8rem;min-width:20px;margin-top:2px;}
+
+/* ── HEADER ── */
+header{background:var(--bg2);border-bottom:1px solid var(--borde);padding:0 1.5rem;display:flex;justify-content:space-between;align-items:center;height:62px;flex-shrink:0;}
+.marca{display:flex;align-items:center;gap:12px;}
+.marca-ic{width:38px;height:38px;background:linear-gradient(135deg,var(--oro),var(--oro2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#000;flex-shrink:0;}
+.marca h1{font-size:.82rem;font-weight:800;letter-spacing:2px;background:linear-gradient(135deg,var(--oro),var(--oro2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-transform:uppercase;line-height:1.2;}
+.marca p{font-size:.62rem;color:var(--txt2);letter-spacing:1px;}
+.hdr-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.user-pill{display:flex;align-items:center;gap:7px;background:var(--bg4);border:1px solid var(--borde);padding:6px 13px;border-radius:30px;font-size:.72rem;}
+.user-pill i{color:var(--oro);}
+.user-email{color:var(--oro2);font-weight:700;}
+.prog-pill{display:flex;align-items:center;gap:6px;background:rgba(82,196,26,.08);border:1px solid rgba(82,196,26,.25);padding:6px 13px;border-radius:30px;font-size:.72rem;color:var(--verde);}
+
+/* ── LAYOUT ── */
+.layout{
+  display:grid;
+  grid-template-columns:300px 1fr 340px;
+  flex-grow:1;
+  height:calc(100vh - 62px);
+  overflow:hidden;
+}
+.panel{display:flex;flex-direction:column;height:100%;overflow:hidden;}
+
+/* ── IZQUIERDO ── */
+.p-left{background:var(--bg2);border-right:1px solid var(--borde);}
+
+.vid-apoyo-wrap{flex-shrink:0;padding:10px;border-bottom:1px solid var(--borde);background:var(--bg2);}
+.vid-apoyo-lbl{font-size:.6rem;color:var(--txt2);font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.vid-apoyo-box{position:relative;width:100%;padding-top:56.25%;background:#000;border-radius:10px;overflow:hidden;border:1px solid var(--borde);}
+.vid-apoyo-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5;}
+.vid-apoyo-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.2rem;opacity:.25;background:#050607;}
+.vid-apoyo-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;background:rgba(0,0,0,.85);border:2px solid var(--oro);color:var(--oro2);border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:1.1rem;cursor:pointer;transition:.2s;z-index:2;}
+.vid-apoyo-play:hover{background:var(--oro);color:#000;}
+.vid-apoyo-iframe{position:absolute;inset:0;width:100%;height:100%;border:none;display:none;}
+.vid-apoyo-nourl{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:.7rem;color:var(--txt2);text-align:center;padding:8px;}
+.vid-apoyo-title{font-size:.73rem;font-weight:700;color:var(--txt);margin-top:7px;padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+.search-wrap{padding:10px;border-bottom:1px solid var(--borde);flex-shrink:0;}
+.search-inp{width:100%;background:#07080a;border:1px solid var(--borde);border-radius:8px;color:var(--txt);font-size:.78rem;padding:8px 12px;outline:none;transition:.2s;}
+.search-inp:focus{border-color:var(--oro);}
+.cats-scroll{overflow-y:auto;flex:1;padding:6px;}
+.sec-lbl{font-size:.62rem;color:var(--txt2);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:7px 6px 4px;}
+.cat-block{margin-bottom:5px;border:1px solid var(--borde);border-radius:9px;overflow:hidden;}
+.cat-hdr{background:var(--bg4);padding:9px 11px;font-size:.76rem;font-weight:700;color:var(--oro2);display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;transition:.2s;}
+.cat-hdr:hover{background:#1a1c22;}
+.cnt-badge{background:rgba(201,168,76,.14);color:var(--oro);padding:2px 7px;border-radius:10px;font-size:.62rem;font-weight:700;}
+.clases-wrap{background:#0a0b0e;max-height:0;overflow:hidden;transition:max-height .3s ease;}
+.clases-wrap.open{max-height:600px;}
+.clase-item{padding:8px 12px;font-size:.73rem;color:var(--txt2);cursor:pointer;display:flex;align-items:center;gap:7px;transition:.15s;border-left:2px solid transparent;}
+.clase-item:hover{background:var(--oro3);color:var(--txt);}
+.clase-item.activa{background:var(--oro3);color:var(--oro2);border-left-color:var(--oro);font-weight:600;}
+.nivel-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dot-p{background:#52c41a;}.dot-i{background:#faad14;}.dot-a{background:#ff4d4f;}
+.check-ic{font-size:.72rem;flex-shrink:0;}
+.check-ic.done{color:var(--verde);}
+
+/* ── CENTRAL ── */
+.p-center{background:var(--bg3);overflow-y:auto;overflow-x:hidden;padding:1.25rem 1.5rem;height:100%;min-height:0;}
+.clase-breadcrumb{font-size:.68rem;color:var(--txt2);margin-bottom:.4rem;display:flex;align-items:center;gap:5px;}
+.clase-breadcrumb span{color:var(--oro);}
+.nivel-tag{display:inline-flex;align-items:center;gap:5px;font-size:.63rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:.6rem;}
+.tag-p{background:rgba(82,196,26,.1);color:#52c41a;border:1px solid rgba(82,196,26,.25);}
+.tag-i{background:rgba(250,173,20,.1);color:#faad14;border:1px solid rgba(250,173,20,.25);}
+.tag-a{background:rgba(255,77,79,.1);color:#ff4d4f;border:1px solid rgba(255,77,79,.25);}
+.clase-title{font-size:1.5rem;font-weight:800;line-height:1.2;margin-bottom:.4rem;color:var(--txt);}
+.clase-meta{display:flex;align-items:center;gap:12px;font-size:.7rem;color:var(--txt2);margin-bottom:1rem;}
+
+.lamina{background:linear-gradient(160deg,#07090d,#0c0f15);border:1px solid var(--borde2);border-radius:12px;padding:1.5rem;margin-bottom:1rem;position:relative;overflow:visible;}
+.lamina::before{content:'';position:absolute;top:-50px;right:-50px;width:160px;height:160px;background:radial-gradient(circle,rgba(201,168,76,.06),transparent);border-radius:50%;pointer-events:none;}
+.lamina-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px dashed rgba(255,255,255,.06);}
+.lamina-id{font-size:.62rem;font-weight:700;color:var(--txt2);letter-spacing:1.5px;text-transform:uppercase;}
+.lamina-badge{font-size:.58rem;background:var(--oro3);color:var(--oro);padding:2px 8px;border-radius:4px;font-weight:700;letter-spacing:1px;border:1px solid var(--borde2);}
+.lamina-content{font-size:.88rem;line-height:1.85;color:var(--txt3);display:block;visibility:visible;opacity:1;position:relative;z-index:1;}
+.lamina-content strong{color:#1a1a1a;background:var(--oro2);padding:1px 6px;border-radius:4px;font-weight:700;}
+.lamina-content em{color:var(--oro2);font-style:normal;background:rgba(201,168,76,.12);padding:1px 5px;border-radius:3px;}
+.lamina-content .punto{display:flex;gap:10px;margin:8px 0;align-items:flex-start;}
+.lamina-content .punto-num{color:var(--oro);font-weight:800;font-size:.8rem;min-width:20px;margin-top:3px;}
+.lamina-content .alerta{background:rgba(255,77,79,.08);border-left:3px solid var(--rojo);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0;font-size:.82rem;color:#ffb3b4;}
+.lamina-content .tip{background:rgba(82,196,26,.08);border-left:3px solid var(--verde);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0;font-size:.82rem;color:#b7eb8f;}
+.lamina-content .importante{background:rgba(201,168,76,.08);border-left:3px solid var(--oro);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0;font-size:.82rem;color:var(--oro2);}
+
+/* ACTION BAR */
+.action-bar{display:flex;gap:8px;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;}
+.btn{border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.76rem;letter-spacing:.5px;padding:10px 15px;transition:.2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-oro{background:linear-gradient(135deg,var(--oro),var(--oro2));color:#000;}
+.btn-oro:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-verde{background:rgba(82,196,26,.12);border:1px solid rgba(82,196,26,.3);color:var(--verde);}
+.btn-verde:hover{background:rgba(82,196,26,.2);}
+.btn-ghost{background:var(--bg4);border:1px solid var(--borde);color:var(--txt2);}
+.btn-ghost:hover{border-color:var(--oro);color:var(--oro2);}
+.audio-bar{background:var(--bg4);border:1px solid var(--borde);border-radius:8px;padding:9px 13px;display:flex;align-items:center;gap:9px;flex:1;min-width:150px;}
+.audio-play{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--oro),var(--oro2));border:none;cursor:pointer;color:#000;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.audio-info{font-size:.7rem;}
+.audio-info div:first-child{color:var(--txt);font-weight:600;}
+.audio-info div:last-child{color:var(--txt2);}
+.audio-bar.playing{border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.06);}
+
+/* GALERÍA */
+.galeria-section{margin-top:1.5rem;border-top:1px solid var(--borde);padding-top:1.25rem;}
+.sec-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;}
+.galeria-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;}
+.gal-card{background:var(--bg2);border:1px solid var(--borde);border-radius:9px;overflow:hidden;cursor:pointer;transition:.2s;}
+.gal-card:hover{border-color:var(--oro);transform:translateY(-2px);box-shadow:0 6px 20px rgba(201,168,76,.1);}
+.gal-thumb-wrap{width:100%;height:65px;overflow:hidden;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:1.4rem;}
+.gal-thumb-wrap img{width:100%;height:100%;object-fit:cover;}
+.gal-info{padding:7px 9px;}
+.gal-title{font-size:.68rem;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gal-tag{font-size:.58rem;color:var(--verde);display:flex;align-items:center;gap:3px;margin-top:2px;}
+.gal-empty{grid-column:1/-1;text-align:center;padding:1.5rem;font-size:.78rem;color:var(--txt2);}
+
+/* ── DERECHO ── */
+.p-right{background:var(--bg2);border-left:1px solid var(--borde);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1.1rem;}
+.r-lbl{font-size:.62rem;color:var(--txt2);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.6rem;display:flex;align-items:center;gap:5px;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.stat-card{background:var(--bg4);border:1px solid var(--borde);border-radius:9px;padding:11px;text-align:center;}
+.stat-val{font-size:1.35rem;font-weight:800;}
+.stat-lbl{font-size:.6rem;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;margin-top:1px;}
+.sv-oro{color:var(--oro);}.sv-v{color:var(--verde);}.sv-a{color:var(--azul);}.sv-m{color:var(--mora);}
+.prog-wrap{background:var(--bg3);border:1px solid var(--borde);border-radius:9px;padding:11px;}
+.prog-label{display:flex;justify-content:space-between;font-size:.7rem;color:var(--txt2);margin-bottom:7px;}
+.prog-bar{height:7px;background:#1a1c22;border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--oro),var(--oro2));border-radius:4px;transition:width .6s ease;}
+.ficha-right{background:var(--bg3);border:1px solid var(--borde);border-radius:10px;padding:1rem;}
+.ficha-icon{font-size:1.8rem;display:block;text-align:center;margin-bottom:.4rem;opacity:.5;}
+.ficha-title{font-size:.82rem;color:var(--oro2);font-weight:700;text-align:center;margin-bottom:.3rem;}
+.ficha-desc{font-size:.73rem;color:var(--txt2);line-height:1.5;text-align:center;}
+.tools-wrap{display:flex;flex-wrap:wrap;gap:5px;margin-top:.6rem;justify-content:center;}
+.tool-tag{background:var(--bg4);border:1px solid var(--borde);padding:3px 9px;border-radius:12px;font-size:.65rem;color:var(--txt2);}
+.cert-box{background:var(--bg3);border:1px solid var(--borde);border-radius:9px;padding:.9rem;text-align:center;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(70px);padding:11px 22px;border-radius:30px;font-size:.8rem;font-weight:700;z-index:8888;transition:.3s;opacity:0;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.toast-ok{background:#0d2010;border:1px solid var(--verde);color:var(--verde);}
+.toast-err{background:#200d0d;border:1px solid var(--rojo);color:#ff7875;}
+
+@media(max-width:1100px){.layout{grid-template-columns:260px 1fr 290px;}}
+@media(max-width:800px){.layout{grid-template-columns:1fr;}.p-left,.p-right{display:none;}}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- MODAL ACCESO -->
+<div class="modal-ov" id="modal-acceso">
+  <div class="modal-box">
+    <div class="modal-logo">✂️</div>
+    <h2>Academia Fátima Caldera</h2>
+    <p>Introduce tu correo registrado para acceder a tu masterclass y sincronizar tu progreso.</p>
+    <input type="email" id="inp-correo" class="modal-inp" placeholder="tucorreo@ejemplo.com" onkeydown="if(event.key==='Enter')entrar()">
+    <button class="modal-btn" onclick="entrar()">🎓 INGRESAR A MI MASTERCLASS</button>
+    <div class="modal-feats">
+      <div class="modal-feat"><span>📚</span>22 Módulos</div>
+      <div class="modal-feat"><span>🎬</span>Video+Audio</div>
+      <div class="modal-feat"><span>📄</span>PDF Premium</div>
+      <div class="modal-feat"><span>🏆</span>Progreso</div>
+    </div>
+  </div>
+</div>
+
+<!-- PDF MODAL -->
+<div class="pdf-ov" id="pdf-ov">
+  <div class="pdf-box">
+    <div class="pdf-topbar">
+      <div>
+        <div style="font-size:.62rem;color:var(--txt2);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">CONTENIDO OFICIAL · © ACADEMIA FÁTIMA CALDERA</div>
+        <div style="font-size:1.15rem;font-weight:800;" id="pdf-modal-title">—</div>
+        <div style="font-size:.7rem;color:var(--txt2);margin-top:2px;" id="pdf-modal-meta">—</div>
+      </div>
+      <button class="pdf-close" onclick="closePDF()"><i class="ti ti-x"></i></button>
+    </div>
+    <img id="pdf-modal-img" class="pdf-preview-img" src="" alt="" style="display:none;">
+    <div class="pdf-content" id="pdf-modal-body"></div>
+    <div style="margin-top:1.5rem;border-top:1px solid var(--borde);padding-top:1rem;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-oro" onclick="imprimirPDF()"><i class="ti ti-printer"></i> IMPRIMIR / GUARDAR PDF</button>
+      <button class="btn btn-ghost" onclick="closePDF()"><i class="ti ti-x"></i> Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="marca">
+    <div class="marca-ic">✂️</div>
+    <div>
+      <h1>Academia Fátima Caldea</h1>
+      <p>Motor de Conocimiento — Masterclass Premium</p>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="prog-pill"><i class="ti ti-chart-bar"></i><span id="hdr-prog">0% completado</span></div>
+    <div class="user-pill"><i class="ti ti-user-circle"></i>Alumno: <span class="user-email" id="disp-correo">—</span></div>
+    <button class="btn btn-ghost" onclick="cerrarSesion()" style="padding:6px 10px;font-size:.7rem;"><i class="ti ti-logout"></i></button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- IZQUIERDO -->
+  <div class="panel p-left">
+    <div class="vid-apoyo-wrap">
+      <div class="vid-apoyo-lbl"><i class="ti ti-video"></i> Video de Apoyo</div>
+      <div class="vid-apoyo-box" id="vid-apoyo-box">
+        <div class="vid-apoyo-ph" id="vap-ph">🎬</div>
+        <img id="vap-thumb" class="vid-apoyo-thumb" src="" alt="" style="display:none;">
+        <div class="vid-apoyo-play" id="vap-play" onclick="playVideoApoyo()" style="display:none;">
+          <i class="ti ti-player-play"></i>
+        </div>
+        <iframe id="vap-frame" class="vid-apoyo-iframe" allow="autoplay;encrypted-media" allowfullscreen></iframe>
+        <video id="vap-mp4"
+          style="position:absolute;inset:0;width:100%;height:100%;display:none;object-fit:cover;border-radius:10px;"
+          playsinline muted controls>
+        </video>
+        <div class="vid-apoyo-nourl" id="vap-nourl" style="display:none;">
+          <i class="ti ti-video-off" style="font-size:1.8rem;opacity:.3;"></i>
+          <span>Video próximamente</span>
+        </div>
+      </div>
+      <div class="vid-apoyo-title" id="vap-title">Selecciona una clase...</div>
+    </div>
+    <div class="search-wrap">
+      <input class="search-inp" type="text" placeholder="🔍 Buscar clase..." oninput="buscar(this.value)">
+    </div>
+    <div class="cats-scroll" id="cats-container">
+      <div class="sec-lbl">Módulos Curriculares</div>
+    </div>
+  </div>
+
+  <!-- CENTRAL -->
+  <div class="panel p-center" id="p-center">
+    <div class="clase-breadcrumb"><i class="ti ti-home"></i><span id="bc-cat">Academia</span> › <span id="bc-clase">Clase</span></div>
+    <div class="nivel-tag tag-i" id="nivel-tag"><i class="ti ti-star"></i> NIVEL INTERMEDIO</div>
+    <div class="clase-title" id="clase-title">Selecciona una clase</div>
+    <div class="clase-meta">
+      <span><i class="ti ti-clock"></i> <span id="meta-dur">—</span></span>
+      <span><i class="ti ti-category"></i> <span id="meta-cat">—</span></span>
+      <span><i class="ti ti-certificate"></i> Contenido original de autor</span>
+    </div>
+    <div class="lamina" id="lamina-box">
+      <div class="lamina-topbar">
+        <span class="lamina-id" id="lamina-id">UNIDAD TÉCNICA</span>
+        <span class="lamina-badge">© FÁTIMA CALDEA · CONTENIDO ORIGINAL</span>
+      </div>
+      <div class="lamina-content" id="lamina-content" style="color:#d4dce8;display:block;visibility:visible;opacity:1;position:relative;z-index:1;">
+        <div class="importante">Selecciona cualquier lección del menú izquierdo para comenzar. Cada clase contiene el conocimiento técnico real de <strong>19 años de experiencia</strong> en peluquería y colorimetría avanzada.</div>
+      </div>
+    </div>
+    <div class="action-bar">
+      <button class="btn btn-verde" onclick="marcarCompletada()"><i class="ti ti-checkbox"></i> Marcar Completada</button>
+      <button class="btn btn-oro" onclick="abrirPDF()"><i class="ti ti-file-type-pdf"></i> Ver PDF</button>
+      <div class="audio-bar" id="audio-bar">
+        <button class="audio-play" onclick="toggleAudio()" id="btn-audio"><i class="ti ti-player-play" id="ic-audio"></i></button>
+        <div class="audio-info">
+          <div>🎙️ Audio-Guía</div>
+          <div id="audio-status">Listo</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="siguienteClase()"><i class="ti ti-arrow-right"></i> Siguiente</button>
+    </div>
+    <div class="galeria-section">
+      <div class="sec-header">
+        <div>
+          <div class="sec-lbl" style="margin-bottom:1px;"><i class="ti ti-photo-album"></i> Tu Galería de Clases Completadas</div>
+          <div style="font-size:.7rem;color:var(--txt2);">Lecciones certificadas guardadas</div>
+        </div>
+        <button class="btn btn-ghost" onclick="limpiarGaleria()" style="padding:5px 9px;font-size:.65rem;"><i class="ti ti-trash"></i></button>
+      </div>
+      <div class="galeria-grid" id="galeria-grid">
+        <div class="gal-empty"><i class="ti ti-bookmark" style="font-size:1.8rem;display:block;margin-bottom:6px;opacity:.3;"></i>Completa tu primera clase para verla aquí</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DERECHO -->
+  <div class="panel p-right">
+    <div>
+      <div class="r-lbl"><i class="ti ti-chart-pie"></i> Mi Progreso</div>
+      <div class="stats-grid" style="margin-bottom:8px;">
+        <div class="stat-card"><div class="stat-val sv-oro" id="stat-total">0</div><div class="stat-lbl">Clases Totales</div></div>
+        <div class="stat-card"><div class="stat-val sv-v" id="stat-comp">0</div><div class="stat-lbl">Completadas</div></div>
+        <div class="stat-card"><div class="stat-val sv-a" id="stat-cats">22</div><div class="stat-lbl">Categorías</div></div>
+        <div class="stat-card"><div class="stat-val sv-m" id="stat-pct">0%</div><div class="stat-lbl">Progreso</div></div>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-label"><span>Progreso Global</span><span id="prog-txt">0 / 0</span></div>
+        <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="ficha-right" id="ficha-right">
+      <i class="ti ti-shield-check ficha-icon" id="ficha-ic"></i>
+      <div class="ficha-title" id="ficha-title">Selecciona una clase</div>
+      <div class="ficha-desc" id="ficha-desc">Los módulos cubren desde bioseguridad hasta colorimetría avanzada, balayage, queratina y morfología capilar.</div>
+      <div class="tools-wrap" id="tools-wrap"></div>
+    </div>
+    <div class="cert-box">
+      <div style="font-size:.72rem;color:var(--txt2);margin-bottom:.4rem;">Certifícate completando todas las clases</div>
+      <div style="font-size:.75rem;color:var(--oro);font-weight:700;" id="cert-prog">0 de <span id="cert-total">0</span> clases</div>
+    </div>
+  </div>
+</div>
+
+<!-- Motor de Conocimiento Expandido — Academia Fátima Caldea -->
+<script src="motor_p1_bioseg_balayage.js"></script>
+<script src="motor_p2_queratina_elevaciones.js"></script>
+<script src="motor_p3_morfologia_alertas.js"></script>
+<!-- JS Principal -->
+<script src="app.js"></script>
+<script src="motor_helper.js"></script>
+<script src="peluqueria_hub_bridge.js"></script>
+</body>
+</html>

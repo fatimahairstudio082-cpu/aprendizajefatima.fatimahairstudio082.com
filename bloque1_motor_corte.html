@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FATIMA PRO — Bloque 1</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --bg:#020408;--panel:#0a111f;--panel2:#0c1525;
+  --oro:#c9a84c;--oro2:#f0d080;--oro3:#a07830;
+  --txt:#e2e8f0;--muted:#64748b;--border:#c9a84c28;
+  --ok:#22c55e;--pin:#ff3e3e;--warn:#facc15;--bio:#00f2ff;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Monaco','Consolas',monospace;}
+body{background:var(--bg);color:var(--txt);padding:16px;font-size:11px;overflow-y:auto;}
+
+/* FICHAS */
+.proto{border-left:2px solid var(--oro);padding:10px 12px;background:#030a18;border-radius:0 8px 8px 0;position:relative;}
+.proto.bio{border-left-color:var(--bio);}
+.proto h4{color:var(--oro);font-size:8px;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;}
+.proto.bio h4{color:var(--bio);}
+.proto-val{font-size:10px;line-height:1.6;color:#94a3b8;margin-bottom:4px;}
+.ok-val{color:var(--ok);font-weight:700;}
+.pin-val{color:var(--pin);font-weight:700;}
+.bio-val{color:var(--bio);font-size:9px;line-height:1.7;}
+.tip{color:var(--warn);font-style:italic;font-size:8px;margin-top:4px;line-height:1.5;}
+
+/* BOTÓN TTS FICHA */
+.btn-tts-ficha{position:absolute;top:7px;right:7px;padding:3px 8px;border-radius:12px;border:1px solid rgba(201,168,76,.3);background:rgba(201,168,76,.08);color:var(--oro);font-size:8px;cursor:pointer;font-family:Monaco,monospace;transition:all .2s;display:flex;align-items:center;gap:3px;}
+.btn-tts-ficha:hover{background:rgba(201,168,76,.2);}
+.btn-tts-ficha.playing{background:rgba(201,168,76,.25);border-color:var(--oro);}
+
+/* SD INPUTS */
+.sd-row{display:flex;align-items:center;gap:5px;padding:3px 6px;border-radius:4px;background:#030710;border:1px solid #1a2030;margin-bottom:2px;}
+.sd-zl{font-size:7px;width:44px;letter-spacing:1px;text-transform:uppercase;}
+.sd-row input{width:46px;padding:3px 4px;background:#000;border:1px solid #1e3a5f;border-radius:3px;color:#fff;font-size:10px;font-family:Monaco,monospace;text-align:center;outline:none;}
+.sd-row input:focus{border-color:var(--oro);}
+.sd-ai{width:30px;font-size:9px;text-align:right;font-weight:700;}
+
+select{width:100%;padding:8px 10px;background:#030710;border:1px solid #c9a84c40;border-radius:7px;color:var(--txt);margin-bottom:5px;font-family:Monaco,monospace;font-size:10px;outline:none;cursor:pointer;}
+select:focus{border-color:var(--oro);}
+
+/* MÓDULOS */
+.mod-card{background:#000;border:1px solid #333;border-radius:8px;overflow:hidden;cursor:pointer;transition:all .25s;display:flex;flex-direction:column;}
+.mod-card:hover{border-color:var(--oro);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.5);}
+.mod-thumb{width:100%;height:90px;object-fit:cover;display:block;background:#030710;}
+.mod-thumb-ph{width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,#050812,#0d1526);}
+.mod-body{padding:9px 10px;flex:1;display:flex;flex-direction:column;gap:4px;}
+.mod-num{font-size:9px;font-weight:700;letter-spacing:1px;}
+.mod-tit{font-size:9px;color:#e2e8f0;line-height:1.3;flex:1;}
+.mod-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-top:6px;}
+.mod-btn{padding:4px 2px;text-align:center;border-radius:5px;font-size:8px;font-weight:700;cursor:pointer;border:none;transition:all .2s;letter-spacing:.3px;}
+.mod-btn-ver{background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);color:var(--oro);}
+.mod-btn-jpg{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--ok);}
+.mod-btn-pdf{background:rgba(0,242,255,.08);border:1px solid rgba(0,242,255,.25);color:var(--bio);}
+.mod-btn:hover{opacity:.8;transform:translateY(-1px);}
+
+/* TTS BARRA GLOBAL */
+.tts-bar{display:flex;align-items:center;gap:7px;background:#020a14;border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:7px 12px;flex-wrap:wrap;margin-bottom:10px;}
+.tts-bar button{padding:5px 10px;border-radius:5px;border:1px solid var(--oro);background:transparent;color:var(--oro);font-size:9px;cursor:pointer;font-family:Monaco,monospace;}
+.tts-bar button:hover{background:rgba(201,168,76,.15);}
+.tts-label{font-size:8px;color:var(--muted);letter-spacing:1px;}
+.tts-wave{display:flex;align-items:center;gap:2px;height:14px;}
+.tts-wave span{display:inline-block;width:2px;background:var(--oro);border-radius:1px;animation:wave .8s ease-in-out infinite;}
+.tts-wave span:nth-child(2){animation-delay:.1s;}
+.tts-wave span:nth-child(3){animation-delay:.2s;}
+.tts-wave span:nth-child(4){animation-delay:.3s;}
+.tts-wave span:nth-child(5){animation-delay:.4s;}
+@keyframes wave{0%,100%{height:3px}50%{height:12px}}
+.tts-wave.hidden{display:none;}
+
+/* MESH */
+@keyframes meshPulse{0%,100%{box-shadow:0 0 0 3px rgba(216,58,42,.18)}50%{box-shadow:0 0 0 7px transparent}}
+@keyframes meshGlow{0%,100%{opacity:.85}50%{opacity:1}}
+.mfx-seg line.vis{transition:stroke-width 120ms,opacity 120ms;}
+.mfx-seg.is-active line.vis{stroke-width:1.6;opacity:1;filter:drop-shadow(0 0 4px rgba(216,58,42,.6));animation:meshGlow 1800ms ease-in-out infinite;}
+.mfx-seg.is-hot line.vis{stroke-width:2.2;opacity:1;filter:drop-shadow(0 0 6px rgba(216,58,42,.85));}
+.mfx-seg .hit{cursor:pointer;}
+.mfx-label{font:6px Monaco,monospace;fill:#d83a2a;pointer-events:none;}
+svg[id^="mesh_"]{pointer-events:none;}
+svg[id^="mesh_"] .mfx-seg .hit{pointer-events:auto;}
+svg[id^="mesh_"].off{display:none;}
+
+/* MODAL VIDEO */
+#modalVideo{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:3000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+#modalVideo.open{display:flex;}
+.mv-box{background:var(--panel);border:1px solid rgba(201,168,76,.25);border-radius:14px;width:100%;max-width:800px;overflow:hidden;}
+.mv-hdr{background:linear-gradient(90deg,#050812,#0d1526);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(201,168,76,.15);}
+.mv-tit{color:var(--oro);font-size:11px;letter-spacing:1px;}
+.mv-close{background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--muted);font-size:13px;cursor:pointer;border-radius:5px;padding:3px 10px;}
+.mv-close:hover{color:#fff;}
+.mv-player{width:100%;background:#000;}
+.mv-player video{width:100%;max-height:400px;display:block;}
+.mv-player iframe{width:100%;height:380px;border:none;display:block;}
+.mv-nv{padding:32px;text-align:center;color:#334155;font-size:10px;}
+.mv-ctrl{display:flex;gap:8px;padding:8px 14px;background:#030f1a;border-top:1px solid rgba(201,168,76,.1);flex-wrap:wrap;align-items:center;}
+.mv-ctrl button{padding:5px 10px;border-radius:5px;border:1px solid rgba(201,168,76,.3);background:transparent;color:var(--oro);font-size:9px;cursor:pointer;font-family:Monaco,monospace;}
+.mv-ctrl select{width:auto;padding:4px 8px;margin:0;font-size:9px;color:var(--oro);border-color:rgba(201,168,76,.3);}
+
+@keyframes fadeInOut{0%{opacity:0;transform:translateY(-8px)}10%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
+</style>
+<style id="hub-responsive-fix">
+/* Red de seguridad responsive (solo móvil <=680px) — no afecta desktop */
+@media (max-width: 680px){
+  html,body{max-width:100%;overflow-x:hidden;}
+  img,svg,video{max-width:100%;height:auto;}
+  /* colapsar rejillas multi-columna definidas inline */
+  [style*="grid-template-columns:1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"],
+  [style*="grid-template-columns:repeat(2"],
+  [style*="grid-template-columns:repeat(3"],
+  [style*="grid-template-columns:repeat(4"]{
+    grid-template-columns: 1fr !important;
+  }
+  /* colapsar utilidades Tailwind de columnas fijas */
+  .grid-cols-2,.grid-cols-3,.grid-cols-4,
+  .md\:grid-cols-2,.md\:grid-cols-3,.md\:grid-cols-4,
+  .lg\:grid-cols-3,.lg\:grid-cols-4{
+    grid-template-columns: 1fr !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- TTS BARRA GLOBAL -->
+<div class="tts-bar">
+  <span class="tts-label">🔊 MOTOR CORTE:</span>
+  <button onclick="TTS.leer('diagnostico')">▶ Diagnóstico</button>
+  <button onclick="TTS.leer('fichas')">▶ Todas las Fichas</button>
+  <button onclick="TTS.leer('protocolo')">▶ Protocolo</button>
+  <button onclick="TTS.leer('modulos')">▶ Módulos</button>
+  <button onclick="TTS.parar()">⏹ Parar</button>
+  <div class="tts-wave hidden" id="ttsWave1"><span></span><span></span><span></span><span></span><span></span></div>
+  <select id="ttsVoz" style="width:auto;padding:4px 8px;margin:0;font-size:9px;" onchange="TTS.cambiarVoz()">
+    <option value="">Voz por defecto</option>
+  </select>
+  <input type="range" id="ttsVelocidad" min="0.5" max="1.8" step="0.1" value="0.95" style="width:60px;accent-color:var(--oro);" title="Velocidad">
+  <span id="creditosB1" style="margin-left:auto;font-size:9px;color:var(--oro);border:1px solid rgba(201,168,76,.3);border-radius:15px;padding:3px 10px;">● Créditos: —</span>
+</div>
+
+<!-- ══ MOTOR DIOS v10 ══ -->
+<div style="background:var(--panel2);border:1px solid rgba(201,168,76,.3);border-radius:14px;overflow:hidden;">
+
+  <div style="background:linear-gradient(135deg,#030f08,#051020);padding:14px 18px;border-bottom:1px solid rgba(201,168,76,.15);display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;">
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div>
+        <div style="font-size:9px;color:var(--oro);letter-spacing:3px;text-transform:uppercase;margin-bottom:3px;">✂️ Sistema Dios v10.0</div>
+        <div style="font-size:11px;color:var(--txt);font-weight:700;">Arquitectura Geométrica — Elevaciones Dinámicas</div>
+      </div>
+      <svg width="80" height="60" viewBox="0 0 120 90">
+        <style>.bt{transform-origin:28px 45px;animation:snip 1.8s ease-in-out infinite;}.bb{transform-origin:28px 45px;animation:snip 1.8s ease-in-out infinite reverse;}@keyframes snip{0%,100%{transform:rotate(-16deg);}50%{transform:rotate(16deg);}}.gl{animation:gl 1.8s ease-in-out infinite;}@keyframes gl{0%,100%{opacity:.3;}50%{opacity:1;}}</style>
+        <circle cx="28" cy="45" r="5" fill="#d4af37"/><circle cx="28" cy="45" r="2.5" fill="#000"/>
+        <g class="bt"><path d="M28 45 Q60 22 108 14 Q92 34 28 45" fill="#d4af37" opacity=".85"/><ellipse cx="15" cy="37" rx="9" ry="6" fill="none" stroke="#d4af37" stroke-width="2"/><circle cx="15" cy="37" r="2" fill="#d4af37"/></g>
+        <g class="bb"><path d="M28 45 Q60 68 108 76 Q92 56 28 45" fill="#00ff88" opacity=".75"/><ellipse cx="15" cy="53" rx="9" ry="6" fill="none" stroke="#00ff88" stroke-width="2"/><circle cx="15" cy="53" r="2" fill="#00ff88"/></g>
+        <circle class="gl" cx="108" cy="14" r="3" fill="#d4af37"/><circle class="gl" cx="108" cy="76" r="3" fill="#00ff88"/>
+      </svg>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;">
+      <div style="background:#111822;border:1px solid #333;border-top:3px solid var(--oro);border-radius:6px;padding:10px;min-width:155px;">
+        <div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Visajismo</div>
+        <select id="sd_rostro" onchange="SD.renderAll()">
+          <option value="oval">Ovalado (Equilibrio)</option>
+          <option value="square">Cuadrado (Suavizar)</option>
+          <option value="heart">Corazón (Vol. Inferior)</option>
+          <option value="round">Redondo (Alargar)</option>
+        </select>
+        <select id="sd_textura" onchange="SD.renderAll()">
+          <option value="liso">LISO (Horizontal)</option>
+          <option value="ondulado">ONDULADO (Dinámico)</option>
+          <option value="rizado">RIZADO (Seco)</option>
+        </select>
+      </div>
+      <div style="background:#111822;border:1px solid #333;border-top:3px solid var(--oro);border-radius:6px;padding:10px;min-width:155px;">
+        <div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Corte Madre</div>
+        <select id="sd_corteMadre" onchange="SD.renderAll()">
+          <option value="recto">Recto / Sólido</option>
+          <option value="v">Corte en V</option>
+          <option value="mariposa">Corte Mariposa</option>
+          <option value="pixie">Corte Pixie</option>
+          <option value="bob">Bob Clásico</option>
+          <option value="wolf">Wolf Cut</option>
+          <option value="shaggy">Shaggy — Capa Fluida</option>
+          <option value="lob">Lob — Long Bob</option>
+          <option value="bob_inv">Bob Invertido</option>
+          <option value="capas_u">Capas en U</option>
+          <option value="degrafilado">Degrafilado Lateral</option>
+        </select>
+        <select id="sd_divisiones" onchange="SD.renderAll()">
+          <option value="4">División: 4 Partes</option>
+          <option value="6">División: 6 Partes</option>
+        </select>
+      </div>
+      <div style="background:#111822;border:1px solid #333;border-top:3px solid var(--oro);border-radius:6px;padding:10px;min-width:270px;">
+        <div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Elevaciones Dinámicas</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <div style="font-size:8px;color:#d4af37;text-align:center;margin-bottom:4px;font-weight:700;">FRONTAL</div>
+            <div id="sd_stackFront" style="display:flex;flex-direction:column-reverse;gap:2px;"></div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#00ff88;text-align:center;margin-bottom:4px;font-weight:700;">POSTERIOR</div>
+            <div id="sd_stackBack" style="display:flex;flex-direction:column-reverse;gap:2px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="sd_bloqueCompleto" style="padding:14px;">
+    <!-- BOTONES MOTOR -->
+    <div style="background:linear-gradient(135deg,#0a0d14,#0d1020);border:1px solid rgba(201,168,76,.35);border-radius:10px;padding:8px 14px;display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;width:fit-content;">
+      <span style="font-size:8px;color:#6b7280;letter-spacing:1px;">MOTOR SD</span>
+      <button onclick="SD.generarFicha()" style="padding:8px 14px;background:linear-gradient(135deg,#a07830,#d4af37);border:none;border-radius:6px;color:#000;font-weight:700;font-size:10px;cursor:pointer;letter-spacing:1px;">⚡ ACTUALIZAR DIAGNÓSTICO</button>
+      <button onclick="SD.descargar('JPG')" style="padding:8px 12px;background:#0f1520;color:#d4af37;border:1px solid rgba(212,175,55,.5);font-size:10px;cursor:pointer;font-weight:700;border-radius:6px;">📸 JPG <span style="font-size:8px;opacity:.6;">-8cr</span></button>
+      <button onclick="SD.descargar('PDF')" style="padding:8px 12px;background:#0f1520;color:#d4af37;border:1px solid rgba(212,175,55,.5);font-size:10px;cursor:pointer;font-weight:700;border-radius:6px;">📄 PDF <span style="font-size:8px;opacity:.6;">-10cr</span></button>
+    </div>
+
+    <!-- VISOR overlay -->
+    <div id="sd_overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;flex-direction:column;align-items:center;justify-content:center;">
+      <img id="sd_imgVisor" src="" style="max-width:85%;max-height:75%;border:2px solid #d4af37;border-radius:8px;" alt="">
+      <div id="sd_tituloVisor" style="margin-top:12px;color:#d4af37;font-weight:700;font-size:13px;letter-spacing:2px;"></div>
+      <div onclick="SD_cerrarVisor()" style="margin-top:16px;background:#d4af37;color:#000;padding:9px 24px;border-radius:4px;cursor:pointer;font-weight:700;font-size:11px;">CERRAR VISTA TÉCNICA</div>
+    </div>
+
+    <!-- 3 CANVAS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div style="background:#030710;border:1px solid rgba(201,168,76,.2);border-radius:10px;overflow:hidden;">
+        <div style="font-size:8px;color:#d4af37;letter-spacing:2px;text-align:center;padding:7px;border-bottom:1px solid rgba(201,168,76,.1);font-weight:700;">VISAJISMO FRONTAL · MESH</div>
+        <div style="position:relative;"><canvas id="sd_c1" width="500" height="420" style="display:block;width:100%;background:#000;"></canvas><svg id="mesh_c1" viewBox="0 0 500 420" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></svg></div>
+      </div>
+      <div style="background:#030710;border:1px solid rgba(201,168,76,.2);border-radius:10px;overflow:hidden;">
+        <div style="font-size:8px;color:#d4af37;letter-spacing:2px;text-align:center;padding:7px;border-bottom:1px solid rgba(201,168,76,.1);font-weight:700;">ARQUITECTURA POSTERIOR · MESH</div>
+        <div style="position:relative;"><canvas id="sd_c2" width="500" height="420" style="display:block;width:100%;background:#000;"></canvas><svg id="mesh_c2" viewBox="0 0 500 420" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></svg></div>
+      </div>
+      <div style="background:#030710;border:1px solid rgba(201,168,76,.2);border-radius:10px;overflow:hidden;">
+        <div style="font-size:8px;color:#d4af37;letter-spacing:2px;text-align:center;padding:7px;border-bottom:1px solid rgba(201,168,76,.1);font-weight:700;">DIAGRAMA DE PINZAS · MESH</div>
+        <div style="position:relative;"><canvas id="sd_c3" width="500" height="420" style="display:block;width:100%;background:#000;"></canvas><svg id="mesh_c3" viewBox="0 0 500 420" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></svg></div>
+      </div>
+    </div>
+
+    <!-- MESH CONTROL -->
+    <div style="background:#030710;border:1px solid rgba(216,58,42,.2);border-radius:10px;padding:8px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;font-size:10px;">
+        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#d83a2a;animation:meshPulse 1.6s ease-in-out infinite;"></span>
+        <b style="color:#d83a2a;">MESH VECTORIAL</b>
+        <span style="color:#64748b;font-size:9px;">visagismo triangulado · hover/click</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="meshToggle" style="width:auto;padding:4px 8px;margin:0;background:#000;color:#d83a2a;border:1px solid #d83a2a44;font-size:9px;">
+          <option value="on">MESH ACTIVO</option>
+          <option value="off">MESH OCULTO</option>
+        </select>
+        <span id="meshInfo" style="font-size:9px;color:#d83a2a;">—</span>
+      </div>
+    </div>
+
+    <!-- DIAGNÓSTICO -->
+    <div id="sd_diagnostico" style="background:#030710;border:1px solid rgba(0,255,136,.2);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:10px;color:#00ff88;display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;margin-bottom:14px;">
+      <div>// REGLAS TÉCNICAS: Lavado y preparación obligatoria.</div>
+      <div>// PROTOCOLO: Higiene quirúrgica de herramientas.</div>
+      <div>// SISTEMA FATIMA.CALDEA — 2026</div>
+    </div>
+
+    <!-- ══ FICHAS TÉCNICAS CON TTS ══ -->
+    <div style="background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px;">
+
+      <div class="proto" id="fichaEjecucion">
+        <h4>Ejecución de Tijera</h4>
+        <p id="fTijera" class="proto-val">—</p>
+        <div class="tip" id="fTipTijera">Genera el diagnóstico para ver el detalle.</div>
+        <button class="btn-tts-ficha" onclick="TTS.leerFicha('ejecucion')">🔊 Escuchar</button>
+      </div>
+
+      <div class="proto" id="fichaPinzas">
+        <h4>Mapa de Pinzas</h4>
+        <p id="fPinzas" class="proto-val">—</p>
+        <div class="tip">Seccionado limpio = simetría perfecta.</div>
+        <button class="btn-tts-ficha" onclick="TTS.leerFicha('pinzas')">🔊 Escuchar</button>
+      </div>
+
+      <div class="proto" id="fichaMano">
+        <h4>Dinámica de Mano</h4>
+        <p id="fMano" class="proto-val">—</p>
+        <div class="tip" id="fTipMano">—</div>
+        <button class="btn-tts-ficha" onclick="TTS.leerFicha('mano')">🔊 Escuchar</button>
+      </div>
+
+      <div class="proto bio" id="fichaHigiene">
+        <h4>Higiene & Protocolo</h4>
+        <p class="bio-val">1. Detergente + Vinagre Blanco + Alcohol</p>
+        <p class="bio-val">2. Capa + Cuello protector + Rociador</p>
+        <p class="bio-val">3. Lavado profundo PREVIO al corte</p>
+        <p class="bio-val">4. Área de trabajo limpia siempre</p>
+        <button class="btn-tts-ficha" onclick="TTS.leerFicha('higiene')" style="border-color:rgba(0,242,255,.4);color:var(--bio);">🔊 Escuchar</button>
+      </div>
+
+      <div class="proto" id="fichaRec">
+        <h4>Recomendación Técnica</h4>
+        <p id="fRec" class="ok-val proto-val">—</p>
+        <div class="tip">Sistema FATIMA.CALDEA — 2026</div>
+        <button class="btn-tts-ficha" onclick="TTS.leerFicha('recomendacion')">🔊 Escuchar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ MÓDULOS M1–M7 ══ -->
+  <div style="padding:0 14px 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:2px;">📚 Aprendizaje Técnico — Módulos M1–M7</div>
+      <button onclick="TTS.leer('modulos')" style="padding:4px 10px;border-radius:10px;border:1px solid rgba(201,168,76,.3);background:transparent;color:var(--oro);font-size:8px;cursor:pointer;font-family:Monaco,monospace;">🔊 Leer todos</button>
+    </div>
+    <div id="modulosGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;"></div>
+  </div>
+
+</div>
+
+<!-- ══ MODAL VIDEO MÓDULO ══ -->
+<div id="modalVideo">
+  <div class="mv-box">
+    <div class="mv-hdr">
+      <div class="mv-tit" id="mvTitulo">—</div>
+      <button class="mv-close" onclick="cerrarVideo()">✕ CERRAR</button>
+    </div>
+    <div class="mv-player" id="mvPlayer">
+      <div class="mv-nv" id="mvNoVideo">🎬 Video próximamente</div>
+    </div>
+    <div class="mv-ctrl" id="mvCtrl" style="display:none;">
+      <button onclick="vPlay()">▶</button>
+      <button onclick="vPause()">⏸</button>
+      <button onclick="vRestart()">⟳</button>
+      <select id="vSpeed" onchange="vSetSpeed()" style="color:var(--oro);border-color:rgba(201,168,76,.3);">
+        <option value="0.75">0.75x</option>
+        <option value="1" selected>1x</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+      </select>
+      <button onclick="vFull()" style="margin-left:auto;">⛶ Pantalla completa</button>
+    </div>
+    <!-- TTS dentro del modal -->
+    <div class="tts-bar" style="margin:8px 12px 10px;border-color:rgba(201,168,76,.2);">
+      <span class="tts-label">🔊</span>
+      <button onclick="TTS.leer('modActual')">▶ Leer módulo</button>
+      <button onclick="TTS.parar()">⏹ Parar</button>
+      <div class="tts-wave hidden" id="ttsWaveModal"><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══ DATOS MÓDULOS ══ */
+const MODULOS=[
+  {id:'M1',emoji:'🧼',titulo:'Protocolo de Limpieza',color:'#d4af37',
+   driveId:'1Furtk56Gb3NzNYfeMRnk4AOk-NC8VkFx',videoUrl:null,
+   desc:'Desinfección profesional de herramientas con detergente, vinagre blanco y alcohol. Obligatorio entre cada clienta.',
+   pasos:['Retira restos de cabello de tijeras y peine','Aplica detergente y frota con cepillo','Enjuaga con agua caliente','Aplica alcohol o vinagre blanco','Seca completamente antes de usar']},
+  {id:'M2',emoji:'✂️',titulo:'Herramientas Profesionales',color:'#d4af37',
+   driveId:null,videoUrl:null,
+   desc:'Conoce cada herramienta: tijeras, peine 0, navaja, pinzas y rociador. Cada una tiene un propósito específico.',
+   pasos:['Tijeras de corte: mínimo 5.5 pulgadas acero japonés','Peine 0: guía principal siempre limpio','Navaja: solo para desgrafilado en cabello húmedo','Pinzas: mínimo 8 piezas para seccionar','Rociador: cabello húmedo igual a corte preciso']},
+  {id:'M3',emoji:'📐',titulo:'Técnica Lógica de Corte',color:'#d4af37',
+   driveId:null,videoUrl:null,
+   desc:'La lógica detrás de cada corte: guía, elevación, dirección y tensión. Sin lógica no hay técnica.',
+   pasos:['Define siempre una guía primero','Trabaja de nuca hacia frontal','Controla la tensión del cabello constantemente','Verifica simetría con espejo de mano','Documenta las elevaciones usadas']},
+  {id:'M4',emoji:'👩‍🎨',titulo:'Avatar Fátima Caldea',color:'#d4af37',
+   driveId:'1N0uaA8GQcEegqCD7z2Fr-Ji4fhvOxqK5',videoUrl:null,
+   desc:'Identidad visual y filosófica del sistema. Fátima Caldea, 19 años, creadora del Sistema Dios de peluquería.',
+   pasos:['Estética negro y dorado: elegancia técnica','Motor geométrico basado en elevaciones reales','Sistema de créditos para acceso modular','Plataforma educativa desde Venezuela para el mundo','Cada clase diseñada con protocolo de bioseguridad']},
+  {id:'M5',emoji:'📏',titulo:'Secciones y Divisiones',color:'#00ff88',
+   driveId:'1NLgYw_DRMxdOx9I5i6-RPGS8fWxncnId',videoUrl:null,
+   desc:'Cómo dividir el cabello en secciones precisas. La división correcta determina el 70% del resultado.',
+   pasos:['Raya central: divide en 2 mitades simétricas','Raya de oreja a oreja: separa frontal de posterior','4 cuadrantes: control total de cada zona','6 secciones: para cortes avanzados con capas','Usa pinzas siempre para sostener secciones']},
+  {id:'M6',emoji:'📡',titulo:'Elevaciones y Proyecciones',color:'#00ff88',
+   driveId:'1xlve_jWZMfy4pyIR0ZokqJW8WHLVCfvN',videoUrl:null,
+   desc:'Las elevaciones determinan el volumen y la forma. Desde 0° hasta 180°, cada ángulo crea un resultado diferente.',
+   pasos:['0°: sin elevación, línea de peso, corte recto','45°: elevación baja, transición suave','90°: elevación media, capas uniformes','135°: elevación alta, capas cortas en coronilla','180°: proyección máxima, desconexión total']},
+  {id:'M7',emoji:'🔷',titulo:'Geometría del Corte',color:'#00ff88',
+   driveId:'1YbSzP-u-dfVpt5_EEcCSo2A0eFNWrix6',videoUrl:null,
+   desc:'La geometría como base de toda arquitectura capilar. Triángulos, líneas y curvas determinan la forma final.',
+   pasos:['Línea horizontal: uniformidad y peso visual','Línea diagonal: movimiento y fluidez','Línea vertical: textura y capas desconectadas','Forma en V: más largo al frente que atrás','Forma en U: capas suaves que enmarcan el rostro']}
+];
+let modActual=null;
+
+/* ══ TTS ══ */
+const TTS={
+  voces:[],vozSel:null,
+  init(){
+    if(!('speechSynthesis' in window))return;
+    const c=()=>{
+      this.voces=speechSynthesis.getVoices().filter(v=>v.lang.startsWith('es'));
+      const s=document.getElementById('ttsVoz');if(!s)return;
+      s.innerHTML='<option value="">Voz por defecto</option>';
+      this.voces.forEach((v,i)=>{const o=document.createElement('option');o.value=i;o.textContent=v.name;s.appendChild(o);});
+    };
+    c();speechSynthesis.onvoiceschanged=c;
+  },
+  cambiarVoz(){const s=document.getElementById('ttsVoz');this.vozSel=s.value!==''?this.voces[parseInt(s.value)]:null;},
+  _rate(){return parseFloat(document.getElementById('ttsVelocidad')?.value||0.95);},
+  _wave(id){return document.getElementById(id||'ttsWave1');},
+  _speak(txt,waveId){
+    this.parar();
+    if(!txt)return;
+    const u=new SpeechSynthesisUtterance(txt);
+    u.lang='es-ES';u.rate=this._rate();u.pitch=1;u.volume=1;
+    if(this.vozSel)u.voice=this.vozSel;
+    const w=this._wave(waveId);
+    u.onstart=()=>{w&&w.classList.remove('hidden');};
+    u.onend=()=>{w&&w.classList.add('hidden');};
+    u.onerror=(e)=>{if(e.error==='interrupted'||e.error==='canceled')return;console.warn('TTS:',e.error);w&&w.classList.add('hidden');};
+    if(speechSynthesis.paused)speechSynthesis.resume();
+    speechSynthesis.speak(u);
+  },
+  parar(){
+    if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();
+    document.querySelectorAll('.tts-wave').forEach(w=>w.classList.add('hidden'));
+  },
+
+  /* FICHAS INDIVIDUALES */
+  leerFicha(ficha){
+    let txt='';
+    const tijera=document.getElementById('fTijera')?.innerText||'';
+    const tipT=document.getElementById('fTipTijera')?.innerText||'';
+    const pinzas=document.getElementById('fPinzas')?.innerText||'';
+    const mano=document.getElementById('fMano')?.innerText||'';
+    const tipM=document.getElementById('fTipMano')?.innerText||'';
+    const rec=document.getElementById('fRec')?.innerText||'';
+    if(ficha==='ejecucion') txt=`Ejecución de tijera. ${tijera}. ${tipT}`;
+    else if(ficha==='pinzas') txt=`Mapa de pinzas. ${pinzas}. Seccionado limpio garantiza simetría perfecta.`;
+    else if(ficha==='mano') txt=`Dinámica de mano. ${mano}. ${tipM}`;
+    else if(ficha==='higiene') txt='Higiene y protocolo obligatorio. Paso uno: Detergente, vinagre blanco y alcohol. Paso dos: Capa protectora, cuello y rociador para la clienta. Paso tres: Lavado profundo previo al corte. Paso cuatro: Área de trabajo limpia y ordenada en todo momento.';
+    else if(ficha==='recomendacion') txt=`Recomendación técnica. ${rec}. Sistema Fátima Caldea 2026.`;
+    this._speak(txt);
+  },
+
+  /* LECTURAS GENERALES */
+  leer(tipo){
+    if(tipo==='diagnostico'){
+      const diag=document.getElementById('sd_diagnostico')?.innerText||'Genera el diagnóstico primero.';
+      const rec=document.getElementById('fRec')?.innerText||'';
+      this._speak(`Diagnóstico técnico del Sistema Dios versión diez. ${diag}. Recomendación: ${rec}.`);
+    } else if(tipo==='fichas'){
+      const t=document.getElementById('fTijera')?.innerText||'sin datos';
+      const p=document.getElementById('fPinzas')?.innerText||'sin datos';
+      const m=document.getElementById('fMano')?.innerText||'sin datos';
+      const r=document.getElementById('fRec')?.innerText||'sin datos';
+      this._speak(`Fichas técnicas del motor de corte. Ejecución de tijera: ${t}. Mapa de pinzas: ${p}. Dinámica de mano: ${m}. Protocolo: Detergente, vinagre blanco y alcohol. Capa y cuello para la clienta. Lavado previo obligatorio. Recomendación: ${r}. Sistema Fátima Caldea 2026.`);
+    } else if(tipo==='protocolo'){
+      this._speak('Protocolo de higiene profesional. Uno: Detergente, vinagre blanco y alcohol para desinfección. Dos: Capa protectora, cuello y rociador para la clienta. Tres: Lavado profundo previo al corte. Cuatro: Área de trabajo limpia y ordenada en todo momento.');
+    } else if(tipo==='modulos'){
+      this._speak('Módulos de aprendizaje técnico. Módulo uno: Protocolo de limpieza. Módulo dos: Herramientas profesionales. Módulo tres: Técnica lógica de corte. Módulo cuatro: Avatar Fátima Caldea. Módulo cinco: Secciones y divisiones. Módulo seis: Elevaciones y proyecciones. Módulo siete: Geometría del corte.');
+    } else if(tipo==='modActual' && modActual){
+      const p=modActual.pasos.map((s,i)=>`Paso ${i+1}: ${s}`).join('. ');
+      this._speak(`${modActual.titulo}. ${modActual.desc}. ${p}.`,'ttsWaveModal');
+    }
+  }
+};
+
+/* ══ RENDER MÓDULOS ══ */
+function renderModulos(){
+  const g=document.getElementById('modulosGrid');if(!g)return;
+  g.innerHTML='';
+  MODULOS.forEach(m=>{
+    const card=document.createElement('div');card.className='mod-card';
+    const _src=m.imgUrl?m.imgUrl:(m.driveId?`https://drive.google.com/thumbnail?id=${m.driveId}&sz=w300`:'');
+    const imgHtml=_src
+      ?`<img class="mod-thumb" src="${_src}" onerror="this.outerHTML='<div class=mod-thumb-ph>${m.emoji}</div>'">`
+      :`<div class="mod-thumb-ph">${m.emoji}</div>`;
+    card.innerHTML=`
+      ${imgHtml}
+      <div class="mod-body">
+        <div class="mod-num" style="color:${m.color};">${m.id}</div>
+        <div class="mod-tit">${m.titulo}</div>
+        <div class="mod-actions">
+          <button class="mod-btn mod-btn-ver" onclick="abrirModulo('${m.id}')">▶ Ver</button>
+          <button class="mod-btn mod-btn-jpg" onclick="dlModJPG('${m.id}')">📸 JPG</button>
+          <button class="mod-btn mod-btn-pdf" onclick="dlModPDF('${m.id}')">📄 PDF</button>
+        </div>
+      </div>`;
+    g.appendChild(card);
+  });
+}
+
+/* ══ ABRIR MÓDULO ══ */
+function abrirModulo(id){
+  if(!_desc(5,'Ver módulo'))return;
+  modActual=MODULOS.find(m=>m.id===id);if(!modActual)return;
+  document.getElementById('mvTitulo').textContent=modActual.id+' — '+modActual.titulo;
+  // Video
+  const player=document.getElementById('mvPlayer');
+  const ctrl=document.getElementById('mvCtrl');
+  const nv=document.getElementById('mvNoVideo');
+  player.innerHTML='';player.appendChild(nv);ctrl.style.display='none';
+  if(modActual.videoUrl){
+    const isGD=modActual.videoUrl.includes('drive.google.com');
+    const isMp4=modActual.videoUrl.match(/\.(mp4|webm|ogg)/i)||modActual.videoUrl.includes('firebasestorage');
+    if(isMp4&&!isGD){
+      const vid=document.createElement('video');vid.id='mvVid';vid.style.cssText='width:100%;max-height:400px;display:block;';vid.controls=true;
+      const s=document.createElement('source');s.src=modActual.videoUrl;s.type='video/mp4';vid.appendChild(s);
+      player.innerHTML='';player.appendChild(vid);ctrl.style.display='flex';nv.style.display='none';
+    } else {
+      let url=modActual.videoUrl;
+      if(isGD){const match=url.match(/[-\w]{25,}/);if(match)url=`https://drive.google.com/file/d/${match[0]}/preview`;}
+      const fr=document.createElement('iframe');fr.id='mvVid';fr.src=url;fr.style.cssText='width:100%;height:380px;border:none;display:block;';fr.allowFullscreen=true;
+      player.innerHTML='';player.appendChild(fr);nv.style.display='none';
+    }
+  } else {
+    nv.style.display='block';nv.textContent='🎬 Video próximamente — '+modActual.titulo;
+  }
+  document.getElementById('modalVideo').classList.add('open');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>TTS._speak(`${modActual.titulo}. ${modActual.desc}`,'ttsWaveModal'),400);
+}
+
+function cerrarVideo(){
+  const v=document.getElementById('mvVid');
+  if(v&&v.tagName==='VIDEO'){v.pause();v.src='';}
+  document.getElementById('modalVideo').classList.remove('open');
+  document.body.style.overflow='';TTS.parar();
+}
+function vPlay(){const v=document.getElementById('mvVid');if(v&&v.tagName==='VIDEO')v.play();}
+function vPause(){const v=document.getElementById('mvVid');if(v&&v.tagName==='VIDEO')v.pause();}
+function vRestart(){const v=document.getElementById('mvVid');if(v&&v.tagName==='VIDEO'){v.currentTime=0;v.play();}}
+function vSetSpeed(){const v=document.getElementById('mvVid');const s=document.getElementById('vSpeed');if(v&&v.tagName==='VIDEO'&&s)v.playbackRate=parseFloat(s.value);}
+function vFull(){const v=document.getElementById('mvVid');if(!v)return;if(v.requestFullscreen)v.requestFullscreen();else if(v.webkitRequestFullscreen)v.webkitRequestFullscreen();}
+
+/* ══ DESCARGAS MÓDULO ══ */
+async function dlModJPG(id){
+  if(!_desc(8,'Módulo JPG'))return;
+  const m=MODULOS.find(x=>x.id===id);if(!m)return;
+  await _dlMod(m,'jpg');
+}
+async function dlModPDF(id){
+  if(!_desc(10,'Módulo PDF'))return;
+  const m=MODULOS.find(x=>x.id===id);if(!m)return;
+  await _dlMod(m,'pdf');
+}
+async function _dlMod(m,tipo){
+  const dark=(tipo==='jpg');
+  const div=document.createElement('div');
+  div.style.cssText=`position:fixed;left:-9999px;top:0;width:740px;padding:28px;font-family:Monaco,monospace;background:${dark?'#020408':'#ffffff'};color:${dark?'#e2e8f0':'#111827'};`;
+  const muted=dark?'#94a3b8':'#475569';
+  const gold='#c9a84c';
+  const brd=dark?'#1e293b':'#e2e8f0';
+  const cardBg=dark?'#030710':'#f8f9ff';
+  const pasos=m.pasos.map((p,i)=>`<div style="display:flex;gap:8px;margin-bottom:8px;"><div style="min-width:20px;height:20px;background:${gold};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#000;flex-shrink:0;">${i+1}</div><div style="font-size:10px;color:${muted};line-height:1.5;">${p}</div></div>`).join('');
+  div.innerHTML=`
+    <div style="background:linear-gradient(135deg,#020408,#0a111f);border-radius:10px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+      <div><div style="font-size:8px;color:${gold};letter-spacing:3px;text-transform:uppercase;margin-bottom:3px;">Academia Fátima Caldea · ${m.id}</div><div style="font-size:18px;color:#e2e8f0;font-weight:700;">${m.titulo}</div></div>
+      <div style="font-size:3rem;">${m.emoji}</div>
+    </div>
+    <div style="background:${dark?'#0a111f':'#fffbf0'};border-left:3px solid ${gold};border-radius:0 8px 8px 0;padding:10px 14px;font-size:10px;color:${muted};line-height:1.8;margin-bottom:12px;">${m.desc}</div>
+    <div style="padding:12px;background:${cardBg};border:1px solid ${brd};border-radius:8px;margin-bottom:12px;">
+      <div style="font-size:8px;color:${gold};letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">📋 PASOS DEL MÓDULO</div>${pasos}
+    </div>
+    <div style="text-align:center;font-size:8px;color:${dark?'#334155':'#9ca3af'};letter-spacing:2px;padding-top:8px;border-top:1px solid ${brd};">ACADEMIA FÁTIMA CALDEA · fatimahairstudio082.com · 2026</div>`;
+  document.body.appendChild(div);
+  try{
+    const canvas=await html2canvas(div,{backgroundColor:dark?'#020408':'#ffffff',scale:2,useCORS:true,logging:false});
+    if(tipo==='pdf'){
+      const{jsPDF}=window.jspdf;const doc=new jsPDF('p','mm','a4');
+      const w=doc.internal.pageSize.getWidth();
+      doc.addImage(canvas.toDataURL('image/png'),'PNG',0,0,w,(canvas.height*w)/canvas.width);
+      doc.save(m.id+'_'+m.titulo.replace(/\s+/g,'_')+'.pdf');
+      TTS._speak('PDF del módulo '+m.id+' exportado correctamente.');
+    } else {
+      const a=document.createElement('a');a.download=m.id+'_'+m.titulo.replace(/\s+/g,'_')+'_'+Date.now()+'.jpg';
+      a.href=canvas.toDataURL('image/jpeg',0.95);a.click();
+      TTS._speak('JPG del módulo '+m.id+' descargado correctamente.');
+    }
+  }catch(e){alert('Error: '+e.message);}
+  finally{document.body.removeChild(div);}
+}
+
+/* ══ VISOR IMG (los módulos con imagen Drive) ══ */
+function SD_abrirVisor(url,titulo){
+  document.getElementById('sd_imgVisor').src=url;
+  document.getElementById('sd_tituloVisor').innerText=titulo;
+  document.getElementById('sd_overlay').style.display='flex';
+  TTS._speak('Módulo: '+titulo.replace(/M\d:/,'').trim());
+}
+function SD_cerrarVisor(){document.getElementById('sd_overlay').style.display='none';TTS.parar();}
+
+/* ══ SISTEMA CRÉDITOS ══ */
+function _leer(){const c=parseInt(localStorage.getItem('fc_credits'));if(isNaN(c)){localStorage.setItem('fc_credits','10');return 10;}return c;}
+function _badge(){const b=document.getElementById('creditosB1');if(b)b.textContent='● Créditos: '+_leer();}
+function _desc(n,concepto){
+  const a=_leer();
+  if(a<n){
+    const o=document.createElement('div');
+    o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    o.innerHTML=`<div style="background:#0a111f;border:2px solid #ef4444;border-radius:14px;padding:26px 30px;max-width:340px;text-align:center;font-family:Monaco,monospace;">
+      <div style="font-size:1.8rem;margin-bottom:10px;">⚠️</div>
+      <div style="color:#ef4444;font-weight:700;margin-bottom:5px;">Créditos insuficientes</div>
+      <div style="color:#64748b;font-size:11px;margin-bottom:16px;line-height:1.8;">Necesitas <b style="color:#ef4444;">${n} créditos</b> para ${concepto}.<br>Tienes: <b>${a}</b></div>
+      <button onclick="this.closest('div').parentElement.remove()" style="width:100%;padding:10px;background:linear-gradient(135deg,#a07830,#c9a84c);border:none;border-radius:8px;color:#000;font-weight:700;cursor:pointer;margin-bottom:6px;">💬 Comprar créditos</button>
+      <button onclick="this.closest('div').parentElement.remove()" style="width:100%;padding:8px;background:transparent;border:1px solid #334155;border-radius:8px;color:#64748b;cursor:pointer;">Cancelar</button>
+    </div>`;
+    document.body.appendChild(o);return false;
+  }
+  const nv=a-n;localStorage.setItem('fc_credits',nv);_badge();
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;top:16px;right:16px;z-index:9999;background:#0a111f;border:1px solid #c9a84c;border-radius:10px;padding:10px 14px;font-size:11px;color:#c9a84c;animation:fadeInOut 3s forwards;font-family:Monaco,monospace;';
+  t.innerHTML='<b>💳 -'+n+' créditos — '+concepto+'</b><br><span style="color:#64748b;font-size:9px;">Quedan: '+nv+'</span>';
+  document.body.appendChild(t);setTimeout(()=>t.remove(),3200);
+  return true;
+}
+
+/* ══ FUNCIONES CANVAS ══ */
+function dibujarVisajismoFondo(ctx,W,H,esFrontal,rostro){
+  const cx=W/2,cy=H/2,sW=W*0.13,sH=H*0.38;
+  const F={oval:{t:.96,s:1.04,c:.98,j:.76,ch:.20},square:{t:1.04,s:1.10,c:1.04,j:.96,ch:.38},heart:{t:1.08,s:1.02,c:.88,j:.56,ch:.16},round:{t:1.00,s:1.06,c:1.02,j:.88,ch:.32}}[rostro]||{t:.96,s:1.04,c:.98,j:.76,ch:.20};
+  const yT=cy-sH,yFr=cy-sH*.54,yCo=cy+sH*.18,yPo=cy+sH*.44,yMa=cy+sH*.68,yMe=cy+sH*.90;
+  if(esFrontal){
+    const g=ctx.createRadialGradient(cx,cy-sH*.15,0,cx,cy,sW*1.6);
+    g.addColorStop(0,'rgba(80,105,135,0.45)');g.addColorStop(0.6,'rgba(40,60,82,0.25)');g.addColorStop(1,'rgba(5,12,25,0.08)');
+    ctx.beginPath();ctx.moveTo(cx,yT);ctx.bezierCurveTo(cx+sW*F.t,yT,cx+sW*F.s,yFr,cx+sW*F.s,yCo);ctx.bezierCurveTo(cx+sW*F.c,yPo,cx+sW*F.j,yMa,cx+sW*F.ch,yMe);ctx.bezierCurveTo(cx+sW*.06,yMe+5,cx-sW*.06,yMe+5,cx-sW*F.ch,yMe);ctx.bezierCurveTo(cx-sW*F.j,yMa,cx-sW*F.c,yPo,cx-sW*F.s,yCo);ctx.bezierCurveTo(cx-sW*F.s,yFr,cx-sW*F.t,yT,cx,yT);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='rgba(140,180,210,0.35)';ctx.lineWidth=0.8;ctx.stroke();
+  } else {
+    const yNA=cy+sH*.44,yNM=cy+sH*.66,yNB=cy+sH*.82,yCe=cy+sH*.93;
+    const g=ctx.createRadialGradient(cx,cy-sH*.22,0,cx,cy,sW*1.5);
+    g.addColorStop(0,'rgba(70,95,122,0.42)');g.addColorStop(0.6,'rgba(35,55,75,0.22)');g.addColorStop(1,'rgba(5,12,25,0.06)');
+    ctx.beginPath();ctx.moveTo(cx,yT);ctx.bezierCurveTo(cx+sW*.52,yT,cx+sW*1.04,cy-sH*.54,cx+sW,cy);ctx.bezierCurveTo(cx+sW*1.02,cy+sH*.28,cx+sW*.92,yNA,cx+sW*.78,yNA+4);ctx.bezierCurveTo(cx+sW*.66,yNM,cx+sW*.48,yNB,cx+sW*.24,yCe);ctx.bezierCurveTo(cx+sW*.09,yCe+4,cx-sW*.09,yCe+4,cx-sW*.24,yCe);ctx.bezierCurveTo(cx-sW*.48,yNB,cx-sW*.66,yNM,cx-sW*.78,yNA+4);ctx.bezierCurveTo(cx-sW*.92,yNA,cx-sW*1.02,cy+sH*.28,cx-sW,cy);ctx.bezierCurveTo(cx-sW*1.04,cy-sH*.54,cx-sW*.52,yT,cx,yT);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='rgba(120,175,200,0.32)';ctx.lineWidth=0.8;ctx.stroke();
+    [[yNA,'#00b4d8','N.ALTA'],[yNM,'#00ff88','N.MEDIA'],[yNB,'#c9a84c','N.BAJA']].forEach(([y,col,lbl])=>{ctx.save();ctx.setLineDash([2,4]);ctx.beginPath();ctx.moveTo(cx-sW*.65,y);ctx.lineTo(cx+sW*.65,y);ctx.strokeStyle=col+'22';ctx.lineWidth=0.5;ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=col+'45';ctx.font='5px monospace';ctx.textAlign='left';ctx.fillText(lbl,cx+sW*.68,y+2);ctx.restore();});
+  }
+}
+function dibujarCraneoFondo(ctx,W,H){
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.30;
+  const g=ctx.createRadialGradient(cx-R*.15,cy-R*.22,0,cx,cy,R*1.1);
+  g.addColorStop(0,'rgba(65,88,114,0.38)');g.addColorStop(0.65,'rgba(30,50,70,0.20)');g.addColorStop(1,'rgba(4,12,26,0.06)');
+  ctx.beginPath();ctx.moveTo(cx,cy-R);ctx.bezierCurveTo(cx+R*.55,cy-R,cx+R*1.04,cy-R*.50,cx+R,cy);ctx.bezierCurveTo(cx+R*1.02,cy+R*.30,cx+R*.88,cy+R*.55,cx+R*.62,cy+R*.78);ctx.bezierCurveTo(cx+R*.36,cy+R*.94,cx+R*.14,cy+R,cx,cy+R);ctx.bezierCurveTo(cx-R*.14,cy+R,cx-R*.36,cy+R*.94,cx-R*.62,cy+R*.78);ctx.bezierCurveTo(cx-R*.88,cy+R*.55,cx-R*1.02,cy+R*.30,cx-R,cy);ctx.bezierCurveTo(cx-R*1.04,cy-R*.50,cx-R*.55,cy-R,cx,cy-R);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='rgba(140,185,210,0.28)';ctx.lineWidth=1.0;ctx.stroke();
+}
+
+/* ══ MOTOR SD ══ */
+const SD={
+  dataF:[0,0,0,0,0,0,0],dataB:[0,15,30,45,60,75,90],
+  init(){
+    const sf=document.getElementById('sd_stackFront');const sb=document.getElementById('sd_stackBack');
+    if(!sf||!sb)return;sf.innerHTML='';sb.innerHTML='';
+    for(let i=6;i>=0;i--){
+      const rF=document.createElement('div');rF.className='sd-row';rF.style.borderColor='#d4af3720';
+      const lF=document.createElement('span');lF.className='sd-zl';lF.textContent='Z'+i+' F';lF.style.color='#d4af3760';
+      const iF=document.createElement('input');iF.type='number';iF.value=this.dataF[i];
+      iF.addEventListener('input',((idx)=>(e)=>{this.dataF[idx]=parseInt(e.target.value)||0;aiF.textContent=this.dataF[idx]+'°';this.renderAll();})(i));
+      const aiF=document.createElement('span');aiF.className='sd-ai';aiF.textContent=this.dataF[i]+'°';aiF.style.color='#d4af37';
+      rF.appendChild(lF);rF.appendChild(iF);rF.appendChild(aiF);sf.appendChild(rF);
+      const rB=document.createElement('div');rB.className='sd-row';rB.style.borderColor='#00ff8820';
+      const lB=document.createElement('span');lB.className='sd-zl';lB.textContent='Z'+i+' P';lB.style.color='#00ff8860';
+      const iB=document.createElement('input');iB.type='number';iB.value=this.dataB[i];
+      iB.addEventListener('input',((idx)=>(e)=>{this.dataB[idx]=parseInt(e.target.value)||0;aiB.textContent=this.dataB[idx]+'°';this.renderAll();})(i));
+      const aiB=document.createElement('span');aiB.className='sd-ai';aiB.textContent=this.dataB[i]+'°';aiB.style.color='#00ff88';
+      rB.appendChild(lB);rB.appendChild(iB);rB.appendChild(aiB);sb.appendChild(rB);
+    }
+    this.renderAll();
+  },
+  renderAll(){this._drawElev('sd_c1',this.dataF);this._drawElev('sd_c2',this.dataB);this._drawPinzas('sd_c3');MESH.renderAll();},
+  _drawElev(id,arr){
+    const c=document.getElementById(id);if(!c)return;
+    const W=500,H=420;c.width=W;c.height=H;const ctx=c.getContext('2d');ctx.clearRect(0,0,W,H);
+    const esF=(id==='sd_c1');const rostro=(document.getElementById('sd_rostro')||{value:'oval'}).value;
+    dibujarVisajismoFondo(ctx,W,H,esF,rostro);
+    ctx.strokeStyle='#d4af37';ctx.lineWidth=1;ctx.beginPath();ctx.arc(W/2,H/2,130,0,Math.PI*2);ctx.stroke();
+    ctx.strokeStyle='#d4af3755';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(W/2,H/2-130);ctx.lineTo(W/2,H/2+130);ctx.stroke();ctx.beginPath();ctx.moveTo(W/2-130,H/2);ctx.lineTo(W/2+130,H/2);ctx.stroke();
+    const cols=['#22c55e','#c9a84c','#f97316','#00b4d8','#a855f7','#ec4899'];
+    arr.forEach((ang,i)=>{
+      const rad=ang===0?Math.PI/2:(esF?Math.PI/2-(ang*Math.PI/180):Math.PI/2+(ang*Math.PI/180));
+      const oy=(H/2-70)+(i*18);const x=W/2+Math.cos(rad)*160,y=oy+Math.sin(rad)*160;
+      ctx.beginPath();ctx.lineWidth=ang===0?2.5:3;ctx.strokeStyle=cols[i%cols.length];ctx.moveTo(W/2,oy);ctx.lineTo(x,y);ctx.setLineDash(ang===0?[6,3]:[]);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle=cols[i%cols.length];ctx.fill();
+      ctx.shadowColor='#000';ctx.shadowBlur=6;ctx.fillStyle='#fff';ctx.font='bold 10px Monaco';ctx.textAlign='center';ctx.fillText(ang+'°',x+(x>W/2?14:-14),y+(y>oy?14:-6));ctx.shadowBlur=0;
+    });
+    ctx.fillStyle=esF?'#c9a84c':'#00b4d8';ctx.font='9px Monaco';ctx.textAlign='center';ctx.fillText(esF?'PROYECCIÓN FRONTAL':'PROYECCIÓN POSTERIOR',W/2,14);ctx.textAlign='left';
+  },
+  _drawPinzas(id){
+    const c=document.getElementById(id);if(!c)return;const W=500,H=420;c.width=W;c.height=H;
+    const ctx=c.getContext('2d');ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);dibujarCraneoFondo(ctx,W,H);
+    const cx=W/2,cy=H/2,r=140;const div=parseInt((document.getElementById('sd_divisiones')||{value:'4'}).value)||4;
+    ctx.strokeStyle='#d4af37';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+    ctx.strokeStyle='#d4af3755';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx,cy+r);ctx.stroke();ctx.beginPath();ctx.moveTo(cx-r,cy);ctx.lineTo(cx+r,cy);ctx.stroke();
+    if(div===6)[[60],[120]].forEach(([d])=>{const rad=d*Math.PI/180;ctx.beginPath();ctx.moveTo(cx-Math.cos(rad)*r,cy-Math.sin(rad)*r);ctx.lineTo(cx+Math.cos(rad)*r,cy+Math.sin(rad)*r);ctx.stroke();});
+    const pts=div===4?[{x:cx-r*.5,y:cy-r*.5},{x:cx+r*.5,y:cy-r*.5},{x:cx-r*.5,y:cy+r*.5},{x:cx+r*.5,y:cy+r*.5}]:[{x:cx,y:cy-r*.72},{x:cx+r*.62,y:cy-r*.36},{x:cx+r*.62,y:cy+r*.36},{x:cx,y:cy+r*.72},{x:cx-r*.62,y:cy+r*.36},{x:cx-r*.62,y:cy-r*.36}];
+    pts.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,9,0,Math.PI*2);ctx.fillStyle='#d4af37';ctx.fill();ctx.fillStyle='#000';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.fillText(i+1,p.x,p.y+3);});
+    ctx.fillStyle='#555';ctx.font='9px monospace';ctx.textAlign='center';ctx.fillText('DIAGRAMA · '+div+' DIVISIONES',cx,H-14);ctx.textAlign='left';
+  },
+  generarFicha(){
+    if(!_desc(5,'Generar diagnóstico'))return;
+    const mad=document.getElementById('sd_corteMadre');const ros=document.getElementById('sd_rostro');const tex=document.getElementById('sd_textura');const div=document.getElementById('sd_divisiones');
+    if(!mad||!ros||!tex||!div)return;
+    const madV=mad.value,rosV=ros.value,texV=tex.value,divV=div.value;
+    const mxF=Math.max(...this.dataF),mxB=Math.max(...this.dataB);
+    document.getElementById('sd_diagnostico').innerHTML=`<div><b style="color:#d4af37">[DIAGNÓSTICO]</b><br>ROSTRO: ${rosV.toUpperCase()}<br>TEXTURA: ${texV.toUpperCase()}<br>CORTE: ${madV.toUpperCase()}</div><div><b style="color:#d4af37">[ELEVACIÓN]</b><br>MÁX FRONTAL: ${mxF}°<br>MÁX POSTERIOR: ${mxB}°<br>DIVISIONES: ${divV} PARTES</div><div><b style="color:#d4af37">[AUTOR]</b><br>FÁTIMA CALDEA · 19 AÑOS<br>SISTEMA DIOS v10.0<br>fatimahairstudio082.com</div>`;
+    const cn=mad.options[mad.selectedIndex].text;const rn=ros.options[ros.selectedIndex].text;
+    const tejMap={liso:'<span style="color:var(--ok);font-weight:700;">HORIZONTAL FIJA</span>',ondulado:'<span style="color:var(--ok);font-weight:700;">VACIADO DE CANAL</span>',rizado:'<span style="color:var(--ok);font-weight:700;">VERTICAL / ENTRECORTE</span>'};
+    const tipMap={liso:'Peine paralelo al suelo.',ondulado:'Vaciado de canal en seco.',rizado:'Corte vertical para integrar el rizo.'};
+    const manoMap={recto:'Palma plana paralela al cuello — 0° total',v:'Proyección lateral fuerte — 90°',mariposa:'Palma hacia afuera — diagonal ascendente',pixie:'Vertical completa — tijera sobre dedo',bob:'Sobre peine — dedos rectos hacia abajo',wolf:'Punta de dedo interna — sin conectar nuca',shaggy:'Deslizamiento suave vertical',lob:'Sobre peine — paralelo al suelo',bob_inv:'Inclinación diagonal hacia adelante',capas_u:'Movimiento curvo hacia afuera',degrafilado:'Lateral — deslizamiento 35° zona lateral'};
+    const eF=this.dataF.filter(a=>a>0);const eB=this.dataB.filter(a=>a>0);
+    const eFStr=eF.length?eF.join('°→')+'°':'0° (Sin elevación)';const eBStr=eB.length?eB.join('°→')+'°':'0° (Sin elevación)';
+    const fT=document.getElementById('fTijera');const fTT=document.getElementById('fTipTijera');const fP=document.getElementById('fPinzas');const fM=document.getElementById('fMano');const fTM=document.getElementById('fTipMano');const fR=document.getElementById('fRec');
+    if(fT)fT.innerHTML=tejMap[texV]||'—';
+    if(fTT)fTT.textContent='Frontal: '+eFStr+' | Posterior: '+eBStr+'. '+(tipMap[texV]||'');
+    if(fP)fP.innerHTML=`<span style="color:var(--pin);font-weight:700;">${parseInt(divV)||4} Divisiones — F: ${eFStr} / P: ${eBStr}</span>`;
+    if(fM)fM.textContent=manoMap[madV]||'Técnica libre';
+    if(fTM)fTM.textContent=cn+' | Rostro: '+rn;
+    if(fR)fR.textContent=cn+' | F: '+eFStr+' | P: '+eBStr;
+    this.renderAll();
+    setTimeout(()=>TTS.leer('fichas'),300);
+  },
+  async descargar(tipo){
+    const costo=tipo==='PDF'?10:8;
+    if(!_desc(costo,tipo==='PDF'?'Diagnóstico PDF':'Diagnóstico JPG'))return;
+    const bloque=document.getElementById('sd_bloqueCompleto');
+    const canvas=await html2canvas(bloque,{backgroundColor:'#0b0f14',scale:2,useCORS:true});
+    const a=document.createElement('a');const ts=Date.now();
+    if(tipo==='PDF'){const{jsPDF}=window.jspdf;const doc=new jsPDF('l','mm','a4');const pW=doc.internal.pageSize.getWidth();doc.addImage(canvas.toDataURL('image/png'),'PNG',0,0,pW,(canvas.height*pW)/canvas.width);doc.save('Diagnostico_Fatima_'+ts+'.pdf');TTS._speak('PDF del diagnóstico exportado.');}
+    else{a.download='Diagnostico_Fatima_'+ts+'.jpg';a.href=canvas.toDataURL('image/jpeg',0.95);a.click();TTS._speak('JPG del diagnóstico descargado.');}
+  }
+};
+
+/* ══ MESH VECTORIAL ══ */
+const MESH=(function(){
+  const RED='#d83a2a';
+  const FRONTAL={A:{"N.crown":[250,55],"N.crown.l":[185,75],"N.crown.r":[315,75],"N.temple.l":[145,130],"N.temple.r":[355,130],"N.fringe":[250,118],"N.brow.l":[210,160],"N.brow.r":[290,160],"N.eye.l":[215,185],"N.eye.r":[285,185],"N.ear.l":[130,210],"N.ear.r":[370,210],"N.nose":[250,220],"N.cerp.l":[180,250],"N.cerp.r":[320,250],"N.lip":[250,275],"N.arce.l":[195,305],"N.arce.r":[305,305],"N.jaw.l":[185,335],"N.jaw.r":[315,335],"N.chin":[250,372],"N.cerv.l":[210,400],"N.cerv.r":[290,400]},segs:[["SEG_CROWN_1","N.crown","N.crown.l"],["SEG_CROWN_2","N.crown","N.crown.r"],["SEG_CROWN_3","N.crown.l","N.crown.r"],["SEG_LAT_CROWN_L","N.crown.l","N.temple.l"],["SEG_LAT_CROWN_R","N.crown.r","N.temple.r"],["SEG_FRINGE_1","N.crown","N.fringe"],["SEG_FRINGE_L","N.fringe","N.brow.l"],["SEG_FRINGE_R","N.fringe","N.brow.r"],["SEG_TEMPLE_L","N.temple.l","N.brow.l"],["SEG_TEMPLE_R","N.temple.r","N.brow.r"],["SEG_TEMPLE_EAR_L","N.temple.l","N.ear.l"],["SEG_TEMPLE_EAR_R","N.temple.r","N.ear.r"],["SEG_EYE_L","N.brow.l","N.eye.l"],["SEG_EYE_R","N.brow.r","N.eye.r"],["SEG_NAR_L","N.eye.l","N.nose"],["SEG_NAR_R","N.eye.r","N.nose"],["SEG_CERP_L","N.eye.l","N.cerp.l"],["SEG_CERP_R","N.eye.r","N.cerp.r"],["SEG_EAR_CERP_L","N.ear.l","N.cerp.l"],["SEG_EAR_CERP_R","N.ear.r","N.cerp.r"],["SEG_NAR_CERP_L","N.nose","N.cerp.l"],["SEG_NAR_CERP_R","N.nose","N.cerp.r"],["SEG_LIP_L","N.cerp.l","N.lip"],["SEG_LIP_R","N.cerp.r","N.lip"],["SEG_LIP_NAR","N.nose","N.lip"],["SEG_ARCE_L","N.cerp.l","N.arce.l"],["SEG_ARCE_R","N.cerp.r","N.arce.r"],["SEG_LAT_JAW_L","N.arce.l","N.jaw.l"],["SEG_LAT_JAW_R","N.arce.r","N.jaw.r"],["SEG_JAW_L","N.jaw.l","N.chin"],["SEG_JAW_R","N.jaw.r","N.chin"],["SEG_NAPE_L","N.chin","N.cerv.l"],["SEG_NAPE_R","N.chin","N.cerv.r"]]};
+  const POSTERIOR={A:{"POST_CROWN":[250,55],"POST_CROWN_L":[180,75],"POST_CROWN_R":[320,75],"POST_CROWN_3L":[125,120],"POST_CROWN_3R":[375,120],"N.occip.t":[250,95],"N.occip.l":[160,180],"N.occip.r":[340,180],"N.occip.c":[250,185],"N.ear.l":[115,215],"N.ear.r":[385,215],"N.nape.l":[170,260],"N.nape.r":[330,260],"N.nape.c":[250,290],"N.cerv.l":[195,335],"N.cerv.r":[305,335],"N.cerv.c":[250,345],"N.cerv.b":[250,395]},segs:[["SEG_CROWN_1","POST_CROWN","POST_CROWN_L"],["SEG_CROWN_2","POST_CROWN","POST_CROWN_R"],["SEG_CROWN_3","POST_CROWN_L","POST_CROWN_R"],["SEG_OCC_TOP","POST_CROWN","N.occip.t"],["SEG_OCC_L","N.occip.t","N.occip.l"],["SEG_OCC_R","N.occip.t","N.occip.r"],["SEG_OCC_C","N.occip.t","N.occip.c"],["SEG_OCC_LC","N.occip.l","N.occip.c"],["SEG_OCC_RC","N.occip.r","N.occip.c"],["SEG_LAT_CROWN_L","POST_CROWN_3L","N.occip.l"],["SEG_LAT_CROWN_R","POST_CROWN_3R","N.occip.r"],["SEG_LAT_EAR_L","N.occip.l","N.ear.l"],["SEG_LAT_EAR_R","N.occip.r","N.ear.r"],["SEG_POST_PLANE_L","N.ear.l","N.nape.l"],["SEG_POST_PLANE_R","N.ear.r","N.nape.r"],["SEG_NAPE_L","N.occip.l","N.nape.l"],["SEG_NAPE_R","N.occip.r","N.nape.r"],["SEG_NAPE_C1","N.occip.c","N.nape.c"],["SEG_NAPE_C2","N.nape.l","N.nape.c"],["SEG_NAPE_C3","N.nape.r","N.nape.c"],["SEG_POST_NAPE_L","N.nape.l","N.cerv.l"],["SEG_POST_NAPE_R","N.nape.r","N.cerv.r"],["SEG_POS_PLANE","N.nape.c","N.cerv.c"],["SEG_CERV_L","N.cerv.l","N.cerv.c"],["SEG_CERV_R","N.cerv.r","N.cerv.c"],["SEG_CERV_BOT","N.cerv.c","N.cerv.b"]]};
+  const PINZAS={A:(()=>{const cx=250,cy=210,r=140,A={"C":[cx,cy]};for(let i=0;i<12;i++){const a=i*30*Math.PI/180;A["P"+i]=[cx+Math.cos(a)*r,cy+Math.sin(a)*r];}for(let i=0;i<6;i++){const a=(i*60+30)*Math.PI/180;A["M"+i]=[cx+Math.cos(a)*(r*.55),cy+Math.sin(a)*(r*.55)];}return A;})(),segs:(()=>{const s=[];for(let i=0;i<12;i++)s.push(["SEG_R"+i,"C","P"+i]);for(let i=0;i<12;i++)s.push(["SEG_C"+i,"P"+i,"P"+((i+1)%12)]);for(let i=0;i<6;i++){s.push(["SEG_M"+i,"C","M"+i]);s.push(["SEG_MO"+i,"M"+i,"P"+(i*2)]);s.push(["SEG_MO_"+i,"M"+i,"P"+(i*2+1)]);}return s;})()};
+  const REGLAS={oval:{label:'Ovalado',front:["SEG_FRINGE_1","SEG_FRINGE_L","SEG_FRINGE_R","SEG_CERP_L","SEG_CERP_R","SEG_JAW_L","SEG_JAW_R"],post:["SEG_OCC_C","SEG_NAPE_C1","SEG_POS_PLANE"],pinz:["SEG_R0","SEG_R3","SEG_R6","SEG_R9"]},square:{label:'Cuadrado',front:["SEG_TEMPLE_L","SEG_TEMPLE_R","SEG_ARCE_L","SEG_ARCE_R","SEG_LAT_JAW_L","SEG_LAT_JAW_R","SEG_JAW_L","SEG_JAW_R"],post:["SEG_LAT_EAR_L","SEG_LAT_EAR_R","SEG_POST_PLANE_L","SEG_POST_PLANE_R"],pinz:["SEG_R1","SEG_R5","SEG_R7","SEG_R11"]},heart:{label:'Corazón',front:["SEG_FRINGE_L","SEG_FRINGE_R","SEG_TEMPLE_EAR_L","SEG_TEMPLE_EAR_R","SEG_LIP_L","SEG_LIP_R"],post:["SEG_OCC_L","SEG_OCC_R","SEG_OCC_C"],pinz:["SEG_R0","SEG_R2","SEG_R10"]},round:{label:'Redondo',front:["SEG_CROWN_1","SEG_CROWN_2","SEG_FRINGE_1","SEG_NAR_L","SEG_NAR_R","SEG_JAW_L","SEG_JAW_R"],post:["SEG_OCC_TOP","SEG_OCC_C","SEG_NAPE_C1","SEG_CERV_BOT"],pinz:["SEG_R0","SEG_R6"]}};
+  let hovered=null,pinned=new Set();
+  function rInto(svgEl,def,activeSet){
+    if(!svgEl)return;svgEl.innerHTML='';const A=def.A;
+    def.segs.forEach(([id,a,b])=>{
+      const [x1,y1]=A[a],[x2,y2]=A[b];const isA=activeSet.has(id);const isH=(hovered===id||pinned.has(id));
+      const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','mfx-seg'+(isA?' is-active':'')+(isH?' is-hot':''));
+      const hit=document.createElementNS('http://www.w3.org/2000/svg','line');hit.setAttribute('class','hit');hit.setAttribute('x1',x1);hit.setAttribute('y1',y1);hit.setAttribute('x2',x2);hit.setAttribute('y2',y2);hit.setAttribute('stroke','transparent');hit.setAttribute('stroke-width','12');g.appendChild(hit);
+      const ln=document.createElementNS('http://www.w3.org/2000/svg','line');ln.setAttribute('class','vis');ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);ln.setAttribute('stroke',RED);ln.setAttribute('stroke-width',isH?2.2:(isA?1.6:0.6));ln.setAttribute('opacity',isH?1:(isA?1:0.45));g.appendChild(ln);
+      if(isA||isH){const tx=document.createElementNS('http://www.w3.org/2000/svg','text');tx.setAttribute('class','mfx-label');tx.setAttribute('x',(x1+x2)/2);tx.setAttribute('y',(y1+y2)/2-2);tx.textContent=id.replace('SEG_','');g.appendChild(tx);}
+      g.addEventListener('mouseenter',()=>{hovered=id;rAll();});g.addEventListener('mouseleave',()=>{hovered=null;rAll();});g.addEventListener('click',()=>{pinned.has(id)?pinned.delete(id):pinned.add(id);rAll();});
+      svgEl.appendChild(g);
+    });
+    Object.entries(A).forEach(([id,[x,y]])=>{const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','mfx-node');const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('class','core');c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',1.6);c.setAttribute('fill',RED);g.appendChild(c);svgEl.appendChild(g);});
+  }
+  function getRostro(){const el=document.getElementById('sd_rostro');return(el&&REGLAS[el.value])?el.value:'oval';}
+  function rAll(){
+    const r=REGLAS[getRostro()];const info=document.getElementById('meshInfo');
+    if(info&&!hovered)info.textContent='◊ '+r.label;
+    rInto(document.getElementById('mesh_c1'),FRONTAL,new Set(r.front));
+    rInto(document.getElementById('mesh_c2'),POSTERIOR,new Set(r.post));
+    rInto(document.getElementById('mesh_c3'),PINZAS,new Set(r.pinz));
+  }
+  function init(){
+    const t=document.getElementById('meshToggle');
+    if(t){t.addEventListener('change',()=>{['mesh_c1','mesh_c2','mesh_c3'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('off',t.value==='off');});});}
+    const ros=document.getElementById('sd_rostro');if(ros)ros.addEventListener('change',rAll);
+    rAll();
+  }
+  return{init,renderAll:rAll};
+})();
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){SD_cerrarVisor();cerrarVideo();}});
+document.getElementById('modalVideo').addEventListener('click',function(e){if(e.target===this)cerrarVideo();});
+window.addEventListener('message',function(e){if(e.data?.tipo==='sincronizarCreditos'){localStorage.setItem('fc_credits',e.data.creditos);_badge();}});
+try{window.parent.postMessage({tipo:'pedirCreditos'},'*');}catch(e){}
+
+/* ══ OVERRIDES DESDE FIREBASE · corte_modulos/{M1..M7} ══
+   Permite actualizar imagen (Drive), video, título y descripción de cada
+   módulo M1–M7 desde la Biblioteca, sin tocar el código. */
+function _extraerDriveId(v){
+  if(!v) return '';
+  const s=String(v).trim();
+  const m=s.match(/[-\w]{25,}/);          // ID dentro de un enlace de Drive
+  return m? m[0] : s;                      // o el ID/valor tal cual
+}
+async function cargarModulosFirebase(){
+  try{
+    if(!firebase.apps.length){
+      firebase.initializeApp({
+        apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",
+        authDomain:"aprendisajefatima.firebaseapp.com",
+        projectId:"aprendisajefatima",
+        storageBucket:"aprendisajefatima.firebasestorage.app",
+        messagingSenderId:"744176967394",
+        appId:"1:744176967394:web:1db2edfd2498ddbaa7c8bb"
+      });
+    }
+    const snap=await firebase.firestore().collection('corte_modulos').get();
+    if(snap.empty) return;
+    snap.forEach(d=>{
+      const m=MODULOS.find(x=>x.id===d.id); if(!m) return;
+      const data=d.data()||{};
+      if(data.imgUrl)   m.imgUrl  = data.imgUrl;            // URL directa de imagen
+      if(data.driveId)  m.driveId = _extraerDriveId(data.driveId);
+      if(data.videoUrl!==undefined) m.videoUrl = data.videoUrl||null;
+      if(data.titulo)   m.titulo  = data.titulo;
+      if(data.desc)     m.desc    = data.desc;
+    });
+    renderModulos();   // re-pintar con el contenido actualizado
+  }catch(e){ console.warn('corte_modulos:', e.message); }
+}
+
+window.addEventListener('load',()=>{
+  SD.init();MESH.init();TTS.init();renderModulos();_badge();
+  cargarModulosFirebase();
+});
+</script>
+<script src="hub_credito_bridge.js"></script>
+</body>
+</html>

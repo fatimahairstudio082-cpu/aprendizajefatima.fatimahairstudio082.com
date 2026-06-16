@@ -1,0 +1,5 @@
+# Configuración de Netlify para Fátima Pro
+# Carpeta donde viven las funciones (servidores intermediarios)
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

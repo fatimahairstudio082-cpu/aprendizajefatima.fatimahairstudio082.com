@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* ───────────────────────────────────────────────
+       FÁTIMA PRO · Reglas de seguridad (LISTAS PARA PUBLICAR)
+       Proyecto: aprendisajefatima
+       Pega TODO esto en: Firestore → Reglas → Publicar
+       ─────────────────────────────────────────────── */
+
+    // ¿Es el administrador? (tu correo)
+    function esAdmin() {
+      return request.auth != null
+        && request.auth.token.email in [
+             'fatimahairstudio082@gmail.com'
+             // , 'otro-correo-admin@gmail.com'   // agrega más si necesitas
+           ];
+    }
+    // ¿Hay sesión iniciada?
+    function logueado() {
+      return request.auth != null;
+    }
+
+    // ── USUARIOS · cada quien SOLO su propio documento ──
+    match /usuarios/{uid} {
+      // Lee su doc el propio dueño o el admin
+      allow read: if request.auth.uid == uid || esAdmin();
+
+      // Al registrarse crea su doc:
+      //  · máximo 10 créditos de prueba
+      //  · NO puede nacer con clases desbloqueadas (acceso_clases debe ir vacío)
+      //    → así NADIE puede auto-regalarse las 299 clases creando el doc a mano.
+      allow create: if request.auth.uid == uid
+                    && request.resource.data.get('creditos', 0) <= 10
+                    && request.resource.data.get('acceso_clases', []).size() == 0;
+
+      // Actualizar:
+      //  · el ADMIN puede TODO (recargar créditos, activar/desactivar, asignar clases)
+      //  · la ALUMNA solo puede tocar 'creditos' (para gastarlos, nunca subirlos) y
+      //    'ultimoAcceso'. NO puede tocar acceso_clases, activo, email ni nombre.
+      //    Esto cierra el hueco: la alumna NO puede desbloquearse clases ella sola.
+      allow update: if esAdmin()
+        || (
+             request.auth.uid == uid
+             && request.resource.data.creditos <= resource.data.creditos
+             && request.resource.data.diff(resource.data)
+                  .affectedKeys().hasOnly(['creditos', 'ultimoAcceso'])
+           );
+
+      allow delete: if esAdmin();
+    }
+
+    // ── ACCESOS por alumna (colección aparte, si se usa) · lee el suyo, solo admin escribe ──
+    match /acceso_clases/{uid} {
+      allow read:  if request.auth.uid == uid || esAdmin();
+      allow write: if esAdmin();
+    }
+
+    // ── CRÉDITOS POR BLOQUE (sistema antiguo · bloques 6/8/9) ──
+    //  Cada alumna gestiona SOLO su propio documento de créditos por bloque.
+    //  Se mantiene por compatibilidad: los bloques 6/8/9 aún escriben aquí.
+    match /usuarios_bloques/{uid} {
+      allow read:   if request.auth.uid == uid || esAdmin();
+      allow create: if request.auth.uid == uid || esAdmin();
+      allow update: if request.auth.uid == uid || esAdmin();
+      allow delete: if esAdmin();
+    }
+    // Registros de uso de bloques (auditoría) · la alumna solo puede AÑADIR los suyos
+    match /registros_bloques/{doc} {
+      allow read:   if esAdmin();
+      allow create: if logueado()
+                    && request.resource.data.get('uid', '') == request.auth.uid;
+      allow update, delete: if esAdmin();
+    }
+
+    // ── CONTENIDO · lo LEE cualquier alumna con sesión, solo el ADMIN escribe ──
+    match /fitness_videos/{doc} { allow read: if logueado(); allow write: if esAdmin(); }
+    match /fitness_imgs/{doc}   { allow read: if logueado(); allow write: if esAdmin(); }
+    match /hub_tarjetas/{doc}   { allow read: if logueado(); allow write: if esAdmin(); }
+    match /hub_images/{doc}     { allow read: if logueado(); allow write: if esAdmin(); }
+    match /hub_tools/{doc}      { allow read: if logueado(); allow write: if esAdmin(); }
+    match /noticias/{doc}       { allow read: if logueado(); allow write: if esAdmin(); }
+    match /corte_modulos/{doc}  { allow read: if logueado(); allow write: if esAdmin(); }
+    match /clases_imgs/{doc}    { allow read: if logueado(); allow write: if esAdmin(); }
+    match /clases_videos/{doc}  { allow read: if logueado(); allow write: if esAdmin(); }
+    match /clases/{doc}         { allow read: if logueado(); allow write: if esAdmin(); }
+
+    // ── PROGRESO de cada alumna · solo el suyo ──
+    match /progreso/{uid}       { allow read:  if request.auth.uid == uid || esAdmin();
+                                  allow write: if request.auth.uid == uid || esAdmin(); }
+
+    // ── TODO LO DEMÁS · solo el admin (protege cualquier colección no listada) ──
+    match /{document=**} {
+      allow read, write: if esAdmin();
+    }
+  }
+}

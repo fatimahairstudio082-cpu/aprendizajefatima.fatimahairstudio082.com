@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FÁTIMA CALDEA — MÓDULO 4 · CARPETA INTELIGENTE</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#C9A84C;--gold2:#7A6130;
+  --bg:#0a0a0a;--bg2:#111;--bg3:#191919;--bg4:#0f0f0f;
+  --green:#27AE60;--blue:#2980B9;--red:#E74C3C;--purple:#9B59B6;--cyan:#00bcd4;
+  --border:rgba(201,168,76,.18);--text:#e8e0d0;--muted:#4a4535;
+}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;}
+.hdr{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.logo{font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--gold);}
+.sub{font-size:7px;color:var(--gold2);margin-top:2px;}
+.badge-m4{background:rgba(0,188,212,.1);border:1px solid rgba(0,188,212,.3);color:var(--cyan);padding:3px 8px;border-radius:3px;font-size:7px;}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:14px;background:var(--bg2);border-bottom:1px solid var(--border);}
+.stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center;}
+.stat-val{font-size:18px;font-weight:700;color:var(--gold);}
+.stat-lbl{font-size:6.5px;color:var(--gold2);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
+.stat-save{font-size:9px;color:var(--green);margin-top:2px;}
+.shell{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 140px);}
+.left{background:var(--bg2);border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;}
+.sec{font-size:7px;letter-spacing:.2em;color:var(--gold2);text-transform:uppercase;border-bottom:1px solid rgba(201,168,76,.1);padding-bottom:3px;margin-bottom:6px;}
+.drop-zone{border:2px dashed rgba(201,168,76,.3);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:rgba(201,168,76,.02);}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--gold);background:rgba(201,168,76,.06);}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.drop-icon{font-size:24px;opacity:.35;margin-bottom:6px;}
+.drop-title{font-size:9px;font-weight:700;color:var(--gold);margin-bottom:3px;}
+.drop-sub{font-size:7.5px;color:var(--gold2);line-height:1.6;}
+.opt-section{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;}
+.opt-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.opt-lbl{font-size:8px;color:var(--text);}
+.opt-sub{font-size:6.5px;color:var(--gold2);}
+.sw{position:relative;width:32px;height:17px;cursor:pointer;flex-shrink:0;}
+.sw input{opacity:0;width:0;height:0;}
+.sw-sl{position:absolute;inset:0;background:var(--bg2);border-radius:10px;transition:.2s;border:1px solid var(--border);}
+.sw-sl::before{content:'';position:absolute;width:11px;height:11px;background:var(--muted);border-radius:50%;bottom:2px;left:2px;transition:.2s;}
+.sw input:checked+.sw-sl{background:rgba(201,168,76,.2);border-color:var(--gold);}
+.sw input:checked+.sw-sl::before{transform:translateX(15px);background:var(--gold);}
+.sl-mini{width:100%;height:2px;accent-color:var(--gold);cursor:pointer;margin-top:3px;}
+.sl-lbl-mini{display:flex;justify-content:space-between;font-size:6.5px;color:var(--gold2);margin-top:4px;}
+.fb-section{background:rgba(201,168,76,.04);border:1px solid var(--border);border-radius:6px;padding:10px;}
+.fb-sel{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:8px;padding:5px 7px;font-family:'JetBrains Mono',monospace;margin-bottom:6px;}
+.fb-badge{font-size:6.5px;padding:2px 6px;border-radius:3px;background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.2);color:var(--green);}
+.center{background:var(--bg4);padding:14px;display:flex;flex-direction:column;gap:10px;}
+.bulk-bar{background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.bulk-count{font-size:13px;font-weight:700;color:var(--gold);}
+.bulk-lbl{font-size:8px;color:var(--gold2);}
+.bulk-prog{flex:1;min-width:100px;height:5px;background:rgba(201,168,76,.15);border-radius:3px;overflow:hidden;}
+.bulk-prog-fill{height:100%;background:var(--gold);border-radius:3px;transition:width .3s;}
+.action-btns{display:flex;gap:5px;flex-wrap:wrap;}
+.a-btn{padding:5px 10px;border-radius:3px;font-size:8px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:.15s;border:1px solid;}
+.a-btn-opt{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.3);color:var(--gold);}
+.a-btn-opt:hover{background:rgba(201,168,76,.2);}
+.a-btn-dl{background:rgba(39,174,96,.1);border-color:rgba(39,174,96,.3);color:var(--green);}
+.a-btn-dl:hover{background:rgba(39,174,96,.2);}
+.a-btn-fb{background:rgba(0,188,212,.1);border-color:rgba(0,188,212,.3);color:var(--cyan);}
+.a-btn-fb:hover{background:rgba(0,188,212,.2);}
+.a-btn-pdf{background:rgba(41,128,185,.1);border-color:rgba(41,128,185,.3);color:var(--blue);}
+.a-btn-pdf:hover{background:rgba(41,128,185,.2);}
+.a-btn-del{background:rgba(231,76,60,.08);border-color:rgba(231,76,60,.25);color:var(--red);}
+.a-btn-del:hover{background:rgba(231,76,60,.15);}
+.a-btn-sel{background:transparent;border-color:var(--border);color:var(--gold2);}
+.a-btn-sel:hover{border-color:var(--gold);color:var(--gold);}
+.filters{display:flex;gap:4px;flex-wrap:wrap;}
+.filter-btn{padding:4px 10px;border:1px solid var(--border);border-radius:20px;font-size:7.5px;color:var(--gold2);cursor:pointer;background:transparent;}
+.filter-btn.act{background:var(--gold);color:#000;border-color:var(--gold);}
+.file-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;flex:1;overflow-y:auto;max-height:calc(100vh - 360px);}
+.file-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;overflow:hidden;position:relative;transition:.15s;cursor:pointer;}
+.file-card:hover{border-color:rgba(201,168,76,.35);}
+.file-card.selected{border-color:var(--gold);outline:2px solid rgba(201,168,76,.4);}
+.file-thumb{width:100%;height:90px;object-fit:cover;display:block;background:var(--bg3);}
+.file-thumb-placeholder{width:100%;height:90px;display:flex;align-items:center;justify-content:center;background:var(--bg3);font-size:28px;}
+.file-check{position:absolute;top:5px;left:5px;width:16px;height:16px;background:rgba(0,0,0,.7);border:1.5px solid var(--gold);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.file-check.on{background:var(--gold);color:#000;}
+.file-type-badge{position:absolute;top:5px;right:5px;font-size:6px;padding:2px 4px;border-radius:2px;font-weight:700;}
+.tb-img{background:rgba(201,168,76,.8);color:#000;}
+.tb-vid{background:rgba(41,128,185,.8);color:#fff;}
+.tb-pdf{background:rgba(231,76,60,.8);color:#fff;}
+.tb-aud{background:rgba(39,174,96,.8);color:#fff;}
+.file-info{padding:6px 7px;background:var(--bg3);}
+.file-name{font-size:7.5px;color:var(--text);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.file-meta{font-size:6.5px;color:var(--gold2);margin-top:2px;}
+.file-save{font-size:6.5px;color:var(--green);margin-top:1px;}
+.file-clase{font-size:6px;color:#60a5fa;margin-top:2px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);border-radius:2px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.file-clase.libre{color:var(--gold);background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.25);}
+.grupo-head{grid-column:1/-1;display:flex;align-items:center;gap:7px;margin:6px 0 2px;padding:5px 9px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.18);border-radius:4px;font-size:7.5px;color:#60a5fa;font-weight:700;}
+.grupo-head .pkg{font-size:6px;color:var(--gold2);background:rgba(201,168,76,.1);border-radius:2px;padding:1px 5px;}
+.file-acts{display:flex;gap:2px;padding:4px 5px;background:var(--bg3);border-top:1px solid rgba(201,168,76,.08);}
+.fa{flex:1;padding:3px 2px;border:1px solid rgba(201,168,76,.12);border-radius:2px;font-size:6.5px;color:var(--gold2);text-align:center;cursor:pointer;}
+.fa:hover{border-color:var(--gold);color:var(--gold);}
+.opt-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;display:none;align-items:center;justify-content:center;}
+.opt-overlay.show{display:flex;}
+.opt-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:28px 32px;width:440px;text-align:center;}
+.opt-title{font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.15em;margin-bottom:6px;}
+.opt-sub{font-size:8px;color:var(--gold2);margin-bottom:16px;}
+.opt-prog-bar{height:6px;background:rgba(201,168,76,.15);border-radius:3px;overflow:hidden;margin:10px 0;}
+.opt-prog-fill{height:100%;background:var(--gold);border-radius:3px;transition:width .3s;}
+.opt-log{max-height:120px;overflow-y:auto;font-size:7.5px;color:var(--gold2);text-align:left;line-height:2;margin-top:8px;}
+.opt-log .ok{color:var(--green);}
+.opt-log .info{color:var(--blue);}
+.status-bar{background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.12);border-radius:3px;padding:5px 10px;font-size:7.5px;color:var(--gold2);}
+.s-ok{color:var(--green)!important;}
+.s-err{color:var(--red)!important;}
+.s-info{color:var(--cyan)!important;}
+</style>
+</head>
+<body>
+
+<!-- ══ PUENTE SUPERIOR ══ -->
+<div style="background:rgba(4,6,8,.98);border-bottom:2px solid rgba(201,168,76,.18);padding:0 14px;display:flex;align-items:center;height:44px;position:sticky;top:0;z-index:100;">
+  <div style="font-size:9px;font-weight:700;letter-spacing:.2em;color:#C9A84C;padding-right:14px;border-right:1px solid rgba(201,168,76,.15);margin-right:8px;white-space:nowrap;">✦ FÁTIMA CALDEA</div>
+  <a href="modulo1_imagen.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-right:1px solid rgba(201,168,76,.08);font-size:8px;color:#7A6130;text-decoration:none;white-space:nowrap;"><div style="width:6px;height:6px;border-radius:50%;background:#4a4535;"></div>⚡ M1 · Imagen</a>
+  <a href="modulo2_video.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-right:1px solid rgba(201,168,76,.08);font-size:8px;color:#7A6130;text-decoration:none;white-space:nowrap;"><div style="width:6px;height:6px;border-radius:50%;background:#4a4535;"></div>🎬 M2 · Video</a>
+  <a href="modulo3_voz.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-right:1px solid rgba(201,168,76,.08);font-size:8px;color:#7A6130;text-decoration:none;white-space:nowrap;"><div style="width:6px;height:6px;border-radius:50%;background:#4a4535;"></div>🔊 M3 · Voz</a>
+  <a href="modulo4_carpeta.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;font-size:8px;color:#C9A84C;background:rgba(201,168,76,.1);border-bottom:2px solid #C9A84C;text-decoration:none;white-space:nowrap;"><div style="width:6px;height:6px;border-radius:50%;background:#C9A84C;"></div>📁 M4 · Carpeta<span style="font-size:5.5px;padding:1px 4px;background:#C9A84C;color:#000;border-radius:2px;font-weight:700;">ACTIVO</span></a>
+  <!-- 🔧 PARCHE: link a Admin -->
+  <a href="admin.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-left:1px solid rgba(201,168,76,.15);font-size:8px;color:#7A6130;text-decoration:none;white-space:nowrap;"><div style="width:6px;height:6px;border-radius:50%;background:#4a4535;"></div>🛠️ Admin</a>
+  <!-- 🆕 link al Admin de Academia (motores de 360 clases) -->
+  <a href="admin_motores.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-left:1px solid rgba(0,242,255,.2);font-size:8px;color:#00bcd4;text-decoration:none;white-space:nowrap;transition:.15s;background:rgba(0,242,255,.04);">
+    <div style="width:6px;height:6px;border-radius:50%;background:#00bcd4;"></div>
+    🎓 Academia
+  </a>
+  <div style="margin-left:auto;font-size:7px;color:#27AE60;display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;background:#27AE60;border-radius:50%;"></div>Studio V5</div>
+</div>
+
+<div class="hdr">
+  <div>
+    <div class="logo">FÁTIMA CALDEA — MÓDULO 4 · CARPETA INTELIGENTE</div>
+    <div class="sub">Optimizador automático · Multi-selección · Firebase · Descarga · Recibe de M1 M2 M3 automáticamente</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="badge-m4">● M4 ACTIVO</span>
+    <button style="padding:5px 12px;background:transparent;border:1px solid var(--border);color:var(--gold2);font-size:8px;border-radius:3px;cursor:pointer;" onclick="window.close()">✕ Cerrar</button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat-card"><div class="stat-val" id="sTotalFiles">0</div><div class="stat-lbl">Archivos</div></div>
+  <div class="stat-card"><div class="stat-val" id="sImgs" style="color:var(--gold)">0</div><div class="stat-lbl">Imágenes</div></div>
+  <div class="stat-card"><div class="stat-val" id="sVids" style="color:var(--blue)">0</div><div class="stat-lbl">Videos</div></div>
+  <div class="stat-card"><div class="stat-val" id="sPdfs" style="color:var(--red)">0</div><div class="stat-lbl">PDFs</div></div>
+  <div class="stat-card"><div class="stat-val" id="sAuds" style="color:var(--green)">0</div><div class="stat-lbl">Audios</div></div>
+  <div class="stat-card"><div class="stat-val" id="sSaved" style="color:var(--green)">0%</div><div class="stat-lbl">Peso ahorrado</div><div class="stat-save" id="sSavedKB"></div></div>
+</div>
+
+<div class="shell">
+  <div class="left">
+    <div>
+      <div class="sec">📂 Agregar archivos</div>
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" multiple accept="image/*,video/*,audio/*,.pdf" onchange="addFiles(this.files)">
+        <div class="drop-icon">📂</div>
+        <div class="drop-title">Arrastra archivos aquí</div>
+        <div class="drop-sub">JPG · PNG · MP4 · PDF · MP3 · WAV<br>O recibe automáticamente desde M1 M2 M3</div>
+      </div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;padding:7px;background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:7.5px;color:var(--gold2);">
+        📁 Seleccionar carpeta completa
+        <input type="file" webkitdirectory multiple onchange="addFiles(this.files)" style="display:none;">
+      </label>
+    </div>
+
+    <div>
+      <div class="sec">⚡ Optimización automática</div>
+      <div class="opt-section">
+        <div class="opt-row">
+          <div><div class="opt-lbl">🖼️ Imágenes JPG/PNG</div><div class="opt-sub">Canvas API · sin pérdida visual</div></div>
+          <label class="sw"><input type="checkbox" id="optImg" checked><span class="sw-sl"></span></label>
+        </div>
+        <div class="sl-lbl-mini"><span>Calidad</span><span id="vImgQ" style="color:var(--gold)">80%</span></div>
+        <input type="range" class="sl-mini" id="imgQ" min="50" max="95" value="80" oninput="vImgQ.textContent=this.value+'%'">
+        <div class="sl-lbl-mini"><span>Ancho máx.</span><span id="vImgW" style="color:var(--gold)">1400px</span></div>
+        <input type="range" class="sl-mini" id="imgW" min="600" max="2400" step="200" value="1400" oninput="vImgW.textContent=this.value+'px'">
+        <div class="opt-row" style="margin-top:10px;">
+          <div><div class="opt-lbl">🎬 Videos MP4/MOV</div><div class="opt-sub">Canvas frame-by-frame · -60% peso</div></div>
+          <label class="sw"><input type="checkbox" id="optVid" checked><span class="sw-sl"></span></label>
+        </div>
+        <div class="sl-lbl-mini"><span>Calidad video</span><span id="vVidQ" style="color:var(--gold)">75%</span></div>
+        <input type="range" class="sl-mini" id="vidQ" min="40" max="90" value="75" oninput="vVidQ.textContent=this.value+'%'">
+        <div class="opt-row" style="margin-top:10px;">
+          <div><div class="opt-lbl">📄 PDFs</div><div class="opt-sub">Recomprime imágenes internas</div></div>
+          <label class="sw"><input type="checkbox" id="optPdf" checked><span class="sw-sl"></span></label>
+        </div>
+        <div class="opt-row" style="margin-top:8px;">
+          <div><div class="opt-lbl">🎵 Audio MP3/WAV</div><div class="opt-sub">Reduce bitrate · WAV→MP3</div></div>
+          <label class="sw"><input type="checkbox" id="optAud" checked><span class="sw-sl"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec">☁️ Destino Firebase</div>
+      <div class="fb-section">
+        <div style="font-size:7px;color:var(--gold2);margin-bottom:5px;">Carpeta en Firebase Storage:</div>
+        <select class="fb-sel" id="fbFolder">
+          <option value="fitness_imgs">💪 fitness_imgs/ — Imágenes fitness</option>
+          <option value="academia">🎓 academia/ — Imágenes clases</option>
+          <option value="nutricion">🥗 nutricion/ — Imágenes nutrición ⭐ NUEVO</option>
+          <option value="hub">🖼️ hub/ — Imágenes del Hub principal ⭐ NUEVO</option>
+          <option value="pdfs">📄 pdfs/ — Fichas PDF</option>
+          <option value="videos">🎬 videos/ — Videos</option>
+          <option value="audios">🎵 audios/ — Audios</option>
+          <option value="clases_imgs">✂️ clases_imgs/ — Peluquería</option>
+        </select>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="fb-badge">✓ Firebase conectado</div>
+          <span style="font-size:6.5px;color:var(--muted);">aprendisajefatima</span>
+        </div>
+      </div>
+    </div>
+
+    <button id="btnOptimize" onclick="optimizarTodo()" disabled style="width:100%;padding:12px;background:linear-gradient(135deg,var(--gold2),var(--gold));border:none;border-radius:5px;color:#000;font-size:10px;font-weight:700;letter-spacing:.15em;cursor:pointer;font-family:'JetBrains Mono',monospace;opacity:.5;">
+      ⚡ OPTIMIZAR Y PREPARAR TODO
+    </button>
+    <button id="btnOptUpload" onclick="optimizarYSubirTodo()" style="width:100%;margin-top:8px;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:5px;color:#fff;font-size:10px;font-weight:700;letter-spacing:.15em;cursor:pointer;font-family:'JetBrains Mono',monospace;">
+      ⚡☁️ OPTIMIZAR Y SUBIR TODO A FIREBASE
+    </button>
+  </div>
+
+  <div class="center">
+    <div class="bulk-bar">
+      <div><span class="bulk-count" id="bulkCount">0</span><span class="bulk-lbl"> seleccionados</span></div>
+      <div class="bulk-prog"><div class="bulk-prog-fill" id="bulkProgFill" style="width:0%"></div></div>
+      <div class="action-btns">
+        <button class="a-btn a-btn-sel" onclick="selAll()">☑ Todos</button>
+        <button class="a-btn a-btn-sel" onclick="deselAll()">☐ Ninguno</button>
+        <button class="a-btn a-btn-opt" onclick="optimizarSeleccionados()">⚡ Optimizar</button>
+        <button class="a-btn a-btn-dl"  onclick="descargarSeleccionados()">📥 Descargar</button>
+        <button class="a-btn a-btn-fb"  onclick="subirFirebase()">☁️ Firebase</button>
+        <button class="a-btn a-btn-pdf" onclick="crearFichaPDF()">📋 Ficha PDF</button>
+        <button class="a-btn a-btn-del" onclick="eliminarSeleccionados()">🗑 Eliminar</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn act" onclick="filtrar('todo',this)">Todos</button>
+      <button class="filter-btn" onclick="filtrar('img',this)">🖼️ Imágenes</button>
+      <button class="filter-btn" onclick="filtrar('vid',this)">🎬 Videos</button>
+      <button class="filter-btn" onclick="filtrar('pdf',this)">📄 PDFs</button>
+      <button class="filter-btn" onclick="filtrar('aud',this)">🎵 Audios</button>
+      <button class="filter-btn" onclick="filtrar('opt',this)">✅ Optimizados</button>
+      <button class="filter-btn" onclick="filtrar('sin-opt',this)">⏳ Sin optimizar</button>
+    </div>
+
+    <div class="file-grid" id="fileGrid">
+      <div style="grid-column:1/-1;font-size:8px;color:var(--muted);padding:24px;text-align:center;">
+        📂 Los archivos enviados desde M1, M2 y M3 aparecen aquí automáticamente.<br>También puedes arrastrar archivos o seleccionar una carpeta desde el panel izquierdo.
+      </div>
+    </div>
+
+    <div class="status-bar" id="statusBar">Estado: listo · Módulo 4 Carpeta Inteligente activo</div>
+  </div>
+</div>
+
+<div class="opt-overlay" id="optOverlay">
+  <div class="opt-box">
+    <div class="opt-title">⚡ OPTIMIZANDO</div>
+    <div class="opt-sub" id="optSubtitle">Preparando archivos...</div>
+    <div class="opt-prog-bar"><div class="opt-prog-fill" id="optProgFill" style="width:0%"></div></div>
+    <div style="font-size:9px;color:var(--gold2);margin-bottom:6px;" id="optProgTxt">0 / 0 archivos</div>
+    <div class="opt-log" id="optLog"></div>
+    <button onclick="document.getElementById('optOverlay').classList.remove('show')" style="margin-top:12px;padding:7px 20px;background:var(--gold);border:none;border-radius:4px;color:#000;font-size:8px;font-weight:700;cursor:pointer;display:none;" id="btnCerrarOpt">✓ LISTO</button>
+  </div>
+</div>
+
+<script>
+// ════════ ESTADO ════════
+const C={files:[],selected:new Set(),filter:'todo',totalOrig:0,totalOpt:0};
+
+function setStatus(msg,type=''){const sb=document.getElementById('statusBar');sb.innerHTML=type==='ok'?`<span class="s-ok">✓ ${msg}</span>`:type==='err'?`<span class="s-err">⚠ ${msg}</span>`:type==='info'?`<span class="s-info">ℹ ${msg}</span>`:msg;}
+
+// ════════ AGREGAR ARCHIVOS ════════
+function getFileType(file){const t=file.type;if(t.startsWith('image/'))return 'img';if(t.startsWith('video/'))return 'vid';if(t==='application/pdf')return 'pdf';if(t.startsWith('audio/'))return 'aud';const ext=file.name.split('.').pop().toLowerCase();if(['jpg','jpeg','png','webp','gif'].includes(ext))return 'img';if(['mp4','mov','webm','avi'].includes(ext))return 'vid';if(ext==='pdf')return 'pdf';if(['mp3','wav','ogg','m4a','aac'].includes(ext))return 'aud';return 'otro';}
+
+function addFiles(fileList){const files=[...fileList];if(!files.length)return;let added=0;const pending=[];files.forEach(f=>{if(C.files.find(x=>x.name===f.name&&x.sizeOrig===f.size))return;const id='f'+Date.now()+Math.random().toString(36).slice(2,5);const type=getFileType(f);C.files.unshift({id,file:f,type,name:f.name,sizeOrig:f.size,sizeOpt:null,blob:null,thumb:null,estado:'pendiente',selected:false});C.totalOrig+=f.size;added++;if(type==='img')pending.push({id,f});});if(added){renderGrid();updateStats();document.getElementById('btnOptimize').disabled=false;document.getElementById('btnOptimize').style.opacity='1';setStatus('✓ '+added+' archivo(s) agregados · '+C.files.length+' en total','ok');pending.forEach(({id,f})=>generarThumb(id,f));}}
+
+function generarThumb(id,file){const r=new FileReader();r.onload=ev=>{const item=C.files.find(x=>x.id===id);if(item){item.thumb=ev.target.result;renderGrid();}};r.readAsDataURL(file);}
+
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');addFiles(e.dataTransfer.files);});
+
+// ════════ OPTIMIZACIÓN ════════
+function optimizarImagen(file){return new Promise(resolve=>{const q=parseInt(document.getElementById('imgQ').value)/100;const maxW=parseInt(document.getElementById('imgW').value);const img=new Image();const url=URL.createObjectURL(file);img.onload=()=>{let w=img.width,h=img.height;if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}const cv=document.createElement('canvas');cv.width=w;cv.height=h;const ctx=cv.getContext('2d');if(file.type==='image/png'){ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);}ctx.drawImage(img,0,0,w,h);URL.revokeObjectURL(url);cv.toBlob(blob=>resolve({blob,w,h}),'image/jpeg',q);};img.onerror=()=>{URL.revokeObjectURL(url);resolve(null);};img.src=url;});}
+
+function optimizarVideo(file){return new Promise(resolve=>{const q=parseInt(document.getElementById('vidQ').value)/100;const url=URL.createObjectURL(file);const video=document.createElement('video');video.src=url;video.muted=true;video.onloadedmetadata=()=>{const canvas=document.createElement('canvas');const maxW=1280;let w=video.videoWidth,h=video.videoHeight;if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}canvas.width=w;canvas.height=h;const stream=canvas.captureStream(24);const recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:Math.round(1000000*q)});const chunks=[];recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};recorder.onstop=()=>{URL.revokeObjectURL(url);const blob=new Blob(chunks,{type:'video/webm'});resolve({blob});};const ctx=canvas.getContext('2d');let t=0;function drawFrame(){if(video.ended||video.paused){recorder.stop();return;}ctx.drawImage(video,0,0,w,h);t+=1/24;video.currentTime=Math.min(t,video.duration);}video.onseeked=drawFrame;recorder.start();video.play();setTimeout(()=>{if(recorder.state==='recording')recorder.stop();},Math.min(video.duration*1000+2000,30000));};video.onerror=()=>{URL.revokeObjectURL(url);resolve(null);};})}
+
+async function optimizarTodo(){const pendientes=C.files.filter(f=>f.estado==='pendiente');if(!pendientes.length){setStatus('Sin archivos pendientes de optimizar','info');return;}await optimizarLote(pendientes);}
+async function optimizarSeleccionados(){const sel=C.files.filter(f=>C.selected.has(f.id)&&f.estado==='pendiente');if(!sel.length){setStatus('Selecciona archivos pendientes primero','err');return;}await optimizarLote(sel);}
+
+// ⚡☁️ OPTIMIZAR + SUBIR TODO EN UN CLIC — optimiza lo pendiente y sube todo lo optimizado a Firebase
+async function optimizarYSubirTodo(){
+  const pendientes=C.files.filter(f=>f.estado==='pendiente');
+  if(pendientes.length){ setStatus('Paso 1/2 · Optimizando '+pendientes.length+' archivo(s)…','info'); await optimizarLote(pendientes); }
+  const optimizados=C.files.filter(f=>f.estado==='optimizado');
+  if(!optimizados.length){ setStatus('No hay archivos para subir.','err'); return; }
+  C.selected=new Set(optimizados.map(f=>f.id));
+  renderGrid(); updateBulk();
+  setStatus('Paso 2/2 · Subiendo '+optimizados.length+' archivo(s) a Firebase…','info');
+  await subirFirebase();
+}
+
+async function optimizarLote(lista){const overlay=document.getElementById('optOverlay');const progFill=document.getElementById('optProgFill');const progTxt=document.getElementById('optProgTxt');const log=document.getElementById('optLog');const sub=document.getElementById('optSubtitle');overlay.classList.add('show');log.innerHTML='';document.getElementById('btnCerrarOpt').style.display='none';let ok=0,err=0;for(let i=0;i<lista.length;i++){const item=lista[i];const pct=Math.round((i/lista.length)*100);progFill.style.width=pct+'%';progTxt.textContent=`${i+1} / ${lista.length} archivos`;sub.textContent='Optimizando: '+item.name;try{let result=null;if(item.type==='img'&&document.getElementById('optImg').checked){addLog(log,'⚡ Imagen: '+item.name+'...','info');result=await optimizarImagen(item.file);if(result){item.blob=result.blob;item.sizeOpt=result.blob.size;item.estado='optimizado';item.thumb=URL.createObjectURL(result.blob);C.totalOpt+=result.blob.size;const ahorro=Math.round((1-result.blob.size/item.sizeOrig)*100);addLog(log,'✅ '+item.name+' → -'+ahorro+'% · '+formatKB(result.blob.size),'ok');ok++;}}else if(item.type==='vid'&&document.getElementById('optVid').checked){addLog(log,'🎬 Video: '+item.name+'...','info');result=await optimizarVideo(item.file);if(result){item.blob=result.blob;item.sizeOpt=result.blob.size;item.estado='optimizado';C.totalOpt+=result.blob.size;const ahorro=Math.round((1-result.blob.size/item.sizeOrig)*100);addLog(log,'✅ '+item.name+' → -'+ahorro+'%','ok');ok++;}}else{item.blob=item.file;item.sizeOpt=item.file.size;item.estado='optimizado';C.totalOpt+=item.file.size;addLog(log,'✅ '+item.name+' → listo','ok');ok++;}}catch(e){item.estado='error';addLog(log,'❌ '+item.name+': '+e.message);err++;}renderGrid();updateStats();}progFill.style.width='100%';progTxt.textContent='✓ '+ok+' optimizados · '+err+' errores';sub.textContent='Optimización completada';document.getElementById('btnCerrarOpt').style.display='inline-block';setStatus('✓ '+ok+' optimizados · ahorro: '+calcAhorro()+'%','ok');}
+
+function addLog(container,msg,type=''){const d=document.createElement('div');d.className=type==='ok'?'ok':type==='info'?'info':'';d.textContent=msg;container.appendChild(d);container.scrollTop=container.scrollHeight;}
+
+// ════════ ACCIONES BULK ════════
+async function descargarSeleccionados(){const sel=C.files.filter(f=>C.selected.has(f.id));if(!sel.length){setStatus('Selecciona archivos primero','err');return;}setStatus('Descargando '+sel.length+' archivos...','info');for(const item of sel){const blob=item.blob||item.file;const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=item.name;a.click();await new Promise(r=>setTimeout(r,300));}setStatus('✓ '+sel.length+' archivos descargados','ok');}
+
+async function subirFirebase(){const sel=C.files.filter(f=>C.selected.has(f.id)&&f.estado==='optimizado');if(!sel.length){setStatus('Optimiza los archivos antes de subir a Firebase','err');return;}const folder=document.getElementById('fbFolder').value;const payload=sel.map(item=>({nombre:item.name,tipo:item.type,folder,claseId:item.claseId||null,cat:item.cat||null,slug:item.slug||null,niv:item.niv||null,titulo:item.titulo||null,targetPath:item.targetPath||null,sizeOrig:item.sizeOrig,sizeOpt:item.sizeOpt,ahorro:Math.round((1-item.sizeOpt/item.sizeOrig)*100)}));try{if(window.opener)window.opener.postMessage({tipo:'carpeta:subir',files:payload},'*');console.log('FIREBASE PAYLOAD:',payload);setStatus('✓ '+sel.length+' archivos listos · -'+calcAhorro()+'% peso · carpeta: '+folder+'/','ok');sel.forEach(item=>{item.estado='subido';});renderGrid();}catch(e){setStatus('Error preparando subida: '+e.message,'err');}}
+
+async function crearFichaPDF(){const sel=C.files.filter(f=>C.selected.has(f.id)&&f.type==='img');if(!sel.length){setStatus('Selecciona imágenes para crear la ficha PDF','err');return;}const imgs=sel.map(i=>i.thumb||URL.createObjectURL(i.blob||i.file));const W=window.open('','_blank');if(!W){setStatus('Permite ventanas emergentes','err');return;}const html=imgs.map((src,i)=>`<div style="page-break-after:always;text-align:center;padding:10mm;"><div style="font-family:monospace;font-size:14pt;color:#C9A84C;margin-bottom:5mm;">✦ FÁTIMA CALDEA ESTUDIO</div><img src="${src}" style="max-width:100%;max-height:250mm;border:1px solid #C9A84C;"><div style="font-size:9pt;color:#7A6130;margin-top:5mm;">${sel[i].name}</div></div>`).join('');W.document.write(`<!DOCTYPE html><html><head><style>@page{size:A4;margin:8mm;}body{background:#fff;margin:0;}</style></head><body>${html}<script>window.onload=()=>window.print()<\/script></body></html>`);W.document.close();setStatus('✓ Ficha PDF con '+sel.length+' imágenes generada','ok');}
+
+function eliminarSeleccionados(){if(!C.selected.size){setStatus('Selecciona archivos primero','err');return;}if(!confirm('¿Eliminar '+C.selected.size+' archivo(s)?'))return;C.files=C.files.filter(f=>!C.selected.has(f.id));C.selected.clear();renderGrid();updateStats();setStatus('✓ Archivos eliminados','ok');}
+
+// ════════ SELECCIÓN ════════
+function toggleSel(id){if(C.selected.has(id))C.selected.delete(id);else C.selected.add(id);renderGrid();updateBulk();}
+function selAll(){C.files.filter(visible).forEach(f=>C.selected.add(f.id));renderGrid();updateBulk();}
+function deselAll(){C.selected.clear();renderGrid();updateBulk();}
+function updateBulk(){const n=C.selected.size;document.getElementById('bulkCount').textContent=n;document.getElementById('bulkProgFill').style.width=(n/Math.max(C.files.length,1)*100)+'%';}
+
+// ════════ FILTROS ════════
+function filtrar(f,btn){C.filter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('act'));btn.classList.add('act');renderGrid();}
+function visible(item){if(C.filter==='todo')return true;if(C.filter==='opt')return item.estado==='optimizado'||item.estado==='subido';if(C.filter==='sin-opt')return item.estado==='pendiente';return item.type===C.filter;}
+
+// ════════ RENDER GRID ════════
+function renderGrid(){const g=document.getElementById('fileGrid');const lista=C.files.filter(visible).slice().sort((a,b)=>{const ka=a.claseId||'zzz_'+a.name,kb=b.claseId||'zzz_'+b.name;return ka<kb?-1:ka>kb?1:0;});if(!lista.length){g.innerHTML='<div style="grid-column:1/-1;font-size:8px;color:var(--muted);padding:24px;text-align:center;">📂 Sin archivos en esta vista.</div>';return;}g.innerHTML='';let _lastClase='__init__';lista.forEach(item=>{
+const _cid=item.claseId||null;
+if(_cid && _cid!==_lastClase){
+  const grupo=lista.filter(x=>x.claseId===_cid);
+  const tieneImg=grupo.some(x=>x.type==='img'),tieneVid=grupo.some(x=>x.type==='vid'),tieneAud=grupo.some(x=>x.type==='aud');
+  const h=document.createElement('div');h.className='grupo-head';
+  h.innerHTML=`🎯 ${_cid} <span class="pkg">${grupo.length} archivo(s)${tieneImg?' · 🖼️':''}${tieneVid?' · 🎬':''}${tieneAud?' · 🎵':''}</span>`;
+  g.appendChild(h);
+}
+_lastClase=_cid||_lastClase;
+const sel=C.selected.has(item.id);const card=document.createElement('div');card.className='file-card'+(sel?' selected':'');const typeBadge={'img':'IMG tb-img','vid':'VID tb-vid','pdf':'PDF tb-pdf','aud':'AUD tb-aud'}[item.type]||'OTR';const estadoColor=item.estado==='optimizado'?'var(--green)':item.estado==='subido'?'var(--blue)':item.estado==='error'?'var(--red)':'var(--gold2)';const estadoLabel=item.estado==='optimizado'?'✅ Opt':item.estado==='subido'?'☁️ FB':item.estado==='error'?'❌ Error':'⏳ Pend';const ahorroStr=item.sizeOpt?`-${Math.round((1-item.sizeOpt/item.sizeOrig)*100)}% · ${formatKB(item.sizeOpt)}`:'';let thumbHTML='';if(item.thumb&&item.type==='img'){thumbHTML=`<img class="file-thumb" src="${item.thumb}" loading="lazy">`;}else{const icons={'img':'🖼️','vid':'🎬','pdf':'📄','aud':'🎵'};thumbHTML=`<div class="file-thumb-placeholder">${icons[item.type]||'📎'}</div>`;}card.innerHTML=`${thumbHTML}<div class="file-check${sel?' on':''}" onclick="event.stopPropagation();toggleSel('${item.id}')">${sel?'✓':''}</div><div class="file-type-badge ${typeBadge.split(' ')[1]}">${typeBadge.split(' ')[0]}</div><div class="file-info"><div class="file-name" title="${item.name}">${item.name}</div>${item.claseId?`<div class="file-clase${(item.cat==='libre'||item.origen&&!item.cat)?' libre':''}" title="Clase: ${item.claseId}">🎯 ${item.claseId}</div>`:''}<div class="file-meta">${formatKB(item.sizeOrig)} · <span style="color:${estadoColor}">${estadoLabel}</span></div>${ahorroStr?`<div class="file-save">${ahorroStr}</div>`:''}</div><div class="file-acts"><div class="fa" onclick="event.stopPropagation();descargarItem('${item.id}')" title="Descargar">📥</div><div class="fa" onclick="event.stopPropagation();optimizarItem('${item.id}')" title="Optimizar">⚡</div><div class="fa" onclick="event.stopPropagation();eliminarItem('${item.id}')" title="Eliminar" style="color:var(--red)">🗑</div></div>`;card.onclick=()=>toggleSel(item.id);g.appendChild(card);});}
+
+function descargarItem(id){const item=C.files.find(f=>f.id===id);if(!item)return;const blob=item.blob||item.file;const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=item.name;a.click();}
+async function optimizarItem(id){const item=C.files.find(f=>f.id===id);if(!item||item.estado==='optimizado')return;await optimizarLote([item]);}
+function eliminarItem(id){C.files=C.files.filter(f=>f.id!==id);C.selected.delete(id);renderGrid();updateStats();updateBulk();}
+
+// ════════ STATS ════════
+function updateStats(){document.getElementById('sTotalFiles').textContent=C.files.length;document.getElementById('sImgs').textContent=C.files.filter(f=>f.type==='img').length;document.getElementById('sVids').textContent=C.files.filter(f=>f.type==='vid').length;document.getElementById('sPdfs').textContent=C.files.filter(f=>f.type==='pdf').length;document.getElementById('sAuds').textContent=C.files.filter(f=>f.type==='aud').length;const ahorro=calcAhorro();document.getElementById('sSaved').textContent=ahorro+'%';const ahorroBytes=C.totalOrig-C.totalOpt;document.getElementById('sSavedKB').textContent=ahorroBytes>0?'-'+formatKB(ahorroBytes):'';}
+function calcAhorro(){if(!C.totalOrig||!C.totalOpt)return 0;return Math.max(0,Math.round((1-C.totalOpt/C.totalOrig)*100));}
+function formatKB(bytes){if(bytes>1048576)return (bytes/1048576).toFixed(1)+' MB';return Math.round(bytes/1024)+' KB';}
+
+// ════════ PARCHE: LEER COLA AUTOMÁTICA AL ABRIR ════════
+(function leerColaAlAbrir(){
+  const raw=localStorage.getItem('fc_carpeta_queue');
+  if(!raw)return;
+  let queue;
+  try{queue=JSON.parse(raw);}catch(e){return;}
+  if(!queue||!queue.length)return;
+  localStorage.removeItem('fc_carpeta_queue');
+  let importados=0;
+  queue.forEach(item=>{
+    try{
+      // Si dataUrl es una URL externa (video), crear entrada directamente
+      let blob,file,thumbImg=null;
+      if(item.dataUrl&&item.dataUrl.startsWith('data:')){
+        const arr=item.dataUrl.split(',');
+        const mime=arr[0].match(/:(.*?);/)[1];
+        const bstr=atob(arr[1]);
+        const u8=new Uint8Array(bstr.length);
+        for(let i=0;i<bstr.length;i++)u8[i]=bstr.charCodeAt(i);
+        blob=new Blob([u8],{type:mime});
+        file=new File([blob],item.label,{type:mime});
+        if(item.tipo==='img')thumbImg=item.dataUrl;
+      } else {
+        // URL externa (ej video de API)
+        blob=null;file=null;
+      }
+      const tipo=item.tipo||'img';
+      const id='f'+Date.now()+Math.random().toString(36).slice(2,5);
+      const sizeOrig=blob?blob.size:(item.size||0);
+      C.files.unshift({id,file:file||{name:item.label,size:sizeOrig,type:tipo},type:tipo,name:item.label,sizeOrig,sizeOpt:null,blob:null,thumb:thumbImg,estado:'pendiente',selected:false,origen:item.motor||'M1/M2/M3',claseId:item.claseId||null,cat:item.cat||null,slug:item.slug||null,niv:item.niv||null,titulo:item.titulo||null,targetPath:item.targetPath||null});
+      C.totalOrig+=sizeOrig;
+      importados++;
+    }catch(e){console.warn('Error importando item:',item.label,e);}
+  });
+  if(importados){
+    renderGrid();updateStats();
+    document.getElementById('btnOptimize').disabled=false;
+    document.getElementById('btnOptimize').style.opacity='1';
+    setStatus('✓ '+importados+' archivo(s) recibidos de otros módulos · Listos para optimizar','ok');
+  }
+})();
+</script>
+
+<!-- ════════ MOTOR BRIDGE — biblioteca de las 360 clases ════════ -->
+<script src="motor_p1_bioseg_balayage.js"></script>
+<script src="motor_p2_queratina_elevaciones.js"></script>
+<script src="motor_p3_morfologia_alertas.js"></script>
+<script src="motor_helper.js"></script>
+<script src="m4_motor_bridge.js"></script>
+
+</body>
+</html>

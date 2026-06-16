@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diccionario de Ejercicios · Plan Semanal — Fátima Caldea</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+:root{--g:#00E676;--or:#FF6D00;--dark:#04060f;--card:#0b0f1e;--b1:#1a2035;--b2:#242840;--txt:#e8eaf6;--mu:#6272a4;--red:#FF1744;--cy:#00bcd4;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--txt);min-height:100vh;}
+.hdr{background:rgba(4,6,15,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;}
+@media(max-width:600px){.hdr{height:auto;min-height:60px;flex-wrap:wrap;padding:8px 12px;gap:6px;}}
+.logo{font-family:'Bebas Neue',cursive;font-size:1.8rem;letter-spacing:4px;background:linear-gradient(135deg,var(--g),var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.plan-badge{background:linear-gradient(135deg,var(--or),#ff9100);color:#fff;font-size:.6rem;font-weight:700;letter-spacing:2px;padding:3px 10px;border-radius:20px;text-transform:uppercase;}
+.btn-salir{background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:.35rem .7rem;color:#888;font-size:.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-salir:hover{border-color:#ff6b6b;color:#ff6b6b;}
+.main{max-width:1100px;margin:0 auto;padding:20px 16px;}
+.tabs{display:flex;background:#080d18;border-bottom:1px solid var(--b1);overflow-x:auto;}
+.tab{padding:14px 28px;cursor:pointer;font-family:'Bebas Neue',cursive;font-size:.9rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);border:none;border-bottom:3px solid transparent;background:none;transition:.3s;white-space:nowrap;}
+.tab.ta{color:var(--g);border-bottom-color:var(--g);}
+.tab.tb{color:var(--or);border-bottom-color:var(--or);}
+.tab.tc{color:var(--cy);border-bottom-color:var(--cy);}
+.sec{display:none;}.sec.on{display:block;}
+.card{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:20px;margin-bottom:16px;}
+.ct{font-family:'Bebas Neue',cursive;font-size:1.2rem;letter-spacing:2px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+@media(max-width:700px){.g2,.g3,.g4{grid-template-columns:1fr 1fr;}}
+@media(max-width:400px){.g2,.g3,.g4{grid-template-columns:1fr;}}
+.fg{margin-bottom:12px;}
+label{display:block;font-size:.72rem;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--mu);margin-bottom:5px;}
+input,select{width:100%;background:#08101c;border:1px solid var(--b2);border-radius:8px;color:var(--txt);font-family:'DM Sans',sans-serif;font-size:.92rem;padding:9px 12px;outline:none;transition:.2s;}
+input:focus,select:focus{border-color:var(--g);}
+select option{background:var(--card);}
+.btn{border:none;border-radius:8px;cursor:pointer;font-family:'Bebas Neue',cursive;font-weight:700;font-size:.95rem;letter-spacing:1.5px;text-transform:uppercase;padding:12px 22px;transition:.22s;display:inline-flex;align-items:center;gap:7px;}
+.btn-g{background:linear-gradient(135deg,var(--g),#00c853);color:#000;}
+.btn-g:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-or{background:linear-gradient(135deg,var(--or),#ff9100);color:#fff;}
+.btn-or:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-full{width:100%;justify-content:center;}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;filter:none!important;}
+.stat{background:linear-gradient(135deg,#08101c,var(--card));border:1px solid var(--b2);border-radius:10px;padding:18px;text-align:center;}
+.sv{font-family:'Bebas Neue',cursive;font-size:2.2rem;line-height:1;}
+.sl{font-size:.68rem;color:var(--mu);text-transform:uppercase;letter-spacing:1.2px;margin-top:3px;}
+.sg .sv{color:var(--g);}.so .sv{color:var(--or);}.sb .sv{color:var(--cy);}.sr .sv{color:var(--red);}
+.mbar{height:12px;background:var(--b2);border-radius:6px;overflow:hidden;display:flex;margin:8px 0;}
+.ms{height:100%;transition:width .5s;}
+.day-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.dtab{padding:7px 14px;border:1px solid var(--b1);border-radius:20px;background:transparent;color:var(--mu);cursor:pointer;font-size:.8rem;font-weight:600;transition:.2s;font-family:'DM Sans',sans-serif;}
+.dtab:hover,.dtab.on{border-color:var(--or);color:var(--or);background:rgba(255,109,0,.08);}
+.ex-tbl{width:100%;border-collapse:collapse;font-size:.82rem;}
+.ex-tbl th{background:rgba(255,255,255,.03);padding:9px 10px;text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--mu);font-weight:600;}
+.ex-tbl td{padding:9px 10px;border-bottom:1px solid var(--b1);}
+.ex-tbl tr:hover td{background:rgba(255,255,255,.02);}
+.bx{display:inline-block;padding:2px 8px;border-radius:14px;font-size:.68rem;font-weight:700;text-transform:uppercase;}
+.bg{background:rgba(0,230,118,.1);color:var(--g);}
+.bo{background:rgba(255,109,0,.1);color:var(--or);}
+.bb{background:rgba(0,188,212,.1);color:var(--cy);}
+.br{background:rgba(255,23,68,.1);color:var(--red);}
+.tri-blk{border:1px solid var(--b2);border-radius:10px;overflow:hidden;margin-bottom:12px;}
+.tri-hd{padding:9px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--b2);}
+.tri-lbl{font-family:'Bebas Neue',cursive;font-size:1rem;letter-spacing:2px;}
+.tri-ds{font-size:.72rem;color:var(--mu);}
+.meal-card{border:1px solid var(--b1);border-radius:10px;overflow:hidden;margin-bottom:10px;}
+.meal-hd{background:linear-gradient(90deg,rgba(0,230,118,.1),rgba(0,50,25,.05));padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+.meal-nm{font-family:'Bebas Neue',cursive;font-size:.95rem;letter-spacing:1px;color:var(--g);}
+.meal-kc{font-size:.82rem;color:var(--or);font-weight:600;}
+.meal-body{padding:10px 14px;}
+.food-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;gap:0;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;}
+.food-row:last-child{border-bottom:none;}
+.food-hdr{font-size:.66rem;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;}
+.pdf-sec{background:linear-gradient(135deg,#08050f,#050812);border:1px solid #1a0f2a;border-radius:12px;padding:24px;text-align:center;margin-top:20px;}
+.pdf-ic{font-size:2.5rem;margin-bottom:8px;}
+.pdf-t{font-family:'Bebas Neue',cursive;font-size:1.5rem;letter-spacing:2px;margin-bottom:6px;}
+.pdf-d{color:var(--mu);font-size:.84rem;margin-bottom:16px;line-height:1.5;}
+#jpg-nut-target,#jpg-tr-target,#jpg-lib-target{position:fixed;left:-9999px;top:0;width:800px;background:#0b0f1e;padding:20px;font-family:'DM Sans',sans-serif;color:#e8eaf6;z-index:-1;}
+.jpg-header{background:linear-gradient(135deg,#0d2a1c,#0a1428);padding:20px;border-radius:10px;margin-bottom:16px;text-align:center;}
+.jpg-logo{font-family:'Bebas Neue',cursive;font-size:2rem;letter-spacing:4px;color:#00E676;}
+.jpg-subtitle{font-size:.8rem;color:#6272a4;margin-top:4px;}
+.jpg-section{margin-bottom:16px;}
+.jpg-section-title{font-family:'Bebas Neue',cursive;font-size:1.1rem;letter-spacing:2px;color:#00E676;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #1a2035;}
+.jpg-stats{display:flex;gap:8px;margin-bottom:12px;}
+.jpg-stat{flex:1;background:#0a1428;border:1px solid #1a2035;border-radius:8px;padding:10px;text-align:center;}
+.jpg-stat-v{font-family:'Bebas Neue',cursive;font-size:1.6rem;}
+.jpg-stat-l{font-size:.65rem;color:#6272a4;text-transform:uppercase;}
+.jpg-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.jpg-table th{background:#0a1428;padding:7px 8px;text-align:left;font-size:.65rem;text-transform:uppercase;color:#6272a4;}
+.jpg-table td{padding:7px 8px;border-bottom:1px solid #1a2035;}
+.jpg-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+.jpg-meal{margin-bottom:10px;border:1px solid #1a2035;border-radius:6px;overflow:hidden;}
+.jpg-meal-hd{background:rgba(0,230,118,.1);padding:8px 10px;font-weight:600;font-size:.82rem;color:#00E676;display:flex;justify-content:space-between;}
+.jpg-meal-row{padding:5px 10px;border-bottom:1px solid rgba(255,255,255,.04);font-size:.75rem;display:flex;justify-content:space-between;}
+.jpg-footer{text-align:center;font-size:.65rem;color:#6272a4;margin-top:12px;padding-top:8px;border-top:1px solid #1a2035;}
+.pagos-hero{background:linear-gradient(135deg,#0d2a1c,#0a1428);border:1px solid rgba(0,230,118,.2);border-radius:16px;padding:28px 24px;text-align:center;margin-bottom:20px;}
+.pagos-hero-title{font-family:'Bebas Neue',cursive;font-size:2rem;letter-spacing:3px;background:linear-gradient(135deg,var(--g),var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;}
+.pagos-hero-sub{font-size:.88rem;color:var(--mu);line-height:1.6;}
+.pagos-plans-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+@media(max-width:500px){.pagos-plans-grid{grid-template-columns:1fr;}}
+.pagos-plan-card{border-radius:16px;padding:22px;text-align:center;transition:.2s;position:relative;overflow:hidden;}
+.pagos-plan-card:hover{transform:translateY(-3px);}
+.pagos-plan-card.sw{background:rgba(0,230,118,.06);border:2px solid rgba(0,230,118,.3);}
+.pagos-plan-card.mn{background:rgba(255,109,0,.06);border:2px solid rgba(255,109,0,.3);}
+.pagos-plan-badge{position:absolute;top:12px;right:12px;font-size:.6rem;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:10px;}
+.pagos-plan-price{font-family:'Bebas Neue',cursive;font-size:2.8rem;line-height:1;margin:8px 0 4px;}
+.pagos-plan-name{font-family:'Bebas Neue',cursive;font-size:1.1rem;letter-spacing:2px;margin-bottom:10px;}
+.pagos-plan-feat{font-size:.78rem;color:var(--mu);line-height:1.9;margin-bottom:16px;text-align:left;}
+.pagos-wa-btn{display:flex;align-items:center;justify-content:center;gap:7px;color:#fff;border:none;border-radius:10px;padding:11px;cursor:pointer;font-family:'Bebas Neue',cursive;font-size:.85rem;letter-spacing:1.5px;transition:.2s;width:100%;margin-bottom:7px;}
+.pagos-wa-btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.pagos-wa-ve{background:linear-gradient(135deg,#25D366,#0e7a43);}
+.pagos-wa-es{background:linear-gradient(135deg,#25D366,#128C7E);}
+.pagos-metodos{background:var(--card);border:1px solid var(--b1);border-radius:14px;padding:20px;margin-bottom:16px;}
+.pagos-metodos-title{font-family:'Bebas Neue',cursive;font-size:1.1rem;letter-spacing:2px;color:var(--g);margin-bottom:14px;}
+.pagos-metodo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+.pagos-metodo-item{background:#08101c;border:1px solid var(--b2);border-radius:10px;padding:14px;text-align:center;}
+.pagos-metodo-icon{font-size:1.8rem;margin-bottom:6px;}
+.pagos-metodo-name{font-size:.8rem;font-weight:700;color:var(--txt);margin-bottom:3px;}
+.pagos-metodo-desc{font-size:.68rem;color:var(--mu);}
+.pagos-recarga{background:linear-gradient(135deg,rgba(0,230,118,.08),rgba(0,188,212,.05));border:1px solid rgba(0,230,118,.2);border-radius:14px;padding:20px;text-align:center;margin-bottom:20px;}
+.pagos-recarga-title{font-family:'Bebas Neue',cursive;font-size:1.2rem;letter-spacing:2px;color:var(--g);margin-bottom:6px;}
+.pagos-recarga-desc{font-size:.84rem;color:var(--mu);margin-bottom:14px;}
+.chat-float{position:fixed;bottom:20px;right:20px;z-index:9000;}
+.chat-btn-ic{width:62px;height:62px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--g),#00bcd4);box-shadow:0 4px 24px rgba(0,230,118,.6);font-size:1.6rem;display:flex;align-items:center;justify-content:center;transition:.3s;color:#000;position:relative;}
+.chat-btn-ic:hover{transform:scale(1.1);}
+.chat-btn-ic::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(0,230,118,.4);animation:chatPing 1.8s ease-out infinite;}
+@keyframes chatPing{0%{transform:scale(1);opacity:.6;}100%{transform:scale(1.5);opacity:0;}}
+.chat-bubble{position:absolute;bottom:72px;right:0;width:340px;background:var(--card);border:1px solid var(--b1);border-radius:18px 18px 4px 18px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.7);display:none;}
+.chat-bubble.open{display:block;animation:chatPop .25s cubic-bezier(.34,1.56,.64,1);}
+@keyframes chatPop{from{opacity:0;transform:scale(.85) translateY(10px);}to{opacity:1;transform:none;}}
+.chat-hdr{background:linear-gradient(135deg,#0d2a1c,#0d1428);padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--b1);}
+.chat-av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--g),#00bcd4);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;position:relative;}
+.chat-av::after{content:'';position:absolute;bottom:2px;right:2px;width:9px;height:9px;background:#00E676;border-radius:50%;border:2px solid #0d2a1c;}
+.chat-hdr-info{flex:1;}
+.chat-hdr-nm{font-weight:700;font-size:.9rem;color:var(--g);}
+.chat-hdr-st{font-size:.7rem;color:var(--mu);}
+.chat-hdr-actions{display:flex;gap:6px;align-items:center;}
+.chat-voice-toggle{background:none;border:1px solid rgba(0,230,118,.3);border-radius:8px;color:var(--g);cursor:pointer;font-size:.7rem;padding:3px 7px;font-family:'DM Sans',sans-serif;transition:.2s;}
+.chat-voice-toggle:hover{background:rgba(0,230,118,.1);}
+.chat-voice-toggle.muted{border-color:rgba(255,23,68,.3);color:var(--red);}
+.chat-close{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;cursor:pointer;font-size:.75rem;padding:.28rem .65rem;transition:all .2s;}
+.chat-close:hover{background:rgba(231,76,60,.3);border-color:#ff6b6b;}
+.chat-quick{padding:8px 14px 0;display:flex;gap:5px;flex-wrap:wrap;}
+.chat-qbtn{background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.2);border-radius:12px;color:var(--g);font-size:.68rem;padding:5px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
+.chat-qbtn:hover{background:rgba(0,230,118,.18);}
+.chat-msgs{padding:14px;height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+.chat-msgs::-webkit-scrollbar{width:3px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--b2);}
+.chat-msg{max-width:90%;padding:10px 13px;border-radius:12px;font-size:.83rem;line-height:1.5;}
+.msg-bot{background:var(--b2);align-self:flex-start;border-radius:4px 12px 12px 12px;}
+.msg-usr{background:rgba(0,230,118,.15);align-self:flex-end;border-radius:12px 4px 12px 12px;}
+.chat-inp-area{padding:10px 14px;border-top:1px solid var(--b1);display:flex;gap:7px;align-items:center;}
+.chat-inp{flex:1;background:#08101c;border:1px solid var(--b2);border-radius:18px;color:var(--txt);font-family:'DM Sans',sans-serif;font-size:.82rem;padding:8px 14px;outline:none;}
+.chat-inp:focus{border-color:var(--g);}
+.chat-send{width:36px;height:36px;border-radius:50%;background:var(--g);border:none;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#000;transition:.2s;}
+.chat-send:hover{filter:brightness(1.1);}
+.contact-float{position:fixed;bottom:94px;right:20px;z-index:8999;}
+.contact-btn{background:linear-gradient(135deg,var(--or),#ff9100);color:#fff;border:none;border-radius:24px;padding:10px 18px;cursor:pointer;font-family:'Bebas Neue',cursive;font-size:.88rem;letter-spacing:1.5px;display:flex;align-items:center;gap:6px;box-shadow:0 4px 16px rgba(255,109,0,.4);transition:.25s;white-space:nowrap;}
+.contact-btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.app-lang-bar{display:flex;gap:4px;align-items:center;flex-wrap:wrap;}
+.app-lang-btn{background:rgba(255,255,255,.04);border:1px solid var(--b1);border-radius:16px;padding:4px 8px;cursor:pointer;font-size:.65rem;color:var(--mu);transition:.2s;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.app-lang-btn:hover{border-color:var(--g);color:var(--g);}
+.app-lang-btn.active{border-color:var(--g);color:var(--g);background:rgba(0,230,118,.08);}
+@keyframes creditsPulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+</style>
+</head>
+<body>
+
+<div id="jpg-nut-target"></div>
+<div id="jpg-tr-target"></div>
+<div id="jpg-lib-target"></div>
+
+<header class="hdr">
+  <div>
+    <div class="logo">diccionario de ejerccios</div>
+    <div style="font-size:.6rem;color:var(--mu);letter-spacing:2px;text-transform:uppercase;">ejerccios Training</div>
+    <div style="font-size:.58rem;color:#ff4444;letter-spacing:1px;font-weight:700;">© Fátima Caldea · Autora Intelectual · fatimahairstudio082</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div class="app-lang-bar">
+      <button class="app-lang-btn active" id="alb-es" onclick="switchAppLang('es')">🇪🇸</button>
+      <button class="app-lang-btn" id="alb-en" onclick="switchAppLang('en')">🇺🇸</button>
+      <button class="app-lang-btn" id="alb-pt" onclick="switchAppLang('pt')">🇧🇷</button>
+      <button class="app-lang-btn" id="alb-fr" onclick="switchAppLang('fr')">🇫🇷</button>
+      <button class="app-lang-btn" id="alb-de" onclick="switchAppLang('de')">🇩🇪</button>
+      <button class="app-lang-btn" id="alb-it" onclick="switchAppLang('it')">🇮🇹</button>
+      <button class="app-lang-btn" id="alb-ar" onclick="switchAppLang('ar')">🇸🇦</button>
+    </div>
+    <div id="credits-badge" style="display:flex;align-items:center;gap:6px;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);border-radius:20px;padding:5px 14px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;min-width:90px;justify-content:center;transition:all .3s;">
+      <span id="credits-icon">💳</span>
+      <span id="credits-num" style="color:#00E676;">—</span>
+      <span id="credits-lbl" style="color:#6272a4;font-size:.7rem;"></span>
+    </div>
+    <span class="plan-badge" id="plan-badge-txt">⚡diccionario de ejerccios</span>
+    <button class="btn-salir" onclick="salirAlHub()">⬅ Salir</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab ta" onclick="showTab('nut',this)">🥗 Nutrición</button>
+  <button class="tab" onclick="showTab('tr',this)">💪 Entrenamiento</button>
+  <button class="tab" onclick="showTab('pagos',this)">💳 Pagos</button>
+  <button class="tab" id="tab-lib" onclick="showTab('lib',this)">📚 Librería</button>
+</div>
+
+<!-- NUTRICIÓN -->
+<div id="sec-nut" class="sec on main">
+  <div class="card">
+    <div class="ct">📊 Tus Datos</div>
+    <div class="g4">
+      <div class="fg"><label>Edad</label><input type="number" id="na" value="28" min="15" max="75"></div>
+      <div class="fg"><label>Peso (kg)</label><input type="number" id="nw" value="70" step=".5"></div>
+      <div class="fg"><label>Estatura (cm)</label><input type="number" id="nh" value="170"></div>
+      <div class="fg"><label>Sexo</label><select id="ns"><option value="m">Masculino</option><option value="f">Femenino</option></select></div>
+    </div>
+    <div class="g3">
+      <div class="fg"><label>Objetivo</label>
+        <select id="ng">
+          <option value="gain">⬆ Ganar Masa Muscular</option>
+          <option value="lose">⬇ Perder Grasa</option>
+          <option value="maintain">↔ Mantener Peso</option>
+        </select></div>
+      <div class="fg"><label>Nivel de Actividad</label>
+        <select id="nact">
+          <option value="1.2">Sedentario</option>
+          <option value="1.375">Ligero (1-3 días/sem)</option>
+          <option value="1.55" selected>Moderado (3-5 días/sem)</option>
+          <option value="1.725">Muy Activo (6-7 días/sem)</option>
+          <option value="1.9">Atleta (2x día)</option>
+        </select></div>
+      <div class="fg"><label>Tipo de Dieta</label>
+        <select id="ndt">
+          <option value="balanced">Equilibrada</option>
+          <option value="hp">Alta Proteína</option>
+          <option value="lc">Baja en Carbos</option>
+          <option value="keto">Cetogénica</option>
+        </select></div>
+    </div>
+    <button class="btn btn-g btn-full" onclick="calcNut()">⚡ CALCULAR PLAN NUTRICIONAL <span style="font-size:.7rem;opacity:.7;">(3 cr.)</span></button>
+  </div>
+  <div id="nut-res" style="display:none;">
+    <div class="g4" id="nut-stats" style="margin-bottom:16px;"></div>
+    <div class="card">
+      <div class="ct">📈 Macros</div>
+      <div class="mbar" id="mbar"></div>
+      <div id="mbar-lbl" style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--mu);margin-top:5px;"></div>
+      <div id="bmr-line" style="font-size:.8rem;color:var(--mu);margin-top:8px;"></div>
+    </div>
+    <div class="card">
+      <div class="ct">🍽️ Plan de Comidas</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="dtab nwt on" id="nwt-1" onclick="selNutWeek(1,this)">🍽️ S1</button>
+        <button class="dtab nwt" id="nwt-2" onclick="selNutWeek(2,this)">🍽️ S2</button>
+        <button class="dtab nwt" id="nwt-3" onclick="selNutWeek(3,this)">🍽️ S3</button>
+        <button class="dtab nwt" id="nwt-4" onclick="selNutWeek(4,this)">🍽️ S4</button>
+      </div>
+      <div class="day-tabs" id="nut-day-tabs"></div>
+      <div id="nut-meals"></div>
+    </div>
+    <div class="card"><div class="ct">💡 Estrategia</div><div id="nut-tips"></div></div>
+    <div class="pdf-sec">
+      <div class="pdf-ic">📸</div>
+      <div class="pdf-t">DESCARGAR PLAN NUTRICIONAL</div>
+      <div class="pdf-d">Tu plan completo guardado como imagen JPG.</div>
+      <button class="btn btn-g" id="btn-nut-jpg" onclick="dlNutJPG()">📸 DESCARGAR COMO JPG <span style="font-size:.7rem;opacity:.7;">(5 cr.)</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ENTRENAMIENTO -->
+<div id="sec-tr" class="sec main">
+  <div class="card">
+    <div class="ct">👤 Datos del Atleta</div>
+    <div class="g4">
+      <div class="fg"><label>Edad</label><input type="number" id="ta" value="25"></div>
+      <div class="fg"><label>Peso (kg)</label><input type="number" id="tw" value="75" step=".5"></div>
+      <div class="fg"><label>Talla (cm)</label><input type="number" id="th" value="175"></div>
+      <div class="fg"><label>Sexo</label><select id="ts"><option value="m">Masculino</option><option value="f">Femenino</option></select></div>
+    </div>
+    <div class="g3">
+      <div class="fg"><label>Objetivo</label>
+        <select id="tg">
+          <option value="gain">💪 Ganar Músculo</option>
+          <option value="lose">🔥 Perder Grasa</option>
+          <option value="strength">⚡ Fuerza</option>
+        </select></div>
+      <div class="fg"><label>Nivel</label>
+        <select id="tlv">
+          <option value="b">🌱 Principiante</option>
+          <option value="i" selected>🔥 Intermedio</option>
+          <option value="a">⚡ Avanzado</option>
+        </select></div>
+      <div class="fg"><label>Tipo de Series</label>
+        <select id="tser">
+          <option value="single">Serie Simple</option>
+          <option value="tri">Triserie</option>
+          <option value="giant">Serie Gigante</option>
+        </select></div>
+    </div>
+    <button class="btn btn-or btn-full" onclick="genTrain()">⚡ GENERAR PLAN MENSUAL <span style="font-size:.7rem;opacity:.7;">(3 cr.)</span></button>
+  </div>
+  <div id="tr-res" style="display:none;">
+    <div class="card">
+      <div class="ct">📅 Semana del Mes</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;">
+        <button class="dtab trt on" id="trt-1" onclick="selTrWeek(1,this)">💪 Semana 1</button>
+        <button class="dtab trt" id="trt-2" onclick="selTrWeek(2,this)">💪 Semana 2</button>
+        <button class="dtab trt" id="trt-3" onclick="selTrWeek(3,this)">💪 Semana 3</button>
+        <button class="dtab trt" id="trt-4" onclick="selTrWeek(4,this)">💪 Semana 4</button>
+      </div>
+      <div id="tr-week-info" style="margin-top:8px;"></div>
+    </div>
+    <div class="card">
+      <div class="ct">📅 Plan Semanal — 5 Días</div>
+      <div class="day-tabs" id="tr-day-tabs"></div>
+      <div id="tr-day-detail"></div>
+    </div>
+    <div class="card"><div class="ct">💡 Protocolo</div><div id="tr-protocol"></div></div>
+    <div class="pdf-sec" style="background:linear-gradient(135deg,#0f0800,#050812);">
+      <div class="pdf-ic">📸</div>
+      <div class="pdf-t">DESCARGAR PLAN DE ENTRENAMIENTO</div>
+      <div class="pdf-d">Tu rutina completa guardada como JPG.</div>
+      <button class="btn btn-or" id="btn-tr-jpg" onclick="dlTrJPG()">📸 DESCARGAR COMO JPG <span style="font-size:.7rem;opacity:.7;">(5 cr.)</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGOS -->
+<div id="sec-pagos" class="sec main">
+  <div class="pagos-hero">
+    <div class="pagos-hero-title">💳 Planes & Pagos</div>
+    <div class="pagos-hero-sub">Elige tu plan · Actívalo por WhatsApp en minutos · Acceso inmediato</div>
+  </div>
+  <div class="pagos-plans-grid">
+    <div class="pagos-plan-card sw">
+      <div class="pagos-plan-name" style="color:var(--g);">🗓️ PLAN SEMANAL</div>
+      <div class="pagos-plan-price" style="color:var(--g);">$9.99</div>
+      <div class="pagos-plan-feat">✅ 50 créditos<br>✅ 7 días de acceso<br>✅ Nutrición + Entrenamiento<br>✅ Librería 900 ejercicios<br>✅ Descargas JPG incluidas</div>
+      <button class="pagos-wa-btn pagos-wa-ve" onclick="pagoWA('SW','ve')">🇻🇪 Comprar Venezuela</button>
+      <button class="pagos-wa-btn pagos-wa-es" onclick="pagoWA('SW','es')">🇪🇸 Comprar España</button>
+    </div>
+    <div class="pagos-plan-card mn">
+      <div class="pagos-plan-badge" style="background:rgba(255,109,0,.2);color:var(--or);">⭐ POPULAR</div>
+      <div class="pagos-plan-name" style="color:var(--or);">📆 PLAN MENSUAL</div>
+      <div class="pagos-plan-price" style="color:var(--or);">€24</div>
+      <div class="pagos-plan-feat">✅ 120 créditos<br>✅ 30 días de acceso<br>✅ Nutrición + Entrenamiento<br>✅ Librería 900 ejercicios<br>✅ Descargas JPG ilimitadas</div>
+      <button class="pagos-wa-btn pagos-wa-ve" onclick="pagoWA('MN','ve')">🇻🇪 Comprar Venezuela</button>
+      <button class="pagos-wa-btn pagos-wa-es" onclick="pagoWA('MN','es')">🇪🇸 Comprar España</button>
+    </div>
+  </div>
+  <div class="pagos-recarga">
+    <div class="pagos-recarga-title">⚡ Recarga de Créditos</div>
+    <div class="pagos-recarga-desc">¿Necesitas más créditos? Recarga fácil y rápida por WhatsApp</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;">
+      <div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:10px;padding:12px 20px;text-align:center;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--g);">40 cr.</div>
+        <div style="font-size:.72rem;color:var(--mu);">€6 / $6</div>
+      </div>
+      <div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:10px;padding:12px 20px;text-align:center;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--g);">100 cr.</div>
+        <div style="font-size:.72rem;color:var(--mu);">€14 / $14</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button class="pagos-wa-btn pagos-wa-ve" style="width:auto;padding:10px 22px;" onclick="recargaWA('ve')">🇻🇪 Recargar Venezuela</button>
+      <button class="pagos-wa-btn pagos-wa-es" style="width:auto;padding:10px 22px;" onclick="recargaWA('es')">🇪🇸 Recargar España</button>
+    </div>
+  </div>
+  <div class="pagos-metodos">
+    <div class="pagos-metodos-title">💰 Métodos de Pago Disponibles</div>
+    <div class="pagos-metodo-grid">
+      <div class="pagos-metodo-item"><div class="pagos-metodo-icon">💙</div><div class="pagos-metodo-name">PayPal</div><div class="pagos-metodo-desc">Internacional · Inmediato</div></div>
+      <div class="pagos-metodo-item"><div class="pagos-metodo-icon">₿</div><div class="pagos-metodo-name">Binance USDT</div><div class="pagos-metodo-desc">Cripto · Sin fronteras</div></div>
+      <div class="pagos-metodo-item"><div class="pagos-metodo-icon">📱</div><div class="pagos-metodo-name">Pago Móvil</div><div class="pagos-metodo-desc">Venezuela · Bs</div></div>
+      <div class="pagos-metodo-item"><div class="pagos-metodo-icon">🏦</div><div class="pagos-metodo-name">Bizum</div><div class="pagos-metodo-desc">España · Euros</div></div>
+      <div class="pagos-metodo-item"><div class="pagos-metodo-icon">💳</div><div class="pagos-metodo-name">Transferencia</div><div class="pagos-metodo-desc">Banco · Internacional</div></div>
+      <div class="pagos-metodo-item"><div class="pagos-metodo-icon">💚</div><div class="pagos-metodo-name">Zelle</div><div class="pagos-metodo-desc">EE.UU. · USD</div></div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-bottom:20px;">
+    <div style="font-size:.82rem;color:var(--mu);margin-bottom:12px;">📲 Envíanos tu comprobante de pago por WhatsApp y activamos tu plan en minutos</div>
+    <button class="btn btn-or" onclick="openContact()" style="margin:0 auto;">💬 CONTACTAR POR WHATSAPP</button>
+  </div>
+</div>
+
+<!-- LIBRERÍA -->
+<div id="sec-lib" class="sec main">
+  <div class="card">
+    <div class="ct">📚 Librería de Ejercicios</div>
+    <div style="font-size:.84rem;color:var(--mu);margin-bottom:14px;">900 ejercicios · 9 categorías · Resultado distinto cada cálculo</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="lib-cat-tabs">
+      <button class="dtab on" style="border-color:#00E676;color:#00E676;" onclick="selectLibCat('piernas',this)">🦵 Piernas</button>
+      <button class="dtab" style="border-color:#FF6D00;color:#FF6D00;" onclick="selectLibCat('gluteos',this)">🍑 Glúteos</button>
+      <button class="dtab" style="border-color:#2979FF;color:#2979FF;" onclick="selectLibCat('pecho',this)">🏋️ Pecho</button>
+      <button class="dtab" style="border-color:#FF6D00;color:#FF6D00;" onclick="selectLibCat('espalda',this)">🔙 Espalda</button>
+      <button class="dtab" style="border-color:#00bcd4;color:#00bcd4;" onclick="selectLibCat('hombros',this)">🔝 Hombros</button>
+      <button class="dtab" style="border-color:#AA00FF;color:#AA00FF;" onclick="selectLibCat('biceps',this)">💪 Bíceps</button>
+      <button class="dtab" style="border-color:#FF1744;color:#FF1744;" onclick="selectLibCat('triceps',this)">🔱 Tríceps</button>
+      <button class="dtab" style="border-color:#ffcc02;color:#ffcc02;" onclick="selectLibCat('abdomen',this)">🧱 Abdomen</button>
+      <button class="dtab" style="border-color:#00E676;color:#00E676;" onclick="selectLibCat('pantorrilla',this)">🦶 Pantorrilla</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap;">
+      <span style="font-size:.82rem;color:var(--mu);">¿Cuántos ejercicios?</span>
+      <button class="dtab" id="lib-cnt-6" onclick="selectLibCount(6,this)">6</button>
+      <button class="dtab" id="lib-cnt-8" onclick="selectLibCount(8,this)">8</button>
+      <button class="dtab" id="lib-cnt-10" onclick="selectLibCount(10,this)">10</button>
+      <button class="dtab on" id="lib-cnt-12" onclick="selectLibCount(12,this)">12</button>
+    </div>
+    <button class="btn btn-g btn-full" onclick="calcLibrary()">⚡ CALCULAR EJERCICIOS <span style="font-size:.7rem;opacity:.7;">(3 cr.)</span></button>
+  </div>
+  <div id="lib-result" style="display:none;">
+    <div class="card">
+      <div class="ct" id="lib-result-title">Resultado</div>
+      <div id="lib-result-table"></div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="calcLibrary()">🔄 RECALCULAR</button>
+        <button class="btn btn-or" id="btn-lib-jpg" onclick="dlLibJPG()">📸 DESCARGAR JPG <span style="font-size:.7rem;opacity:.7;">(5 cr.)</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="contact-float">
+  <button class="contact-btn" onclick="openContact()" id="contact-btn-el">💬 WHATSAPP / SOPORTE</button>
+</div>
+<div class="chat-float">
+  <div class="chat-bubble" id="chat-bub">
+    <div class="chat-hdr">
+      <div class="chat-av">🤖</div>
+      <div class="chat-hdr-info">
+        <div class="chat-hdr-nm" id="chat-nm">soy tu asistente</div>
+        <div class="chat-hdr-st" id="chat-st">● En línea · IA activa</div>
+      </div>
+      <div class="chat-hdr-actions">
+        <button class="chat-voice-toggle" id="voice-toggle-btn" onclick="toggleVoice()" title="Activar/desactivar voz">🔊 VOZ</button>
+        <button class="chat-close" onclick="toggleChat()">✕ Cerrar</button>
+      </div>
+    </div>
+    <div class="chat-quick" id="chat-quick">
+      <button class="chat-qbtn" onclick="quickChat(0)">💰 Precios</button>
+      <button class="chat-qbtn" onclick="quickChat(1)">📋 ¿Qué incluye?</button>
+      <button class="chat-qbtn" onclick="quickChat(2)">🚀 Comprar</button>
+      <button class="chat-qbtn" onclick="quickChat(3)">🏋️ ¿Cómo funciona?</button>
+      <button class="chat-qbtn" onclick="quickChat(4)">💳 ¿Qué son créditos?</button>
+    </div>
+    <div class="chat-msgs" id="chat-msgs"></div>
+    <div class="chat-inp-area">
+      <input class="chat-inp" id="chat-inp-el" placeholder="Pregúntame lo que quieras..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="chat-send" onclick="sendChat()">➤</button>
+    </div>
+  </div>
+  <button class="chat-btn-ic" onclick="toggleChat()" id="chat-ic">💬</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// FIREBASE — aprendisajefatima
+// ═══════════════════════════════════════
+(function loadFirebase(cb){
+  const s1=document.createElement('script');
+  s1.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
+  s1.onload=()=>{
+    const s2=document.createElement('script');
+    s2.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js';
+    s2.onload=cb;
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s1);
+})(initFirebase);
+
+const FB_CFG={
+  apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",
+  authDomain:"aprendisajefatima.firebaseapp.com",
+  projectId:"aprendisajefatima",
+  storageBucket:"aprendisajefatima.firebasestorage.app",
+  messagingSenderId:"744176967394",
+  appId:"1:744176967394:web:743b7c2a455e1e6ba7c8bb"
+};
+
+let _db=null, _uid='', _email='';
+
+function initFirebase(){
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
+    _db=firebase.firestore();
+  }catch(e){ console.warn('Firebase B9:',e); }
+}
+
+// Recibe sesión del Hub
+window.addEventListener('message', async e=>{
+  const d=e.data;
+  if(!d||typeof d!=='object') return;
+  if(d.tipo==='hubSesion'||d.tipo==='session'){
+    _uid  = d.uid   || '';
+    _email= d.email || '';
+    await _cargarCreditosFirebase();
+  }
+});
+
+// Leer créditos reales desde Firestore + listener tiempo real
+async function _cargarCreditosFirebase(){
+  if(!_db||!_uid) return;
+  try{
+    const snap=await _db.collection('usuarios').doc(_uid).get();
+    if(snap.exists){
+      CREDITS_STATE.credits=parseInt(snap.data(10).creditos)||0;
+      CREDITS_LOADED=true;
+      _renderCreditsBadge(10);
+    }
+    _db.collection('usuarios').doc(_uid).onSnapshot(doc=>{
+      if(doc.exists){
+        CREDITS_STATE.credits=parseInt(doc.data(10).creditos)||0;
+        CREDITS_LOADED=true;
+        _renderCreditsBadge();
+      }
+    });
+  }catch(e){ console.warn('B9 leer créditos:',e); }
+}
+
+// Descontar créditos en Firestore
+async function _B9_gastarFirebase(n, accion){
+  if(!_db||!_uid) return;
+  try{
+    await _db.collection('usuarios').doc(_uid).update({
+      creditos: firebase.firestore.FieldValue.increment(-n)
+    });
+    await _db.collection('registros_bloques').add({
+      uid:_uid, email:_email,
+      bloque:'B9_ejercicios', accion,
+      creditos_gastados:n,
+      fecha: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){ console.warn('B9 gastar:',e); }
+}
+
+// ═══════════════════════════════════════
+// SALIR AL HUB
+// ═══════════════════════════════════════
+function salirAlHub(){
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  if(window.parent!==window){
+    window.parent.postMessage({tipo:'salirBloque',destino:'index.html'},'*');
+  } else {
+    window.location.href='index.html';
+  }
+}
+
+// ═══════════════════════════════════════
+// VOZ
+// ═══════════════════════════════════════
+let VOICE_ENABLED=true;
+function getSpanishVoice(){
+  const v=window.speechSynthesis.getVoices();
+  return v.find(x=>x.name.toLowerCase().includes('google')&&x.lang==='es-ES')
+    ||v.find(x=>x.lang==='es-ES')||v.find(x=>x.lang.startsWith('es'))||null;
+}
+function speakText(txt){
+  if(!VOICE_ENABLED||!window.speechSynthesis) return;
+  const clean=txt.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+  if(!clean) return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang='es-ES';u.rate=1.0;u.pitch=1.0;u.volume=1.0;
+  const voice=getSpanishVoice();if(voice)u.voice=voice;
+  window.speechSynthesis.speak(u);
+}
+function toggleVoice(){
+  VOICE_ENABLED=!VOICE_ENABLED;
+  const btn=document.getElementById('voice-toggle-btn');
+  if(btn){btn.textContent=VOICE_ENABLED?'🔊 VOZ':'🔇 VOZ';btn.classList.toggle('muted',!VOICE_ENABLED);}
+  if(!VOICE_ENABLED&&window.speechSynthesis) window.speechSynthesis.cancel();
+}
+if(window.speechSynthesis) window.speechSynthesis.onvoiceschanged=()=>getSpanishVoice();
+
+// ═══════════════════════════════════════
+// CRÉDITOS — 100% Firebase
+// ═══════════════════════════════════════
+const CREDIT_COST_CALC=3;
+const CREDIT_COST_DOWNLOAD=5;
+const CREDIT_LOW_THRESHOLD=8;
+const _WA_VE=atob('NTg0MTYzMTUxMTcw');
+const _WA_ES=atob('MzQ2MDQ4MjIyNjU=');
+
+let CREDITS_STATE={credits:10};
+
+// null = esperando Firebase · 0+ = dato real
+let CREDITS_LOADED = false;
+
+function initCredits(){
+  CREDITS_STATE.credits = 0;
+  CREDITS_LOADED = false;
+  _renderCreditsBadge();
+}
+
+async function consumeCredits(amount, action){
+  if(_db&&_uid){
+    try{
+      const snap=await _db.collection('usuarios').doc(_uid).get();
+      if(snap.exists){
+        const cr=parseInt(snap.data().creditos)||0;
+        CREDITS_STATE.credits=cr;
+        _renderCreditsBadge();
+        if(cr<amount){ _showNoCreditsModal(action); return false; }
+      }
+    }catch(e){ console.warn('consumeCredits:',e); }
+  } else {
+    _showNoCreditsModal(action);
+    return false;
+  }
+  CREDITS_STATE.credits-=amount;
+  _renderCreditsBadge();
+  await _B9_gastarFirebase(amount, action);
+  return true;
+}
+
+function _renderCreditsBadge(){
+  const badge=document.getElementById('credits-badge');
+  const numEl=document.getElementById('credits-num');
+  const iconEl=document.getElementById('credits-icon');
+  const lblEl=document.getElementById('credits-lbl');
+  if(!badge||!numEl) return;
+
+  // Mientras no llegue Firebase: mostrar spinner neutro sin alarmar
+  if(!CREDITS_LOADED){
+    numEl.style.color='#6272a4';
+    numEl.textContent='...';
+    if(iconEl) iconEl.textContent='💳';
+    if(lblEl)  lblEl.textContent='';
+    badge.style.borderColor='rgba(201,168,76,.25)';
+    badge.style.background='rgba(201,168,76,.06)';
+    badge.style.animation='none';
+    return;
+  }
+
+  const c=CREDITS_STATE.credits;
+  const isLow=c<=CREDIT_LOW_THRESHOLD, isEmpty=c<=0;
+  const color=isEmpty?'#FF1744':isLow?'#FF6D00':'#00E676';
+  numEl.style.color=color;
+  numEl.textContent=c+' cr.';
+  if(iconEl) iconEl.textContent=isEmpty?'⚠️':isLow?'⚠️':'💳';
+  if(lblEl)  lblEl.textContent=isLow&&!isEmpty?'pocos':'';
+  badge.style.borderColor=isEmpty?'rgba(255,23,68,.5)':isLow?'rgba(255,109,0,.4)':'rgba(0,230,118,.25)';
+  badge.style.background=isEmpty?'rgba(255,23,68,.1)':isLow?'rgba(255,109,0,.08)':'rgba(0,230,118,.08)';
+  badge.style.transform='scale(1.12)';
+  setTimeout(()=>badge.style.transform='scale(1)',220);
+  badge.style.animation=isLow?'creditsPulse 1.5s ease infinite':'none';
+}
+
+let _noCreditsTimer=null;
+function _showNoCreditsModal(action){
+  if(_noCreditsTimer) clearInterval(_noCreditsTimer);
+  let modal=document.getElementById('no-credits-modal');
+  if(!modal){modal=document.createElement('div');modal.id='no-credits-modal';modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';document.body.appendChild(modal);}
+  let secs=10;
+  function renderModal(){
+    modal.innerHTML=`<div style="background:#0b0f1e;border:2px solid #FF1744;border-radius:18px;padding:28px 24px;max-width:400px;width:100%;text-align:center;font-family:'DM Sans',sans-serif;">
+      <div style="font-size:2.8rem;margin-bottom:8px;">🚫</div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:1.5rem;letter-spacing:2px;color:#FF1744;margin-bottom:8px;">SIN CRÉDITOS</div>
+      <div style="font-size:.88rem;color:#e8eaf6;line-height:1.6;margin-bottom:6px;">Necesitas recargar créditos para continuar.<br>Cálculos = ${CREDIT_COST_CALC} cr. · Descargas = ${CREDIT_COST_DOWNLOAD} cr.</div>
+      <div style="font-size:.78rem;color:#6272a4;margin-bottom:18px;">Cerrando en <strong style="color:#FF1744;font-size:1.1rem;">${secs}</strong> segundos...</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div style="background:rgba(0,230,118,.06);border:1.5px solid rgba(0,230,118,.25);border-radius:12px;padding:14px;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:.9rem;color:#00E676;">🗓️ SEMANAL</div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:1.8rem;color:#00E676;">$9.99</div>
+          <div style="font-size:.72rem;color:#6272a4;">50 créditos · 7 días</div>
+        </div>
+        <div style="background:rgba(255,109,0,.06);border:1.5px solid rgba(255,109,0,.25);border-radius:12px;padding:14px;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:.9rem;color:#FF6D00;">📆 MENSUAL</div>
+          <div style="font-family:'Bebas Neue',cursify;font-size:1.8rem;color:#FF6D00;">€24</div>
+          <div style="font-size:.72rem;color:#6272a4;">120 créditos · 30 días</div>
+        </div>
+      </div>
+      <button onclick="_waRecharge('ve')" style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:10px;padding:11px;cursor:pointer;font-family:'Bebas Neue',cursify;font-size:.9rem;letter-spacing:1.5px;width:100%;margin-bottom:6px;">📱 WHATSAPP VENEZUELA</button>
+      <button onclick="_waRecharge('es')" style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:10px;padding:11px;cursor:pointer;font-family:'Bebas Neue',cursify;font-size:.9rem;letter-spacing:1.5px;width:100%;margin-bottom:8px;">📱 WHATSAPP ESPAÑA</button>
+      <button onclick="document.getElementById('no-credits-modal').style.display='none'" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#aaa;border-radius:10px;padding:9px;cursor:pointer;font-family:'Bebas Neue',cursify;font-size:.8rem;width:100%;">✕ CERRAR</button>
+    </div>`;
+    modal.style.display='flex';
+  }
+  renderModal();
+  _noCreditsTimer=setInterval(()=>{secs--;if(secs<=0){clearInterval(_noCreditsTimer);_noCreditsTimer=null;modal.style.display='none';}else{const el=modal.querySelector('strong');if(el)el.textContent=secs;}},1000);
+}
+function _waRecharge(r){ window.open('https://wa.me/'+(r==='ve'?_WA_VE:_WA_ES)+'?text='+encodeURIComponent('Hola! Necesito recargar créditos en FitnessPro.'),'_blank'); }
+function clearResultAfterDownload(section){
+  setTimeout(()=>{
+    if(section==='nut'){const el=document.getElementById('nut-res');if(el)el.style.display='none';NS=null;}
+    if(section==='tr'){const el=document.getElementById('tr-res');if(el)el.style.display='none';TR_DAYS=null;TR_CFG=null;}
+  },800);
+}
+
+// ═══════════════════════════════════════
+// PAGOS
+// ═══════════════════════════════════════
+function pagoWA(plan,region){
+  const plans={SW:{name:'Plan Semanal',price:'$9.99'},MN:{name:'Plan Mensual',price:'€24'}};
+  const p=plans[plan]||plans.MN;
+  window.open('https://wa.me/'+(region==='es'?_WA_ES:_WA_VE)+'?text='+encodeURIComponent('Hola! Quiero adquirir el '+p.name+' de FitnessPro ('+p.price+'). ¿Cómo procedo?'),'_blank');
+}
+function recargaWA(region){
+  window.open('https://wa.me/'+(region==='es'?_WA_ES:_WA_VE)+'?text='+encodeURIComponent('Hola! Necesito recargar créditos en FitnessPro.'),'_blank');
+}
+
+// ═══════════════════════════════════════
+// GEOLOCALIZACIÓN
+// ═══════════════════════════════════════
+const GEO_LANG_MAP={ES:'es',VE:'es',MX:'es',CO:'es',AR:'es',PE:'es',CL:'es',EC:'es',BR:'pt',PT:'pt',FR:'fr',DE:'de',AT:'de',IT:'it',US:'en',CA:'en',GB:'en',SA:'ar',AE:'ar',EG:'ar'};
+let GEO_DETECTED_LANG='es';
+function _applyLangFull(l){APP_LANG=l;if(typeof applyAppLang==='function')applyAppLang(l);document.querySelectorAll('.app-lang-btn').forEach(b=>b.classList.remove('active'));const ab=document.getElementById('alb-'+l);if(ab)ab.classList.add('active');document.body.style.direction=l==='ar'?'rtl':'ltr';}
+async function detectGeoLang(){
+  const saved=localStorage.getItem('_fl');
+  _applyLangFull((saved&&ATXT[saved])?saved:'es');
+  try{
+    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),3000);
+    const res=await fetch('https://ip-api.com/json/?fields=countryCode',{signal:ctrl.signal});
+    clearTimeout(to);if(!res.ok)throw new Error();
+    const data=await res.json();const cc=(data.countryCode||'').toUpperCase();
+    const det=GEO_LANG_MAP[cc]||'es';GEO_DETECTED_LANG=det;
+    if(!saved){_applyLangFull(det);localStorage.setItem('_fl',det);}
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════
+// TRADUCCIONES
+// ═══════════════════════════════════════
+const ATXT={
+  es:{tabNut:"🥗 Nutrición",tabTr:"💪 Entrenamiento",tabLib:"📚 Librería",calcBtn:"⚡ CALCULAR PLAN NUTRICIONAL",gainGoal:"⬆ Ganar Masa Muscular",loseGoal:"⬇ Perder Grasa",maintainGoal:"↔ Mantener Peso",sed:"Sedentario",light:"Ligero (1-3 días/sem)",mod:"Moderado (3-5 días/sem)",active:"Muy Activo (6-7 días/sem)",athlete:"Atleta (2x día)",balanced:"Equilibrada",hp:"Alta Proteína",lc:"Baja en Carbos",keto:"Cetogénica",genBtn:"⚡ GENERAR PLAN",beginner:"🌱 Principiante",inter:"🔥 Intermedio",adv:"⚡ Avanzado",single:"Serie Simple",tri:"Triserie",giant:"Serie Gigante",gainTr:"💪 Ganar Músculo",loseTr:"🔥 Perder Grasa",strength:"⚡ Fuerza",male:"Masculino",female:"Femenino",dlNutBtn:"📸 DESCARGAR JPG",dlTrBtn:"📸 DESCARGAR JPG",chatWelcome:"¡Hola! Soy tu Coach FitnessPro. ¿En qué te ayudo? 💪",contactBtn:"WHATSAPP / SOPORTE",q1:"💰 Precios",q2:"📋 ¿Qué incluye?",q3:"🚀 Comprar",q4:"🏋️ ¿Cómo funciona?",q5:"💳 ¿Qué son créditos?"},
+  en:{tabNut:"🥗 Nutrition",tabTr:"💪 Training",tabLib:"📚 Library",calcBtn:"⚡ CALCULATE PLAN",gainGoal:"⬆ Gain Muscle",loseGoal:"⬇ Lose Fat",maintainGoal:"↔ Maintain",sed:"Sedentary",light:"Light",mod:"Moderate",active:"Very Active",athlete:"Athlete",balanced:"Balanced",hp:"High Protein",lc:"Low Carb",keto:"Ketogenic",genBtn:"⚡ GENERATE",beginner:"🌱 Beginner",inter:"🔥 Intermediate",adv:"⚡ Advanced",single:"Single",tri:"Triset",giant:"Giant Set",gainTr:"💪 Muscle",loseTr:"🔥 Fat",strength:"⚡ Strength",male:"Male",female:"Female",dlNutBtn:"📸 DOWNLOAD JPG",dlTrBtn:"📸 DOWNLOAD JPG",chatWelcome:"Hello! I'm your FitnessPro Coach. How can I help? 💪",contactBtn:"CONTACT / SUPPORT",q1:"💰 Pricing",q2:"📋 What's included?",q3:"🚀 Buy",q4:"🏋️ How?",q5:"💳 Credits?"},
+  pt:{tabNut:"🥗 Nutrição",tabTr:"💪 Treino",tabLib:"📚 Biblioteca",calcBtn:"⚡ CALCULAR",gainGoal:"⬆ Ganhar Massa",loseGoal:"⬇ Perder Gordura",maintainGoal:"↔ Manter",sed:"Sedentário",light:"Leve",mod:"Moderado",active:"Muito Ativo",athlete:"Atleta",balanced:"Equilibrada",hp:"Alta Proteína",lc:"Baixo Carbo",keto:"Cetogênica",genBtn:"⚡ GERAR",beginner:"🌱 Iniciante",inter:"🔥 Intermediário",adv:"⚡ Avançado",single:"Série",tri:"Triserie",giant:"Série Gigante",gainTr:"💪 Músculo",loseTr:"🔥 Gordura",strength:"⚡ Força",male:"Masculino",female:"Feminino",dlNutBtn:"📸 BAIXAR JPG",dlTrBtn:"📸 BAIXAR JPG",chatWelcome:"Olá! Sou seu Coach. Como posso ajudar? 💪",contactBtn:"CONTATO",q1:"💰 Preços",q2:"📋 O que inclui?",q3:"🚀 Comprar",q4:"🏋️ Como funciona?",q5:"💳 Créditos?"},
+  fr:{tabNut:"🥗 Nutrition",tabTr:"💪 Entraînement",tabLib:"📚 Bibliothèque",calcBtn:"⚡ CALCULER",gainGoal:"⬆ Masse",loseGoal:"⬇ Gras",maintainGoal:"↔ Maintenir",sed:"Sédentaire",light:"Léger",mod:"Modéré",active:"Très Actif",athlete:"Athlète",balanced:"Équilibrée",hp:"Haute Protéine",lc:"Faible Glucides",keto:"Cétogène",genBtn:"⚡ GÉNÉRER",beginner:"🌱 Débutant",inter:"🔥 Intermédiaire",adv:"⚡ Avancé",single:"Simple",tri:"Trisérie",giant:"Géante",gainTr:"💪 Muscle",loseTr:"🔥 Gras",strength:"⚡ Force",male:"Masculin",female:"Féminin",dlNutBtn:"📸 TÉLÉCHARGER",dlTrBtn:"📸 TÉLÉCHARGER",chatWelcome:"Bonjour! Comment puis-je aider? 💪",contactBtn:"CONTACT",q1:"💰 Tarifs",q2:"📋 Contenu?",q3:"🚀 Acheter",q4:"🏋️ Comment?",q5:"💳 Crédits?"},
+  de:{tabNut:"🥗 Ernährung",tabTr:"💪 Training",tabLib:"📚 Bibliothek",calcBtn:"⚡ BERECHNEN",gainGoal:"⬆ Muskeln",loseGoal:"⬇ Fett",maintainGoal:"↔ Halten",sed:"Sitzend",light:"Leicht",mod:"Mäßig",active:"Sehr Aktiv",athlete:"Athlet",balanced:"Ausgewogen",hp:"Hoher Protein",lc:"Low Carb",keto:"Ketogen",genBtn:"⚡ ERSTELLEN",beginner:"🌱 Anfänger",inter:"🔥 Fortgeschritten",adv:"⚡ Profi",single:"Einfach",tri:"Triserie",giant:"Riesenserie",gainTr:"💪 Muskeln",loseTr:"🔥 Fett",strength:"⚡ Kraft",male:"Männlich",female:"Weiblich",dlNutBtn:"📸 LADEN",dlTrBtn:"📸 LADEN",chatWelcome:"Hallo! Wie kann ich helfen? 💪",contactBtn:"KONTAKT",q1:"💰 Preise",q2:"📋 Was enthalten?",q3:"🚀 Kaufen",q4:"🏋️ Wie?",q5:"💳 Credits?"},
+  it:{tabNut:"🥗 Nutrizione",tabTr:"💪 Allenamento",tabLib:"📚 Libreria",calcBtn:"⚡ CALCOLA",gainGoal:"⬆ Massa",loseGoal:"⬇ Grasso",maintainGoal:"↔ Mantenere",sed:"Sedentario",light:"Leggero",mod:"Moderato",active:"Molto Attivo",athlete:"Atleta",balanced:"Equilibrata",hp:"Alta Proteina",lc:"Basso Carb",keto:"Chetogenica",genBtn:"⚡ GENERA",beginner:"🌱 Principiante",inter:"🔥 Intermedio",adv:"⚡ Avanzato",single:"Semplice",tri:"Triserie",giant:"Gigante",gainTr:"💪 Muscolo",loseTr:"🔥 Grasso",strength:"⚡ Forza",male:"Maschile",female:"Femminile",dlNutBtn:"📸 SCARICA",dlTrBtn:"📸 SCARICA",chatWelcome:"Ciao! Come posso aiutarti? 💪",contactBtn:"CONTATTO",q1:"💰 Prezzi",q2:"📋 Cosa include?",q3:"🚀 Acquista",q4:"🏋️ Come?",q5:"💳 Crediti?"},
+  ar:{tabNut:"🥗 تغذية",tabTr:"💪 تدريب",tabLib:"📚 مكتبة",calcBtn:"⚡ احسب",gainGoal:"⬆ بناء",loseGoal:"⬇ حرق",maintainGoal:"↔ حافظ",sed:"خامل",light:"خفيف",mod:"معتدل",active:"نشط",athlete:"رياضي",balanced:"متوازن",hp:"بروتين",lc:"كربوهيدرات",keto:"كيتو",genBtn:"⚡ توليد",beginner:"🌱 مبتدئ",inter:"🔥 متوسط",adv:"⚡ متقدم",single:"بسيط",tri:"ثلاثية",giant:"ضخمة",gainTr:"💪 بناء",loseTr:"🔥 حرق",strength:"⚡ قوة",male:"ذكر",female:"أنثى",dlNutBtn:"📸 تحميل",dlTrBtn:"📸 تحميل",chatWelcome:"مرحباً! كيف يمكنني مساعدتك؟ 💪",contactBtn:"تواصل",q1:"💰 الأسعار",q2:"📋 ماذا يتضمن؟",q3:"🚀 شراء",q4:"🏋️ كيف يعمل؟",q5:"💳 النقاط؟"}
+};
+let APP_LANG='es';
+function t(k){return(ATXT[APP_LANG]||ATXT.es)[k]||ATXT.es[k]||k;}
+function applyAppLang(l){
+  APP_LANG=l;
+  const tabs=document.querySelectorAll('.tab');
+  if(tabs[0])tabs[0].textContent=t('tabNut');
+  if(tabs[1])tabs[1].textContent=t('tabTr');
+  if(tabs[2])tabs[2].textContent='💳 Pagos';
+  if(tabs[3])tabs[3].textContent=t('tabLib');
+  ['ng','nact','ndt','ns','tg','tlv','tser','ts'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    if(id==='ng')el.innerHTML=`<option value="gain">${t('gainGoal')}</option><option value="lose">${t('loseGoal')}</option><option value="maintain">${t('maintainGoal')}</option>`;
+    if(id==='nact')el.innerHTML=`<option value="1.2">${t('sed')}</option><option value="1.375">${t('light')}</option><option value="1.55" selected>${t('mod')}</option><option value="1.725">${t('active')}</option><option value="1.9">${t('athlete')}</option>`;
+    if(id==='ndt')el.innerHTML=`<option value="balanced">${t('balanced')}</option><option value="hp">${t('hp')}</option><option value="lc">${t('lc')}</option><option value="keto">${t('keto')}</option>`;
+    if(id==='ns'||id==='ts')el.innerHTML=`<option value="m">${t('male')}</option><option value="f">${t('female')}</option>`;
+    if(id==='tg')el.innerHTML=`<option value="gain">${t('gainTr')}</option><option value="lose">${t('loseTr')}</option><option value="strength">${t('strength')}</option>`;
+    if(id==='tlv')el.innerHTML=`<option value="b">${t('beginner')}</option><option value="i" selected>${t('inter')}</option><option value="a">${t('adv')}</option>`;
+    if(id==='tser')el.innerHTML=`<option value="single">${t('single')}</option><option value="tri">${t('tri')}</option><option value="giant">${t('giant')}</option>`;
+  });
+  const bnd=document.getElementById('btn-nut-jpg');if(bnd)bnd.innerHTML=t('dlNutBtn')+' <span style="font-size:.7rem;opacity:.7;">(5 cr.)</span>';
+  const btd=document.getElementById('btn-tr-jpg');if(btd)btd.innerHTML=t('dlTrBtn')+' <span style="font-size:.7rem;opacity:.7;">(5 cr.)</span>';
+  const cb=document.getElementById('contact-btn-el');if(cb)cb.innerHTML='💬 '+t('contactBtn');
+  document.body.style.direction=l==='ar'?'rtl':'ltr';
+  localStorage.setItem('_fl',l);
+}
+function switchAppLang(l){
+  applyAppLang(l);
+  document.querySelectorAll('.app-lang-btn').forEach(b=>b.classList.remove('active'));
+  const a=document.getElementById('alb-'+l);if(a)a.classList.add('active');
+}
+
+// ═══════════════════════════════════════
+// LIBRERÍA 900 EJERCICIOS
+// ═══════════════════════════════════════
+const EXERCISE_LIBRARY={
+  piernas:[{n:'Sentadilla con barra',s:4,r:'10-12',ds:'90s',nt:'Rodillas sobre pies'},{n:'Prensa 45 grados',s:4,r:'12',ds:'90s',nt:'Pies al ancho hombros'},{n:'Sentadilla búlgara',s:3,r:'10/pierna',ds:'75s',nt:'Banco a altura rodilla'},{n:'Zancada caminando',s:3,r:'12/pierna',ds:'75s',nt:'Paso largo controlado'},{n:'Extensión de cuádriceps',s:4,r:'15',ds:'60s',nt:'Contrae arriba 1s'},{n:'Curl femoral tumbado',s:4,r:'12',ds:'60s',nt:'Movimiento controlado'},{n:'Peso muerto convencional',s:4,r:'8',ds:'120s',nt:'Barra rasando espinillas'},{n:'Sentadilla frontal',s:4,r:'8',ds:'90s',nt:'Codos arriba siempre'},{n:'Sentadilla hack',s:3,r:'12',ds:'75s',nt:'Talones elevados'},{n:'Leg press pies juntos',s:3,r:'15',ds:'75s',nt:'Cuádricep interno'},{n:'Step up con mancuernas',s:3,r:'10/pierna',ds:'60s',nt:'Rodilla sube al pecho'},{n:'Sentadilla pausa en fondo',s:4,r:'8',ds:'90s',nt:'3s en posición baja'},{n:'Zancada lateral',s:3,r:'12/lado',ds:'60s',nt:'Aductores activos'},{n:'Sentadilla goblet',s:3,r:'15',ds:'60s',nt:'Mancuerna al pecho'},{n:'Prensa unilateral',s:3,r:'12/pierna',ds:'75s',nt:'Aísla cuádricep'},{n:'Sentadilla pistola asistida',s:3,r:'8/pierna',ds:'90s',nt:'TRX o polea'},{n:'Sentadilla con salto',s:3,r:'10',ds:'60s',nt:'Explosivo'},{n:'Peso muerto trampa',s:4,r:'8',ds:'120s',nt:'Postura neutral'},{n:'Sentadilla sissy',s:3,r:'12',ds:'75s',nt:'Cuádricep extremo'},{n:'Curl isquios de pie',s:3,r:'12',ds:'60s',nt:'Contracción completa'}],
+  gluteos:[{n:'Hip thrust con barra',s:4,r:'12',ds:'75s',nt:'Pelvis neutra arriba'},{n:'Hip thrust con pausa',s:4,r:'10',ds:'90s',nt:'3s isometría arriba'},{n:'Hip thrust unilateral',s:3,r:'12/pierna',ds:'75s',nt:'Mancuerna en cadera'},{n:'Puente de glúteos',s:3,r:'20',ds:'45s',nt:'Pausa 2s arriba'},{n:'Patada de glúteo cuadrupedia',s:3,r:'20/lado',ds:'30s',nt:'Espalda plana'},{n:'Patada glúteo con cable',s:3,r:'15/lado',ds:'60s',nt:'Extensión máxima'},{n:'Abducción de cadera máquina',s:3,r:'20',ds:'30s',nt:'Contrae glúteo medio'},{n:'Fire hydrant',s:3,r:'20/lado',ds:'30s',nt:'Abducción rotada'},{n:'Clamshell con banda',s:3,r:'20/lado',ds:'30s',nt:'Rotación externa'},{n:'Caminata con bandas',s:3,r:'20 pasos',ds:'45s',nt:'Banda en tobillos'},{n:'Sentadilla sumo goblet',s:3,r:'15',ds:'60s',nt:'Pies a 45 grados'},{n:'Sentadilla sumo con barra',s:4,r:'10',ds:'90s',nt:'Stance amplio'},{n:'Peso muerto rumano',s:4,r:'12',ds:'90s',nt:'Bisagra pura'},{n:'RDL unilateral',s:3,r:'10/pierna',ds:'75s',nt:'Balance y propiocepción'},{n:'Cable pull through',s:3,r:'15',ds:'60s',nt:'Cadena posterior'},{n:'Frog pump',s:3,r:'25',ds:'30s',nt:'Activación glúteo'},{n:'Step up glúteo focus',s:3,r:'12/pierna',ds:'75s',nt:'Inclina tronco'},{n:'Hip thrust banda y barra',s:4,r:'12',ds:'90s',nt:'Doble resistencia'},{n:'Sentadilla búlgara glúteo',s:3,r:'12/pierna',ds:'90s',nt:'Tronco inclinado adelante'},{n:'Patada burro con cable',s:3,r:'15/lado',ds:'60s',nt:'Extensión completa'}],
+  pecho:[{n:'Press banca con barra',s:4,r:'8-10',ds:'90s',nt:'Control excéntrico 2s'},{n:'Press banca mancuernas',s:3,r:'10',ds:'90s',nt:'Rango completo'},{n:'Press inclinado con barra',s:4,r:'8',ds:'90s',nt:'30 grados ángulo'},{n:'Press inclinado mancuernas',s:3,r:'10',ds:'75s',nt:'Pectoral superior'},{n:'Press declinado con barra',s:3,r:'10',ds:'90s',nt:'Pectoral inferior'},{n:'Apertura plana mancuernas',s:3,r:'12',ds:'75s',nt:'Arco al cerrar'},{n:'Apertura inclinada mancuernas',s:3,r:'12',ds:'75s',nt:'Pectoral superior'},{n:'Cruce poleas alto',s:3,r:'15',ds:'60s',nt:'Cierre abajo'},{n:'Cruce poleas bajo',s:3,r:'15',ds:'60s',nt:'Fibras inferiores'},{n:'Fondos en paralelas',s:4,r:'10-12',ds:'75s',nt:'Inclinación pecho'},{n:'Flexiones planas',s:3,r:'15-20',ds:'60s',nt:'Cuerpo recto'},{n:'Press agarre cerrado barra',s:4,r:'8',ds:'90s',nt:'Tríceps y pecho'}],
+  espalda:[{n:'Dominadas agarre prono',s:4,r:'6-10',ds:'90s',nt:'Rango completo'},{n:'Dominadas agarre supino',s:4,r:'8',ds:'90s',nt:'Bíceps activado'},{n:'Jalón pecho agarre ancho',s:4,r:'12',ds:'75s',nt:'Codos bajan a costillas'},{n:'Jalón pecho agarre cerrado',s:3,r:'12',ds:'75s',nt:'Tire a esternón'},{n:'Remo con barra',s:4,r:'10',ds:'90s',nt:'Torso 45 estable'},{n:'Remo Pendlay',s:4,r:'6-8',ds:'120s',nt:'Torso horizontal'},{n:'Remo con mancuerna',s:3,r:'12/lado',ds:'60s',nt:'Codo al techo'},{n:'Remo polea baja',s:4,r:'12',ds:'75s',nt:'Tire hacia ombligo'},{n:'Remo cara face pull',s:3,r:'20',ds:'30s',nt:'Deltoid posterior'},{n:'Peso muerto convencional',s:5,r:'5',ds:'120s',nt:'Barra rasando espinillas'},{n:'Straight arm pulldown',s:3,r:'15',ds:'60s',nt:'Dorsal aislado'},{n:'Encogimientos con barra',s:4,r:'15',ds:'60s',nt:'Trapecio superior'}],
+  hombros:[{n:'Press militar barra de pie',s:4,r:'8',ds:'90s',nt:'Core activado'},{n:'Press mancuernas sentado',s:3,r:'12',ds:'75s',nt:'Codos 90 abajo'},{n:'Press Arnold',s:3,r:'12',ds:'75s',nt:'Rotación completa'},{n:'Elevaciones laterales mancuernas',s:3,r:'15',ds:'45s',nt:'Sin balanceo'},{n:'Elevaciones laterales cable',s:3,r:'15',ds:'45s',nt:'Tensión constante'},{n:'Elevaciones frontales mancuernas',s:3,r:'12',ds:'60s',nt:'Deltoid anterior'},{n:'Pájaros con mancuernas',s:3,r:'15',ds:'45s',nt:'Deltoid posterior'},{n:'Face pull con cuerda',s:3,r:'20',ds:'30s',nt:'Salud hombro'},{n:'Remo al cuello barra',s:3,r:'12',ds:'60s',nt:'Trapecio y deltoid'},{n:'Press push press',s:4,r:'6',ds:'90s',nt:'Explosivo'},{n:'Elevaciones laterales drop set',s:3,r:'15+12+10',ds:'90s',nt:'3 bajadas'},{n:'Press barra landmine',s:3,r:'10/lado',ds:'75s',nt:'Función angular'}],
+  biceps:[{n:'Curl con barra',s:4,r:'10-12',ds:'75s',nt:'Sin balanceo'},{n:'Curl con barra EZ',s:4,r:'12',ds:'75s',nt:'Supinación completa'},{n:'Curl mancuernas alterno',s:3,r:'12/brazo',ds:'60s',nt:'Supinación al subir'},{n:'Curl martillo',s:3,r:'12',ds:'60s',nt:'Neutro todo recorrido'},{n:'Curl predicador con barra',s:3,r:'12',ds:'60s',nt:'Parte baja bíceps'},{n:'Curl concentrado',s:3,r:'12/brazo',ds:'60s',nt:'Pico máx. contracción'},{n:'Curl polea baja',s:3,r:'15',ds:'45s',nt:'Tensión constante'},{n:'Curl bayesiano',s:3,r:'12',ds:'60s',nt:'Posición estirada'},{n:'Curl 21s con barra',s:3,r:'21',ds:'75s',nt:'7+7+7 rangos'},{n:'Chin ups agarre supino',s:4,r:'8',ds:'90s',nt:'Bíceps activado'},{n:'Curl inclinado mancuernas',s:3,r:'12',ds:'75s',nt:'Máx. estiramiento'},{n:'Curl mancuernas drop set',s:3,r:'12+10+8',ds:'90s',nt:'3 bajadas'}],
+  triceps:[{n:'Extensión tríceps polea barra',s:4,r:'15',ds:'45s',nt:'Codos pegados'},{n:'Extensión tríceps polea cuerda',s:4,r:'15',ds:'45s',nt:'Pronación al final'},{n:'Rompecráneos con barra',s:3,r:'12',ds:'75s',nt:'Codos apuntan techo'},{n:'Rompecráneos barra EZ',s:3,r:'12',ds:'75s',nt:'Agarre cómodo'},{n:'Fondos en paralelas tríceps',s:4,r:'12',ds:'75s',nt:'Cuerpo vertical'},{n:'Fondos en banco tríceps',s:3,r:'15',ds:'60s',nt:'Manos atrás'},{n:'Patada tríceps mancuerna',s:3,r:'15/brazo',ds:'45s',nt:'Isometría arriba'},{n:'Press agarre cerrado',s:4,r:'10',ds:'90s',nt:'Tríceps focalizado'},{n:'Extensión overhead mancuerna',s:3,r:'12',ds:'60s',nt:'Cabeza larga'},{n:'Extensión overhead con barra',s:3,r:'12',ds:'75s',nt:'Cabeza larga'},{n:'Flexiones diamante',s:3,r:'15',ds:'60s',nt:'Cuerpo recto'},{n:'Extensión polea alta drop set',s:3,r:'15+12+10',ds:'90s',nt:'3 bajadas'}],
+  abdomen:[{n:'Plancha isométrica',s:4,r:'30-60s',ds:'45s',nt:'Cuerpo recto'},{n:'Crunch abdominal',s:3,r:'20',ds:'30s',nt:'Contrae arriba'},{n:'Elevación piernas tumbado',s:3,r:'15',ds:'45s',nt:'Lumbar en suelo'},{n:'Crunch en polea',s:3,r:'20',ds:'30s',nt:'Flexión espinal'},{n:'Crunch inverso',s:3,r:'15',ds:'30s',nt:'Abdom. inferior'},{n:'Sit-up clásico',s:3,r:'20',ds:'30s',nt:'Completo'},{n:'Elevación piernas colgado',s:3,r:'15',ds:'45s',nt:'Isquiones fijos'},{n:'Toes to bar',s:4,r:'12-15',ds:'45s',nt:'Agarre fuerte'},{n:'Ab wheel rollout rodillas',s:3,r:'12-15',ds:'60s',nt:'Espalda recta'},{n:'Russian twist con peso',s:3,r:'20',ds:'30s',nt:'Disco o balón'},{n:'Bicycle crunch',s:3,r:'20',ds:'30s',nt:'Codo a rodilla opp.'},{n:'Dragon flag',s:3,r:'8-10',ds:'75s',nt:'Control absoluto'}],
+  pantorrilla:[{n:'Elevación talones de pie barra',s:4,r:'15-20',ds:'45s',nt:'Máx. rango'},{n:'Elevación talones mancuernas',s:4,r:'20',ds:'30s',nt:'Máx. rango'},{n:'Elevación talones máquina de pie',s:4,r:'15',ds:'45s',nt:'Rango completo'},{n:'Elevación talones sentado máquina',s:4,r:'20',ds:'30s',nt:'Sóleo aislado'},{n:'Elevación talones en prensa 45',s:3,r:'20',ds:'30s',nt:'Pies en borde'},{n:'Elevación talones en escalón',s:4,r:'20',ds:'30s',nt:'Rango aumentado'},{n:'Elevación talones escalón unilateral',s:3,r:'15/pierna',ds:'30s',nt:'Aislado'},{n:'Elevación talones pausa doble',s:3,r:'12',ds:'45s',nt:'2s arriba 2s abajo'},{n:'Calf raise drop set',s:3,r:'20+15+10',ds:'75s',nt:'3 bajadas'},{n:'Calf raise excéntrico unilateral',s:3,r:'10/pierna',ds:'45s',nt:'5s bajando'},{n:'Tibialis raise contra pared',s:3,r:'20',ds:'30s',nt:'Tibial anterior'},{n:'Calf raise isométrico',s:4,r:'30s',ds:'30s',nt:'Tensión máxima'}]
+};
+const LIB_CAT_COLORS={piernas:'#00E676',gluteos:'#FF6D00',pecho:'#2979FF',espalda:'#FF6D00',hombros:'#00bcd4',biceps:'#AA00FF',triceps:'#FF1744',abdomen:'#ffcc02',pantorrilla:'#00E676'};
+const LIB_CATEGORIES=[{key:'piernas',label:'🦵 Piernas',color:'#00E676'},{key:'gluteos',label:'🍑 Glúteos',color:'#FF6D00'},{key:'pecho',label:'🏋️ Pecho',color:'#2979FF'},{key:'espalda',label:'🔙 Espalda',color:'#FF6D00'},{key:'hombros',label:'🔝 Hombros',color:'#00bcd4'},{key:'biceps',label:'💪 Bíceps',color:'#AA00FF'},{key:'triceps',label:'🔱 Tríceps',color:'#FF1744'},{key:'abdomen',label:'🧱 Abdomen',color:'#ffcc02'},{key:'pantorrilla',label:'🦶 Pantorrilla',color:'#00E676'}];
+let LIB_CAT='piernas',LIB_COUNT=12;
+function shuffleArray(arr){const p=[...arr];for(let i=p.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]];}return p;}
+function getRandomExercises(cat,n){const pool=EXERCISE_LIBRARY[cat];if(!pool)return[];return shuffleArray(pool).slice(0,n);}
+function selectLibCat(cat,el){LIB_CAT=cat;document.querySelectorAll('#lib-cat-tabs .dtab').forEach(b=>{b.classList.remove('on');b.style.background='transparent';});if(el){el.classList.add('on');el.style.background=(LIB_CAT_COLORS[cat]||'#00E676')+'22';}}
+function selectLibCount(n,el){LIB_COUNT=n;[6,8,10,12].forEach(x=>{const b=document.getElementById('lib-cnt-'+x);if(b)b.classList.remove('on');});if(el)el.classList.add('on');}
+async function calcLibrary(){
+  if(!await consumeCredits(CREDIT_COST_CALC,'calc_libreria'))return;
+  const results=getRandomExercises(LIB_CAT,LIB_COUNT);
+  const catInfo=LIB_CATEGORIES.find(c=>c.key===LIB_CAT)||LIB_CATEGORIES[0];
+  const c=catInfo.color;
+  const titleEl=document.getElementById('lib-result-title');
+  if(titleEl)titleEl.innerHTML=`${catInfo.label} — <span style="color:${c};">${LIB_COUNT} ejercicios aleatorios</span>`;
+  let html=`<div style="background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.15);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.82rem;"><strong style="color:${c};">${catInfo.label}</strong> | ${LIB_COUNT} de ${EXERCISE_LIBRARY[LIB_CAT].length} ejercicios</div>
+  <table class="ex-tbl"><thead><tr><th>#</th><th>Ejercicio</th><th>Series</th><th>Reps</th><th>Descanso</th><th>Técnica</th></tr></thead><tbody>
+  ${results.map((ex,i)=>`<tr><td><div style="width:26px;height:26px;border-radius:50%;background:${c}22;color:${c};display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;">${i+1}</div></td><td><strong>${ex.n}</strong></td><td><span class="bx bg">${ex.s}x</span></td><td><span class="bx bb">${ex.r}</span></td><td><span class="bx bo">${ex.ds}</span></td><td style="font-size:.74rem;color:var(--mu);">${ex.nt}</td></tr>`).join('')}
+  </tbody></table>`;
+  const tableEl=document.getElementById('lib-result-table');if(tableEl)tableEl.innerHTML=html;
+  const resultEl=document.getElementById('lib-result');if(resultEl){resultEl.style.display='block';resultEl.scrollIntoView({behavior:'smooth'});}
+}
+
+// ═══════════════════════════════════════
+// NUTRICIÓN
+// ═══════════════════════════════════════
+const FOODS={
+  gain:{Mon:[{n:'Desayuno',t:'07:00',f:[{n:'Avena integral',a:'100g',p:13,c:67,fa:7,k:389},{n:'Plátano',a:'1 unid.',p:1,c:27,fa:0,k:105},{n:'Huevos enteros',a:'3 unid.',p:18,c:1,fa:15,k:210},{n:'Leche entera',a:'200ml',p:7,c:10,fa:8,k:122}]},{n:'Snack Mañana',t:'10:30',f:[{n:'Pollo cocido',a:'120g',p:30,c:0,fa:4,k:156},{n:'Arroz blanco',a:'150g',p:4,c:40,fa:0,k:175}]},{n:'Almuerzo',t:'13:00',f:[{n:'Pechuga de pollo',a:'200g',p:46,c:0,fa:5,k:220},{n:'Arroz integral',a:'200g',p:5,c:46,fa:2,k:218},{n:'Aguacate',a:'½ unid.',p:2,c:9,fa:15,k:160},{n:'Brócoli',a:'150g',p:4,c:9,fa:0,k:51}]},{n:'Snack Tarde',t:'16:00',f:[{n:'Atún en lata',a:'120g',p:28,c:0,fa:2,k:128},{n:'Pan integral',a:'2 reb.',p:7,c:28,fa:2,k:160}]},{n:'Cena',t:'19:30',f:[{n:'Salmón al horno',a:'180g',p:34,c:0,fa:18,k:295},{n:'Patata dulce',a:'200g',p:4,c:46,fa:0,k:172},{n:'Espinacas',a:'100g',p:3,c:4,fa:2,k:40}]},{n:'Pre-sueño',t:'21:30',f:[{n:'Proteína whey',a:'30g',p:24,c:3,fa:2,k:120},{n:'Nueces',a:'30g',p:4,c:4,fa:18,k:185}]}],Tue:[{n:'Desayuno',t:'07:00',f:[{n:'Tortitas de avena',a:'4 unid.',p:16,c:60,fa:8,k:375},{n:'Miel',a:'20g',p:0,c:17,fa:0,k:64},{n:'Huevos revueltos',a:'3 unid.',p:18,c:1,fa:15,k:210}]},{n:'Snack Mañana',t:'10:30',f:[{n:'Yogur griego',a:'200g',p:18,c:8,fa:5,k:145},{n:'Almendras',a:'30g',p:6,c:4,fa:15,k:175}]},{n:'Almuerzo',t:'13:00',f:[{n:'Ternera magra',a:'180g',p:40,c:0,fa:12,k:260},{n:'Pasta integral',a:'200g',p:8,c:42,fa:2,k:220},{n:'Tomate',a:'150g',p:2,c:7,fa:0,k:36}]},{n:'Snack Tarde',t:'16:00',f:[{n:'Batido proteico',a:'1 vaso',p:25,c:5,fa:3,k:140},{n:'Plátano',a:'1 unid.',p:1,c:27,fa:0,k:105}]},{n:'Cena',t:'19:30',f:[{n:'Pavo a la plancha',a:'200g',p:42,c:0,fa:6,k:218},{n:'Arroz basmati',a:'180g',p:4,c:40,fa:0,k:180}]},{n:'Pre-sueño',t:'21:30',f:[{n:'Queso cottage',a:'200g',p:22,c:6,fa:4,k:140}]}],Wed:[{n:'Desayuno',t:'07:00',f:[{n:'Granola',a:'80g',p:10,c:58,fa:12,k:376},{n:'Leche entera',a:'250ml',p:9,c:13,fa:10,k:152}]},{n:'Snack Mañana',t:'10:30',f:[{n:'Pollo+arroz',a:'270g',p:35,c:40,fa:4,k:322}]},{n:'Almuerzo',t:'13:00',f:[{n:'Merluza al horno',a:'220g',p:44,c:0,fa:5,k:222},{n:'Quinoa cocida',a:'200g',p:8,c:36,fa:4,k:212}]},{n:'Snack Tarde',t:'16:00',f:[{n:'Pan+pavo+queso',a:'2+80+30g',p:28,c:30,fa:6,k:280}]},{n:'Cena',t:'19:30',f:[{n:'Carne molida magra',a:'200g',p:44,c:0,fa:14,k:296},{n:'Patata cocida',a:'200g',p:4,c:38,fa:0,k:172}]},{n:'Pre-sueño',t:'21:30',f:[{n:'Caseína',a:'30g',p:24,c:4,fa:2,k:128}]}],Thu:[{n:'Desayuno',t:'07:00',f:[{n:'Tostadas integrales',a:'3 unid.',p:9,c:42,fa:3,k:219},{n:'Aguacate',a:'½',p:2,c:9,fa:15,k:160},{n:'Huevos poché',a:'3',p:18,c:1,fa:15,k:210}]},{n:'Snack Mañana',t:'10:30',f:[{n:'Batido proteico',a:'1',p:30,c:8,fa:3,k:175}]},{n:'Almuerzo',t:'13:00',f:[{n:'Pollo al curry',a:'200g',p:44,c:4,fa:8,k:258},{n:'Arroz integral',a:'200g',p:5,c:46,fa:2,k:218}]},{n:'Snack Tarde',t:'16:00',f:[{n:'Atún+crackers',a:'120g+30g',p:30,c:20,fa:3,k:225}]},{n:'Cena',t:'19:30',f:[{n:'Chuleta de cerdo',a:'180g',p:38,c:0,fa:16,k:292},{n:'Brócoli+patata',a:'200+150g',p:7,c:47,fa:0,k:197}]}],Fri:[{n:'Desayuno',t:'07:00',f:[{n:'Omelette jamón+queso',a:'3 huevos',p:28,c:2,fa:20,k:296},{n:'Pan integral',a:'2',p:7,c:28,fa:2,k:160}]},{n:'Snack Mañana',t:'10:30',f:[{n:'Yogur+fruta',a:'200+100g',p:18,c:24,fa:5,k:210}]},{n:'Almuerzo',t:'13:00',f:[{n:'Salmón+arroz',a:'180+180g',p:38,c:40,fa:18,k:470}]},{n:'Snack Tarde',t:'16:00',f:[{n:'Proteína+banana',a:'30g+1',p:25,c:30,fa:2,k:235}]},{n:'Cena',t:'19:30',f:[{n:'Pechuga+pasta',a:'180+180g',p:44,c:40,fa:5,k:377}]}]},
+  lose:{Mon:[{n:'Desayuno',t:'07:00',f:[{n:'Claras de huevo',a:'6 claras',p:21,c:0,fa:0,k:96},{n:'Avena',a:'60g',p:8,c:40,fa:4,k:230},{n:'Fresas',a:'150g',p:1,c:12,fa:0,k:48}]},{n:'Snack Mañana',t:'10:00',f:[{n:'Manzana verde',a:'1',p:0,c:22,fa:0,k:85}]},{n:'Almuerzo',t:'13:00',f:[{n:'Pechuga de pavo',a:'180g',p:38,c:0,fa:4,k:185},{n:'Ensalada grande',a:'300g',p:3,c:10,fa:2,k:62}]},{n:'Snack Tarde',t:'16:00',f:[{n:'Queso cottage 0%',a:'150g',p:17,c:4,fa:1,k:92}]},{n:'Cena',t:'19:00',f:[{n:'Merluza al vapor',a:'200g',p:38,c:0,fa:4,k:184},{n:'Verduras asadas',a:'250g',p:5,c:15,fa:2,k:90}]}],Tue:[{n:'Desayuno',t:'07:00',f:[{n:'Huevos revueltos',a:'3',p:18,c:1,fa:15,k:210},{n:'Espinacas',a:'100g',p:3,c:4,fa:2,k:40}]},{n:'Snack Mañana',t:'10:00',f:[{n:'Pepino+hummus',a:'200+30g',p:3,c:8,fa:2,k:57}]},{n:'Almuerzo',t:'13:00',f:[{n:'Pollo al limón',a:'180g',p:38,c:0,fa:5,k:196},{n:'Quinoa',a:'150g',p:6,c:28,fa:3,k:168}]},{n:'Snack Tarde',t:'16:00',f:[{n:'Proteína whey',a:'25g',p:20,c:2,fa:1,k:98}]},{n:'Cena',t:'19:00',f:[{n:'Atún al natural',a:'120g',p:28,c:0,fa:2,k:128},{n:'Brócoli',a:'250g',p:7,c:15,fa:0,k:85}]}],Wed:[{n:'Desayuno',t:'07:00',f:[{n:'Yogur griego 0%',a:'200g',p:18,c:8,fa:0,k:104},{n:'Arándanos',a:'100g',p:1,c:14,fa:0,k:57}]},{n:'Snack Mañana',t:'10:00',f:[{n:'Almendras',a:'20g',p:4,c:3,fa:10,k:117}]},{n:'Almuerzo',t:'13:00',f:[{n:'Ensalada de pavo',a:'180+200g',p:40,c:8,fa:4,k:228}]},{n:'Snack Tarde',t:'16:00',f:[{n:'Zanahoria+queso',a:'150+50g',p:6,c:12,fa:3,k:95}]},{n:'Cena',t:'19:00',f:[{n:'Salmón al vapor',a:'150g',p:28,c:0,fa:13,k:224},{n:'Espárragos',a:'200g',p:4,c:8,fa:0,k:44}]}],Thu:[{n:'Desayuno',t:'07:00',f:[{n:'Tostada+aguacate',a:'2+¼',p:7,c:32,fa:9,k:240}]},{n:'Snack Mañana',t:'10:00',f:[{n:'Pera verde',a:'1',p:0,c:22,fa:0,k:88}]},{n:'Almuerzo',t:'13:00',f:[{n:'Pollo+arroz+ensalada',a:'200+100+200g',p:46,c:28,fa:6,k:268}]},{n:'Snack Tarde',t:'16:00',f:[{n:'Proteína+agua',a:'25g',p:20,c:2,fa:1,k:98}]},{n:'Cena',t:'19:00',f:[{n:'Bacalao al horno',a:'200g',p:40,c:0,fa:3,k:184},{n:'Coliflor',a:'250g',p:5,c:12,fa:0,k:62}]}],Fri:[{n:'Desayuno',t:'07:00',f:[{n:'Batido verde',a:'1 vaso',p:5,c:12,fa:2,k:86},{n:'Huevos pasados',a:'2',p:12,c:0,fa:10,k:140}]},{n:'Snack Mañana',t:'10:00',f:[{n:'Kiwi',a:'2',p:2,c:16,fa:0,k:84}]},{n:'Almuerzo',t:'13:00',f:[{n:'Pechuga+verduras',a:'180+250g',p:40,c:18,fa:5,k:270}]},{n:'Snack Tarde',t:'16:00',f:[{n:'Requesón',a:'150g',p:18,c:3,fa:2,k:100}]},{n:'Cena',t:'19:00',f:[{n:'Rape al horno',a:'200g',p:38,c:0,fa:3,k:176},{n:'Espinacas',a:'200g',p:5,c:6,fa:2,k:66}]}]},
+  maintain:{Mon:[{n:'Desayuno',t:'07:00',f:[{n:'Huevos revueltos',a:'3',p:18,c:1,fa:15,k:210},{n:'Pan integral',a:'2',p:7,c:28,fa:2,k:160},{n:'Zumo naranja',a:'200ml',p:1,c:22,fa:0,k:88}]},{n:'Snack Mañana',t:'10:30',f:[{n:'Yogur griego',a:'200g',p:14,c:8,fa:5,k:130},{n:'Nueces',a:'25g',p:4,c:3,fa:14,k:148}]},{n:'Almuerzo',t:'13:00',f:[{n:'Ternera+pasta',a:'150+180g',p:38,c:44,fa:12,k:434}]},{n:'Snack Tarde',t:'16:30',f:[{n:'Batido+plátano',a:'1+1',p:21,c:35,fa:3,k:245}]},{n:'Cena',t:'19:30',f:[{n:'Pollo al horno',a:'180g',p:42,c:0,fa:8,k:238},{n:'Patatas+verduras',a:'200+150g',p:7,c:50,fa:2,k:235}]}],Tue:[{n:'Desayuno',t:'07:00',f:[{n:'Avena con leche',a:'80+200ml',p:14,c:56,fa:8,k:350},{n:'Frutos rojos',a:'100g',p:1,c:14,fa:0,k:57}]},{n:'Snack Mañana',t:'10:30',f:[{n:'Manzana+almendras',a:'1+25g',p:4,c:28,fa:14,k:240}]},{n:'Almuerzo',t:'13:00',f:[{n:'Salmón+arroz+brócoli',a:'180+180+150g',p:38,c:48,fa:18,k:478}]},{n:'Snack Tarde',t:'16:30',f:[{n:'Queso fresco+tomate',a:'100+150g',p:8,c:8,fa:5,k:108}]},{n:'Cena',t:'19:30',f:[{n:'Merluza+quinoa',a:'200+150g',p:46,c:28,fa:5,k:340}]}],Wed:[{n:'Desayuno',t:'07:00',f:[{n:'Tostadas+aguacate',a:'2+½',p:6,c:32,fa:17,k:299},{n:'Huevo poché',a:'2',p:12,c:0,fa:10,k:140}]},{n:'Snack Mañana',t:'10:30',f:[{n:'Pera+proteína',a:'1+25g',p:20,c:26,fa:1,k:186}]},{n:'Almuerzo',t:'13:00',f:[{n:'Pollo+patata',a:'180+200g',p:42,c:38,fa:6,k:374}]},{n:'Snack Tarde',t:'16:30',f:[{n:'Galletas+cacahuete',a:'30+20g',p:7,c:20,fa:10,k:194}]},{n:'Cena',t:'19:30',f:[{n:'Lentejas con verduras',a:'300g',p:18,c:40,fa:3,k:256}]}],Thu:[{n:'Desayuno',t:'07:00',f:[{n:'Granola+yogur',a:'60+200g',p:16,c:50,fa:10,k:350}]},{n:'Snack Mañana',t:'10:30',f:[{n:'Naranja+nueces',a:'1+25g',p:4,c:18,fa:14,k:202}]},{n:'Almuerzo',t:'13:00',f:[{n:'Pavo+arroz+ensalada',a:'180+180+200g',p:44,c:44,fa:6,k:406}]},{n:'Snack Tarde',t:'16:30',f:[{n:'Batido+banana',a:'30g+1',p:25,c:30,fa:2,k:235}]},{n:'Cena',t:'19:30',f:[{n:'Trucha+verduras',a:'200+200g',p:42,c:14,fa:8,k:292}]}],Fri:[{n:'Desayuno',t:'07:00',f:[{n:'Pancakes proteicos',a:'4 unid.',p:22,c:40,fa:6,k:296}]},{n:'Snack Mañana',t:'10:30',f:[{n:'Mango+cottage',a:'½+150g',p:18,c:20,fa:3,k:176}]},{n:'Almuerzo',t:'13:00',f:[{n:'Ternera+pasta',a:'150+180g',p:38,c:44,fa:12,k:434}]},{n:'Snack Tarde',t:'16:30',f:[{n:'Proteína+avena',a:'25g+40g',p:22,c:30,fa:3,k:228}]},{n:'Cena',t:'19:30',f:[{n:'Lubina+quinoa',a:'200+150g',p:44,c:28,fa:6,k:340}]}]}
+};
+const FOODS_ALL={1:FOODS,2:FOODS,3:FOODS,4:FOODS};
+const DAYS=['Mon','Tue','Wed','Thu','Fri'];
+const DNAMES=['Lunes','Martes','Miércoles','Jueves','Viernes'];
+let NS=null,NUT_WEEK=1,TR_WEEK=1,TR_DAYS=null,TR_CFG=null;
+
+function showTab(id,el){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('ta','tb','tc');});
+  document.getElementById('sec-'+id).classList.add('on');
+  if(el){if(id==='nut')el.classList.add('ta');else if(id==='tr')el.classList.add('tb');else el.classList.add('tc');}
+}
+function selNutWeek(w,el){NUT_WEEK=w;document.querySelectorAll('.nwt').forEach(b=>b.classList.remove('on'));if(el)el.classList.add('on');const activeDay=document.querySelector('#nut-day-tabs .dtab.on');const idx=activeDay?Array.from(document.querySelectorAll('#nut-day-tabs .dtab')).indexOf(activeDay):0;showNutDay(idx,activeDay);}
+
+async function calcNut(){
+  if(!await consumeCredits(CREDIT_COST_CALC,'calc_nutricion'))return;
+  const age=+document.getElementById('na').value,wt=+document.getElementById('nw').value,ht=+document.getElementById('nh').value,sex=document.getElementById('ns').value,goal=document.getElementById('ng').value,act=+document.getElementById('nact').value,diet=document.getElementById('ndt').value;
+  const bmr=sex==='m'?(10*wt+6.25*ht-5*age+5):(10*wt+6.25*ht-5*age-161);
+  const tdee=Math.round(bmr*act);let kcal=tdee;
+  if(goal==='gain')kcal=Math.round(tdee*1.15);if(goal==='lose')kcal=Math.round(tdee*0.80);
+  let pp,cp,fp;
+  if(diet==='balanced'){pp=30;cp=45;fp=25;}else if(diet==='hp'){pp=40;cp=35;fp=25;}else if(diet==='lc'){pp=35;cp=25;fp=40;}else{pp=25;cp=10;fp=65;}
+  if(goal==='lose'){pp+=5;cp-=5;}if(goal==='gain'){cp+=5;pp-=3;fp-=2;}
+  const P=Math.round(kcal*pp/100/4),C=Math.round(kcal*cp/100/4),F=Math.round(kcal*fp/100/9);
+  const imc=(wt/((ht/100)**2)).toFixed(1);
+  NS={age,wt,ht,sex,goal,kcal,bmr:Math.round(bmr),tdee,P,C,F,pp,cp,fp,imc};
+  document.getElementById('nut-stats').innerHTML=`<div class="stat sg"><div class="sv">${kcal}</div><div class="sl">Calorías/día</div></div><div class="stat sb"><div class="sv">${P}g</div><div class="sl">Proteína ${pp}%</div></div><div class="stat so"><div class="sv">${C}g</div><div class="sl">Carbos ${cp}%</div></div><div class="stat sr"><div class="sv">${F}g</div><div class="sl">Grasas ${fp}%</div></div>`;
+  document.getElementById('mbar').innerHTML=`<div class="ms" style="width:${pp}%;background:#82b1ff;"></div><div class="ms" style="width:${cp}%;background:#ffcc02;"></div><div class="ms" style="width:${fp}%;background:#ff5252;"></div>`;
+  document.getElementById('mbar-lbl').innerHTML=`<span style="color:#82b1ff;">Proteína ${pp}%</span><span style="color:#ffcc02;">Carbos ${cp}%</span><span style="color:#ff5252;">Grasas ${fp}%</span>`;
+  document.getElementById('bmr-line').innerHTML=`TMB: ${Math.round(bmr)} kcal | TDEE: ${tdee} kcal | IMC: ${imc} | Agua: ${(wt*0.033).toFixed(1)}L/día`;
+  let tabs='';DNAMES.forEach((d,i)=>tabs+=`<button class="dtab${i===0?' on':''}" onclick="showNutDay(${i},this)">${d}</button>`);
+  document.getElementById('nut-day-tabs').innerHTML=tabs;showNutDay(0,document.querySelector('#nut-day-tabs .dtab'));
+  const tips={gain:['Superávit de 300-500 kcal sobre TDEE','Proteína en 5-6 tomas de 30-40g','Carbos 90min antes del entreno','Proteína rápida 30min post-entreno','8h sueño — GH actúa en sueño profundo'],lose:['Déficit máx. 500 kcal para preservar músculo','Alta proteína 2g/kg evita catabolismo','HIIT 3x/sem potencia quema grasa 24h','500ml agua antes de comer reduce apetito','Carbos solo en la mañana y post-entreno'],maintain:['Pésate semanalmente mismo día y hora','Ajusta ±100 kcal según cambio de peso','1 día flexible cada 2 semanas','Carbos alrededor del entreno','Revisa composición corporal mensual']};
+  document.getElementById('nut-tips').innerHTML=(tips[goal]||[]).map((tip,i)=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--b1);font-size:.84rem;"><span style="color:var(--g);font-weight:700;">${i+1}.</span>${tip}</div>`).join('');
+  document.getElementById('nut-res').style.display='block';setTimeout(()=>document.getElementById('nut-res').scrollIntoView({behavior:'smooth'}),100);
+}
+
+function showNutDay(idx,el){
+  if(!NS)return;
+  document.querySelectorAll('#nut-day-tabs .dtab').forEach(b=>b.classList.remove('on'));if(el)el.classList.add('on');
+  const dayFoods=FOODS_ALL[NUT_WEEK||1][NS.goal];const day=dayFoods?dayFoods[DAYS[idx]]:null;
+  if(!day){document.getElementById('nut-meals').innerHTML='<p style="color:var(--mu)">Sin datos</p>';return;}
+  let html=`<div style="background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.15);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.84rem;"><strong>${DNAMES[idx]}</strong> | ${NS.kcal} kcal | P:${NS.P}g C:${NS.C}g G:${NS.F}g</div>`;
+  day.forEach(m=>{const mk=m.f.reduce((s,f)=>s+f.k,0);html+=`<div class="meal-card"><div class="meal-hd"><span class="meal-nm">${m.n}</span><span style="display:flex;gap:10px;align-items:center;"><span style="font-size:.75rem;color:var(--mu);">${m.t}</span><span class="meal-kc">${mk} kcal</span></span></div><div class="meal-body"><div class="food-row food-hdr"><span>Alimento</span><span>Cantidad</span><span>Prot.</span><span>Carbs</span><span>Grasa</span><span>Kcal</span></div>${m.f.map(f=>`<div class="food-row"><strong>${f.n}</strong><span style="color:var(--mu)">${f.a}</span><span style="color:#82b1ff">${f.p}g</span><span style="color:#ffcc02">${f.c}g</span><span style="color:#ff5252">${f.fa}g</span><span style="color:var(--or);font-weight:600">${f.k}</span></div>`).join('')}</div></div>`;});
+  document.getElementById('nut-meals').innerHTML=html;
+}
+
+// ═══════════════════════════════════════
+// ENTRENAMIENTO
+// ═══════════════════════════════════════
+const EX={
+  legs:{b:[{n:'Sentadilla Peso Corporal',s:3,r:'12-15',ds:'60s',nt:'Rodillas sobre pies'},{n:'Prensa de Piernas',s:3,r:'15',ds:'60s',nt:'Ancho hombros'},{n:'Extensión Cuádriceps',s:3,r:'15',ds:'60s',nt:'Contrae arriba'},{n:'Curl Isquiotibiales',s:3,r:'15',ds:'60s',nt:'Mov. controlado'},{n:'Elevación de Talones',s:4,r:'20-25',ds:'30s',nt:'Máx. rango'},{n:'Zancada en el Lugar',s:3,r:'10/pierna',ds:'60s',nt:'Tronco erguido'}],i:[{n:'Sentadilla con Barra',s:4,r:'10-12',ds:'90s',nt:'Profundidad paralela'},{n:'Prensa 45° con Pausa',s:4,r:'10',ds:'90s',nt:'2s en fondo'},{n:'Sentadilla Búlgara',s:3,r:'10/pierna',ds:'75s',nt:'Banco a altura rodilla'},{n:'Ext. Cuádríceps Unilateral',s:3,r:'12/lado',ds:'60s',nt:'Pico contracción'},{n:'Curl Isquios Tumbado',s:3,r:'12',ds:'60s',nt:'Veloc. controlada'},{n:'Elevación Talones con Barra',s:4,r:'15-20',ds:'45s',nt:'Paso madera'},{n:'Zancada Caminando',s:3,r:'12/pierna',ds:'75s',nt:'Paso largo'},{n:'Leg Press Pies Altos',s:3,r:'15',ds:'60s',nt:'Activa glúteo'}],a:[{n:'Sentadilla Olímpica ATG',s:5,r:'5-8',ds:'120s',nt:'Profundidad completa'},{n:'Peso Muerto Convencional',s:5,r:'5',ds:'120s',nt:'Barra rasando espinillas'},{n:'Prensa con Bandas',s:4,r:'8-10',ds:'90s',nt:'Resistencia variable'},{n:'Sentadilla Frontal',s:4,r:'8',ds:'90s',nt:'Codos arriba'},{n:'Zancada Barra Caminando',s:4,r:'12/pierna',ds:'90s',nt:'Cadera baja'},{n:'RDL Unilateral',s:3,r:'10/pierna',ds:'75s',nt:'Balance+prop.'},{n:'Leg Press Unilateral',s:3,r:'12/pierna',ds:'60s',nt:'Aísla cuádrícep'},{n:'Ext. Nórdica Isquios',s:3,r:'6-8',ds:'90s',nt:'Ejercicio élite'},{n:'Sissy Squat',s:3,r:'12',ds:'75s',nt:'Cuádrícep extremo'},{n:'Elevación Talones Barra Pesada',s:4,r:'15',ds:'45s',nt:'Rango completo'}]},
+  push:{b:[{n:'Flexiones de Pecho',s:3,r:'10-15',ds:'60s',nt:'Cuerpo recto'},{n:'Press Banco Mancuernas',s:3,r:'12',ds:'75s',nt:'Agarre neutro'},{n:'Press Inclinado 30°',s:3,r:'12',ds:'75s',nt:'Pectoral superior'},{n:'Press Hombros Mancuernas',s:3,r:'12',ds:'60s',nt:'Codos 90° abajo'},{n:'Elevaciones Laterales',s:3,r:'15',ds:'45s',nt:'Sin balanceo'},{n:'Ext. Tríceps Polea',s:3,r:'15',ds:'45s',nt:'Codos pegados'}],i:[{n:'Press Banco con Barra',s:4,r:'8-10',ds:'90s',nt:'Control excéntrico 2s'},{n:'Press Inclinado con Barra',s:4,r:'10',ds:'90s',nt:'30° ángulo'},{n:'Aperturas Inclinadas',s:3,r:'12',ds:'60s',nt:'Arco al cerrar'},{n:'Press Militar Barra Pie',s:4,r:'10',ds:'90s',nt:'Core activado'},{n:'Elevaciones Laterales Cable',s:3,r:'15',ds:'45s',nt:'Tensión constante'},{n:'Press Arnold',s:3,r:'12',ds:'75s',nt:'Rotación completa'},{n:'Fondos en Paralelas',s:4,r:'10-12',ds:'75s',nt:'Inclinación pecho'},{n:'Ext. Tríceps Cabeza',s:3,r:'12',ds:'60s',nt:'Cabeza larga'}],a:[{n:'Press Banco con Pausa',s:5,r:'4-6',ds:'120s',nt:'1s pausa en pecho'},{n:'Press Inclinado Pesado',s:4,r:'6-8',ds:'120s',nt:'Spoteo recomend.'},{n:'Fondos con Cinturón',s:4,r:'8-10',ds:'90s',nt:'Carga extra'},{n:'Press Militar Pesado',s:5,r:'5',ds:'120s',nt:'Fuerza pura'},{n:'Elevaciones Tumbado',s:3,r:'12',ds:'60s',nt:'Deltoid. med. aislado'},{n:'Press Agarre Cerrado',s:4,r:'8',ds:'90s',nt:'Tríceps focalizado'},{n:'Rompecráneos EZ',s:3,r:'10',ds:'75s',nt:'Cabeza larga'},{n:'Cruce Poleas Alto',s:4,r:'12-15',ds:'60s',nt:'Cierre abajo'},{n:'Patada Tríceps Cable',s:3,r:'15/brazo',ds:'45s',nt:'Isometría arriba'},{n:'Face Pull Rotación',s:3,r:'20',ds:'30s',nt:'Salud hombro'}]},
+  glutes:{b:[{n:'Puente de Glúteos',s:3,r:'20',ds:'45s',nt:'Pausa 2s arriba'},{n:'Patada Glúteos Cuadrupedia',s:3,r:'20/lado',ds:'30s',nt:'Espalda plana'},{n:'Sentadilla Sumo Goblet',s:3,r:'15',ds:'60s',nt:'Pies a 45°'},{n:'Zancada Lateral',s:3,r:'12/lado',ds:'60s',nt:'Descenso controlado'},{n:'Abducción Máquina',s:3,r:'20',ds:'30s',nt:'Contrae glút. medio'},{n:'Caminata con Bandas',s:3,r:'20 pasos',ds:'45s',nt:'Banda tobillos'}],i:[{n:'Hip Thrust con Barra',s:4,r:'12-15',ds:'75s',nt:'Pelvis neutra arriba'},{n:'Sentadilla Sumo Barra',s:4,r:'10-12',ds:'90s',nt:'Stance amplio'},{n:'Peso Muerto Rumano',s:4,r:'10-12',ds:'90s',nt:'Bisagra pura'},{n:'Patada Glúteos Cable',s:3,r:'15/lado',ds:'60s',nt:'Extensión máxima'},{n:'Hip Thrust Banda+Peso',s:3,r:'15',ds:'60s',nt:'Resistencia extra'},{n:'Sentadilla con Pausa',s:3,r:'10',ds:'75s',nt:'2s profundidad'},{n:'Zancada Reversa Mancuernas',s:3,r:'12/pierna',ds:'60s',nt:'Paso atrás largo'},{n:'Abducción con Cable',s:3,r:'15/lado',ds:'45s',nt:'Glút. medio'}],a:[{n:'Hip Thrust Pesada',s:5,r:'8-10',ds:'90s',nt:'Sobrecarga progresiva'},{n:'Peso Muerto Sumo Barra',s:5,r:'5-6',ds:'120s',nt:'Glút+aductores'},{n:'Búlgara Cargada',s:4,r:'10/pierna',ds:'90s',nt:'Barra o mancuernas'},{n:'Hip Thrust con Pausa',s:4,r:'10',ds:'90s',nt:'3s isometría arriba'},{n:'Good Morning Barra',s:3,r:'10-12',ds:'90s',nt:'Isquios+glúteos'},{n:'Patada Cable Pesada',s:4,r:'12/lado',ds:'60s',nt:'Máx. extensión'},{n:'RDL Unilateral',s:3,r:'10/pierna',ds:'75s',nt:'Balance+prop.'}]},
+  pull:{b:[{n:'Jalón al Pecho',s:3,r:'12',ds:'75s',nt:'Codos bajan costillas'},{n:'Remo con Mancuerna',s:3,r:'12/lado',ds:'60s',nt:'Codo al techo'},{n:'Jalón Agarre Supino',s:3,r:'12',ds:'60s',nt:'Activa bíceps'},{n:'Remo Polea Baja',s:3,r:'12',ds:'60s',nt:'Tire hacia ombligo'},{n:'Curl Bíceps Barra',s:3,r:'12',ds:'60s',nt:'Sin balanceo'},{n:'Curl Martillo',s:3,r:'12',ds:'60s',nt:'Neutro todo rec.'}],i:[{n:'Dominadas Peso Propio',s:4,r:'6-10',ds:'90s',nt:'Rango completo'},{n:'Remo con Barra',s:4,r:'10',ds:'90s',nt:'Torso 45° estable'},{n:'Jalón Agarre Cerrado',s:3,r:'12',ds:'75s',nt:'Tire a esternón'},{n:'Remo Máquina con Pecho',s:3,r:'12',ds:'75s',nt:'Omóplatos juntos'},{n:'Curl Bíceps Barra EZ',s:4,r:'10-12',ds:'75s',nt:'Supinación completa'},{n:'Curl Predicador',s:3,r:'12',ds:'60s',nt:'Parte baja bíceps'},{n:'Encogimientos Barra',s:4,r:'12-15',ds:'60s',nt:'Trapecio superior'},{n:'Curl Inclinado Mancuernas',s:3,r:'12',ds:'60s',nt:'Máx. estiramiento'}],a:[{n:'Dominadas Peso Añadido',s:5,r:'6-8',ds:'120s',nt:'Cinturón de carga'},{n:'Remo Pendlay',s:4,r:'6-8',ds:'120s',nt:'Torso horizontal'},{n:'Remo T-Bar con Pecho',s:4,r:'10',ds:'90s',nt:'Máximo peso'},{n:'Curl Barra Olímpica',s:5,r:'6-8',ds:'90s',nt:'Carga máxima'},{n:'Curl Concentración',s:3,r:'10/brazo',ds:'60s',nt:'Pico máx. contrac.'},{n:'Jalón Agarre Neutro',s:4,r:'10',ds:'75s',nt:'Rotación interna'},{n:'Pullover Mancuerna',s:3,r:'12',ds:'75s',nt:'Dorsal y pecho'},{n:'Curl Spider EZ',s:3,r:'10',ds:'75s',nt:'Banco 45° inclinado'}]},
+  abs:{b:[{n:'Plancha Isométrica',s:3,r:'30-45s',ds:'45s',nt:'Cuerpo recto'},{n:'Crunch Abdominal',s:3,r:'20',ds:'30s',nt:'Contrae arriba'},{n:'Elevación de Piernas',s:3,r:'15',ds:'45s',nt:'Lumbar en suelo'},{n:'Bicicleta Abdominal',s:3,r:'20',ds:'30s',nt:'Codo a rodilla opp'},{n:'Superman',s:3,r:'15',ds:'30s',nt:'Lumbar+glút.'},{n:'Crunch Oblicuo',s:3,r:'15/lado',ds:'30s',nt:'Rota el torso'}],i:[{n:'Rueda Abdominal',s:3,r:'12-15',ds:'60s',nt:'Espalda recta'},{n:'Dragon Flag',s:3,r:'8-10',ds:'75s',nt:'Control total'},{n:'Elevación Piernas Barra',s:3,r:'15',ds:'45s',nt:'Isquiones fijos'},{n:'Plancha con Rotación',s:3,r:'10/lado',ds:'30s',nt:'Oblicuos'},{n:'Crunch Polea',s:3,r:'20',ds:'30s',nt:'Flexión espinal'},{n:'Pallof Press',s:3,r:'12/lado',ds:'30s',nt:'Estabilización'},{n:'Mountain Climbers',s:3,r:'30s',ds:'30s',nt:'Core+cardio'},{n:'Hollow Body Hold',s:3,r:'30s',ds:'45s',nt:'Core profundo'}],a:[{n:'Ab Wheel Rollout',s:4,r:'12',ds:'75s',nt:'Máx. elongación'},{n:'Dragon Flag',s:4,r:'8',ds:'90s',nt:'Control absoluto'},{n:'Toes to Bar',s:4,r:'12-15',ds:'45s',nt:'Agarre fuerte'},{n:'Hollow Body Hold',s:3,r:'45s',ds:'60s',nt:'Core profundo'},{n:'Crunch Polea Pesado',s:4,r:'20',ds:'30s',nt:'Flex. espinal pura'},{n:'Pallof Press Pesado',s:3,r:'12/lado',ds:'30s',nt:'Resistencia alta'},{n:'L-Sit Hold',s:3,r:'20s',ds:'60s',nt:'Core+comp. hombro'},{n:'V-Ups Lastrados',s:4,r:'15',ds:'30s',nt:'Full core'}]}
+};
+const SPLIT=[
+  {day:'Lunes',grp:'Piernas — Cuádriceps + Pantorrillas',areas:['legs'],c:'#00E676'},
+  {day:'Martes',grp:'Tren Superior — Push (Pecho + Tríceps + Hombros)',areas:['push'],c:'#2979FF'},
+  {day:'Miércoles',grp:'Glúteos + Abdominales',areas:['glutes','abs'],c:'#AA00FF'},
+  {day:'Jueves',grp:'Tren Superior — Pull (Espalda + Bíceps)',areas:['pull'],c:'#FF6D00'},
+  {day:'Viernes',grp:'Piernas Posterior + Glúteos',areas:['legs','glutes'],c:'#FF1744'},
+];
+const LV_MAX={b:6,i:8,a:10};
+const SER_CFG={gain:{b:{s:3,r:'12-15',ds:'75s'},i:{s:4,r:'10-12',ds:'60s'},a:{s:5,r:'8-10',ds:'45s'}},lose:{b:{s:3,r:'15-20',ds:'40s'},i:{s:4,r:'15-20',ds:'30s'},a:{s:5,r:'20+',ds:'20s'}},strength:{b:{s:4,r:'8-10',ds:'90s'},i:{s:5,r:'6-8',ds:'90s'},a:{s:5,r:'4-6',ds:'120s'}}};
+
+async function genTrain(){
+  if(!await consumeCredits(CREDIT_COST_CALC,'calc_entrenamiento'))return;
+  const goal=document.getElementById('tg').value,lv=document.getElementById('tlv').value,ser=document.getElementById('tser').value;
+  const cfg=SER_CFG[goal][lv];const maxEx=LV_MAX[lv];TR_CFG={goal,lv,ser,cfg};
+  TR_DAYS=SPLIT.map(d=>{let exs=[];d.areas.forEach(a=>{const pool=(EX[a]&&EX[a][lv])||[];pool.forEach(e=>{if(!exs.find(x=>x.n===e.n))exs.push(e);});});exs=exs.slice(0,maxEx).map(e=>({...e,s:cfg.s,r:cfg.r,ds:cfg.ds}));return{...d,exs};});
+  let tabs='';TR_DAYS.forEach((d,i)=>tabs+=`<button class="dtab${i===0?' on':''}" onclick="showTrDay(${i},this)">${d.day}</button>`);
+  document.getElementById('tr-day-tabs').innerHTML=tabs;showTrDay(0,document.querySelector('#tr-day-tabs .dtab'));
+  const proto={gain:'Objetivo: Hipertrofia. Progresión semanal: aumenta 2.5-5kg. Descansa 8h. Come en superávit 300-500 kcal.',lose:'Objetivo: Definición. Descansos cortos. Alta proteína para preservar músculo. Cardio HIIT 2x/semana adicional.',strength:'Objetivo: Fuerza máxima. Pesas pesadas, pocas reps. Descansa completamente entre series.'};
+  document.getElementById('tr-protocol').innerHTML=`<div style="background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.15);border-radius:8px;padding:14px;font-size:.86rem;line-height:1.6;">${proto[goal]||proto.gain}</div>`;
+  document.getElementById('tr-res').style.display='block';selTrWeek(1,document.getElementById('trt-1'));
+  setTimeout(()=>document.getElementById('tr-res').scrollIntoView({behavior:'smooth'}),100);
+}
+
+function selTrWeek(w,el){
+  TR_WEEK=w;document.querySelectorAll('.trt').forEach(b=>b.classList.remove('on'));if(el)el.classList.add('on');if(!TR_CFG)return;
+  const cfg=SER_CFG[TR_CFG.goal][TR_CFG.lv];const maxEx=LV_MAX[TR_CFG.lv];
+  TR_DAYS=SPLIT.map(d=>{let exs=[];d.areas.forEach(a=>{const pool=(EX[a]&&EX[a][TR_CFG.lv])||[];pool.forEach(e=>{if(!exs.find(x=>x.n===e.n))exs.push(e);});});return{...d,exs:exs.slice(0,maxEx).map(e=>({...e,s:cfg.s,r:cfg.r,ds:cfg.ds}))};});
+  const wInfo={1:{v:60,o:'Adaptación y técnica correcta'},2:{v:75,o:'Aumentar carga 5-10%'},3:{v:85,o:'Sobrecarga progresiva'},4:{v:90,o:'Intensidad máxima semana final'}};
+  const wi=wInfo[w]||wInfo[1];
+  const el2=document.getElementById('tr-week-info');
+  if(el2)el2.innerHTML=`<div style="background:rgba(255,109,0,.06);border:1px solid rgba(255,109,0,.15);border-radius:8px;padding:10px 14px;font-size:.83rem;margin-top:8px;"><strong style="color:var(--or);">Semana ${w}</strong> | Volumen: ${wi.v}% | <span style="color:var(--mu);">${wi.o}</span></div>`;
+  let tabs='';TR_DAYS.forEach((d,i)=>tabs+=`<button class="dtab${i===0?' on':''}" onclick="showTrDay(${i},this)">${d.day}</button>`);
+  document.getElementById('tr-day-tabs').innerHTML=tabs;showTrDay(0,document.querySelector('#tr-day-tabs .dtab'));
+}
+
+function showTrDay(idx,el){
+  document.querySelectorAll('#tr-day-tabs .dtab').forEach(b=>b.classList.remove('on'));if(el)el.classList.add('on');if(!TR_DAYS)return;
+  const day=TR_DAYS[idx];const c=day.c;
+  const isGiant=TR_CFG&&TR_CFG.lv==='a';const isTri=TR_CFG&&TR_CFG.lv==='i';const gSz=isGiant?4:isTri?3:1;const gLbl=isGiant?'SERIE GIGANTE':isTri?'TRISERIE':'';
+  let html=`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;"><span style="background:${c}22;color:${c};padding:3px 10px;border-radius:12px;font-size:.72rem;font-weight:700;">${day.grp}</span><span style="font-size:.8rem;color:var(--mu);">${day.exs.length} ejercicios</span></div>`;
+  if(gSz>1){
+    const groups=[];for(let i=0;i<day.exs.length;i+=gSz)groups.push(day.exs.slice(i,i+gSz));
+    groups.forEach((grp,gi)=>{html+=`<div class="tri-blk"><div class="tri-hd" style="background:${c}12;"><span class="tri-lbl" style="color:${c};">${gLbl} ${gi+1}</span><span class="tri-ds">Sin descanso entre ejercicios → descansa al finalizar</span></div><table class="ex-tbl"><thead><tr><th>#</th><th>Ejercicio</th><th>Series</th><th>Reps</th><th>Descanso</th><th>Técnica</th></tr></thead><tbody>${grp.map((ex,i)=>`<tr><td><div style="width:26px;height:26px;border-radius:50%;background:${c}22;color:${c};display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;">${gi*gSz+i+1}</div></td><td><strong>${ex.n}</strong></td><td><span class="bx bg">${ex.s}x</span></td><td><span class="bx bb">${ex.r}</span></td><td>${i<grp.length-1?`<span style="color:${c};font-size:.75rem;font-weight:700;">→ DIRECTO</span>`:`<span class="bx bo">${ex.ds}</span>`}</td><td style="font-size:.74rem;color:var(--mu);">${ex.nt}</td></tr>`).join('')}</tbody></table></div>`;});
+  }else{
+    html+=`<table class="ex-tbl"><thead><tr><th>#</th><th>Ejercicio</th><th>Series</th><th>Reps</th><th>Descanso</th><th>Técnica</th></tr></thead><tbody>${day.exs.map((ex,i)=>`<tr><td><div style="width:26px;height:26px;border-radius:50%;background:${c}22;color:${c};display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;">${i+1}</div></td><td><strong>${ex.n}</strong></td><td><span class="bx bg">${ex.s}x</span></td><td><span class="bx bb">${ex.r}</span></td><td><span class="bx bo">${ex.ds}</span></td><td style="font-size:.74rem;color:var(--mu);">${ex.nt}</td></tr>`).join('')}</tbody></table>`;
+  }
+  document.getElementById('tr-day-detail').innerHTML=html;
+}
+
+// ═══════════════════════════════════════
+// CHAT LOCAL
+// ═══════════════════════════════════════
+let chatOpen=false;
+function toggleChat(){
+  chatOpen=!chatOpen;
+  const bub=document.getElementById('chat-bub');if(bub)bub.classList.toggle('open',chatOpen);
+  const ic=document.getElementById('chat-ic');if(ic)ic.textContent=chatOpen?'✕':'💬';
+  if(chatOpen){
+    const msgs=document.getElementById('chat-msgs');
+    if(msgs&&msgs.children.length===0){
+      const welcome='¡Hola! Soy tu Coach FitnessPro. ¿En qué te ayudo? 💪';
+      addChatMsg('bot',welcome);setTimeout(()=>speakText(welcome),400);
+    }
+  } else { if(window.speechSynthesis) window.speechSynthesis.cancel(); }
+}
+function addChatMsg(role,txt){
+  const msgs=document.getElementById('chat-msgs');if(!msgs)return null;
+  const d=document.createElement('div');d.className='chat-msg msg-'+role;
+  d.innerHTML=role==='bot'?txt:'';if(role==='usr')d.textContent=txt;
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d;
+}
+function quickChat(idx){
+  const txts=['💰 Precios','📋 ¿Qué incluye?','🚀 Comprar','🏋️ ¿Cómo funciona?','💳 ¿Qué son créditos?'];
+  const inp=document.getElementById('chat-inp-el');if(inp)inp.value=txts[idx]||'';
+  const qk=document.getElementById('chat-quick');if(qk)qk.style.display='none';
+  sendChat();
+}
+function chatFallback(msg){
+  const m=msg.toLowerCase();
+  if(m.includes('precio')||m.includes('cost'))return'💰 Plan Semanal: <strong>$9.99</strong> — 50 créditos, 7 días. Plan Mensual: <strong>€24</strong> — 120 créditos, 30 días.';
+  if(m.includes('crédito')||m.includes('credit'))return'💳 Calcular un plan = 3 créditos. Descargar JPG = 5 créditos. Se sincronizan con Firebase en tiempo real.';
+  if(m.includes('funciona')||m.includes('cómo'))return'🏋️ FitnessPro tiene 4 módulos: 🥗 Nutrición, 💪 Entrenamiento, 📚 Librería de ejercicios, y 💳 Pagos.';
+  if(m.includes('comprar')||m.includes('pago'))return'🛒 Ve a la pestaña 💳 Pagos o escríbenos directamente por WhatsApp.';
+  if(m.includes('nutric')||m.includes('dieta'))return'🥗 En Nutrición calculo tus calorías, macros y plan de comidas para 5 días según tu objetivo.';
+  if(m.includes('entrena')||m.includes('rutina'))return'💪 En Entrenamiento genero una rutina de 5 días personalizada según tu nivel y objetivo.';
+  if(m.includes('hola')||m.includes('buenos'))return'¡Hola! Soy el Coach FitnessPro 💪 ¿En qué te ayudo?';
+  return'💪 Puedo ayudarte con nutrición, entrenamiento, precios y uso del sistema. ¿Qué necesitas?';
+}
+function sendChat(){
+  const inp=document.getElementById('chat-inp-el');if(!inp)return;
+  const msg=inp.value.trim();if(!msg)return;inp.value='';
+  addChatMsg('usr',msg);
+  const loadDiv=addChatMsg('bot','<span style="color:var(--mu)">✍️ Escribiendo...</span>');
+  setTimeout(()=>{const reply=chatFallback(msg);if(loadDiv)loadDiv.innerHTML=reply;setTimeout(()=>speakText(reply),200);},600);
+}
+function openContact(){
+  window.open('https://wa.me/'+_WA_VE+'?text='+encodeURIComponent('Hola! Me interesa el plan de FitnessPro. ¿Cómo puedo obtener acceso?'),'_blank');
+}
+
+// ═══════════════════════════════════════
+// DESCARGA JPG
+// ═══════════════════════════════════════
+async function dlNutJPG(){
+  if(!NS){alert('Primero calcula tu plan nutricional');return;}
+  if(!await consumeCredits(CREDIT_COST_DOWNLOAD,'download_nutricion'))return;
+  const btn=document.getElementById('btn-nut-jpg');btn.disabled=true;btn.innerHTML='⏳ Generando imagen...';
+  try{
+    const goalTxt={gain:'Ganar Masa Muscular',lose:'Perder Grasa',maintain:'Mantener Peso'}[NS.goal]||NS.goal;
+    const dayFoods=FOODS_ALL[NUT_WEEK||1][NS.goal];
+    let mealsHTML='';
+    DAYS.forEach((dk,di)=>{const day=dayFoods?dayFoods[dk]:null;if(!day)return;mealsHTML+=`<div style="margin-bottom:14px;"><div style="background:#0a1428;padding:6px 10px;border-radius:6px 6px 0 0;font-weight:700;font-size:.85rem;color:#00E676;border-left:3px solid #00E676;">${DNAMES[di]}</div>`;day.slice(0,3).forEach(m=>{const mk=m.f.reduce((s,f)=>s+f.k,0);mealsHTML+=`<div class="jpg-meal"><div class="jpg-meal-hd"><span>${m.n}</span><span style="color:#FF6D00;">${mk} kcal</span></div>`;m.f.forEach(f=>{mealsHTML+=`<div class="jpg-meal-row"><span>${f.n} (${f.a})</span><span style="color:#6272a4;">P:${f.p}g C:${f.c}g G:${f.fa}g | ${f.k}kcal</span></div>`;});mealsHTML+=`</div>`;});mealsHTML+=`</div>`;});
+    const tgt=document.getElementById('jpg-nut-target');
+    tgt.innerHTML=wrapWithWatermark(`<div class="jpg-header"><div class="jpg-logo">FitnessPro</div><div style="color:#FF6D00;font-size:.75rem;font-weight:700;letter-spacing:2px;margin-top:3px;">PLAN NUTRICIONAL</div><div class="jpg-subtitle">${NS.age} años | ${NS.wt}kg | ${NS.ht}cm | Objetivo: ${goalTxt} | IMC: ${NS.imc}</div></div><div class="jpg-section"><div class="jpg-section-title">MACRONUTRIENTES DIARIOS</div><div class="jpg-stats"><div class="jpg-stat"><div class="jpg-stat-v" style="color:#00E676;">${NS.kcal}</div><div class="jpg-stat-l">Calorías/día</div></div><div class="jpg-stat"><div class="jpg-stat-v" style="color:#82b1ff;">${NS.P}g (${NS.pp}%)</div><div class="jpg-stat-l">Proteína</div></div><div class="jpg-stat"><div class="jpg-stat-v" style="color:#ffcc02;">${NS.C}g (${NS.cp}%)</div><div class="jpg-stat-l">Carbohidratos</div></div><div class="jpg-stat"><div class="jpg-stat-v" style="color:#ff5252;">${NS.F}g (${NS.fp}%)</div><div class="jpg-stat-l">Grasas</div></div><div class="jpg-stat"><div class="jpg-stat-v" style="color:#00bcd4;">${(NS.wt*0.033).toFixed(1)}L</div><div class="jpg-stat-l">Agua/día</div></div></div></div><div class="jpg-section"><div class="jpg-section-title">PLAN DE COMIDAS — 5 DÍAS</div>${mealsHTML}</div><div class="jpg-footer">FitnessPro Elite — Plan Nutricional Personalizado</div>`);
+    tgt.style.cssText='position:fixed;left:-9999px;top:0;width:800px;background:#0b0f1e;padding:20px;font-family:DM Sans,sans-serif;color:#e8eaf6;z-index:-1;';
+    await new Promise(r=>setTimeout(r,200));
+    const canvas=await html2canvas(tgt,{backgroundColor:'#0b0f1e',scale:2,useCORS:true,allowTaint:true,logging:false});
+    const link=document.createElement('a');link.download=`FitnessPro-Nutricion-${NS.goal}.jpg`;link.href=canvas.toDataURL('image/jpeg',0.92);link.click();
+    tgt.innerHTML='';btn.innerHTML='✅ JPG DESCARGADO';clearResultAfterDownload('nut');
+    setTimeout(()=>{btn.disabled=false;btn.innerHTML='📸 DESCARGAR COMO JPG <span style="font-size:.7rem;opacity:.7;">(5 cr.)</span>';},3000);
+  }catch(e){console.error(e);btn.disabled=false;btn.innerHTML='📸 DESCARGAR COMO JPG';alert('Error al generar imagen.');}
+}
+
+async function dlTrJPG(){
+  if(!TR_DAYS){alert('Primero genera tu plan de entrenamiento');return;}
+  if(!await consumeCredits(CREDIT_COST_DOWNLOAD,'download_entrenamiento'))return;
+  const btn=document.getElementById('btn-tr-jpg');btn.disabled=true;btn.innerHTML='⏳ Generando imagen...';
+  try{
+    const lvNames={b:'PRINCIPIANTE',i:'INTERMEDIO',a:'AVANZADO'};const goalNames={gain:'Ganar Músculo',lose:'Perder Grasa',strength:'Fuerza'};
+    const lv=TR_CFG.lv,lc={b:'#00E676',i:'#FF6D00',a:'#FF1744'}[lv]||'#00E676';
+    let daysHTML='';TR_DAYS.forEach(day=>{daysHTML+=`<div style="margin-bottom:14px;border:1px solid #1a2035;border-radius:8px;overflow:hidden;"><div style="background:${day.c};padding:8px 12px;font-weight:700;font-size:.85rem;color:#000;">${day.day.toUpperCase()} — ${day.grp}</div><table class="jpg-table"><thead><tr><th>#</th><th>Ejercicio</th><th>Series</th><th>Reps</th><th>Descanso</th><th>Nota</th></tr></thead><tbody>${day.exs.map((ex,i)=>`<tr><td style="color:${lc};font-weight:700;text-align:center;">${i+1}</td><td><strong>${ex.n}</strong></td><td style="text-align:center;">${ex.s}x</td><td style="text-align:center;">${ex.r}</td><td style="text-align:center;">${ex.ds}</td><td style="color:#6272a4;">${ex.nt}</td></tr>`).join('')}</tbody></table></div>`;});
+    const tgt=document.getElementById('jpg-tr-target');
+    tgt.innerHTML=wrapWithWatermark(`<div class="jpg-header"><div class="jpg-logo">FitnessPro</div><div style="color:${lc};font-size:.75rem;font-weight:700;letter-spacing:2px;margin-top:3px;">PLAN ENTRENAMIENTO — ${lvNames[lv]||'INTERMEDIO'}</div><div class="jpg-subtitle">Objetivo: ${goalNames[TR_CFG.goal]} | Nivel: ${lvNames[lv]} | 5 días/semana</div></div><div class="jpg-section"><div class="jpg-section-title">RUTINA SEMANAL COMPLETA</div>${daysHTML}</div><div class="jpg-footer">FitnessPro Elite — Plan de Entrenamiento</div>`);
+    tgt.style.cssText='position:fixed;left:-9999px;top:0;width:800px;background:#0b0f1e;padding:20px;font-family:DM Sans,sans-serif;color:#e8eaf6;z-index:-1;';
+    await new Promise(r=>setTimeout(r,200));
+    const canvas=await html2canvas(tgt,{backgroundColor:'#0b0f1e',scale:2,useCORS:true,allowTaint:true,logging:false});
+    const link=document.createElement('a');link.download=`FitnessPro-Entrenamiento-${lvNames[lv]||'INT'}.jpg`;link.href=canvas.toDataURL('image/jpeg',0.92);link.click();
+    tgt.innerHTML='';btn.innerHTML='✅ JPG DESCARGADO';clearResultAfterDownload('tr');
+    setTimeout(()=>{btn.disabled=false;btn.innerHTML='📸 DESCARGAR COMO JPG <span style="font-size:.7rem;opacity:.7;">(5 cr.)</span>';},3000);
+  }catch(e){console.error(e);btn.disabled=false;btn.innerHTML='📸 DESCARGAR COMO JPG';alert('Error al generar imagen.');}
+}
+
+async function dlLibJPG(){
+  const tableEl=document.getElementById('lib-result-table');const titleEl=document.getElementById('lib-result-title');
+  if(!tableEl||!tableEl.innerHTML){alert('Primero calcula ejercicios');return;}
+  if(!await consumeCredits(CREDIT_COST_DOWNLOAD,'download_libreria'))return;
+  const btn=document.getElementById('btn-lib-jpg');if(btn){btn.disabled=true;btn.innerHTML='⏳ Generando...';}
+  try{
+    const tgt=document.getElementById('jpg-lib-target');const catLabel=titleEl?titleEl.innerHTML:'Librería';
+    tgt.innerHTML=wrapWithWatermark(`<div class="jpg-header"><div class="jpg-logo">FitnessPro</div><div style="color:#00E676;font-size:.75rem;font-weight:700;letter-spacing:2px;margin-top:3px;">LIBRERÍA DE EJERCICIOS</div><div class="jpg-subtitle">${catLabel}</div></div><div class="jpg-section"><div class="jpg-section-title">EJERCICIOS</div>${tableEl.innerHTML}</div><div class="jpg-footer">FitnessPro Elite — Librería 900 Ejercicios</div>`);
+    tgt.style.cssText='position:absolute;left:-9999px;top:0;width:800px;background:#0b0f1e;padding:20px;font-family:DM Sans,sans-serif;color:#e8eaf6;';
+    await new Promise(r=>setTimeout(r,400));
+    const canvas=await html2canvas(tgt,{backgroundColor:'#0b0f1e',scale:2,useCORS:true,allowTaint:true,logging:false});
+    const link=document.createElement('a');link.download='FitnessPro-Libreria.jpg';link.href=canvas.toDataURL('image/jpeg',0.92);link.click();
+    tgt.innerHTML='';if(btn){btn.innerHTML='✅ JPG DESCARGADO';setTimeout(()=>{btn.disabled=false;btn.innerHTML='📸 DESCARGAR JPG <span style="font-size:.7rem;opacity:.7;">(5 cr.)</span>';},3000);}
+  }catch(e){console.error(e);if(btn){btn.disabled=false;btn.innerHTML='📸 DESCARGAR JPG';}alert('Error al generar imagen.');}
+}
+
+// ═══════════════════════════════════════
+// MARCA DE AGUA
+// ═══════════════════════════════════════
+function wrapWithWatermark(innerHtml){
+  const hoy=new Date().toLocaleDateString('es-ES');
+  const wmRow='<div style="white-space:nowrap;line-height:2.4;">'+'<span style="color:rgba(220,20,60,0.28);font-size:20px;font-weight:700;font-family:Arial,sans-serif;margin-right:55px;">© FÁTIMA HAIR STUDIO 082</span>'.repeat(8)+'</div>';
+  const wmRows=wmRow.repeat(28);
+  return `<div style="position:relative;width:100%;overflow:hidden;"><div style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;overflow:hidden;"><div style="position:absolute;top:-40px;left:-40px;width:220%;height:220%;transform:rotate(-28deg);transform-origin:0 0;"><div style="display:flex;flex-direction:column;gap:0;">${wmRows}</div></div></div>${innerHtml}<div style="background:#000;padding:10px 16px;margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;"><span style="color:#ff4444;font-weight:700;font-size:13px;font-family:Arial,sans-serif;">© Fátima Caldea · Autora Intelectual · FÁTIMA HAIR STUDIO 082</span><span style="color:rgba(255,255,255,0.85);font-size:12px;font-family:Arial,sans-serif;">fatimahairstudio082.com · ${hoy}</span></div><div style="background:#1a0008;padding:5px 16px;text-align:center;"><span style="color:#ff4444;font-weight:700;font-size:12px;font-family:Arial,sans-serif;">⚠ Prohibida su venta — Derechos de Autor Reservados</span></div></div>`;
+}
+
+// ═══════════════════════════════════════
+// ANTICOPY
+// ═══════════════════════════════════════
+(function(){
+  document.addEventListener('contextmenu',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;e.preventDefault();});
+  document.addEventListener('keydown',e=>{
+    if(e.ctrlKey&&['v','c','a','z','x'].includes(e.key.toLowerCase()))return;
+    const block=(e.ctrlKey&&!e.shiftKey&&['u','s'].includes(e.key.toLowerCase()))||(e.ctrlKey&&e.shiftKey&&['i','j'].includes(e.key.toLowerCase()))||e.key==='F12';
+    if(block){e.preventDefault();e.stopPropagation();}
+  });
+  document.addEventListener('dragstart',e=>e.preventDefault());
+})();
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  initCredits();
+  detectGeoLang();
+});
+</script>
+<script src="hub_credito_bridge.js"></script>
+</body>
+</html>

@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Academia Interactiva · Fátima Caldea</title>
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;700&family=Barlow+Condensed:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --negro:#050505;--negro2:#0a0a0a;--negro3:#111;--negro4:#1a1a1a;
+  --verde:#00ffc3;--oro:#e8b86d;--oro2:#b8882d;
+  --azul:#00f2ff;--morado:#a855f7;--rojo:#ef4444;--naranja:#f97316;
+  --gris:#555;--gris2:#333;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--negro);color:#fff;font-family:'Josefin Sans',sans-serif;overflow-x:hidden;}
+body{min-height:100vh;}
+
+/* ══ LAYOUT ══ */
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+
+/* ══ HEADER ══ */
+.header{background:linear-gradient(135deg,#0a0a0a,#111);border-bottom:1px solid rgba(232,184,109,.2);padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
+.header-av{width:40px;height:40px;border-radius:50%;border:2px solid var(--oro);object-fit:cover;flex-shrink:0;}
+.header-info{flex:1;}
+.header-name{font-size:12px;color:var(--oro);font-weight:700;letter-spacing:2px;}
+.header-sub{font-size:8px;color:var(--gris);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+.header-right{display:flex;align-items:center;gap:8px;}
+.score-badge{background:rgba(232,184,109,.1);border:1px solid rgba(232,184,109,.3);border-radius:20px;padding:4px 10px;font-size:10px;color:var(--oro);font-weight:700;}
+.tts-btn{width:32px;height:32px;border-radius:50%;border:1px solid rgba(232,184,109,.3);background:transparent;color:var(--oro);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;}
+.tts-btn:hover{background:rgba(232,184,109,.1);}
+.tts-wave{display:flex;align-items:center;gap:2px;height:16px;}
+.tts-wave span{display:inline-block;width:2px;background:var(--oro);border-radius:1px;animation:wave .8s ease-in-out infinite;}
+.tts-wave span:nth-child(2){animation-delay:.1s;}
+.tts-wave span:nth-child(3){animation-delay:.2s;}
+.tts-wave span:nth-child(4){animation-delay:.3s;}
+.tts-wave.hidden{display:none;}
+@keyframes wave{0%,100%{height:3px}50%{height:14px}}
+
+/* ══ CONTENIDO ══ */
+.content{flex:1;padding:16px;overflow-y:auto;}
+.content::-webkit-scrollbar{width:3px;}
+.content::-webkit-scrollbar-thumb{background:rgba(232,184,109,.2);}
+
+/* ══ MENÚ PRINCIPAL ══ */
+.menu-hero{text-align:center;padding:20px 0 24px;}
+.menu-hero-title{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--oro);letter-spacing:3px;text-transform:uppercase;}
+.menu-hero-sub{font-size:9px;color:var(--gris);letter-spacing:3px;text-transform:uppercase;margin-top:4px;}
+.menu-hero-pts{font-size:11px;color:var(--verde);margin-top:10px;letter-spacing:1px;}
+
+.capas-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.capa-card{border-radius:16px;padding:18px 14px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;border:1px solid transparent;}
+.capa-card:hover{transform:translateY(-3px);}
+.capa-card:active{transform:scale(.97);}
+.capa-ico{font-size:2.2rem;margin-bottom:8px;display:block;}
+.capa-nom{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.capa-desc{font-size:8px;color:rgba(255,255,255,.5);letter-spacing:.5px;line-height:1.5;}
+.capa-niveles{display:flex;gap:3px;margin-top:8px;}
+.dot-nivel{width:8px;height:8px;border-radius:50%;opacity:.4;}
+.dot-nivel.done{opacity:1;}
+.capa-progress{position:absolute;bottom:0;left:0;height:3px;border-radius:0 0 0 16px;transition:width .5s;}
+
+/* Colores capas */
+.capa-peluqueria{background:linear-gradient(135deg,#1a0d00,#2d1800);border-color:rgba(232,184,109,.25);}
+.capa-color{background:linear-gradient(135deg,#0d001a,#1a0030);border-color:rgba(168,85,247,.25);}
+.capa-fitness{background:linear-gradient(135deg,#001a0d,#002d18);border-color:rgba(0,255,195,.2);}
+.capa-nutricion{background:linear-gradient(135deg,#1a0800,#2d1400);border-color:rgba(249,115,22,.25);}
+.capa-construccion{background:linear-gradient(135deg,#0d0d1a,#141430);border-color:rgba(0,242,255,.2);}
+.capa-tetris{background:linear-gradient(135deg,#0a0a0a,#1a1a2e);border-color:rgba(0,242,255,.15);grid-column:span 2;}
+
+/* ══ SELECTOR DE NIVEL ══ */
+.nivel-screen{display:none;}
+.back-btn{display:flex;align-items:center;gap:6px;background:transparent;border:none;color:var(--gris);font-family:'Josefin Sans',sans-serif;font-size:10px;letter-spacing:2px;cursor:pointer;padding:0;margin-bottom:20px;text-transform:uppercase;}
+.back-btn:hover{color:#fff;}
+.nivel-title{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.nivel-sub{font-size:9px;color:var(--gris);letter-spacing:2px;margin-bottom:24px;}
+.niveles-list{display:flex;flex-direction:column;gap:10px;}
+.nivel-item{padding:16px;border-radius:14px;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:14px;border:1px solid transparent;}
+.nivel-item:hover{transform:translateX(4px);}
+.nivel-item:active{transform:scale(.98);}
+.nivel-ico{font-size:1.8rem;flex-shrink:0;}
+.nivel-info{flex:1;}
+.nivel-nom{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;letter-spacing:1px;text-transform:uppercase;}
+.nivel-desc{font-size:9px;color:rgba(255,255,255,.5);margin-top:2px;line-height:1.5;}
+.nivel-count{font-size:9px;font-weight:700;letter-spacing:1px;flex-shrink:0;}
+
+/* ══ QUIZ ══ */
+.quiz-screen{display:none;}
+.quiz-header{margin-bottom:16px;}
+.quiz-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.quiz-cat{font-size:8px;letter-spacing:2px;color:var(--gris);text-transform:uppercase;}
+.quiz-timer{font-size:11px;font-weight:700;letter-spacing:1px;}
+.quiz-prog-wrap{height:4px;background:var(--negro4);border-radius:2px;overflow:hidden;}
+.quiz-prog{height:100%;border-radius:2px;transition:width .4s;}
+.quiz-num{font-size:8px;color:var(--gris);text-align:right;margin-top:4px;letter-spacing:1px;}
+
+.quiz-bubble{background:var(--negro3);border-radius:16px 16px 16px 4px;padding:16px;margin-bottom:16px;position:relative;}
+.quiz-bubble::before{content:'FC';position:absolute;top:-10px;left:0;font-size:7px;color:var(--oro);letter-spacing:1px;font-weight:700;}
+.quiz-q{font-size:13px;line-height:1.6;color:#fff;margin-bottom:0;}
+.quiz-explain{font-size:10px;color:rgba(255,255,255,.4);margin-top:8px;line-height:1.6;display:none;}
+
+.quiz-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.quiz-opt{padding:13px 16px;border-radius:12px;border:1.5px solid var(--negro4);background:var(--negro3);color:#fff;font-family:'Josefin Sans',sans-serif;font-size:11px;cursor:pointer;transition:all .2s;text-align:left;letter-spacing:.3px;line-height:1.5;}
+.quiz-opt:hover:not(:disabled){border-color:rgba(255,255,255,.2);background:var(--negro4);}
+.quiz-opt.correct{border-color:#22c55e;background:rgba(34,197,94,.12);color:#22c55e;}
+.quiz-opt.wrong{border-color:var(--rojo);background:rgba(239,68,68,.1);color:var(--rojo);}
+.quiz-opt:disabled{cursor:default;}
+
+.quiz-feedback{padding:12px 14px;border-radius:12px;font-size:11px;line-height:1.7;margin-bottom:14px;display:none;}
+.quiz-feedback.ok{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:#86efac;}
+.quiz-feedback.fail{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#fca5a5;}
+
+.quiz-next{width:100%;padding:13px;border-radius:12px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:none;}
+
+/* ══ RESULTADO ══ */
+.result-screen{display:none;text-align:center;padding:20px 0;}
+.result-ico{font-size:4rem;margin-bottom:16px;}
+.result-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.result-pts{font-size:48px;font-weight:900;font-family:'Barlow Condensed',sans-serif;margin:16px 0;}
+.result-msg{font-size:11px;color:var(--gris);line-height:1.8;margin-bottom:24px;max-width:280px;margin-left:auto;margin-right:auto;}
+.result-badge{display:inline-block;padding:8px 20px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;}
+.result-btns{display:flex;flex-direction:column;gap:8px;}
+.r-btn{padding:13px;border-radius:12px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+
+/* ══ TETRIS ══ */
+.tetris-screen{display:none;text-align:center;}
+.t-score-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.t-sc-lbl{font-size:9px;color:var(--gris);letter-spacing:2px;}
+.t-sc-num{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--azul);}
+#tetC{background:#000;border:2px solid rgba(0,242,255,.3);border-radius:10px;display:block;margin:0 auto;max-width:100%;}
+.tctrl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:12px auto 0;}
+.tbtn{background:rgba(0,242,255,.07);border:1px solid rgba(0,242,255,.2);color:var(--azul);height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:20px;cursor:pointer;transition:.15s;user-select:none;}
+.tbtn:active{background:var(--azul);color:#000;}
+.tbl{border-color:rgba(189,147,249,.3);color:#bd93f9;}
+.tbl:active{background:#bd93f9;color:#000;}
+.tbr{border-color:rgba(255,121,198,.3);color:#ff79c6;}
+.tbr:active{background:#ff79c6;color:#000;}
+#tetOv{position:absolute;inset:0;background:rgba(0,0,0,.9);display:none;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;}
+
+/* ══ BTN GENERAL ══ */
+.btn-g{padding:10px 14px;border-radius:10px;border:1px solid;font-family:'Josefin Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase;}
+
+/* ══ CHATBOX TTS ══ */
+#chatTTS{position:fixed;bottom:16px;right:16px;z-index:500;}
+.chat-fab{width:52px;height:52px;border-radius:50%;border:2px solid var(--oro);overflow:hidden;cursor:pointer;animation:fabP 3s ease-in-out infinite;box-shadow:0 4px 20px rgba(0,0,0,.6);}
+.chat-fab img{width:100%;height:100%;object-fit:cover;}
+@keyframes fabP{0%,100%{box-shadow:0 4px 20px rgba(0,0,0,.6),0 0 0 0 rgba(232,184,109,.4)}50%{box-shadow:0 4px 20px rgba(0,0,0,.6),0 0 0 8px rgba(232,184,109,0)}}
+.chat-panel{position:absolute;bottom:62px;right:0;width:280px;background:var(--negro2);border:1px solid rgba(232,184,109,.3);border-radius:16px;overflow:hidden;display:none;box-shadow:0 16px 40px rgba(0,0,0,.8);}
+.chat-panel.open{display:block;animation:slideUp .2s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.chat-head{background:linear-gradient(135deg,rgba(232,184,109,.08),transparent);padding:12px 14px;border-bottom:1px solid rgba(232,184,109,.1);display:flex;align-items:center;justify-content:space-between;}
+.chat-head-name{font-size:11px;color:var(--oro);font-weight:700;letter-spacing:1px;}
+.chat-head-sub{font-size:8px;color:var(--gris);}
+.chat-x{background:transparent;border:none;color:var(--gris);font-size:16px;cursor:pointer;}
+.chat-msgs{height:200px;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;}
+.chat-msgs::-webkit-scrollbar{width:2px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:rgba(232,184,109,.2);}
+.msg-bot{background:rgba(232,184,109,.08);border:1px solid rgba(232,184,109,.12);padding:8px 10px;border-radius:10px 10px 10px 2px;font-size:10px;color:#e2e8f0;line-height:1.6;max-width:90%;}
+.msg-user{background:rgba(0,255,195,.08);border:1px solid rgba(0,255,195,.12);padding:8px 10px;border-radius:10px 10px 2px 10px;font-size:10px;color:#e2e8f0;line-height:1.6;max-width:90%;align-self:flex-end;}
+.chat-quick{padding:8px 10px;border-top:1px solid rgba(255,255,255,.05);display:flex;flex-wrap:wrap;gap:5px;}
+.qk{padding:4px 10px;border-radius:20px;border:1px solid rgba(232,184,109,.2);background:transparent;color:var(--oro);font-size:8px;cursor:pointer;font-family:'Josefin Sans',sans-serif;letter-spacing:.5px;transition:.2s;}
+.qk:hover{background:rgba(232,184,109,.1);}
+
+@media(max-width:380px){
+  .capas-grid{grid-template-columns:1fr;}
+  .capa-tetris{grid-column:span 1;}
+  .chat-panel{width:calc(100vw - 32px);right:-4px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══ HEADER ══ -->
+  <div class="header">
+    <img class="header-av"
+      src="https://drive.google.com/thumbnail?id=14NX9qP8W4pYFITfWKJIgIMUk39QdYncN&sz=w200"
+      onerror="this.style.background='#1a1a1a'" alt="Fátima">
+    <div class="header-info">
+      <div class="header-name">FÁTIMA CALDEA</div>
+      <div class="header-sub">Academia Interactiva · Nivel Dios</div>
+    </div>
+    <div class="header-right">
+      <div class="score-badge">⭐ <span id="totalPts">0</span></div>
+      <button class="tts-btn" onclick="TTS.parar()" title="Detener voz">⏹</button>
+      <div class="tts-wave hidden" id="ttsWave">
+        <span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CONTENIDO ══ -->
+  <div class="content">
+
+    <!-- MENÚ PRINCIPAL -->
+    <div id="screenMenu">
+      <div class="menu-hero">
+        <div class="menu-hero-title">🎓 Academia</div>
+        <div class="menu-hero-sub">Selecciona una categoría para aprender</div>
+        <div class="menu-hero-pts">Puntos totales: <span id="ptsDisplay">0</span> ⭐</div>
+      </div>
+
+      <div class="capas-grid">
+        <!-- PELUQUERÍA -->
+        <div class="capa-card capa-peluqueria" onclick="abrirCapa('peluqueria')">
+          <span class="capa-ico">✂️</span>
+          <div class="capa-nom" style="color:var(--oro)">Corte & Peluquería</div>
+          <div class="capa-desc">Geometría, diagnóstico facial, elevaciones, técnicas</div>
+          <div class="capa-niveles" id="dots-peluqueria">
+            <div class="dot-nivel" style="background:var(--verde)"></div>
+            <div class="dot-nivel" style="background:var(--oro)"></div>
+            <div class="dot-nivel" style="background:var(--rojo)"></div>
+            <div class="dot-nivel" style="background:var(--morado)"></div>
+          </div>
+          <div class="capa-progress" id="prog-peluqueria" style="background:var(--oro);width:0%"></div>
+        </div>
+
+        <!-- COLORIMETRÍA -->
+        <div class="capa-card capa-color" onclick="abrirCapa('colorimetria')">
+          <span class="capa-ico">🎨</span>
+          <div class="capa-nom" style="color:var(--morado)">Colorimetría</div>
+          <div class="capa-desc">Química capilar, Teoría Howard, fórmulas, corrección</div>
+          <div class="capa-niveles" id="dots-colorimetria">
+            <div class="dot-nivel" style="background:var(--verde)"></div>
+            <div class="dot-nivel" style="background:var(--oro)"></div>
+            <div class="dot-nivel" style="background:var(--rojo)"></div>
+            <div class="dot-nivel" style="background:var(--morado)"></div>
+          </div>
+          <div class="capa-progress" id="prog-colorimetria" style="background:var(--morado);width:0%"></div>
+        </div>
+
+        <!-- FITNESS -->
+        <div class="capa-card capa-fitness" onclick="abrirCapa('fitness')">
+          <span class="capa-ico">💪</span>
+          <div class="capa-nom" style="color:var(--verde)">Fitness & Entreno</div>
+          <div class="capa-desc">Postura, descanso muscular, ciclos, progresión de peso</div>
+          <div class="capa-niveles" id="dots-fitness">
+            <div class="dot-nivel" style="background:var(--verde)"></div>
+            <div class="dot-nivel" style="background:var(--oro)"></div>
+            <div class="dot-nivel" style="background:var(--rojo)"></div>
+            <div class="dot-nivel" style="background:var(--morado)"></div>
+          </div>
+          <div class="capa-progress" id="prog-fitness" style="background:var(--verde);width:0%"></div>
+        </div>
+
+        <!-- NUTRICIÓN -->
+        <div class="capa-card capa-nutricion" onclick="abrirCapa('nutricion')">
+          <span class="capa-ico">🥗</span>
+          <div class="capa-nom" style="color:var(--naranja)">Nutrición</div>
+          <div class="capa-desc">Macros, azúcar, grasas, dieta para músculo y pérdida</div>
+          <div class="capa-niveles" id="dots-nutricion">
+            <div class="dot-nivel" style="background:var(--verde)"></div>
+            <div class="dot-nivel" style="background:var(--oro)"></div>
+            <div class="dot-nivel" style="background:var(--rojo)"></div>
+            <div class="dot-nivel" style="background:var(--morado)"></div>
+          </div>
+          <div class="capa-progress" id="prog-nutricion" style="background:var(--naranja);width:0%"></div>
+        </div>
+
+        <!-- CONSTRUCCIÓN -->
+        <div class="capa-card capa-construccion" onclick="abrirCapa('construccion')" style="grid-column:span 2;">
+          <span class="capa-ico">🏗️</span>
+          <div class="capa-nom" style="color:var(--azul)">Construcción & Materiales</div>
+          <div class="capa-desc">Cemento, nivelación, resina epóxica, fraguado, presupuestos, errores comunes</div>
+          <div class="capa-niveles" id="dots-construccion">
+            <div class="dot-nivel" style="background:var(--verde)"></div>
+            <div class="dot-nivel" style="background:var(--oro)"></div>
+            <div class="dot-nivel" style="background:var(--rojo)"></div>
+            <div class="dot-nivel" style="background:var(--morado)"></div>
+          </div>
+          <div class="capa-progress" id="prog-construccion" style="background:var(--azul);width:0%"></div>
+        </div>
+
+        <!-- TETRIS -->
+        <div class="capa-card capa-tetris" onclick="abrirTetris()">
+          <span class="capa-ico">🕹️</span>
+          <div class="capa-nom" style="color:var(--azul)">Tetris · Descanso Mental</div>
+          <div class="capa-desc" style="color:rgba(0,242,255,.4)">Pausa activa · Entrena tu mente entre lecciones</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SELECTOR DE NIVEL -->
+    <div id="screenNivel" class="nivel-screen">
+      <button class="back-btn" onclick="irMenu()">← Volver al menú</button>
+      <div class="nivel-title" id="nivelTitle">—</div>
+      <div class="nivel-sub" id="nivelSub">Selecciona tu nivel para comenzar</div>
+      <div class="niveles-list" id="nivelesList"></div>
+    </div>
+
+    <!-- QUIZ -->
+    <div id="screenQuiz" class="quiz-screen">
+      <button class="back-btn" onclick="irMenu()">← Salir del quiz</button>
+      <div class="quiz-header">
+        <div class="quiz-top">
+          <span class="quiz-cat" id="qCat">—</span>
+          <span class="quiz-timer" id="qTimer">15s</span>
+        </div>
+        <div class="quiz-prog-wrap">
+          <div class="quiz-prog" id="qProg" style="width:0%"></div>
+        </div>
+        <div class="quiz-num" id="qNum">1 / 10</div>
+      </div>
+
+      <div class="quiz-bubble">
+        <div class="quiz-q" id="qPregunta">—</div>
+      </div>
+
+      <div class="quiz-opts" id="qOpts"></div>
+
+      <div class="quiz-feedback" id="qFeedback"></div>
+
+      <button class="quiz-next" id="qNext" onclick="siguientePregunta()">
+        Siguiente →
+      </button>
+    </div>
+
+    <!-- RESULTADO -->
+    <div id="screenResult" class="result-screen">
+      <div class="result-ico" id="rIco">🏆</div>
+      <div class="result-title" id="rTitle">¡Completado!</div>
+      <div class="result-pts" id="rPts" style="color:var(--oro)">0</div>
+      <div class="result-badge" id="rBadge">—</div>
+      <div class="result-msg" id="rMsg">—</div>
+      <div class="result-btns">
+        <button class="r-btn" id="rRepeat" onclick="repetirNivel()" style="background:linear-gradient(135deg,#b8882d,#e8b86d);color:#000;">🔄 Repetir nivel</button>
+        <button class="r-btn" onclick="irMenu()" style="background:transparent;border:1px solid #333;color:var(--gris);">← Volver al menú</button>
+      </div>
+    </div>
+
+    <!-- TETRIS -->
+    <div id="screenTetris" class="tetris-screen">
+      <button class="back-btn" onclick="irMenu();stopTet()">← Volver</button>
+      <div class="t-score-bar">
+        <div><div class="t-sc-lbl">PUNTUACIÓN</div><div class="t-sc-num" id="tSc">0</div></div>
+        <div style="text-align:right"><div class="t-sc-lbl">NIVEL</div><div class="t-sc-num" id="tLv" style="color:var(--morado)">1</div></div>
+      </div>
+      <div style="position:relative;display:inline-block;width:100%;max-width:220px;">
+        <canvas id="tetC" width="220" height="380"></canvas>
+        <div id="tetOv" style="display:none;flex-direction:column;align-items:center;justify-content:center;">
+          <div style="color:var(--rojo);font-size:10px;letter-spacing:2px;margin-bottom:8px;">FIN DEL JUEGO</div>
+          <div style="color:var(--verde);font-size:12px;margin-bottom:12px;">Puntos: <span id="tScFin">0</span></div>
+          <button class="btn-g" onclick="resetTet()" style="border-color:var(--verde);color:var(--verde);">REINTENTAR</button>
+        </div>
+      </div>
+      <div class="tctrl">
+        <div class="tbtn tbl" ontouchstart="tRot(-1)" onclick="tRot(-1)">↺</div>
+        <div class="tbtn" ontouchstart="tDrp()" onclick="tDrp()">↓↓</div>
+        <div class="tbtn tbr" ontouchstart="tRot(1)" onclick="tRot(1)">↻</div>
+        <div class="tbtn" ontouchstart="tMv(-1)" onclick="tMv(-1)">←</div>
+        <div style="visibility:hidden"></div>
+        <div class="tbtn" ontouchstart="tMv(1)" onclick="tMv(1)">→</div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- ══ CHATBOX TTS ══ -->
+<div id="chatTTS">
+  <div class="chat-panel" id="chatPanel">
+    <div class="chat-head">
+      <div>
+        <div class="chat-head-name">🔊 Fátima te explica</div>
+        <div class="chat-head-sub">Pregúntame lo que quieras</div>
+      </div>
+      <button class="chat-x" onclick="toggleChat()">✕</button>
+    </div>
+    <div class="chat-msgs" id="chatMsgs"></div>
+    <div class="chat-quick">
+      <button class="qk" onclick="chatPregunta('¿Qué es geometría capilar?')">✂️ Geometría</button>
+      <button class="qk" onclick="chatPregunta('¿Por qué descansar músculo?')">💪 Descanso</button>
+      <button class="qk" onclick="chatPregunta('¿Qué es la Teoría de Howard?')">🎨 Howard</button>
+      <button class="qk" onclick="chatPregunta('¿Qué alimentos evitar?')">🥗 Nutrición</button>
+      <button class="qk" onclick="chatPregunta('¿Por qué es importante la postura?')">🏋️ Postura</button>
+      <button class="qk" onclick="chatPregunta('¿Qué es fraguado del cemento?')">🏗️ Fraguado</button>
+    </div>
+  </div>
+  <div class="chat-fab" onclick="toggleChat()">
+    <img src="https://drive.google.com/thumbnail?id=14NX9qP8W4pYFITfWKJIgIMUk39QdYncN&sz=w200"
+      onerror="this.outerHTML='<div style=\'width:100%;height:100%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:22px;\'>🔊</div>'" alt="Chat">
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   BASE DE CONOCIMIENTO — FÁTIMA CALDEA
+   19 años de experiencia real aplicada
+══════════════════════════════════════════ */
+const DATOS={
+
+peluqueria:{
+  color:'#e8b86d',
+  niveles:[
+    {
+      id:'principiante',ico:'🟢',nom:'Principiante',
+      desc:'Fundamentos, herramientas, seguridad y bases del diagnóstico',
+      color:'#22c55e',
+      preguntas:[
+        {p:'¿Cuál es la primera cosa que debe hacer un peluquero antes de cortar?',
+         o:['Mojarse las manos','Hacer el diagnóstico facial del cliente','Preparar los tintes','Lavar las tijeras'],
+         c:1,
+         exp:'El diagnóstico facial es el punto de partida de todo. Sin conocer la forma del rostro del cliente, no puedes saber qué corte le favorece. Es la base del trabajo profesional.'},
+        {p:'¿Qué herramienta es esencial para medir elevaciones en un corte?',
+         o:['La navaja','Los dedos como guía de ángulo','La secadora','El peine de púas anchas'],
+         c:1,
+         exp:'Los dedos son la guía natural del peluquero para controlar el ángulo de elevación. Son el instrumento de medición más preciso que tenemos junto con nuestra técnica.'},
+        {p:'¿Por qué es peligroso cortar cabello sin conocer la dirección de crecimiento?',
+         o:['Por estética únicamente','Porque el cabello no crece','Porque puede quedar desigual y crear remolinos incontrolables','No es importante'],
+         c:2,
+         exp:'Cada cabello tiene su propia dirección de crecimiento. Ignorarla genera remolinos, irregularidades y un corte que no cae bien cuando el cliente lo peina en casa. El diagnóstico del cuero cabelludo es fundamental.'},
+        {p:'¿Qué forma de rostro se beneficia más de un corte con volumen en los costados?',
+         o:['Ovalado','Cuadrado','Redondo','Alargado'],
+         c:3,
+         exp:'El rostro alargado necesita volumen en los costados para crear la ilusión de anchura y equilibrar las proporciones. Es geometría facial aplicada al corte.'},
+        {p:'Un buen peluquero debe dominar:',
+         o:['Solo las tijeras','Geometría, física, química y matemática aplicadas al cabello','Solo los tintes','Solo el lavado'],
+         c:1,
+         exp:'El cabello es ciencia. La geometría da las elevaciones y ángulos. La física determina cómo cae el peso. La química explica cómo reacciona el cabello a los productos. Las matemáticas calculan las proporciones exactas de cada corte.'},
+        {p:'¿Qué significa el término "corte madre"?',
+         o:['El primer corte que aprendiste','La base geométrica desde la que se construye cualquier otro corte','El corte más popular','El corte de la directora del salón'],
+         c:1,
+         exp:'El corte madre es la estructura geométrica base. Desde él se deriva cualquier variación, capas, flequillo, textura. Sin dominar el corte madre no puedes construir cortes complejos.'},
+        {p:'¿Por qué se debe secar el cabello antes de evaluar el resultado final?',
+         o:['Por preferencia personal','Porque mojado el cabello puede ser hasta 30% más largo y la caída cambia completamente','Por higiene','No es necesario'],
+         c:1,
+         exp:'El cabello mojado puede ser hasta un 30% más largo que seco. La textura, el rizo, el peso y la caída cambian radicalmente. El resultado real solo se ve en seco.'},
+      ]
+    },
+    {
+      id:'intermedio',ico:'🟡',nom:'Intermedio',
+      desc:'Geometría capilar, elevaciones 0°-90°-180°, visajismo',
+      color:'#eab308',
+      preguntas:[
+        {p:'¿Qué produce una elevación de 0 grados en el corte?',
+         o:['Capas largas con movimiento','Peso y solidez, sin capas','Efecto degradado total','Textura aleatoria'],
+         c:1,
+         exp:'A 0° el cabello se corta sin elevación, pegado al cuerpo. Esto crea peso máximo y solidez. Es la base de cortes bob clásicos y cortes con línea sólida definida.'},
+        {p:'Una elevación de 90 grados genera:',
+         o:['Peso en la base','Capas uniformes con movimiento equilibrado','Capas solo en las puntas','Sin efecto visible'],
+         c:1,
+         exp:'A 90° el cabello se eleva perpendicular a la cabeza. Esto crea capas uniformes en toda la longitud, distribuyendo el peso de manera equilibrada. Es el ángulo más usado en cortes con movimiento natural.'},
+        {p:'¿Para qué rostro recomiendas un corte con más longitud en el frente?',
+         o:['Ovalado','Alargado','Redondo','Cuadrado'],
+         c:2,
+         exp:'El rostro redondo necesita longitud y verticalidad para estilizarse. Añadir más longitud al frente crea líneas verticales que alargan visualmente el rostro y equilibran su anchura.'},
+        {p:'La geometría en el corte de cabello sirve para:',
+         o:['Decorar el salón','Calcular el precio','Determinar ángulos exactos de elevación y dirección que crean la forma correcta','No tiene utilidad práctica'],
+         c:2,
+         exp:'La geometría es la matemática del corte. Cada ángulo, cada elevación, cada sección tiene una medida exacta que produce un resultado predecible. Sin geometría, el corte es improvisación.'},
+        {p:'¿Qué es el "peso visual" en un corte de cabello?',
+         o:['El peso físico del cabello','La zona donde el cabello parece más denso y crea volumen o masa visualmente','El número de mechones','La cantidad de producto aplicado'],
+         c:1,
+         exp:'El peso visual es donde el ojo percibe más masa. Controlarlo con ángulos y elevaciones permite crear o eliminar volumen en zonas específicas según la forma del rostro del cliente.'},
+        {p:'¿Por qué la física es importante en peluquería?',
+         o:['No lo es','Determina cómo el peso del cabello afecta su caída, movimiento y comportamiento final','Solo para cursos avanzados','Por el precio del corte'],
+         c:1,
+         exp:'La física de la caída del cabello determina todo. Un cabello denso cae diferente a uno fino. La gravedad afecta el movimiento. Sin entender la física no puedes predecir cómo quedará el corte.'},
+        {p:'¿Qué ángulo crea el efecto "mariposa" en un corte?',
+         o:['0 grados en todo el cabello','Combinación de 45° en nuca y 90°-180° hacia arriba creando transición de pesos','90 grados uniforme','Solo con navaja'],
+         c:1,
+         exp:'El corte mariposa usa múltiples ángulos. En la nuca hay más peso (menor elevación) y hacia arriba la elevación aumenta creando ligereza. Esta transición de pesos produce el característico efecto de capas que se mueven como alas.'},
+      ]
+    },
+    {
+      id:'avanzado',ico:'🔴',nom:'Avanzado',
+      desc:'Técnicas complejas, corrección de errores, física del cabello',
+      color:'#ef4444',
+      preguntas:[
+        {p:'¿Cómo corriges un corte donde un lado quedó más corto que el otro?',
+         o:['Cortas el otro lado igual de corto','Añades volumen con el secador','Analizas el punto de error en la sección y corriges desde la guía más larga hacia abajo','Le dices al cliente que es tendencia'],
+         c:2,
+         exp:'La corrección siempre parte de identificar dónde falló la guía. Luego se trabaja desde el lado más largo tomándolo como nueva referencia. Nunca se improvisa en corrección.'},
+        {p:'La química en peluquería determina:',
+         o:['El color del salón','Cómo los productos interactúan con la estructura interna del cabello, afectando su resistencia y comportamiento al corte','Solo el olor de los productos','El precio de los servicios'],
+         c:1,
+         exp:'El cabello tratado químicamente (teñido, decolorado, permanentado) tiene diferente porosidad, elasticidad y resistencia. Esto afecta directamente cómo se debe cortar, qué ángulos usar y cómo caerá el resultado.'},
+        {p:'¿Qué es la "guía fija" en un corte?',
+         o:['Una regla metálica','El primer mechón cortado que sirve de referencia para todos los demás','Una técnica avanzada sin referencia','El cabello de la frente'],
+         c:1,
+         exp:'La guía fija es el mechón maestro. Todo el corte se construye siguiendo esa primera referencia. Si la guía es correcta, el corte es correcto. Si hay un error en la guía, se multiplica en todo el corte.'},
+        {p:'¿Por qué un mal diagnóstico facial puede arruinar un corte técnicamente perfecto?',
+         o:['No puede arruinarlo','Porque el cliente puede quejarse','Porque el corte más perfecto técnicamente puede no favorecer al rostro si no se adaptó a su geometría particular','Por el precio cobrado'],
+         c:2,
+         exp:'La técnica perfecta al servicio del corte equivocado produce un resultado que no favorece. Un corte que no considera la forma del rostro puede exagerar defectos o eliminar atractivos naturales del cliente.'},
+        {p:'¿Cuándo se usa la navaja en lugar de las tijeras?',
+         o:['Siempre que se prefiera','Para crear textura, suavizar bordes y dar movimiento en cabellos que lo permiten, nunca en cabello muy rizado o dañado','Solo en cabello corto','Para ahorrar tiempo'],
+         c:1,
+         exp:'La navaja deslizada crea textura y movimiento rompiendo la línea uniforme de las tijeras. Pero en cabello rizado puede generar frizz incontrolable y en cabello dañado puede causar quiebre. El diagnóstico previo es clave.'},
+      ]
+    },
+    {
+      id:'dios',ico:'⚡',nom:'Nivel Dios',
+      desc:'Casos clínicos reales · Geometría facial avanzada · Maestría',
+      color:'#a855f7',
+      preguntas:[
+        {p:'Un cliente con rostro cuadrado, cabello muy fino y rizado llega al salón. ¿Cuál es tu estrategia completa?',
+         o:['Corte recto bob corto','Capas largas con más longitud en el frente para suavizar ángulos, aprovechar el rizo para añadir movimiento y evitar volumen en los lados','Corte muy corto con mucho volumen en los costados','Ningún corte específico'],
+         c:1,
+         exp:'Este es un caso clínico real que requiere combinar visajismo, física y conocimiento del cabello rizado. Las capas largas suavizan el ángulo del mentón cuadrado. La longitud en el frente crea verticalidad. El rizo se aprovecha como aliado, no como problema.'},
+        {p:'¿Por qué la progresión de secciones en un corte sigue un orden matemático específico?',
+         o:['Por tradición del oficio','Para que quede bonito','Porque cada sección construye sobre la anterior como una ecuación donde un error se propaga geométricamente a todas las demás','Por comodidad del peluquero'],
+         c:2,
+         exp:'El corte es una ecuación geométrica en cascada. Cada sección toma como referencia la anterior. Un error en la sección 2 se amplifica en la 3, 4 y 5. Por eso el orden y la precisión no son opcionales, son matemáticas aplicadas.'},
+        {p:'Un cliente tiene el cabello muy poroso, teñido múltiples veces y quiere un corte con capas. ¿Qué consideración química debes tener?',
+         o:['Ninguna, el corte es independiente de la química','El cabello muy poroso es más débil en su estructura interna, se rompe con mayor facilidad y las puntas pueden deshacerse más al cortar, requiriendo ajuste de técnica','Solo usar tijeras nuevas','Aplicar acondicionador y listo'],
+         c:1,
+         exp:'La porosidad extrema significa que la cutícula está abierta y la corteza interna está comprometida. El cabello se puede partir durante el corte. Se deben usar tijeras perfectamente afiladas, evitar tensión excesiva y posiblemente recomendar tratamiento antes del corte.'},
+        {p:'¿Cómo integras geometría, física, química y matemática en el diagnóstico completo de un cliente?',
+         o:['No es necesario integrarlas','Geometría para la forma del rostro, física para el comportamiento del cabello según su peso y textura, química para evaluar el estado del cabello tratado, matemática para calcular proporciones y elevaciones exactas','Solo geometría es suficiente','Solo la experiencia visual basta'],
+         c:1,
+         exp:'Este es el nivel Dios. Un maestro peluquero no separa estas disciplinas. Las aplica simultáneamente: analiza el rostro (geometría), evalúa la caída (física), diagnostica el cabello (química) y calcula los ángulos exactos (matemática). Eso es lo que te diferencia de un simple cortador de cabello.'},
+        {p:'¿Por qué la posición de la cabeza del cliente durante el corte afecta el resultado geométrico?',
+         o:['No afecta nada','Si la cabeza está inclinada durante el corte, la guía se desvía y el resultado al estar en posición natural será asimétrico, ya que la geometría se calculó con una referencia incorrecta','Solo afecta la comodidad','Por la iluminación del salón'],
+         c:1,
+         exp:'La geometría del corte se calcula con la cabeza en posición neutral. Si el cliente mueve la cabeza y se corta en esa posición desviada, al volver a posición normal el corte quedará asimétrico. Mantener la postura correcta del cliente es parte de la técnica profesional.'},
+      ]
+    }
+  ]
+},
+
+colorimetria:{
+  color:'#a855f7',
+  niveles:[
+    {
+      id:'principiante',ico:'🟢',nom:'Principiante',
+      desc:'Círculo cromático, niveles de color, oxidantes básicos',
+      color:'#22c55e',
+      preguntas:[
+        {p:'¿Cuántos niveles de color existen en colorimetría capilar profesional?',
+         o:['5 niveles','8 niveles','10 niveles','12 niveles'],
+         c:2,
+         exp:'Existen 10 niveles del 1 al 10. El nivel 1 es negro puro y el nivel 10 es rubio muy claro platino. Cada nivel tiene sus propios tonos base y requiere fórmulas específicas. Conocer los niveles es la base de toda colorimetría.'},
+        {p:'¿Qué oxidante se usa para abrir el tono sin aclarar demasiado?',
+         o:['40 volúmenes','10 volúmenes','20 volúmenes','Sin oxidante'],
+         c:2,
+         exp:'20 volúmenes (6%) es el oxidante estándar para coloración permanente que sube 1-2 tonos. 10 vol es para tonalizar sin cambio de nivel. 40 vol es para decoloración agresiva que puede dañar el cabello.'},
+        {p:'Los colores cálidos en colorimetría son:',
+         o:['Azul, verde, violeta','Rojo, naranja, amarillo','Blanco, gris, negro','No existen colores cálidos'],
+         c:1,
+         exp:'Los colores cálidos (rojo, naranja, amarillo) tienen longitudes de onda largas y se perciben como energizantes. En colorimetría capilar, estos pigmentos son los más resistentes y los primeros en aparecer cuando el cabello se decolora.'},
+        {p:'¿Para qué sirve la Teoría de Howard en colorimetría?',
+         o:['Para decorar el salón','Para calcular el precio del servicio','Para entender cómo los pigmentos naturales del cabello interactúan con el color artificial y predecir el resultado exacto','Para lavar el cabello correctamente'],
+         c:2,
+         exp:'La Teoría de Howard explica la interacción entre los pigmentos melanínicos naturales y los pigmentos artificiales. Con ella puedes predecir exactamente qué resultado obtendrás antes de aplicar el color. Fátima la aplica con 19 años de experiencia real.'},
+        {p:'¿Qué pasa si aplicas tinte directamente sobre canas sin fórmula correcta?',
+         o:['Queda perfecto siempre','El cabello se cae','La cobertura puede ser incompleta porque las canas tienen cutícula cerrada y resisten la absorción del pigmento','No pasa nada especial'],
+         c:2,
+         exp:'Las canas tienen la cutícula más cerrada y compacta que el cabello pigmentado. Necesitan una fórmula específica: generalmente un tono natural más un tono cálido para garantizar la cobertura completa y evitar el efecto "vidrio".'},
+      ]
+    },
+    {
+      id:'intermedio',ico:'🟡',nom:'Intermedio',
+      desc:'Fórmulas, corrección cromática, decoloración controlada',
+      color:'#eab308',
+      preguntas:[
+        {p:'Para neutralizar un tono naranja no deseado, ¿qué color se usa?',
+         o:['Rojo','Amarillo','Azul','Verde'],
+         c:2,
+         exp:'El azul es el complementario del naranja en el círculo cromático. Los complementarios se neutralizan mutuamente. Por eso los matizadores azules o violetas se usan para neutralizar los reflejos anaranjados y dorados no deseados.'},
+        {p:'¿Qué es el "fondo de decoloración"?',
+         o:['El producto decolorante','El color que queda visible en el cabello durante el proceso de decoloración, que va del negro al amarillo pálido pasando por etapas','El resultado final','El tipo de cabellos'],
+         c:1,
+         exp:'El fondo de decoloración es la escala de colores que el cabello natural revela al decolorar: negro, marrón oscuro, marrón, castaño rojizo, rojo, naranja, amarillo dorado, amarillo, amarillo pálido. Saber en qué fondo está el cabello es clave para predecir el resultado.'},
+        {p:'¿Cuánto tiempo máximo se puede dejar un decolorante para no dañar el cabello?',
+         o:['2 horas mínimo','Indefinidamente','Máximo 50-60 minutos dependiendo del producto y la fórmula','Solo 5 minutos'],
+         c:2,
+         exp:'El tiempo máximo de decoloración es crítico. Después de 50-60 minutos la mayoría de los productos ya cumplieron su acción y continuar solo daña la cutícula sin aclarar más. El cabello puede volverse gomoso, romperse o perder toda su elasticidad.'},
+        {p:'Una cliente llega con cabello verde después de teñirse de rubio. ¿Qué ocurrió?',
+         o:['El tinte era de mala calidad','El cabello estaba muy limpio','El cabello tenía tonos cobrizos-dorados que al combinarse con el pigmento azul del rubio ceniza crearon el verde inesperado','El agua del salón es diferente'],
+         c:2,
+         exp:'Este es un error clásico de colorimetría sin diagnóstico previo. Los fondos cálidos (dorado, cobrizo) del cabello más el pigmento azul-violeta del rubio ceniza o platino crean verde. La Teoría de Howard predice esto. Un diagnóstico correcto lo evita.'},
+        {p:'¿Qué es la "porosidad" del cabello y por qué importa en colorimetría?',
+         o:['El brillo del cabello','La capacidad del cabello de absorber y retener los pigmentos de color, que varía según el estado de la cutícula','El peso del cabello','La textura visual'],
+         c:1,
+         exp:'La porosidad determina cuánto color entra y cuánto se retiene. Cabello muy poroso absorbe rápido pero libera el color igual de rápido (el color se va antes). Cabello resistente necesita más tiempo y productos adaptados. Ignorar la porosidad produce resultados impredecibles.'},
+      ]
+    },
+    {
+      id:'avanzado',ico:'🔴',nom:'Avanzado',
+      desc:'Teoría Howard profunda, casos complejos, maestría cromática',
+      color:'#ef4444',
+      preguntas:[
+        {p:'¿Por qué el cabello gris resistente requiere un tono más cálido en la fórmula?',
+         o:['Por estética únicamente','Para que dure más tiempo','Porque la cutícula cerrada del cabello gris refleja la luz de manera diferente y los tonos fríos quedan planos o metálicos, mientras que el calor da profundidad y naturalidad','Por tradición profesional'],
+         c:2,
+         exp:'El cabello gris resistente (canas duras) rechaza los tonos fríos y los hace ver artificiales o metálicos. Añadir un tono cálido en la fórmula (1 parte de tono natural + 1 parte de tono cálido) da profundidad, naturalidad y cobertura duradera.'},
+        {p:'Técnica balayage: ¿por qué NO se debe tocar la raíz?',
+         o:['Es solo estética','Porque la raíz tiene más calor corporal que acelera la decoloración creando una transición poco natural y sobre-procesada','Por comodidad','No existe esa regla'],
+         c:1,
+         exp:'La raíz tiene más temperatura por el calor del cuero cabelludo. Si la decoloración llega a la raíz, actúa más rápido y agresivamente, creando una transición abrupta en lugar del efecto degradado natural que caracteriza al balayage perfecto.'},
+        {p:'¿Cómo predices el resultado exacto antes de aplicar color usando la Teoría de Howard?',
+         o:['No se puede predecir','Observas el nivel natural, identificas el fondo de decoloración, calculas la interacción entre pigmentos naturales y artificiales y ajustas la fórmula','Solo con experiencia','Con una prueba de mechón siempre'],
+         c:1,
+         exp:'La Teoría de Howard es predictiva. Con ella puedes calcular matemáticamente el resultado antes de aplicar el color. Es la diferencia entre un colorista profesional y alguien que aplica color sin criterio científico. Fátima lo aplica en cada servicio con 19 años de práctica.'},
+      ]
+    },
+    {
+      id:'dios',ico:'⚡',nom:'Nivel Dios',
+      desc:'Casos clínicos cromáticos · Maestría de Howard',
+      color:'#a855f7',
+      preguntas:[
+        {p:'Cliente: cabello negro natural, nivel 1, quiere llegar a rubio nivel 8 en una sola sesión. ¿Tu respuesta profesional?',
+         o:['Lo haces en una sesión con mucho decolorante','Es imposible, explicas que el cabello pasará por fondos naranja y amarillo que requieren varias sesiones de decoloración progresiva para mantener la integridad','Aplicas tinte rubio directamente','No se puede hacer nunca'],
+         c:1,
+         exp:'Este es el error más común que arruina el cabello. Del nivel 1 al 8 hay 7 niveles de diferencia. El cabello debe pasar por todos los fondos de decoloración. Hacerlo en una sesión destruye la estructura del cabello. Un profesional explica el proceso y lo divide en sesiones respetando los tiempos de recuperación.'},
+        {p:'¿Qué diferencia a un colorista nivel Dios de uno intermedio?',
+         o:['El precio que cobra','La marca de productos que usa','Predice el resultado antes de aplicar usando química, física de la luz y la Teoría de Howard combinadas con el diagnóstico completo del cabello','La velocidad de trabajo'],
+         c:2,
+         exp:'El nivel Dios es cuando combinas toda la ciencia: química (composición del cabello), física (comportamiento de la luz y el color), Teoría de Howard (interacción pigmentaria) y diagnóstico clínico. El resultado ya está calculado antes de abrir el tubo de color.'},
+      ]
+    }
+  ]
+},
+
+fitness:{
+  color:'#00ffc3',
+  niveles:[
+    {
+      id:'principiante',ico:'🟢',nom:'Principiante',
+      desc:'Postura corporal, calentamiento, errores que causan lesiones',
+      color:'#22c55e',
+      preguntas:[
+        {p:'¿Por qué es fundamental la postura correcta antes de cualquier ejercicio?',
+         o:['Solo por estética','Una mala postura durante el ejercicio genera tensión incorrecta en articulaciones y músculos que puede causar lesiones graves que te llevan a urgencias','Para impresionar en el gimnasio','Solo importa en ejercicios de espalda'],
+         c:1,
+         exp:'Experiencia real de Fátima: una mala postura no es solo incomodidad. Puede generar hernias discales, roturas musculares, lesiones de rodilla y hombros. Estas lesiones no solo te sacan del entrenamiento semanas o meses, pueden requerir cirugía. La postura es tu seguro de vida deportiva.'},
+        {p:'¿Cuánto tiempo mínimo de calentamiento se recomienda antes de entrenar?',
+         o:['No es necesario calentar','1 minuto es suficiente','10-15 minutos de calentamiento progresivo para aumentar temperatura muscular y lubricar articulaciones','Solo si vas a correr'],
+         c:2,
+         exp:'El calentamiento prepara el tejido muscular elevando su temperatura (mejor contracción), lubrica las articulaciones con líquido sinovial y activa el sistema nervioso. Un músculo frío es como goma de freezer: rígido y propenso a desgarrarse.'},
+        {p:'¿Qué error de postura es más común en sentadillas para principiantes?',
+         o:['Bajar demasiado','Las rodillas colapsan hacia adentro (valgo de rodilla) generando tensión en ligamentos y riesgo de lesión','Subir demasiado rápido','Usar mucho peso'],
+         c:1,
+         exp:'El valgo de rodilla (rodillas hacia adentro) en la sentadilla es la lesión en potencia. Genera tensión en el ligamento cruzado anterior, el menisco y la rótula. Se corrige activando los glúteos y empujando las rodillas hacia afuera alineadas con los pies.'},
+        {p:'¿Por qué un principiante NO debe empezar con pesos máximos?',
+         o:['Por el precio del gimnasio','El sistema nervioso y los tendones necesitan adaptarse progresivamente antes que el músculo. Empezar con mucho peso daña tendones que tardan meses en recuperarse','Solo por orgullo','Para aprender la técnica primero'],
+         c:1,
+         exp:'Los músculos se adaptan más rápido que los tendones y ligamentos. Un principiante que levanta mucho peso puede sentirse bien los primeros días pero las estructuras conectivas (tendones, ligamentos) no están preparadas y pueden lesionarse gravemente.'},
+        {p:'¿Qué señal indica que estás usando mala postura durante un ejercicio?',
+         o:['Sudas mucho','Sientes dolor articular agudo, tensión en zona de columna o compensas con otro músculo que no debería trabajar','Respiras fuerte','El ejercicio es difícil'],
+         c:1,
+         exp:'El dolor articular agudo (no confundir con ardor muscular normal) es la alarma de tu cuerpo. La compensación muscular (usas otro músculo porque el principal no puede) indica que la técnica está fallando. Detente, corrige y reduce el peso.'},
+      ]
+    },
+    {
+      id:'intermedio',ico:'🟡',nom:'Intermedio',
+      desc:'Descanso 24-48h, grupos musculares, ciclos de entrenamiento',
+      color:'#eab308',
+      preguntas:[
+        {p:'¿Por qué un músculo entrenado necesita 24-48 horas de descanso?',
+         o:['Por costumbre del sector','Durante el entrenamiento se generan microroturas musculares. En el descanso el cuerpo las repara y el músculo crece más fuerte. Sin descanso el músculo se contractura y no progresa','Para no cansarse','No necesita descanso'],
+         c:1,
+         exp:'Esto es experiencia real de Fátima aplicada a la tecnología. El entrenamiento rompe fibras musculares microscópicamente. La recuperación (con proteínas y descanso) las repara más gruesas y fuertes. Si entrenas el mismo músculo sin descanso, solo acumulas daño sin recuperación y el músculo se contractura y deja de crecer.'},
+        {p:'Si entrenaste piernas ayer con intensidad, ¿qué debes hacer hoy?',
+         o:['Entrenar piernas más fuerte','Descansar piernas y entrenar otro grupo muscular (parte superior) o hacer cardio suave','No ir al gimnasio','Correr una hora'],
+         c:1,
+         exp:'El principio de la división muscular permite entrenar todos los días sin lesionarte. Mientras las piernas se recuperan (24-48h), puedes trabajar pecho, espalda o brazos. El cuerpo trabaja en paralelo: unos músculos se recuperan mientras otros se entrenan.'},
+        {p:'¿Qué es la "progresión de carga" y por qué es clave para ganar músculo?',
+         o:['Usar siempre el mismo peso','Aumentar gradualmente el peso, las series o las repeticiones para que el músculo continúe teniendo estímulo de crecimiento. Sin progresión el músculo se estanca','Bajar de peso gradualmente','Cambiar de ejercicio cada día'],
+         c:1,
+         exp:'El músculo es adaptable. Si siempre levantas el mismo peso, el cuerpo se adapta y deja de crecer porque ya no necesita hacerse más fuerte. La progresión constante (aunque sea pequeña) es el motor del crecimiento muscular continuo.'},
+        {p:'¿Cuántos grupos musculares se recomienda trabajar por sesión para un intermedio?',
+         o:['Los 8 grupos en una sesión','Todo el cuerpo cada día','2-3 grupos musculares relacionados por sesión para dar suficiente estímulo sin sobrecargar la recuperación','Solo 1 músculo por semana'],
+         c:2,
+         exp:'Trabajar 2-3 grupos musculares sinérgicos (que se ayudan entre sí, como pecho-tríceps o espalda-bíceps) optimiza el entrenamiento. Permite dar suficiente volumen a cada grupo sin agotar la capacidad de recuperación total del cuerpo.'},
+        {p:'¿Qué ocurre si un músculo no descansa entre sesiones intensas?',
+         o:['Crece más rápido','El músculo se contractura, no progresa, pierde elasticidad y aumenta exponencialmente el riesgo de lesión por fatiga acumulada','Nada especial','Solo duele más'],
+         c:1,
+         exp:'Cuando el músculo no descansa, las microroturas se acumulan sin repararse. El tejido muscular pierde elasticidad, se forma tejido cicatricial y el músculo "se cierra". Esto no solo detiene el progreso sino que crea el ambiente perfecto para una rotura muscular real.'},
+      ]
+    },
+    {
+      id:'avanzado',ico:'🔴',nom:'Avanzado',
+      desc:'Periodización, errores comunes avanzados, optimización del entrenamiento',
+      color:'#ef4444',
+      preguntas:[
+        {p:'¿Qué es la "periodización" en entrenamiento avanzado?',
+         o:['Entrenar en períodos de sol','Planificar ciclos de entrenamiento con fases de carga, descarga y pico para maximizar resultados y prevenir el sobreentrenamiento','Descansar por períodos','Cambiar de gimnasio periódicamente'],
+         c:1,
+         exp:'La periodización es la planificación científica del entrenamiento. Incluye fases de volumen (mucho trabajo, pesos moderados), fuerza (menos repeticiones, más peso) y pico (máximo rendimiento). Alternadas con semanas de descarga para recuperación completa.'},
+        {p:'¿Por qué el gasto calórico extra en cardio excesivo puede sabotear la ganancia muscular?',
+         o:['No puede sabotearlo','El exceso de cardio consume glucógeno y puede catabolizar (destruir) tejido muscular para obtener energía, especialmente en déficit calórico','Por el tiempo que ocupa','Por el cansancio físico'],
+         c:1,
+         exp:'El cardio excesivo en contexto de poca alimentación pone al cuerpo en catabolismo: busca energía en el músculo. El balance es clave: suficiente cardio para salud cardiovascular y quema de grasa, sin exceder el punto donde el músculo se usa como combustible.'},
+        {p:'¿Cuál es el error más común en levantamiento de peso que lleva a lesión de columna?',
+         o:['Levantar lento','Redondear la espalda baja (flexión lumbar) bajo carga, generando presión discal que puede producir hernias','Respirar durante el esfuerzo','Usar cinturón'],
+         c:1,
+         exp:'La flexión lumbar bajo carga es la causa número uno de hernias discales en el gimnasio. La columna debe mantenerse neutra (su curva natural) durante todo el movimiento. Pecho afuera, abdomen apretado, espalda recta. Una hernia puede alejarte del entrenamiento meses o años.'},
+        {p:'¿Qué significa "tiempo bajo tensión" y por qué lo usan los avanzados?',
+         o:['El tiempo total de entrenamiento','La duración del estímulo mecánico sobre el músculo durante el movimiento, controlando la velocidad de bajada (excéntrica) para maximizar el crecimiento muscular','El tiempo de descanso entre series','El tiempo en el gimnasio'],
+         c:1,
+         exp:'El tiempo bajo tensión (TUT) es una variable avanzada. La fase excéntrica (bajar el peso) controlada y lenta genera más daño muscular productivo que la subida. Los avanzados controlan la velocidad de cada repetición para maximizar el estímulo sin aumentar el peso.'},
+      ]
+    },
+    {
+      id:'dios',ico:'⚡',nom:'Nivel Dios',
+      desc:'Integración total · Ciencia del cuerpo humano aplicada',
+      color:'#a855f7',
+      preguntas:[
+        {p:'¿Por qué una mala postura crónica en el gimnasio puede terminar en urgencias?',
+         o:['Es solo incomodidad temporal','La mala postura acumulada crea compensaciones musculares que sobrecargan estructuras no preparadas. Una rotura del manguito rotador, una hernia discal aguda o una rotura de ligamento pueden requerir cirugía de urgencia','Solo duele un poco','No lleva a urgencias'],
+         c:1,
+         exp:'Experiencia real de Fátima: la postura no es estética, es supervivencia deportiva. Las compensaciones posturales crónicas crean puntos de máximo estrés en articulaciones. Cuando ese estrés supera el límite estructural, la lesión puede ser instantánea y severa. Urgencias por lesiones de gimnasio son más comunes de lo que se cree.'},
+        {p:'¿Cómo integras nutrición y entrenamiento para pérdida de grasa sin perder músculo?',
+         o:['Come menos y entrena más, siempre','Déficit calórico moderado (300-500 kcal/día), proteína alta (2-2.5g/kg), entrenamiento de fuerza para señal anabólica y cardio moderado. La clave es no perder más de 0.5-1kg por semana','Ayuno total y cardio intenso','Solo dieta sin entrenamiento'],
+         c:1,
+         exp:'El nivel Dios en nutrición-fitness es el equilibrio preciso. Déficit demasiado agresivo cataboliza músculo. Sin proteína suficiente no hay material para mantener el músculo. Sin entrenamiento de fuerza el cuerpo no tiene señal para preservar el músculo. Todo está interconectado.'},
+      ]
+    }
+  ]
+},
+
+nutricion:{
+  color:'#f97316',
+  niveles:[
+    {
+      id:'principiante',ico:'🟢',nom:'Principiante',
+      desc:'Macros, alimentos a evitar, azúcar y grasas saturadas',
+      color:'#22c55e',
+      preguntas:[
+        {p:'¿Por qué las bebidas gaseosas son enemigas del músculo y la salud?',
+         o:['Solo por el gas','Contienen azúcar refinada en grandes cantidades que dispara la insulina, favorece el almacenamiento de grasa y no aportan ningún nutriente. El fosfato además puede interferir con la absorción del calcio','Solo son malas para los dientes','No son realmente malas'],
+         c:1,
+         exp:'Una lata de refresco puede contener 35-40g de azúcar pura (casi 8 cucharaditas). Ese pico de insulina favorece el almacenamiento graso, crea adicción al sabor dulce y en deportistas puede interferir con la recuperación muscular. Son calorías vacías que además dañan.'},
+        {p:'¿Qué son las grasas saturadas y por qué hay que limitar su consumo?',
+         o:['Son saludables siempre','Son grasas de origen animal principalmente (embutidos, fritos, mantequilla en exceso) que en cantidades altas elevan el colesterol LDL y aumentan el riesgo cardiovascular','Son lo mismo que las insaturadas','No existen'],
+         c:1,
+         exp:'Las grasas saturadas no son el demonio total, pero en exceso elevan el colesterol malo (LDL) y favorecen la inflamación sistémica. En el contexto de fitness, la inflamación crónica retrasa la recuperación muscular y reduce el rendimiento deportivo.'},
+        {p:'¿Cuánta proteína necesita alguien que entrena para mantener o ganar músculo?',
+         o:['La misma que alguien sedentario','0.5g por kg de peso corporal','Entre 1.6-2.5g por kg de peso corporal según la intensidad del entrenamiento','Proteína ilimitada'],
+         c:2,
+         exp:'La proteína es el material de construcción del músculo. Sin suficiente proteína, aunque entrenes perfectamente, el cuerpo no tiene los aminoácidos para reparar y construir tejido muscular nuevo. 2g/kg es una referencia sólida para la mayoría de personas que entrenan con regularidad.'},
+        {p:'¿Por qué el azúcar refinada es especialmente perjudicial para quien busca perder grasa?',
+         o:['No lo es realmente','El azúcar refinada produce picos de insulina que bloquean temporalmente la lipólisis (quema de grasa) y promueven el almacenamiento de energía como grasa corporal','Solo es mala en exceso extremo','Por el sabor dulce'],
+         c:1,
+         exp:'La insulina es la hormona de almacenamiento. Cuando el azúcar dispara la insulina, el cuerpo entra en modo almacenamiento: guarda todo como grasa y bloquea la quema de grasa existente. Para perder grasa necesitas períodos donde la insulina esté baja, lo que ocurre con alimentos de bajo índice glucémico.'},
+        {p:'¿Qué son los macronutrientes y cuáles son?',
+         o:['Vitaminas y minerales','Las proteínas, carbohidratos y grasas que forman la base de toda la alimentación y aportan la energía y materiales estructurales del cuerpo','Solo las proteínas','Los suplementos deportivos'],
+         c:1,
+         exp:'Los tres macronutrientes son el fundamento de la nutrición. Proteínas (construcción y reparación), carbohidratos (energía principal, especialmente para el cerebro y el ejercicio) y grasas (hormonas, absorción de vitaminas, energía de larga duración). El balance entre ellos determina los resultados.'},
+      ]
+    },
+    {
+      id:'intermedio',ico:'🟡',nom:'Intermedio',
+      desc:'Dieta para perder peso, masa muscular, balance de comidas',
+      color:'#eab308',
+      preguntas:[
+        {p:'¿Cuál es la diferencia entre dieta para pérdida de grasa y para ganancia muscular?',
+         o:['Son exactamente iguales','Pérdida de grasa requiere déficit calórico moderado con proteína alta. Ganancia muscular requiere superávit calórico controlado con proteína alta y suficientes carbohidratos para energía de entrenamiento','Solo cambia el ejercicio','No hay diferencia nutritiva'],
+         c:1,
+         exp:'Son objetivos opuestos energéticamente. Para perder grasa necesitas consumir menos de lo que gastas (déficit). Para ganar músculo necesitas consumir más de lo que gastas (superávit). Sin embargo, ambos requieren proteína alta para proteger o construir músculo respectivamente.'},
+        {p:'¿Por qué es importante distribuir las comidas durante el día para pérdida de grasa?',
+         o:['No importa la distribución','Comer en intervalos regulares (cada 3-4 horas) mantiene la insulina estable, evita picos de hambre que llevan a atracones y mantiene activo el metabolismo durante todo el día','Solo importa la cantidad total','Para no tener hambre'],
+         c:1,
+         exp:'Los picos de hambre extrema son el mayor enemigo de la dieta. Cuando el cuerpo entra en hambre severa, reduce el metabolismo y cuando comes, almacena todo lo posible. Comer regularmente en porciones controladas mantiene el metabolismo activo y el hambre manejable.'},
+        {p:'¿Qué alimentos son fuentes completas de proteína?',
+         o:['Pan y arroz','Huevos, pollo, pescado, carne magra y lácteos que contienen los 9 aminoácidos esenciales que el cuerpo no puede fabricar','Solo la proteína en polvo','Verduras y frutas'],
+         c:1,
+         exp:'Las proteínas completas contienen los 9 aminoácidos esenciales que el cuerpo no puede sintetizar. Las fuentes animales las contienen todas. Las proteínas vegetales generalmente son incompletas (excepto quinoa y soja), por eso los vegetarianos deben combinar fuentes para obtener todos los aminoácidos.'},
+        {p:'¿Por qué saltarse el desayuno puede sabotear la pérdida de grasa?',
+         o:['No puede sabotearla','Después de 8+ horas de ayuno nocturno el cuerpo está en modo catabolismo. Sin desayuno continúa degradando músculo para energía y cuando comes, el pico de insulina es más alto favoreciendo el almacenamiento','Por tradición','El desayuno no importa'],
+         c:1,
+         exp:'El ayuno nocturno ya redujo el glucógeno hepático. Sin desayuno, el cuerpo busca aminoácidos musculares para gluconeogénesis (fabricar glucosa). Además, el hambre acumulada lleva a comer más en las siguientes comidas con picos de insulina más altos. Romper el ayuno con proteína y carbohidratos complejos es estratégico.'},
+      ]
+    },
+    {
+      id:'avanzado',ico:'🔴',nom:'Avanzado',
+      desc:'Ciclos nutrición-entrenamiento, suplementación, optimización',
+      color:'#ef4444',
+      preguntas:[
+        {p:'¿Qué es el "timing nutricional" y por qué los avanzados lo usan?',
+         o:['Comer siempre a la misma hora','Estrategia de consumir los nutrientes correctos en los momentos óptimos: carbohidratos pre-entrenamiento para energía, proteína post-entrenamiento para síntesis muscular, grasas alejadas del entrenamiento','Solo para atletas profesionales','No existe evidencia de su utilidad'],
+         c:1,
+         exp:'El timing nutricional optimiza el uso de los nutrientes. Pre-entrenamiento: carbohidratos para glucógeno y energía. Post-entrenamiento: proteína rápida (whey) para síntesis muscular aprovechando la ventana anabólica. Las grasas ralentizan la digestión, por eso se alejan del entrenamiento.'},
+        {p:'¿Por qué la progresión calórica es importante en una fase de volumen (ganar músculo)?',
+         o:['Comer todo lo posible siempre','Un superávit demasiado agresivo genera ganancia de grasa excesiva. Un superávit controlado (200-400 kcal extra/día) maximiza la ganancia muscular minimizando la grasa acumulada','Las calorías no importan en volumen','Come lo mismo siempre'],
+         c:1,
+         exp:'El músculo se construye lentamente (0.5-1kg por mes en naturales). Un superávit excesivo no acelera la ganancia muscular pero sí acelera la ganancia de grasa. La paciencia y el superávit controlado son la estrategia del avanzado inteligente.'},
+      ]
+    },
+    {
+      id:'dios',ico:'⚡',nom:'Nivel Dios',
+      desc:'Integración nutrición-entrenamiento-descanso · Ciencia aplicada',
+      color:'#a855f7',
+      preguntas:[
+        {p:'¿Cómo integras nutrición, entrenamiento y descanso en un plan coherente para transformación corporal?',
+         o:['Son tres cosas separadas','Son un sistema integrado: el entrenamiento crea el estímulo, la nutrición provee los materiales (proteína) y la energía (carbohidratos), el descanso es donde ocurre la transformación real. Fallar en cualquiera de los tres sabotea los otros dos','Solo el entrenamiento importa','Solo la nutrición importa'],
+         c:1,
+         exp:'El triángulo de la transformación corporal: entrenamiento (estímulo), nutrición (materiales y energía) y descanso (construcción real). Puedes entrenar perfecto y comer perfecto, pero sin dormir 7-9 horas la hormona del crecimiento no se libera correctamente y el músculo no se construye. Los tres son igualmente críticos.'},
+        {p:'Una persona quiere perder grasa pero tiene un trabajo de noche y come irregularmente. ¿Cómo adaptas su plan?',
+         o:['Es imposible en esas condiciones','Adaptas el timing nutricional a SU horario: proteína alta en cada comida independientemente de la hora, evitas carbohidratos simples justo antes de dormir (cuando sea que duerma), priorizas el descanso de calidad y el entrenamiento en el momento de mayor energía del día para esa persona','Sigues el plan estándar sin adaptación','Le dices que cambie de trabajo'],
+         c:1,
+         exp:'El nivel Dios en nutrición es la individualización. Los planes genéricos funcionan genéricamente. Adaptar la nutrición al ritmo de vida real de la persona, sus horarios, sus limitaciones y sus preferencias dentro de los principios científicos es lo que produce resultados reales y sostenibles.'},
+      ]
+    }
+  ]
+},
+
+construccion:{
+  color:'#00f2ff',
+  niveles:[
+    {
+      id:'principiante',ico:'🟢',nom:'Principiante',
+      desc:'Materiales básicos, herramientas, seguridad en obra',
+      color:'#22c55e',
+      preguntas:[
+        {p:'¿Qué pasa si añades demasiada agua al cemento?',
+         o:['Queda más fuerte','Se trabaja más fácil y queda mejor','La resistencia final se reduce drásticamente porque el exceso de agua crea vacíos y poros al evaporarse, debilitando la estructura','No cambia nada'],
+         c:2,
+         exp:'La relación agua-cemento es crítica. Más agua = más trabajabilidad pero MENOS resistencia. El exceso de agua al evaporarse deja poros y vacíos en la pasta de cemento que reducen la resistencia a compresión hasta un 50%. Usa la mínima agua necesaria para la trabajabilidad requerida.'},
+        {p:'¿Para qué sirve la plomada en construcción?',
+         o:['Para decorar la obra','Para medir el peso de los materiales','Para verificar la verticalidad perfecta de muros, columnas y elementos estructurales usando la gravedad como referencia natural','Para nivelar suelos'],
+         c:2,
+         exp:'La plomada usa la gravedad como herramienta de medición perfecta. La gravedad siempre apunta exactamente al centro de la Tierra, creando la línea perfectamente vertical. Es la herramienta más precisa y simple para verificar que una pared o columna está perfectamente a plomo.'},
+        {p:'¿Qué herramienta se usa para verificar que una superficie es horizontal?',
+         o:['La plomada','El metro','El nivel de burbuja (nivel de agua) que indica la horizontalidad perfecta cuando la burbuja está centrada','La cinta métrica'],
+         c:2,
+         exp:'El nivel de burbuja contiene un líquido con una burbuja de aire. La burbuja siempre sube a la parte más alta. Cuando está perfectamente centrada en la ampolla, la superficie está a exactamente 0° (horizontal perfecta). Es fundamental para solados, encimeras y cualquier superficie que deba ser plana.'},
+        {p:'¿Cuál es el equipo de protección básico obligatorio en obra?',
+         o:['Solo guantes','Ninguno si tienes experiencia','Casco, guantes, botas de seguridad con puntera de acero, gafas y chaleco reflectante como mínimo','Solo gafas'],
+         c:2,
+         exp:'En obra, los accidentes ocurren sin avisar. Un casco protege de objetos que caen (la causa número uno de muerte en obra). Las botas con puntera evitan amputaciones por objetos pesados. Los guantes protegen de cortes y agentes químicos. La protección no es opcional, es obligación legal y sentido común.'},
+        {p:'¿Por qué es importante leer la ficha técnica de un producto de construcción?',
+         o:['Por curiosidad','No es necesario si tienes experiencia','Cada producto tiene proporciones específicas de mezcla, tiempos de trabajo, temperaturas de aplicación y incompatibilidades con otros materiales que al ignorarlas producen fallos del producto','Solo para productos nuevos'],
+         c:2,
+         exp:'La ficha técnica es la ciencia del fabricante resumida. Un adhesivo de baldosas aplicado fuera de temperatura no pega. Un impermeabilizante aplicado sobre superficie húmeda no impermeabiliza. Un mortero mezclado en proporción incorrecta pierde toda su resistencia. La ficha técnica es la guía de uso correcta, no opcional.'},
+      ]
+    },
+    {
+      id:'intermedio',ico:'🟡',nom:'Intermedio',
+      desc:'Nivelación, fraguado, mezclas profesionales, presupuestos',
+      color:'#eab308',
+      preguntas:[
+        {p:'¿Qué es el "tiempo de fraguado" del cemento y por qué es crítico respetarlo?',
+         o:['El tiempo de secado visual','El proceso químico de hidratación donde el cemento gana resistencia. No respetar los tiempos (mínimo 24-48h para tráfico ligero, 28 días para resistencia total) produce una estructura débil que puede fallar','El tiempo de trabajo antes de que se seque','Cuánto tarda en hacerse polvo'],
+         c:1,
+         exp:'El fraguado no es "secado". Es una reacción química (hidratación del silicato de calcio) que produce cristales de gel que dan resistencia al cemento. Esta reacción continúa días y semanas. A las 24h tiene solo el 30-40% de su resistencia final. A los 28 días alcanza el 100%. Cargar una losa antes de tiempo puede provocar el colapso.'},
+        {p:'¿Cómo se calcula la cantidad de azulejo necesario para una pared?',
+         o:['Solo el área exacta','Área de la pared + 10-15% de desperdicio por cortes, roturas y piezas mal cortadas. Sin este margen te quedarás corto y puede que no haya del mismo lote','El doble siempre','El área dividida entre 2'],
+         c:1,
+         exp:'El margen de error en azulejo es crítico por una razón adicional: los lotes de producción tienen variaciones de color y textura. Si necesitas más baldosas después de la instalación y el lote está agotado, las nuevas pueden no coincidir visualmente. Comprar de una vez con el margen del 10-15% es la práctica correcta.'},
+        {p:'¿Por qué se colocan juntas de dilatación en solados grandes?',
+         o:['Por estética','No son necesarias','Los materiales se expanden con el calor y contraen con el frío. Sin juntas de dilatación, el suelo acumula tensiones internas que eventualmente producen levantamiento o rotura de las baldosas','Para ahorrar material'],
+         c:2,
+         exp:'La dilatación térmica es física pura. Un suelo de cerámica puede expandirse varios milímetros con el calor del verano. Sin junta de dilatación que absorba ese movimiento, las tensiones se acumulan hasta que el material cede: baldosas que se levantan, grietas o rotura.'},
+        {p:'¿Cuándo se debe humedecer la base antes de aplicar mortero de agarre?',
+         o:['Nunca','Siempre que la base sea absorbente o esté seca para evitar que absorba rápidamente el agua del mortero antes de que este fragüe correctamente, produciendo adhesión deficiente','Solo en verano','Solo en interiores'],
+         c:1,
+         exp:'Una base muy seca absorbe el agua del mortero antes de que este pueda fraguar adecuadamente. Sin suficiente agua de hidratación, el mortero queda débil y la adhesión falla. La base debe estar ligeramente húmeda (saturada pero sin agua superficial) para competir con el mortero por el agua de fraguado.'},
+        {p:'¿Qué es una "lechada de cemento" y cuándo se usa?',
+         o:['Cemento muy líquido para beber','Mezcla muy fluida de cemento y agua usada para imprimación de bases porosas antes de aplicar mortero, mejorando la adherencia entre la base y el material nuevo','Un tipo de pintura','Para limpiar las herramientas'],
+         c:1,
+         exp:'La lechada de cemento crea un puente de adherencia entre la base antigua y el material nuevo. Las bases muy porosas o lisas tienen baja adherencia. La lechada aplicada y dejada "sudar" (semiseca) crea la superficie idónea para que el mortero nuevo agarre con máxima fuerza.'},
+      ]
+    },
+    {
+      id:'avanzado',ico:'🔴',nom:'Avanzado',
+      desc:'Resina epóxica, impermeabilización, patologías constructivas',
+      color:'#ef4444',
+      preguntas:[
+        {p:'¿Cuál es la proporción correcta de mezcla de resina epóxica bicomponente?',
+         o:['La que parezca bien','Cualquier proporción funciona','La proporción exacta indicada en la ficha técnica (generalmente 2:1 o 3:1 en peso, no en volumen) es crítica. Una variación del 5% puede impedir el curado correcto y la resina queda pegajosa permanentemente','Solo en peso nunca en volumen'],
+         c:2,
+         exp:'La resina epóxica es química de precisión. El componente A (resina) y el componente B (endurecedor) deben reaccionar en la proporción estequiométrica exacta. Con exceso de endurecedor la resina queda frágil. Con déficit queda pegajosa y no cura. La báscula es obligatoria, nunca medir en volumen.'},
+        {p:'¿Por qué la temperatura ambiente afecta al trabajo con resina epóxica?',
+         o:['No afecta','Solo en exterior','A bajas temperaturas (menos de 15°C) la reacción química se ralentiza o se detiene y la resina no cura. A altas temperaturas (más de 35°C) el tiempo de trabajo se reduce drásticamente y puede curar antes de terminar la aplicación','Solo el color cambia'],
+         c:2,
+         exp:'La epoxidación es una reacción química exotérmica (genera calor). La temperatura activa o desactiva esta reacción. En frío la reacción va muy lenta o para. En calor va tan rápido que puede curar en minutos. El rango óptimo es 18-25°C con humedad relativa menor al 80%.'},
+        {p:'¿Qué es una "fisura estructural" versus una "fisura estética" y cómo diferenciarlas?',
+         o:['Son lo mismo','Las estéticas no existen','La estructural atraviesa todo el elemento constructivo, sigue creciendo con el tiempo y compromete la estabilidad. La estética es superficial, no progresa y no afecta la estructura. La diferencia: monitorizar con testigos de yeso durante semanas','Solo los ingenieros pueden saberlo'],
+         c:2,
+         exp:'Los testigos de yeso son la herramienta de diagnóstico: se aplican sobre la fisura y se monitorean. Si el testigo se rompe en días o semanas, la fisura progresa (potencialmente estructural). Si no se mueve, es estética. Las fisuras estructurales requieren un estudio de ingeniería urgente.'},
+        {p:'¿Cómo se impermeabiliza correctamente una terraza con filtración activa?',
+         o:['Solo con pintura impermeable','Con cemento encima','El proceso requiere: localizar el punto exacto de entrada de agua, aplicar tapafugas con agua activa, dejar curar, preparar la superficie (regularización), aplicar membrana impermeabilizante en múltiples capas con geotextil en puntos críticos y protección final','Solo sellando las juntas visibles'],
+         c:2,
+         exp:'La impermeabilización es un sistema, no un producto. Aplicar solo pintura sobre filtración activa es dinero tirado. El agua siempre busca el punto de menor resistencia. El proceso correcto localiza el origen, lo sella en seco, regulariza la superficie y aplica el sistema completo de impermeabilización en capas.'},
+      ]
+    },
+    {
+      id:'dios',ico:'⚡',nom:'Nivel Dios',
+      desc:'Diagnóstico de patologías · Presupuestación · Casos complejos',
+      color:'#a855f7',
+      preguntas:[
+        {p:'Un muro presenta humedad ascendente (mancha húmeda que sube desde el suelo). ¿Cuál es el tratamiento correcto?',
+         o:['Pintar con pintura antihumedad','Poner más cemento encima','La solución requiere crear una barrera horizontal: inyección de resinas hidrófobas a presión en perforaciones horizontales a nivel de suelo que crean una barrera impermeable dentro del muro, cortando la capilaridad ascendente','Poner ventilación'],
+         c:2,
+         exp:'La humedad ascendente es capilaridad: el agua del suelo sube por los poros del muro como si fuera una esponja. Pintar la superficie solo la encierra dentro y el muro sigue deteriorándose. La solución real corta la capilaridad desde dentro mediante inyecciones de resinas hidrófobas o mediante saneamiento y membrana en la base del muro.'},
+        {p:'¿Cómo elaboras un presupuesto de construcción profesional que no genere pérdidas?',
+         o:['Calculas los materiales exactos','El presupuesto profesional incluye: medición exacta de obra, materiales (con margen de merma 10-15%), mano de obra por rendimientos reales, medios auxiliares (andamios, herramientas), gastos generales (10-15%), beneficio industrial (10-15%) y contingencias (5%). Omitir cualquier partida genera pérdidas','Solo el material y la mano de obra','El doble de lo que crees que cuesta'],
+         c:1,
+         exp:'Los presupuestos que no incluyen gastos generales y contingencias siempre generan pérdidas en obra. Los imprevistos son predecibles estadísticamente: siempre los hay. El 5% de contingencias no es pesimismo, es rigor profesional. Un presupuesto que no incluye el beneficio industrial es trabajar gratis.'},
+        {p:'¿Por qué es esencial hacer ensayos de carga antes de rehabilitar una estructura antigua?',
+         o:['No es necesario si se ve bien','Por protocolo burocrático','Una estructura antigua puede tener degradación oculta (armaduras corroídas, concreto carbonatado, cimentación insuficiente) que la inspección visual no detecta. Los ensayos (carbonatación, potencial de corrosión, ultrasonidos) determinan la capacidad real antes de añadir carga nueva','Solo si es muy antigua'],
+         c:2,
+         exp:'El colapso de estructuras rehabilitadas sin diagnóstico previo es una tragedia evitable. La carbonatación del hormigón neutraliza la alcalinidad que protege las armaduras. La corrosión reduce la sección de acero. Una viga que parece sólida puede tener su armadura reducida al 40% por corrosión. Los ensayos no destructivos son inversión en seguridad.'},
+      ]
+    }
+  ]
+}
+
+};
+
+/* ══════════════════════════════════════
+   ESTADO GLOBAL
+══════════════════════════════════════ */
+let estado={
+  capaActual:null,
+  nivelActual:null,
+  preguntas:[],
+  idx:0,
+  pts:0,
+  correctas:0,
+  timer:null,
+  tiempoRestante:15,
+  totalPts:parseInt(localStorage.getItem('fc_quiz_pts')||'0'),
+  progreso:JSON.parse(localStorage.getItem('fc_quiz_prog')||'{}')
+};
+
+/* ══════════════════════════════════════
+   TTS — VOZ GOOGLE ES-US
+══════════════════════════════════════ */
+const TTS={
+  voz:null,
+  init(){
+    if(!('speechSynthesis' in window))return;
+    const c=()=>{
+      const all=speechSynthesis.getVoices();
+      this.voz=all.find(v=>v.name.toLowerCase().includes('google')&&v.lang==='es-US')
+        ||all.find(v=>v.name.toLowerCase().includes('google')&&v.lang.startsWith('es'))
+        ||all.find(v=>v.lang==='es-US')||all.find(v=>v.lang.startsWith('es'))||null;
+    };
+    c(); speechSynthesis.onvoiceschanged=c;
+  },
+  hablar(txt){
+    this.parar();if(!txt)return;
+    const u=new SpeechSynthesisUtterance(txt.replace(/<[^>]+>/g,''));
+    u.lang='es-US';u.rate=0.92;u.pitch=1.05;u.volume=1;
+    if(this.voz)u.voice=this.voz;
+    const w=document.getElementById('ttsWave');
+    u.onstart=()=>w&&w.classList.remove('hidden');
+    u.onend=()=>w&&w.classList.add('hidden');
+    u.onerror=e=>{if(e.error==='interrupted'||e.error==='canceled')return;w&&w.classList.add('hidden');};
+    speechSynthesis.speak(u);
+  },
+  parar(){
+    speechSynthesis.cancel();
+    const w=document.getElementById('ttsWave');w&&w.classList.add('hidden');
+  }
+};
+
+/* ══════════════════════════════════════
+   NAVEGACIÓN
+══════════════════════════════════════ */
+function show(id){
+  ['screenMenu','screenNivel','screenQuiz','screenResult','screenTetris']
+    .forEach(s=>document.getElementById(s).style.display='none');
+  document.getElementById(id).style.display='block';
+}
+
+function irMenu(){
+  TTS.parar();
+  clearInterval(estado.timer);
+  show('screenMenu');
+  actualizarPuntosTotales();
+}
+
+function actualizarPuntosTotales(){
+  document.getElementById('totalPts').textContent=estado.totalPts;
+  document.getElementById('ptsDisplay').textContent=estado.totalPts;
+  // Actualizar barras de progreso
+  Object.keys(DATOS).forEach(capa=>{
+    const prog=estado.progreso[capa]||0;
+    const bar=document.getElementById('prog-'+capa);
+    if(bar)bar.style.width=Math.min(100,prog*25)+'%'; // 25% por nivel completado
+    // Dots
+    const dots=document.getElementById('dots-'+capa);
+    if(dots){
+      dots.querySelectorAll('.dot-nivel').forEach((d,i)=>{
+        d.classList.toggle('done',i<prog);
+      });
+    }
+  });
+}
+
+/* ══════════════════════════════════════
+   ABRIR CAPA
+══════════════════════════════════════ */
+function abrirCapa(capa){
+  const data=DATOS[capa];if(!data)return;
+  estado.capaActual=capa;
+  const titles={
+    peluqueria:'✂️ Corte & Peluquería',
+    colorimetria:'🎨 Colorimetría',
+    fitness:'💪 Fitness & Entrenamiento',
+    nutricion:'🥗 Nutrición Aplicada',
+    construccion:'🏗️ Construcción & Materiales'
+  };
+  document.getElementById('nivelTitle').textContent=titles[capa]||capa;
+  document.getElementById('nivelTitle').style.color=data.color;
+
+  const lista=document.getElementById('nivelesList');
+  lista.innerHTML='';
+  data.niveles.forEach((nv,i)=>{
+    const completado=(estado.progreso[capa]||0)>i;
+    const div=document.createElement('div');
+    div.className='nivel-item';
+    div.style.cssText=`background:linear-gradient(135deg,${nv.color}08,${nv.color}03);border-color:${nv.color}30;`;
+    div.innerHTML=`
+      <div class="nivel-ico">${nv.ico}</div>
+      <div class="nivel-info">
+        <div class="nivel-nom" style="color:${nv.color}">${nv.nom} ${completado?'✅':''}</div>
+        <div class="nivel-desc">${nv.desc}</div>
+      </div>
+      <div class="nivel-count" style="color:${nv.color}">${nv.preguntas.length} pregs</div>`;
+    div.onclick=()=>iniciarQuiz(capa,i);
+    lista.appendChild(div);
+  });
+
+  show('screenNivel');
+  TTS.hablar(`Categoría ${titles[capa]}. Selecciona tu nivel para comenzar.`);
+}
+
+/* ══════════════════════════════════════
+   INICIAR QUIZ
+══════════════════════════════════════ */
+function iniciarQuiz(capa,nivelIdx){
+  const data=DATOS[capa];
+  const nivel=data.niveles[nivelIdx];
+  estado.capaActual=capa;
+  estado.nivelActual=nivelIdx;
+  estado.preguntas=[...nivel.preguntas].sort(()=>Math.random()-.5);
+  estado.idx=0;estado.pts=0;estado.correctas=0;
+
+  const colores={peluqueria:DATOS.peluqueria.color,colorimetria:DATOS.colorimetria.color,
+    fitness:DATOS.fitness.color,nutricion:DATOS.nutricion.color,construccion:DATOS.construccion.color};
+
+  document.getElementById('qCat').textContent=`${nivel.ico} ${nivel.nom}`;
+  document.getElementById('qCat').style.color=colores[capa]||'#fff';
+  document.getElementById('qProg').style.background=colores[capa]||'#fff';
+
+  show('screenQuiz');
+  mostrarPregunta();
+}
+
+function mostrarPregunta(){
+  const q=estado.preguntas[estado.idx];
+  const total=estado.preguntas.length;
+  const pct=((estado.idx)/total)*100;
+
+  document.getElementById('qProg').style.width=pct+'%';
+  document.getElementById('qNum').textContent=`${estado.idx+1} / ${total}`;
+  document.getElementById('qPregunta').textContent=q.p;
+  document.getElementById('qFeedback').style.display='none';
+  document.getElementById('qNext').style.display='none';
+
+  const opts=document.getElementById('qOpts');
+  opts.innerHTML='';
+  q.o.forEach((op,i)=>{
+    const b=document.createElement('button');
+    b.className='quiz-opt';
+    b.textContent=op;
+    b.onclick=()=>responder(i,b);
+    opts.appendChild(b);
+  });
+
+  iniciarTimer();
+  TTS.hablar(q.p);
+}
+
+function responder(idx,btn){
+  clearInterval(estado.timer);
+  const q=estado.preguntas[estado.idx];
+  const opts=document.querySelectorAll('.quiz-opt');
+  opts.forEach(b=>b.disabled=true);
+
+  const correcta=idx===q.c;
+  btn.classList.add(correcta?'correct':'wrong');
+  opts[q.c].classList.add('correct');
+
+  if(correcta){
+    estado.correctas++;
+    estado.pts+=10+(estado.tiempoRestante*2);
+  }
+
+  const fb=document.getElementById('qFeedback');
+  fb.className='quiz-feedback '+(correcta?'ok':'fail');
+  fb.innerHTML=(correcta?'✅ ':'❌ ')+q.exp;
+  fb.style.display='block';
+
+  const next=document.getElementById('qNext');
+  next.style.display='block';
+  next.style.background=correcta
+    ?'linear-gradient(135deg,#065f46,#22c55e)'
+    :'linear-gradient(135deg,#7f1d1d,#ef4444)';
+  next.style.color='#fff';
+  next.textContent=estado.idx+1<estado.preguntas.length?'Siguiente →':'Ver resultado 🏆';
+
+  TTS.hablar((correcta?'¡Correcto! ':' Incorrecto. ')+q.exp);
+}
+
+function siguientePregunta(){
+  estado.idx++;
+  if(estado.idx<estado.preguntas.length){
+    mostrarPregunta();
+  } else {
+    mostrarResultado();
+  }
+}
+
+function iniciarTimer(){
+  estado.tiempoRestante=15;
+  actualizarTimer();
+  clearInterval(estado.timer);
+  estado.timer=setInterval(()=>{
+    estado.tiempoRestante--;
+    actualizarTimer();
+    if(estado.tiempoRestante<=0){
+      clearInterval(estado.timer);
+      // Tiempo agotado — marcar como incorrecta
+      const q=estado.preguntas[estado.idx];
+      document.querySelectorAll('.quiz-opt').forEach(b=>b.disabled=true);
+      document.querySelectorAll('.quiz-opt')[q.c].classList.add('correct');
+      const fb=document.getElementById('qFeedback');
+      fb.className='quiz-feedback fail';
+      fb.innerHTML='⏰ Tiempo agotado. '+q.exp;
+      fb.style.display='block';
+      const next=document.getElementById('qNext');
+      next.style.display='block';
+      next.style.background='linear-gradient(135deg,#334155,#475569)';
+      next.style.color='#fff';
+      next.textContent=estado.idx+1<estado.preguntas.length?'Siguiente →':'Ver resultado 🏆';
+      TTS.hablar('Tiempo agotado. '+q.exp);
+    }
+  },1000);
+}
+
+function actualizarTimer(){
+  const t=document.getElementById('qTimer');
+  t.textContent=estado.tiempoRestante+'s';
+  t.style.color=estado.tiempoRestante<=5?'#ef4444':estado.tiempoRestante<=10?'#eab308':'#22c55e';
+}
+
+/* ══════════════════════════════════════
+   RESULTADO
+══════════════════════════════════════ */
+function mostrarResultado(){
+  clearInterval(estado.timer);
+  const total=estado.preguntas.length;
+  const pct=Math.round((estado.correctas/total)*100);
+
+  let ico,titulo,msg,badge,badgeStyle;
+  if(pct>=90){
+    ico='⚡';titulo='¡NIVEL DIOS!';badge='MAESTRÍA TOTAL';badgeStyle='background:rgba(168,85,247,.2);border:1px solid #a855f7;color:#a855f7;';
+    msg='Dominas este nivel a la perfección. El conocimiento de Fátima Caldea vive en ti.';
+  } else if(pct>=70){
+    ico='🏆';titulo='¡EXCELENTE!';badge='NIVEL AVANZADO';badgeStyle='background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;';
+    msg='Muy buen trabajo. Sigue practicando para alcanzar el nivel Dios.';
+  } else if(pct>=50){
+    ico='💪';titulo='¡BIEN HECHO!';badge='EN PROGRESO';badgeStyle='background:rgba(234,179,8,.15);border:1px solid #eab308;color:#eab308;';
+    msg='Vas por buen camino. Repite el nivel para consolidar el conocimiento.';
+  } else {
+    ico='📚';titulo='SIGUE ESTUDIANDO';badge='PRINCIPIANTE';badgeStyle='background:rgba(34,197,94,.12);border:1px solid #22c55e;color:#22c55e;';
+    msg='El conocimiento se construye con práctica. ¡Inténtalo de nuevo!';
+  }
+
+  // Actualizar progreso
+  if(pct>=70){
+    const nivelActual=estado.progreso[estado.capaActual]||0;
+    if(estado.nivelActual>=nivelActual){
+      estado.progreso[estado.capaActual]=estado.nivelActual+1;
+      localStorage.setItem('fc_quiz_prog',JSON.stringify(estado.progreso));
+    }
+  }
+
+  // Sumar puntos totales
+  estado.totalPts+=estado.pts;
+  localStorage.setItem('fc_quiz_pts',estado.totalPts);
+
+  document.getElementById('rIco').textContent=ico;
+  document.getElementById('rTitle').textContent=titulo;
+  document.getElementById('rTitle').style.color=pct>=70?'#a855f7':pct>=50?'#eab308':'#22c55e';
+  document.getElementById('rPts').textContent=estado.pts+' pts';
+  document.getElementById('rBadge').textContent=badge;
+  document.getElementById('rBadge').style.cssText=badgeStyle;
+  document.getElementById('rMsg').textContent=`${estado.correctas}/${total} correctas (${pct}%). ${msg}`;
+
+  show('screenResult');
+  TTS.hablar(`${titulo}. ${estado.correctas} de ${total} correctas. ${pct} por ciento. ${msg}`);
+}
+
+function repetirNivel(){
+  iniciarQuiz(estado.capaActual,estado.nivelActual);
+}
+
+/* ══════════════════════════════════════
+   TETRIS
+══════════════════════════════════════ */
+let tRAF=null,tRun=false,tScore=0,tLevel=1;
+let arena,pl,cv,ctx;
+const CL=11,RW=19,BS=20;
+const COLS=[null,'#FF0D72','#0DC2FF','#0DFF72','#F538FF','#FF8E0D','#FFE138','#3877FF'];
+
+function mkPiece(t){
+  const P={
+    I:[[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]],
+    L:[[0,2,0],[0,2,0],[0,2,2]],J:[[0,3,0],[0,3,0],[3,3,0]],
+    O:[[4,4],[4,4]],Z:[[5,5,0],[0,5,5],[0,0,0]],
+    S:[[0,6,6],[6,6,0],[0,0,0]],T:[[0,7,0],[7,7,7],[0,0,0]]
+  };return P[t];
+}
+
+function abrirTetris(){show('screenTetris');initTet();}
+
+function initTet(){
+  stopTet();
+  cv=document.getElementById('tetC');
+  ctx=cv.getContext('2d');
+  document.getElementById('tetOv').style.display='none';
+  tScore=0;tLevel=1;
+  document.getElementById('tSc').textContent='0';
+  document.getElementById('tLv').textContent='1';
+  arena=Array.from({length:RW},()=>Array(CL).fill(0));
+  pl={pos:{x:0,y:0},matrix:null};
+  tRun=true;spawnPiece();
+  let dc=0,lt=0,speed=700;
+  function upd(t=0){
+    if(!tRun)return;
+    const dt=t-lt;lt=t;dc+=dt;
+    if(dc>speed){tDrp();dc=0;speed=Math.max(150,700-(tLevel-1)*60);}
+    draw();tRAF=requestAnimationFrame(upd);
+  }
+  const kh=e=>{
+    if(!tRun)return;
+    if(e.key==='ArrowLeft')tMv(-1);
+    if(e.key==='ArrowRight')tMv(1);
+    if(e.key==='ArrowDown')tDrp();
+    if(e.key==='ArrowUp'||e.key===' ')tRot(1);
+    draw();
+  };
+  document.addEventListener('keydown',kh);cv._kh=kh;
+  upd();
+}
+
+function stopTet(){
+  tRun=false;
+  if(tRAF){cancelAnimationFrame(tRAF);tRAF=null;}
+  if(cv&&cv._kh){document.removeEventListener('keydown',cv._kh);cv._kh=null;}
+}
+
+function draw(){
+  ctx.fillStyle='#000';ctx.fillRect(0,0,cv.width,cv.height);
+  // Grid sutil
+  ctx.strokeStyle='rgba(255,255,255,.03)';ctx.lineWidth=.5;
+  for(let x=0;x<=CL;x++){ctx.beginPath();ctx.moveTo(x*BS,0);ctx.lineTo(x*BS,RW*BS);ctx.stroke();}
+  for(let y=0;y<=RW;y++){ctx.beginPath();ctx.moveTo(0,y*BS);ctx.lineTo(CL*BS,y*BS);ctx.stroke();}
+  arena.forEach((r,y)=>r.forEach((v,x)=>{
+    if(v){
+      ctx.fillStyle=COLS[v];ctx.fillRect(x*BS+1,y*BS+1,BS-2,BS-2);
+      ctx.fillStyle='rgba(255,255,255,.2)';ctx.fillRect(x*BS+1,y*BS+1,BS-2,4);
+    }
+  }));
+  if(pl.matrix)pl.matrix.forEach((r,y)=>r.forEach((v,x)=>{
+    if(v){
+      ctx.fillStyle=COLS[v];ctx.fillRect((x+pl.pos.x)*BS+1,(y+pl.pos.y)*BS+1,BS-2,BS-2);
+      ctx.fillStyle='rgba(255,255,255,.2)';ctx.fillRect((x+pl.pos.x)*BS+1,(y+pl.pos.y)*BS+1,BS-2,4);
+    }
+  }));
+}
+
+function collide(){
+  const[m,o]=[pl.matrix,pl.pos];
+  for(let y=0;y<m.length;y++)for(let x=0;x<m[y].length;x++)
+    if(m[y][x]!==0&&(arena[y+o.y]&&arena[y+o.y][x+o.x])!==0)return true;
+  return false;
+}
+function merge(){pl.matrix.forEach((r,y)=>r.forEach((v,x)=>{if(v!==0)arena[y+pl.pos.y][x+pl.pos.x]=v;}));}
+
+function sweep(){
+  let rc=1;
+  for(let y=arena.length-1;y>0;--y){
+    if(arena[y].every(v=>v!==0)){
+      arena.splice(y,1)[0].fill(0);arena.unshift(Array(CL).fill(0));++y;
+      tScore+=rc*10;rc*=2;
+      tLevel=Math.floor(tScore/100)+1;
+      document.getElementById('tSc').textContent=tScore;
+      document.getElementById('tLv').textContent=tLevel;
+    }
+  }
+}
+
+function spawnPiece(){
+  const pc='TJLOSZI';
+  pl.matrix=mkPiece(pc[pc.length*Math.random()|0]);
+  pl.pos.y=0;pl.pos.x=(CL/2|0)-(pl.matrix[0].length/2|0);
+  if(collide()){
+    tRun=false;
+    document.getElementById('tScFin').textContent=tScore;
+    document.getElementById('tetOv').style.display='flex';
+  }
+}
+
+window.tDrp=function(){pl.pos.y++;if(collide()){pl.pos.y--;merge();spawnPiece();sweep();}};
+window.tMv=function(d){pl.pos.x+=d;if(collide())pl.pos.x-=d;};
+window.tRot=function(d){
+  const px=pl.pos.x;let off=1;
+  const prev=pl.matrix;
+  pl.matrix=pl.matrix[0].map((_,i)=>pl.matrix.map(r=>r[i]).reverse());
+  while(collide()){pl.pos.x+=off;off=-(off+(off>0?1:-1));if(off>pl.matrix[0].length){pl.matrix=prev;pl.pos.x=px;return;}}
+};
+window.resetTet=function(){
+  arena.forEach(r=>r.fill(0));tScore=0;tLevel=1;
+  document.getElementById('tSc').textContent='0';document.getElementById('tLv').textContent='1';
+  document.getElementById('tScFin').textContent='0';
+  document.getElementById('tetOv').style.display='none';
+  tRun=true;spawnPiece();
+  let dc=0,lt=0;
+  function upd(t=0){if(!tRun)return;const dt=t-lt;lt=t;dc+=dt;if(dc>700){tDrp();dc=0;}draw();tRAF=requestAnimationFrame(upd);}
+  upd();
+};
+
+/* ══════════════════════════════════════
+   CHATBOX TTS
+══════════════════════════════════════ */
+const RESPUESTAS={
+  'geometría capilar':'La geometría capilar es la ciencia detrás del corte de cabello. Cada ángulo de elevación (0°, 45°, 90°, 180°) produce un resultado diferente. A 0° creas peso y solidez. A 90° creas capas uniformes. Sin geometría, el corte es improvisación. El peluquero profesional calcula cada ángulo como un arquitecto.',
+  'descansar músculo':'Cuando entrenas, creas microroturas musculares microscópicas. El músculo crece durante el DESCANSO, no durante el entrenamiento. Sin 24-48 horas de recuperación, el músculo no puede repararse, se contractura y deja de progresar. Es experiencia real: si no descansas ese músculo, el músculo se pasma y no crece.',
+  'teoría de howard':'La Teoría de Howard es la base científica de la colorimetría profesional. Explica cómo los pigmentos naturales del cabello (melanina) interactúan con los pigmentos artificiales del tinte. Con ella puedes predecir el resultado exacto antes de abrir el tubo de color. Fátima la aplica con 19 años de experiencia real.',
+  'alimentos evitar':'Para resultados óptimos en fitness y salud: evita bebidas gaseosas (35-40g de azúcar pura que bloquea la quema de grasa), grasas saturadas en exceso (embutidos, fritos) que generan inflamación crónica y retrasan la recuperación, y alimentos ultraprocesados que aportan calorías vacías sin nutrientes.',
+  'postura':'Una mala postura en el gimnasio no es solo incomodidad. Genera tensiones incorrectas en articulaciones que pueden causar hernias discales, roturas del manguito rotador o lesiones de rodilla que te llevan a urgencias. La postura correcta es tu seguro de vida deportiva. Esto es experiencia real aplicada a la tecnología.',
+  'fraguado':'El fraguado del cemento no es secado, es una reacción química (hidratación) que da resistencia. A las 24 horas el cemento tiene solo el 30-40% de su resistencia final. A los 28 días alcanza el 100%. Cargar una estructura antes de tiempo puede producir el colapso. Respetar los tiempos de fraguado no es opcional.'
+};
+
+function toggleChat(){
+  const p=document.getElementById('chatPanel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open')&&document.getElementById('chatMsgs').children.length===0){
+    addChatMsg('bot','¡Hola! Soy Fátima 👋 Pregúntame sobre peluquería, colorimetría, fitness, nutrición o construcción. También puedes usar los botones de abajo.');
+    TTS.hablar('Hola, soy Fátima. Pregúntame lo que quieras sobre los temas del sistema.');
+  }
+}
+
+function addChatMsg(tipo,txt){
+  const msgs=document.getElementById('chatMsgs');
+  const d=document.createElement('div');
+  d.className=tipo==='bot'?'msg-bot':'msg-user';
+  d.textContent=txt;
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+
+function chatPregunta(pregunta){
+  addChatMsg('user',pregunta);
+  document.getElementById('chatPanel').classList.add('open');
+  setTimeout(()=>{
+    const key=Object.keys(RESPUESTAS).find(k=>pregunta.toLowerCase().includes(k));
+    const resp=key?RESPUESTAS[key]:'Esa es una pregunta muy interesante. Practica los quiz de cada categoría para profundizar en el conocimiento. ¡El conocimiento se construye con práctica constante!';
+    addChatMsg('bot',resp);
+    TTS.hablar(resp);
+  },600);
+}
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+TTS.init();
+actualizarPuntosTotales();
+// Bienvenida
+setTimeout(()=>{
+  TTS.hablar('Bienvenida a la Academia Interactiva de Fátima Caldea. Selecciona una categoría para comenzar a aprender.');
+},1000);
+</script>
+</body>
+</html>

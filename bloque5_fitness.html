@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neural Fitness — Fátima Caldea</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getFirestore, collection, getDocs }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    const CFG = {
+      apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",
+      authDomain:"aprendisajefatima.firebaseapp.com",
+      projectId:"aprendisajefatima",
+      storageBucket:"aprendisajefatima.firebasestorage.app",
+      messagingSenderId:"744176967394",
+      appId:"1:744176967394:web:743b7c2a455e1e6ba7c8bb"
+    };
+    const app = initializeApp(CFG, 'fitness');
+    const db  = getFirestore(app);
+    window._FIT_IMGS   = {};
+    window._FIT_VIDEOS = {};
+    window._FIT_LISTO  = false;
+    try {
+      const snapI = await getDocs(collection(db,'fitness_imgs'));
+      snapI.forEach(d=>{ window._FIT_IMGS[d.id]=d.data().url; });
+      const snapV = await getDocs(collection(db,'fitness_videos'));
+      snapV.forEach(d=>{ window._FIT_VIDEOS[d.id]=d.data(); });
+      window._FIT_LISTO = true;
+    } catch(e){ window._FIT_LISTO=true; }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Inter:wght@400;600&display=swap');
+    *{box-sizing:border-box;}
+    body{background:#020617;color:#fff;font-family:'Inter',sans-serif;min-height:100vh;}
+    h1,.font-display{font-family:'Barlow Condensed',sans-serif;}
+    .box{background:#0f172a;border:2px solid #1e293b;border-radius:20px;padding:16px;margin-bottom:12px;}
+    .kg{font-size:clamp(24px,6vw,36px);font-weight:900;color:#facc15;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;}
+    .img-box{min-height:300px;display:flex;align-items:center;justify-content:center;border-radius:16px;background:#000;border:3px solid #1e293b;overflow:hidden;}
+    .img-box img{width:100%;height:100%;object-fit:contain;max-height:500px;}
+    .header-masa{color:#3b82f6;}.header-perder{color:#ef4444;}.header-mantener{color:#10b981;}
+    .input-field{width:100%;padding:12px 14px;background:#1e293b;border:2px solid #334155;border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;appearance:none;-webkit-appearance:none;outline:none;transition:border-color .2s;}
+    .input-field:focus{border-color:#3b82f6;}
+    .input-field option{background:#1e293b;color:#fff;}
+    .field-label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#64748b;margin-bottom:5px;}
+    .btn-generar{width:100%;padding:16px;background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;border-radius:14px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+    .btn-generar:active{transform:scale(.97);}
+    .btn-pdf{width:100%;padding:14px;background:#065f46;border:none;border-radius:14px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;}
+    .serie-card{background:#0f172a;border:2px solid #1e293b;border-bottom:4px solid #3b82f6;border-radius:14px;padding:14px 10px;text-align:center;}
+    .inputs-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+    @media(min-width:640px){.inputs-grid{grid-template-columns:1fr 1fr 1fr 1fr;}.inputs-grid .span-2{grid-column:span 2;}}
+    .series-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+    @media(min-width:640px){.series-grid{grid-template-columns:repeat(4,1fr);}}
+    .badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:#1e293b;color:#94a3b8;}
+    .nota-1rm{background:#0f2b1f;border:1px solid #065f46;border-radius:10px;padding:10px 14px;font-size:12px;color:#6ee7b7;margin-top:12px;}
+    /* MULTIMEDIA */
+    .fcmd-block{margin:18px 0;background:linear-gradient(180deg,#0a0a14,#070710);border:1px solid rgba(0,242,255,.22);border-radius:14px;overflow:hidden;}
+    .fcmd-h{padding:14px 18px;display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,rgba(0,242,255,.08),transparent);border-bottom:1px solid rgba(255,255,255,.05);}
+    .fcmd-h .em{font-size:20px;}
+    .fcmd-h .tt{flex:1;font-family:'Barlow Condensed',sans-serif;font-size:15px;color:#00f2ff;letter-spacing:.18em;text-transform:uppercase;font-weight:700;}
+    .fcmd-h .badge2{font-size:8px;color:#00f2ff;background:rgba(0,242,255,.08);border:1px solid rgba(0,242,255,.3);padding:3px 9px;border-radius:20px;letter-spacing:.1em;}
+    .fcmd-vid{aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center;}
+    .fcmd-vid video{width:100%;height:100%;display:block;}
+    .fcmd-vid .ph{color:#3a3a3a;text-align:center;padding:30px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.18em;}
+    .fcmd-vid .ph .ic{font-size:54px;opacity:.2;margin-bottom:10px;}
+    .fcmd-vid .ph .sub{font-size:9px;color:#2a2a2a;letter-spacing:.1em;text-transform:uppercase;margin-top:6px;}
+    .fcmd-controls{display:flex;align-items:center;gap:8px;padding:14px 18px;border-top:1px solid rgba(255,255,255,.05);flex-wrap:wrap;}
+    .fcmd-btn{padding:9px 15px;background:rgba(0,242,255,.1);border:1px solid rgba(0,242,255,.3);color:#00f2ff;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.08em;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+    .fcmd-btn:hover{background:rgba(0,242,255,.2);}
+    .fcmd-btn.stop{color:#ef4444;border-color:rgba(239,68,68,.3);background:transparent;}
+    .fcmd-pulse{width:8px;height:8px;border-radius:50%;background:#00f2ff;animation:fcmdpulse 1.1s infinite;display:none;}
+    .fcmd-controls.playing .fcmd-pulse{display:block;}
+    @keyframes fcmdpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.3;transform:scale(.7);}}
+    .fcmd-rate{display:inline-flex;align-items:center;gap:6px;font-size:9px;color:#7a8b95;letter-spacing:.06em;}
+    .fcmd-rate input{width:90px;accent-color:#00f2ff;}
+    .fcmd-script{padding:14px 18px;background:rgba(0,0,0,.4);font-size:11px;color:#cbd5e1;line-height:1.7;border-top:1px solid rgba(255,255,255,.05);max-height:200px;overflow-y:auto;}
+    .fcmd-script h4{font-size:9px;color:#00f2ff;letter-spacing:.14em;text-transform:uppercase;margin:0 0 8px;font-weight:700;}
+    /* IMAGEN DE CLASE */
+    .fit-img-block{margin:18px 0;background:#0a0a14;border:1px solid rgba(59,130,246,.22);border-radius:14px;overflow:hidden;}
+    .fit-img-block .img-hdr{padding:10px 16px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:#60a5fa;letter-spacing:.14em;text-transform:uppercase;border-bottom:1px solid rgba(59,130,246,.1);background:rgba(59,130,246,.05);}
+    .fit-img-block img{width:100%;max-height:480px;object-fit:contain;display:block;background:#000;}
+  </style>
+</head>
+<body class="p-4 md:p-6">
+
+<h1 id="mainTitle" class="font-display text-4xl md:text-5xl text-center font-black mb-3 uppercase tracking-wide">
+  🔥 Neural Fitness — Arquitectura Élite
+</h1>
+<div id="fitFirebaseStatus" style="text-align:center;font-size:11px;margin-bottom:20px;color:#334155;letter-spacing:.08em;">⏳ Conectando...</div>
+<script>
+(function chk(){
+  if(window._FIT_LISTO){
+    const ni=Object.keys(window._FIT_IMGS||{}).length, nv=Object.keys(window._FIT_VIDEOS||{}).length;
+    document.getElementById('fitFirebaseStatus').innerHTML=
+      `<span style="color:#22c55e;">● ${ni} imágenes · ${nv} videos Firebase</span>`;
+  } else setTimeout(chk,300);
+})();
+</script>
+
+<!-- INPUTS -->
+<div class="inputs-grid">
+  <div><label class="field-label">Peso corporal (kg)</label><input id="peso" type="number" value="80" class="input-field"></div>
+  <div><label class="field-label">1RM estimado (kg)</label><input id="fuerza" type="number" value="200" class="input-field"></div>
+  <div><label class="field-label">Estatura (cm)</label><input id="estatura" type="number" value="160" class="input-field"></div>
+  <div><label class="field-label">Día del programa</label><input id="dia" type="number" value="1" min="1" max="30" class="input-field"></div>
+  <div class="span-2">
+    <label class="field-label">Motor de entrenamiento</label>
+    <select id="objetivoManual" class="input-field font-bold">
+      <option value="masa">MOTOR: GANAR MASA</option>
+      <option value="perder">MOTOR: PERDER GRASA</option>
+      <option value="mantener">MOTOR: MANTENER PESO</option>
+    </select>
+  </div>
+  <div class="span-2">
+    <label class="field-label">Equipamiento</label>
+    <select id="equipamiento" class="input-field">
+      <option value="maquina">EQUIPO: MÁQUINAS</option>
+      <option value="mancuerna">EQUIPO: MANCUERNAS</option>
+      <option value="corporal">EQUIPO: PESO CORPORAL</option>
+    </select>
+  </div>
+  <div>
+    <label class="field-label">Grupo muscular</label>
+    <select id="grupo" class="input-field">
+      <option value="gluteo">Glúteo</option>
+      <option value="pierna">Pierna</option>
+      <option value="superior">Tren Superior</option>
+    </select>
+  </div>
+  <div>
+    <label class="field-label">Nº de ejercicios</label>
+    <select id="cantidadEjercicios" class="input-field font-bold" style="color:#60a5fa;">
+      <option value="6">6 Ejercicios</option>
+      <option value="8">8 Ejercicios</option>
+      <option value="12">12 Ejercicios</option>
+    </select>
+  </div>
+</div>
+
+<div class="flex flex-col sm:flex-row gap-3 mb-8">
+  <div class="flex-1"><button onclick="generar()" class="btn-generar">⚡ GENERAR ENTRENAMIENTO</button></div>
+  <div class="sm:w-36"><button onclick="descargarPDF()" class="btn-pdf">📄 PDF</button></div>
+  <div class="sm:w-36"><button onclick="descargarJPG()" class="btn-pdf" style="background:#1d4ed8;">📸 JPG</button></div>
+</div>
+
+<div id="capture-area"><div id="out"></div></div>
+
+<script>
+/* ══ GUIONES POR MOTOR ══ */
+const GUIONES_FIT = {
+  masa:     (dia,grupo,series,equipo) =>
+    `Día ${dia} del programa de hipertrofia. Hoy trabajamos ${grupo}. ` +
+    `Primera serie: ${series[0].kg} kilos por ${series[0].reps} repeticiones. ` +
+    `Progresión acumulada: más ${((dia-1)*0.2).toFixed(1)} por ciento. ` +
+    `Descansa 90 a 120 segundos entre series. Equipamiento: ${equipo}. Vamos.`,
+  perder:   (dia,grupo,series,equipo) =>
+    `Día ${dia} del protocolo de definición. Zona de trabajo: ${grupo}. ` +
+    `Empezamos con ${series[0].kg} kilos por ${series[0].reps} repeticiones. ` +
+    `Máximo 45 segundos de descanso. Mantén la frecuencia cardíaca alta. ` +
+    `Progresión: más ${((dia-1)*0.2).toFixed(1)} por ciento. Equipamiento: ${equipo}. Quema.`,
+  mantener: (dia,grupo,series,equipo) =>
+    `Día ${dia} del plan de mantenimiento. Grupo muscular: ${grupo}. ` +
+    `Carga estable de ${series[0].kg} kilos por ${series[0].reps} repeticiones. ` +
+    `Descansa 60 a 90 segundos. Técnica perfecta hoy. ` +
+    `Progresión día ${dia}: más ${((dia-1)*0.2).toFixed(1)} por ciento. Equipamiento: ${equipo}.`
+};
+
+/* ══ CLAVE FIREBASE VIDEO ══ */
+function getVideoKey(dia,obj,grupo){ return `dia${dia}_${obj}_${grupo}`; }
+
+/* ══ IMAGEN FIREBASE ══ */
+const DRIVE_IDS={};
+function getDriveURL(nombre){
+  const clave=nombre.replace(/\.(jpg|jpeg|png|webp)$/i,'');
+  if(window._FIT_IMGS&&window._FIT_IMGS[clave]) return window._FIT_IMGS[clave];
+  /* FALLBACK BIBLIOTECA: si la versión aleatoria (vN) no existe, usar cualquier
+     versión disponible de la misma combinación (grupo_obj_equipo_nEj). Así basta
+     con cargar UNA lámina por combinación en la biblioteca para que siempre aparezca. */
+  if(window._FIT_IMGS){
+    const base = clave.replace(/_v\d+$/,'_v');
+    for(const k in window._FIT_IMGS){
+      if(k.indexOf(base)===0 && window._FIT_IMGS[k]) return window._FIT_IMGS[k];
+    }
+  }
+  if(DRIVE_IDS[clave]) return `https://drive.google.com/uc?export=view&id=${DRIVE_IDS[clave]}`;
+  return null;
+}
+
+/* ══ CÁLCULO CIENTÍFICO NSCA ══ */
+let ultimoIndex=null;
+const MAX_LAMINAS=12;
+
+function calcularSeries(obj,fuerza1RM,dia,factorEst){
+  const prog=1+(dia-1)*0.002;
+  const s=[];
+  if(obj==='masa'){
+    [[0.65,12],[0.70,10],[0.77,8],[0.82,6]].forEach(([p,r])=>s.push({reps:r,kg:Math.round(fuerza1RM*p*prog*factorEst)}));
+  } else if(obj==='perder'){
+    [[0.40,15],[0.45,18],[0.50,21],[0.55,25]].forEach(([p,r])=>s.push({reps:r,kg:Math.round(fuerza1RM*p*prog*factorEst)}));
+  } else {
+    [[0.70,12],[0.72,10],[0.75,10],[0.72,12]].forEach(([p,r])=>s.push({reps:r,kg:Math.round(fuerza1RM*p*prog*factorEst)}));
+  }
+  return s;
+}
+
+/* ══ BLOQUE IMAGEN DE CLASE ══ */
+function crearBloqueImagen(imgSrc, nombreArchivo, placeholderURL){
+  const wrap=document.createElement('div');
+  wrap.className='fit-img-block';
+
+  // Si no hay URL real → mostrar placeholder SVG inline (nunca falla)
+  const sinImagen = !imgSrc || imgSrc.trim()==='';
+
+  if(sinImagen){
+    wrap.innerHTML=`
+      <div class="img-hdr">🏋️ LÁMINA TÉCNICA — ${nombreArchivo}</div>
+      <div style="background:#0a0f1c;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:30px;">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="80" height="80" rx="12" fill="#1e293b"/>
+          <text x="40" y="48" text-anchor="middle" font-size="32">🏋️</text>
+        </svg>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:#3b82f6;letter-spacing:1px;text-align:center;">
+          SUBE LA LÁMINA A FIREBASE
+        </div>
+        <div style="font-size:10px;color:#334155;font-family:monospace;text-align:center;line-height:1.6;">
+          Colección: <span style="color:#60a5fa;">fitness_imgs</span><br>
+          Documento: <span style="color:#60a5fa;">${nombreArchivo.replace(/\.jpg$/i,'')}</span><br>
+          Campo: <span style="color:#60a5fa;">url</span> → URL pública de Firebase Storage
+        </div>
+      </div>`;
+  } else {
+    wrap.innerHTML=`
+      <div class="img-hdr">🏋️ LÁMINA TÉCNICA DEL EJERCICIO</div>
+      <img src="${imgSrc}" alt="${nombreArchivo}"
+           style="width:100%;max-height:480px;object-fit:contain;display:block;background:#000;"
+           onerror="
+             this.style.display='none';
+             this.parentNode.insertAdjacentHTML('beforeend',
+               '<div style=\\'background:#0a0f1c;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;\\'>' +
+               '<div style=\\'font-size:36px;\\'>🏋️</div>' +
+               '<div style=\\'font-family:Barlow Condensed,sans-serif;font-size:13px;color:#3b82f6;letter-spacing:1px;\\'>IMAGEN NO DISPONIBLE</div>' +
+               '<div style=\\'font-size:10px;color:#334155;font-family:monospace;text-align:center;line-height:1.7;\\'>' +
+               'fitness_imgs / ${nombreArchivo.replace(/\.jpg$/i,'').replace(/'/g,"\\'")} <br>campo: url</div></div>'
+             )">`;
+  }
+  return wrap;
+}
+
+/* ══ BLOQUE MULTIMEDIA — VIDEO + VOZ IA ══ */
+function crearBloqueMultimedia(dia,obj,grupo,equipo,series){
+  const key  = getVideoKey(dia,obj,grupo);
+  const data = (window._FIT_VIDEOS&&window._FIT_VIDEOS[key])||{};
+  const videoUrl = data.url_video||'';
+  const titulo   = data.titulo||`Día ${dia} · ${obj.toUpperCase()} · ${grupo.toUpperCase()}`;
+  const guion    = data.guion||GUIONES_FIT[obj](dia,grupo,series,equipo);
+  const uid      = `${dia}_${obj}_${grupo}_${Date.now()}`;
+
+  const wrap=document.createElement('div');
+  wrap.className='fcmd-block';
+  wrap.innerHTML=`
+    <div class="fcmd-h">
+      <div class="em">🎬</div>
+      <div class="tt">${titulo}</div>
+      <span class="badge2">DÍA ${dia} · ${obj.toUpperCase()}</span>
+    </div>
+    ${videoUrl
+      ?`<div class="fcmd-vid"><video src="${videoUrl}" controls playsinline preload="metadata"></video></div>`
+      :`<div class="fcmd-vid"><div class="ph"><div class="ic">🎬</div>Vídeo próximamente<div class="sub">Día ${dia} · ${obj} · ${grupo}</div></div></div>`
+    }
+    <div class="fcmd-controls" id="fctr-${uid}">
+      <button class="fcmd-btn" id="fplay-${uid}">▶ Escuchar narración</button>
+      <button class="fcmd-btn stop" id="fstop-${uid}">■ Detener</button>
+      <span class="fcmd-pulse"></span>
+      <span class="fcmd-rate">
+        Velocidad:
+        <input type="range" min="0.7" max="1.4" step="0.05" value="1" id="frate-${uid}">
+        <span id="frl-${uid}">1.0×</span>
+      </span>
+    </div>
+    <div class="fcmd-script">
+      <h4>📝 Guión · Día ${dia}</h4>
+      <p>${guion}</p>
+    </div>`;
+
+  setTimeout(()=>{
+    const play=document.getElementById(`fplay-${uid}`);
+    const stop=document.getElementById(`fstop-${uid}`);
+    const rate=document.getElementById(`frate-${uid}`);
+    const rl  =document.getElementById(`frl-${uid}`);
+    const ctr =document.getElementById(`fctr-${uid}`);
+    if(!play) return;
+    rate.oninput=()=>rl.textContent=parseFloat(rate.value).toFixed(2)+'×';
+    play.onclick=()=>{
+      try{speechSynthesis.cancel();}catch(e){}
+      const u=new SpeechSynthesisUtterance(guion);
+      u.lang='es-ES'; u.rate=parseFloat(rate.value);
+      const vx=speechSynthesis.getVoices();
+      const fem=vx.find(v=>/es[-_]/i.test(v.lang)&&/female|mujer|monica|paulina|lucia/i.test(v.name))
+             ||vx.find(v=>/es[-_]/i.test(v.lang))||vx[0];
+      if(fem) u.voice=fem;
+      u.onstart=()=>ctr.classList.add('playing');
+      u.onend  =()=>ctr.classList.remove('playing');
+      speechSynthesis.speak(u);
+    };
+    stop.onclick=()=>{try{speechSynthesis.cancel();}catch(e){}ctr.classList.remove('playing');};
+    const vid=wrap.querySelector('video');
+    if(vid){
+      vid.addEventListener('play', ()=>setTimeout(()=>play.click(),200));
+      vid.addEventListener('pause',()=>stop.click());
+      vid.addEventListener('ended',()=>stop.click());
+    }
+    if(window.speechSynthesis) speechSynthesis.getVoices();
+  },200);
+
+  return wrap;
+}
+
+/* ══ GENERAR ══ */
+function _generar(){
+  const peso    =parseFloat(document.getElementById('peso').value);
+  const fuerza  =parseFloat(document.getElementById('fuerza').value);
+  const estatura=parseFloat(document.getElementById('estatura').value);
+  const dia     =parseInt(document.getElementById('dia').value);
+  const obj     =document.getElementById('objetivoManual').value;
+  const equipo  =document.getElementById('equipamiento').value;
+  const grupo   =document.getElementById('grupo').value;
+  const nEjer   =document.getElementById('cantidadEjercicios').value;
+
+  const factorEst = estatura<160?0.92:1.0;
+  const colores={masa:'header-masa',perder:'header-perder',mantener:'header-mantener'};
+  document.getElementById('mainTitle').className=
+    `font-display text-4xl md:text-5xl text-center font-black mb-6 uppercase tracking-wide ${colores[obj]}`;
+
+  const series=calcularSeries(obj,fuerza,dia,factorEst);
+
+  let v; do{v=Math.floor(Math.random()*MAX_LAMINAS)+1;}while(v===ultimoIndex);
+  ultimoIndex=v;
+  const nombreArchivo=`${grupo}_${obj}_${equipo}_${nEjer}_v${v}.jpg`;
+  const driveURL=getDriveURL(nombreArchivo);
+  const localURL=`libreria/${grupo}/${nombreArchivo}`;
+  const placeholderURL=`https://placehold.co/600x800/020617/3b82f6?text=${encodeURIComponent(nombreArchivo)}`;
+  const imgSrc=driveURL||localURL;
+
+  const motorInfo={
+    masa:    {label:'HIPERTROFIA',color:'#3b82f6',pct:'65–82% 1RM'},
+    perder:  {label:'RESISTENCIA',color:'#ef4444',pct:'40–55% 1RM'},
+    mantener:{label:'FUERZA BASE',color:'#10b981',pct:'70–75% 1RM'},
+  }[obj];
+
+  const descansoTexto={
+    masa:    '<strong style="color:#fff;">90–120 seg</strong> · Resíntesis ATP.',
+    perder:  '<strong style="color:#fff;">30–45 seg</strong> · FC elevada.',
+    mantener:'<strong style="color:#fff;">60–90 seg</strong> · Recuperación moderada.'
+  }[obj];
+
+  let htmlSeries='';
+  series.forEach((x,i)=>{
+    htmlSeries+=`
+    <div class="serie-card">
+      <p style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Serie ${i+1}</p>
+      <p style="font-family:'Barlow Condensed',sans-serif;font-size:clamp(20px,5vw,28px);font-weight:900;line-height:1.1;">${x.reps} REPS</p>
+      <p class="kg">${equipo==='corporal'?'P.C.':x.kg+' kg'}</p>
+    </div>`;
+  });
+
+  const outEl=document.getElementById('out');
+  outEl.innerHTML=`
+  <!-- SEGURIDAD -->
+  <div class="box" style="border-left:6px solid #eab308;background:#0a0d18;">
+    <h3 style="color:#eab308;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">⚠️ PROTOCOLO DE SEGURIDAD</h3>
+    <p style="font-size:13px;color:#cbd5e1;">🚴 Cardio: 20 min &nbsp;|&nbsp; 🤸 Estiramiento: 10 min</p>
+    <p style="font-size:12px;color:#f87171;font-weight:700;margin-top:8px;">🛑 No repetir grupo muscular antes de 48h.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px;">
+      <div style="background:#0f1f3d;border:1px solid #1e3a5f;border-radius:12px;padding:12px;">
+        <p style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;color:#60a5fa;text-transform:uppercase;margin-bottom:6px;">🚴 Calentamiento</p>
+        <p style="font-size:12px;color:#93c5fd;line-height:1.5;"><strong style="color:#fff;">20 min</strong> · RPM <strong style="color:#facc15;">60–80</strong> · Nivel <strong style="color:#facc15;">3–5</strong></p>
+      </div>
+      <div style="background:#1a0f2e;border:1px solid #3b1f6e;border-radius:12px;padding:12px;">
+        <p style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;color:#a78bfa;text-transform:uppercase;margin-bottom:6px;">⏱️ Descanso</p>
+        <p style="font-size:12px;color:#c4b5fd;line-height:1.5;">${descansoTexto}</p>
+      </div>
+      <div style="background:#062019;border:1px solid #065f46;border-radius:12px;padding:12px;">
+        <p style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;color:#34d399;text-transform:uppercase;margin-bottom:6px;">💧 Hidratación</p>
+        <p style="font-size:12px;color:#6ee7b7;line-height:1.5;">Antes <strong>500ml</strong> · Durante <strong>150ml/15min</strong> · Después <strong>500ml</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL PRINCIPAL -->
+  <div class="box" style="background:#0b1120;">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:16px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <span class="badge">${equipo.toUpperCase()}</span>
+        <span class="badge" style="color:${motorInfo.color};border:1px solid ${motorInfo.color}30;">${motorInfo.label} · ${motorInfo.pct}</span>
+        <span class="badge">Día ${dia} · +${((dia-1)*0.2).toFixed(1)}%</span>
+      </div>
+      <span style="font-size:9px;color:#334155;font-family:monospace;">${nombreArchivo}</span>
+    </div>
+
+    <!-- IMAGEN INDEPENDIENTE -->
+    <div id="fit-img-slot"></div>
+
+    <!-- SERIES -->
+    <div class="series-grid">${htmlSeries}</div>
+
+    <div class="nota-1rm">
+      <strong>📊 1RM: ${fuerza}kg</strong> · NSCA ${motorInfo.label.toLowerCase()} · Progresión día ${dia}: <strong>+${((dia-1)*0.2).toFixed(1)}%</strong>
+      ${equipo==='corporal'?'<br>⚠️ Peso corporal activo.':''}
+    </div>
+
+    <!-- VIDEO + AUDIO INDEPENDIENTE -->
+    <div id="fit-media-slot"></div>
+  </div>`;
+
+  // ── Inyectar imagen ──
+  // Si no hay URL de Firebase ni local, mostrar placeholder SVG directo
+  const imgFinal = driveURL || '';
+  document.getElementById('fit-img-slot').appendChild(
+    crearBloqueImagen(imgFinal, nombreArchivo, placeholderURL)
+  );
+
+  // ── Inyectar video + audio ──
+  document.getElementById('fit-media-slot').appendChild(
+    crearBloqueMultimedia(dia,obj,grupo,equipo,series)
+  );
+}
+
+function descargarPDF(){
+  if(!_fitDescontarCreditos(10,'Plan PDF')) return;
+  html2pdf().set({
+    margin:8,filename:`Fitness_Dia${document.getElementById('dia').value}_Fatima.pdf`,
+    image:{type:'jpeg',quality:.95},
+    html2canvas:{scale:2,backgroundColor:'#020617',useCORS:true},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+  }).from(document.getElementById('capture-area')).save();
+}
+
+/* ══════════════════════════════════════════════
+   BASE DE EJERCICIOS POR GRUPO · MOTOR · EQUIPO
+   6 / 8 / 12 ejercicios distintos
+══════════════════════════════════════════════ */
+const EJERCICIOS_DB = {
+  gluteo:{
+    masa:{
+      maquina:{
+        6:['Hip Thrust Máquina','Prensa Glúteo 45°','Kickback Cable','Abducción Sentada','Step-Up con Carga','Extensión Cadera'],
+        8:['Hip Thrust Máquina','Prensa Glúteo 45°','Kickback Cable','Abducción Sentada','Step-Up con Carga','Extensión Cadera','Sentadilla Smith','Curl Femoral'],
+        12:['Hip Thrust Máquina','Prensa Glúteo 45°','Kickback Cable','Abducción Sentada','Step-Up con Carga','Extensión Cadera','Sentadilla Smith','Curl Femoral','Hiperextensión','Peso Muerto Máquina','Patada Trasera','Aducción Sentada']
+      },
+      mancuerna:{
+        6:['Hip Thrust Mancuerna','Sentadilla Goblet','Peso Muerto Rumano','Zancada Lateral','Step-Up Mancuerna','Patada de Burro'],
+        8:['Hip Thrust Mancuerna','Sentadilla Goblet','Peso Muerto Rumano','Zancada Lateral','Step-Up Mancuerna','Patada de Burro','Sentadilla Sumo','Zancada Búlgara'],
+        12:['Hip Thrust Mancuerna','Sentadilla Goblet','Peso Muerto Rumano','Zancada Lateral','Step-Up Mancuerna','Patada de Burro','Sentadilla Sumo','Zancada Búlgara','Hip Hinge','Abducción de Pie','Peso Muerto Copa','Sentadilla Pulso']
+      },
+      corporal:{
+        6:['Hip Thrust Peso Corp.','Sentadilla Búlgara','Puente de Glúteo','Patada Trasera','Sentadilla Sumo','Step-Up Sin Peso'],
+        8:['Hip Thrust Peso Corp.','Sentadilla Búlgara','Puente de Glúteo','Patada Trasera','Sentadilla Sumo','Step-Up Sin Peso','Sentadilla Pistol','Abducción de Pie'],
+        12:['Hip Thrust Peso Corp.','Sentadilla Búlgara','Puente de Glúteo','Patada Trasera','Sentadilla Sumo','Step-Up Sin Peso','Sentadilla Pistol','Abducción de Pie','Clamshell','Puente Unilateral','Sentadilla Lateral','Patada Lateral']
+      }
+    },
+    perder:{
+      maquina:{6:['Kickback Cable','Abducción Máquina','Prensa Pies Altos','Extensión Cadera','Sentadilla Smith','Step-Up Máquina'],8:['Kickback Cable','Abducción Máquina','Prensa Pies Altos','Extensión Cadera','Sentadilla Smith','Step-Up Máquina','Curl Femoral','Aducción Máquina'],12:['Kickback Cable','Abducción Máquina','Prensa Pies Altos','Extensión Cadera','Sentadilla Smith','Step-Up Máquina','Curl Femoral','Aducción Máquina','Hip Thrust Máquina','Sentadilla Hack','Patada Cable','Extensión Lumbar']},
+      mancuerna:{6:['Peso Muerto Rumano','Zancada Frontal','Sentadilla Sumo','Step-Up Mancuerna','Zancada Lateral','Hip Hinge'],8:['Peso Muerto Rumano','Zancada Frontal','Sentadilla Sumo','Step-Up Mancuerna','Zancada Lateral','Hip Hinge','Zancada Búlgara','Sentadilla Goblet'],12:['Peso Muerto Rumano','Zancada Frontal','Sentadilla Sumo','Step-Up Mancuerna','Zancada Lateral','Hip Hinge','Zancada Búlgara','Sentadilla Goblet','Hip Thrust Mancuerna','Patada de Burro','Abducción Pie','Sentadilla Copa']},
+      corporal:{6:['Sentadilla Sumo','Puente Glúteo','Patada Trasera','Zancada Alterna','Abducción Pie','Sentadilla Pulso'],8:['Sentadilla Sumo','Puente Glúteo','Patada Trasera','Zancada Alterna','Abducción Pie','Sentadilla Pulso','Clamshell','Hip Hinge Unilat.'],12:['Sentadilla Sumo','Puente Glúteo','Patada Trasera','Zancada Alterna','Abducción Pie','Sentadilla Pulso','Clamshell','Hip Hinge Unilat.','Puente Unilateral','Sentadilla Lateral','Patada Lateral','Marcha Glúteo']}
+    },
+    mantener:{
+      maquina:{6:['Hip Thrust Máquina','Abducción Sentada','Prensa Glúteo','Extensión Cadera','Step-Up Máquina','Curl Femoral'],8:['Hip Thrust Máquina','Abducción Sentada','Prensa Glúteo','Extensión Cadera','Step-Up Máquina','Curl Femoral','Kickback Cable','Sentadilla Smith'],12:['Hip Thrust Máquina','Abducción Sentada','Prensa Glúteo','Extensión Cadera','Step-Up Máquina','Curl Femoral','Kickback Cable','Sentadilla Smith','Aducción Máquina','Extensión Lumbar','Patada Cable','Hiperextensión']},
+      mancuerna:{6:['Hip Thrust Mancuerna','Peso Muerto Rumano','Sentadilla Goblet','Zancada Frontal','Step-Up Mancuerna','Hip Hinge'],8:['Hip Thrust Mancuerna','Peso Muerto Rumano','Sentadilla Goblet','Zancada Frontal','Step-Up Mancuerna','Hip Hinge','Sentadilla Sumo','Zancada Búlgara'],12:['Hip Thrust Mancuerna','Peso Muerto Rumano','Sentadilla Goblet','Zancada Frontal','Step-Up Mancuerna','Hip Hinge','Sentadilla Sumo','Zancada Búlgara','Patada de Burro','Abducción Pie','Peso Muerto Copa','Sentadilla Pulso']},
+      corporal:{6:['Puente Glúteo','Sentadilla Búlgara','Hip Thrust Unilat.','Patada Trasera','Sentadilla Sumo','Clamshell'],8:['Puente Glúteo','Sentadilla Búlgara','Hip Thrust Unilat.','Patada Trasera','Sentadilla Sumo','Clamshell','Abducción Pie','Step-Up Sin Peso'],12:['Puente Glúteo','Sentadilla Búlgara','Hip Thrust Unilat.','Patada Trasera','Sentadilla Sumo','Clamshell','Abducción Pie','Step-Up Sin Peso','Puente Unilateral','Sentadilla Lateral','Patada Lateral','Marcha Glúteo']}
+    }
+  },
+  pierna:{
+    masa:{
+      maquina:{6:['Sentadilla Hack','Prensa 45°','Extensión Cuádriceps','Curl Femoral','Prensa Pies Bajos','Abducción Máquina'],8:['Sentadilla Hack','Prensa 45°','Extensión Cuádriceps','Curl Femoral','Prensa Pies Bajos','Abducción Máquina','Sentadilla Smith','Curl Fem. Parado'],12:['Sentadilla Hack','Prensa 45°','Extensión Cuádriceps','Curl Femoral','Prensa Pies Bajos','Abducción Máquina','Sentadilla Smith','Curl Fem. Parado','Extensión Cadera','Step-Up Máquina','Prensa Unilateral','Sentadilla Sissy']},
+      mancuerna:{6:['Sentadilla Trasera Barra','Zancada Lateral Mancuerna','Peso Muerto Sumo','Extensión Pantorrilla','Zancada Búlgara','Sentadilla Copa'],8:['Sentadilla Trasera Barra','Zancada Lateral Mancuerna','Peso Muerto Sumo','Extensión Pantorrilla','Zancada Búlgara','Sentadilla Copa','Peso Muerto Rumano','Step-Up Mancuerna'],12:['Sentadilla Trasera Barra','Zancada Lateral Mancuerna','Peso Muerto Sumo','Extensión Pantorrilla','Zancada Búlgara','Sentadilla Copa','Peso Muerto Rumano','Step-Up Mancuerna','Zancada Frontal','Sentadilla Sumo','Hip Hinge','Curl Isquiotibial']},
+      corporal:{6:['Sentadilla Libre','Zancada Alterna','Sentadilla Búlgara','Sentadilla Pistol','Step-Up Sin Peso','Sentadilla Sumo'],8:['Sentadilla Libre','Zancada Alterna','Sentadilla Búlgara','Sentadilla Pistol','Step-Up Sin Peso','Sentadilla Sumo','Sentadilla Lateral','Sentadilla Pulso'],12:['Sentadilla Libre','Zancada Alterna','Sentadilla Búlgara','Sentadilla Pistol','Step-Up Sin Peso','Sentadilla Sumo','Sentadilla Lateral','Sentadilla Pulso','Zancada Frontal','Wall Sit','Salto Sentadilla','Caminata Isométrica']}
+    },
+    perder:{
+      maquina:{6:['Prensa 45° Ligera','Extensión Cuádriceps','Curl Femoral','Step-Up Máquina','Abducción Máquina','Sentadilla Smith'],8:['Prensa 45° Ligera','Extensión Cuádriceps','Curl Femoral','Step-Up Máquina','Abducción Máquina','Sentadilla Smith','Prensa Unilateral','Curl Fem. Parado'],12:['Prensa 45° Ligera','Extensión Cuádriceps','Curl Femoral','Step-Up Máquina','Abducción Máquina','Sentadilla Smith','Prensa Unilateral','Curl Fem. Parado','Sentadilla Hack','Aducción','Extensión Cadera','Prensa Pies Altos']},
+      mancuerna:{6:['Zancada Frontal','Sentadilla Goblet','Peso Muerto Rumano','Zancada Lateral','Step-Up Mancuerna','Sentadilla Sumo'],8:['Zancada Frontal','Sentadilla Goblet','Peso Muerto Rumano','Zancada Lateral','Step-Up Mancuerna','Sentadilla Sumo','Zancada Búlgara','Hip Hinge'],12:['Zancada Frontal','Sentadilla Goblet','Peso Muerto Rumano','Zancada Lateral','Step-Up Mancuerna','Sentadilla Sumo','Zancada Búlgara','Hip Hinge','Sentadilla Copa','Curl Isquiotibial','Zancada Reversa','Sentadilla Pulso']},
+      corporal:{6:['Sentadilla Sumo','Zancada Alterna','Sentadilla Búlgara','Sentadilla Lateral','Step-Up Sin Peso','Sentadilla Pulso'],8:['Sentadilla Sumo','Zancada Alterna','Sentadilla Búlgara','Sentadilla Lateral','Step-Up Sin Peso','Sentadilla Pulso','Salto Sentadilla','Wall Sit'],12:['Sentadilla Sumo','Zancada Alterna','Sentadilla Búlgara','Sentadilla Lateral','Step-Up Sin Peso','Sentadilla Pulso','Salto Sentadilla','Wall Sit','Sentadilla Pistol','Marcha Alta','Zancada Salta','Caminata Isométrica']}
+    },
+    mantener:{
+      maquina:{6:['Prensa 45°','Extensión Cuádriceps','Curl Femoral','Sentadilla Smith','Step-Up Máquina','Abducción Máquina'],8:['Prensa 45°','Extensión Cuádriceps','Curl Femoral','Sentadilla Smith','Step-Up Máquina','Abducción Máquina','Sentadilla Hack','Curl Fem. Parado'],12:['Prensa 45°','Extensión Cuádriceps','Curl Femoral','Sentadilla Smith','Step-Up Máquina','Abducción Máquina','Sentadilla Hack','Curl Fem. Parado','Prensa Unilateral','Aducción Máquina','Extensión Cadera','Prensa Pies Bajos']},
+      mancuerna:{6:['Sentadilla Goblet','Peso Muerto Rumano','Zancada Frontal','Step-Up Mancuerna','Sentadilla Sumo','Hip Hinge'],8:['Sentadilla Goblet','Peso Muerto Rumano','Zancada Frontal','Step-Up Mancuerna','Sentadilla Sumo','Hip Hinge','Zancada Búlgara','Zancada Lateral'],12:['Sentadilla Goblet','Peso Muerto Rumano','Zancada Frontal','Step-Up Mancuerna','Sentadilla Sumo','Hip Hinge','Zancada Búlgara','Zancada Lateral','Sentadilla Copa','Hip Thrust Mancuerna','Curl Isquiotibial','Sentadilla Pulso']},
+      corporal:{6:['Sentadilla Libre','Zancada Alterna','Sentadilla Búlgara','Step-Up Sin Peso','Sentadilla Sumo','Sentadilla Lateral'],8:['Sentadilla Libre','Zancada Alterna','Sentadilla Búlgara','Step-Up Sin Peso','Sentadilla Sumo','Sentadilla Lateral','Sentadilla Pulso','Wall Sit'],12:['Sentadilla Libre','Zancada Alterna','Sentadilla Búlgara','Step-Up Sin Peso','Sentadilla Sumo','Sentadilla Lateral','Sentadilla Pulso','Wall Sit','Sentadilla Pistol','Zancada Frontal','Sentadilla Copa','Salto Sentadilla']}
+    }
+  },
+  superior:{
+    masa:{
+      maquina:{6:['Press Pecho Máquina','Jalón al Pecho','Remo Máquina','Press Hombro','Curl Bíceps','Extensión Tríceps'],8:['Press Pecho Máquina','Jalón al Pecho','Remo Máquina','Press Hombro','Curl Bíceps','Extensión Tríceps','Cruce Poleas','Face Pull'],12:['Press Pecho Máquina','Jalón al Pecho','Remo Máquina','Press Hombro','Curl Bíceps','Extensión Tríceps','Cruce Poleas','Face Pull','Mariposa Máquina','Remo Sentado','Press Arnold Máquina','Pushdown Cable']},
+      mancuerna:{6:['Press Banca Mancuerna','Remo Unilateral','Press Hombro Mancuerna','Curl Alternado','Extensión Tríceps','Pullover'],8:['Press Banca Mancuerna','Remo Unilateral','Press Hombro Mancuerna','Curl Alternado','Extensión Tríceps','Pullover','Elevación Lateral','Curl Martillo'],12:['Press Banca Mancuerna','Remo Unilateral','Press Hombro Mancuerna','Curl Alternado','Extensión Tríceps','Pullover','Elevación Lateral','Curl Martillo','Mariposa Mancuerna','Remo Inclinado','Arnold Press','Patada Tríceps']},
+      corporal:{6:['Flexiones','Dominadas','Fondos Tríceps','Remo Invertido','Pike Push-Up','Superman'],8:['Flexiones','Dominadas','Fondos Tríceps','Remo Invertido','Pike Push-Up','Superman','Flexión Diamante','Flexión Ancha'],12:['Flexiones','Dominadas','Fondos Tríceps','Remo Invertido','Pike Push-Up','Superman','Flexión Diamante','Flexión Ancha','Archer Push-Up','L-Sit','Curl Isométrico','Elevación Frontal']}
+    },
+    perder:{
+      maquina:{6:['Cruce Poleas','Jalón al Pecho','Face Pull','Press Hombro','Curl Cable','Pushdown Cable'],8:['Cruce Poleas','Jalón al Pecho','Face Pull','Press Hombro','Curl Cable','Pushdown Cable','Remo Sentado','Mariposa'],12:['Cruce Poleas','Jalón al Pecho','Face Pull','Press Hombro','Curl Cable','Pushdown Cable','Remo Sentado','Mariposa','Press Pecho Máquina','Remo Máquina','Extensión Tríceps','Curl Predikador']},
+      mancuerna:{6:['Elevación Lateral','Curl Alternado','Remo Unilateral','Patada Tríceps','Curl Martillo','Elevación Frontal'],8:['Elevación Lateral','Curl Alternado','Remo Unilateral','Patada Tríceps','Curl Martillo','Elevación Frontal','Press Arnold','Extensión Tríceps'],12:['Elevación Lateral','Curl Alternado','Remo Unilateral','Patada Tríceps','Curl Martillo','Elevación Frontal','Press Arnold','Extensión Tríceps','Press Hombro','Mariposa Mancuerna','Pullover','Curl Concentrado']},
+      corporal:{6:['Flexiones','Pike Push-Up','Remo Invertido','Fondos Tríceps','Flexión Diamante','Superman'],8:['Flexiones','Pike Push-Up','Remo Invertido','Fondos Tríceps','Flexión Diamante','Superman','Archer Push-Up','Flexión Ancha'],12:['Flexiones','Pike Push-Up','Remo Invertido','Fondos Tríceps','Flexión Diamante','Superman','Archer Push-Up','Flexión Ancha','L-Sit','Pseudo Planche','Flexión Lenta','Isométrico Pecho']}
+    },
+    mantener:{
+      maquina:{6:['Press Pecho Máquina','Jalón al Pecho','Remo Sentado','Press Hombro','Curl Bíceps','Extensión Tríceps'],8:['Press Pecho Máquina','Jalón al Pecho','Remo Sentado','Press Hombro','Curl Bíceps','Extensión Tríceps','Face Pull','Cruce Poleas'],12:['Press Pecho Máquina','Jalón al Pecho','Remo Sentado','Press Hombro','Curl Bíceps','Extensión Tríceps','Face Pull','Cruce Poleas','Mariposa Máquina','Remo Máquina','Pushdown Cable','Curl Predikador']},
+      mancuerna:{6:['Press Banca','Remo Unilateral','Press Hombro','Curl Alternado','Extensión Tríceps','Elevación Lateral'],8:['Press Banca','Remo Unilateral','Press Hombro','Curl Alternado','Extensión Tríceps','Elevación Lateral','Curl Martillo','Arnold Press'],12:['Press Banca','Remo Unilateral','Press Hombro','Curl Alternado','Extensión Tríceps','Elevación Lateral','Curl Martillo','Arnold Press','Mariposa Mancuerna','Pullover','Patada Tríceps','Curl Concentrado']},
+      corporal:{6:['Flexiones','Dominadas','Fondos Tríceps','Remo Invertido','Superman','Pike Push-Up'],8:['Flexiones','Dominadas','Fondos Tríceps','Remo Invertido','Superman','Pike Push-Up','Flexión Diamante','Flexión Ancha'],12:['Flexiones','Dominadas','Fondos Tríceps','Remo Invertido','Superman','Pike Push-Up','Flexión Diamante','Flexión Ancha','Archer Push-Up','L-Sit','Curl Isométrico','Pseudo Planche']}
+    }
+  }
+};
+
+const MUSCULO_ICONO = {
+  gluteo:   '🍑', pierna: '🦵', superior: '💪'
+};
+const MUSCULO_COLOR = {
+  gluteo:   '#ef4444', pierna: '#3b82f6', superior: '#10b981'
+};
+
+async function descargarJPG(){
+  if(!_fitDescontarCreditos(8,'Ficha JPG')) return;
+
+  const dia    = parseInt(document.getElementById('dia').value)||1;
+  const obj    = document.getElementById('objetivoManual').value;
+  const grupo  = document.getElementById('grupo').value;
+  const equipo = document.getElementById('equipamiento').value;
+  const nEjer  = parseInt(document.getElementById('cantidadEjercicios').value)||6;
+
+  const motorInfo={
+    masa:    {label:'GANAR MASA',    color:'#3b82f6'},
+    perder:  {label:'PERDER GRASA', color:'#ef4444'},
+    mantener:{label:'MANTENER PESO',color:'#10b981'},
+  }[obj];
+
+  // Obtener lista de ejercicios
+  const listaEjer = (EJERCICIOS_DB[grupo]?.[obj]?.[equipo]?.[nEjer])
+    || EJERCICIOS_DB[grupo]?.masa?.mancuerna?.[6]
+    || ['Ejercicio 1','Ejercicio 2','Ejercicio 3','Ejercicio 4','Ejercicio 5','Ejercicio 6'];
+
+  // Series del DOM
+  const serieCards=[...document.querySelectorAll('.serie-card')].map(c=>({
+    reps: c.querySelector('p:nth-child(2)')?.textContent?.trim()||'',
+    kg:   c.querySelector('.kg')?.textContent?.trim()||''
+  }));
+
+  // Descripción muscular por ejercicio
+  const DESC = {
+    gluteo:{
+      'Hip Thrust Máquina':'Glúteo mayor · activación máxima',
+      'Prensa Glúteo 45°':'Glúteo + cuádriceps',
+      'Kickback Cable':'Glúteo mayor · aislamiento',
+      'Abducción Sentada':'Glúteo mediano · externo',
+      'Step-Up con Carga':'Glúteo + estabilizadores',
+      'Extensión Cadera':'Glúteo mayor · cadena posterior',
+      'Hip Thrust Mancuerna':'Glúteo mayor · fuerza',
+      'Sentadilla Goblet':'Glúteo + cuádriceps',
+      'Peso Muerto Rumano':'Glúteo + isquiotibiales',
+      'Zancada Lateral':'Aductores + glúteo mediano',
+      'Zancada Búlgara':'Glúteo mayor · unilateral',
+      'Puente de Glúteo':'Glúteo mayor · básico',
+    },
+    pierna:{
+      'Sentadilla Trasera Barra':'Cuádriceps + glúteo compuesto',
+      'Zancada Lateral Mancuerna':'Aductores + estabilizadores cadera',
+      'Peso Muerto Sumo':'Glúteos + parte posterior muslo',
+      'Extensión Pantorrilla':'Aislamiento específico pantorrillas',
+      'Zancada Búlgara':'Glúteo + desarrollo unilateral',
+      'Sentadilla Copa':'Core + coordinación de movimiento',
+      'Prensa 45°':'Cuádriceps · trabajo compuesto',
+      'Extensión Cuádriceps':'Cuádriceps · aislamiento',
+      'Curl Femoral':'Isquiotibiales · aislamiento',
+      'Sentadilla Hack':'Cuádriceps · énfasis anterior',
+      'Sentadilla Smith':'Cuádriceps + glúteo controlado',
+      'Step-Up Máquina':'Glúteo + estabilidad unilateral',
+    },
+    superior:{
+      'Press Pecho Máquina':'Pectoral mayor · fuerza',
+      'Jalón al Pecho':'Dorsal ancho · amplitud',
+      'Remo Máquina':'Dorsal + trapecio medio',
+      'Press Hombro':'Deltoides anterior + medio',
+      'Curl Bíceps':'Bíceps braquial · aislamiento',
+      'Extensión Tríceps':'Tríceps · aislamiento',
+      'Flexiones':'Pectoral + tríceps compuesto',
+      'Dominadas':'Dorsal + bíceps · peso corporal',
+      'Fondos Tríceps':'Tríceps + pectoral inferior',
+      'Remo Invertido':'Dorsal + retractores escapulares',
+      'Elevación Lateral':'Deltoides mediano · definición',
+      'Face Pull':'Deltoides posterior + manguito',
+    }
+  };
+
+  function getDesc(nombre){
+    return DESC[grupo]?.[nombre]
+      || (['masa','perder','mantener'].includes(obj) ? 'Trabajo muscular específico · técnica' : 'Ejercicio técnico controlado');
+  }
+
+  // ── DIMENSIONES SEGÚN nEjer ──
+  const cols = nEjer===6?3 : nEjer===8?4 : 3;
+  const rows = nEjer===6?2 : nEjer===8?2 : 4;
+  const W = 1080;
+  const PAD = 24, GAP = 14;
+  const HEADER_H = 160, SERIES_H = 200, FOOTER_H = 100;
+  const cellW = (W - PAD*2 - GAP*(cols-1)) / cols;
+  const cellH = nEjer===12 ? 320 : 380;
+  const gridH = rows * cellH + (rows-1)*GAP;
+  const H = HEADER_H + gridH + SERIES_H + FOOTER_H + PAD*3;
+
+  const canvas = document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  const ctx = canvas.getContext('2d');
+
+  // ── BG ──
+  ctx.fillStyle='#060c18';
+  ctx.fillRect(0,0,W,H);
+
+  // Helpers
+  const rr=(x,y,w,h,r,fill,strokeCol,lw=2)=>{
+    ctx.beginPath(); ctx.roundRect(x,y,w,h,r);
+    if(fill){ctx.fillStyle=fill;ctx.fill();}
+    if(strokeCol){ctx.strokeStyle=strokeCol;ctx.lineWidth=lw;ctx.stroke();}
+  };
+  const wrapText=(text,x,y,maxW,lineH,size,col,align='center',weight='700')=>{
+    ctx.font=`${weight} ${size}px Barlow Condensed, Arial Narrow, Arial, sans-serif`;
+    ctx.fillStyle=col; ctx.textAlign=align;
+    const words=text.split(' '); let line='';
+    for(let i=0;i<words.length;i++){
+      const test=line+words[i]+' ';
+      if(ctx.measureText(test).width>maxW && i>0){
+        ctx.fillText(line.trim(), align==='center'?x:x, y);
+        line=words[i]+' '; y+=lineH;
+      } else line=test;
+    }
+    ctx.fillText(line.trim(), align==='center'?x:x, y);
+    return y+lineH;
+  };
+  const t=(text,x,y,size,col,align='center',weight='700')=>{
+    ctx.font=`${weight} ${size}px Barlow Condensed, Arial Narrow, Arial, sans-serif`;
+    ctx.fillStyle=col; ctx.textAlign=align; ctx.fillText(text,x,y);
+  };
+
+  // ── HEADER ──
+  const grupoNombre={gluteo:'GLÚTEOS',pierna:'PIERNAS',superior:'TREN SUPERIOR'}[grupo];
+  const equipoNombre={maquina:'MÁQUINAS',mancuerna:'PESO LIBRE',corporal:'PESO CORPORAL'}[equipo];
+  const accentCol = MUSCULO_COLOR[grupo];
+
+  rr(0,0,W,HEADER_H,0,'#0a1120');
+  // Borde inferior accent
+  ctx.fillStyle=accentCol; ctx.fillRect(0,HEADER_H-5,W,5);
+
+  t(`GUÍA DE ${nEjer} EJERCICIOS`,W/2,56,nEjer===12?44:50,'#ffffff','center','900');
+  t(`${grupoNombre} · ${equipoNombre}`,W/2,102,36,accentCol,'center','700');
+  t(`DÍA ${dia}/30  ·  MOTOR: ${motorInfo.label}  ·  ACADEMIA FÁTIMA CALDEA`,W/2,138,24,'#64748b','center','400');
+
+  // ── GRID DE EJERCICIOS ──
+  const gridY = HEADER_H + PAD;
+
+  listaEjer.slice(0,nEjer).forEach((nombre,i)=>{
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = PAD + col*(cellW+GAP);
+    const y = gridY + row*(cellH+GAP);
+
+    // Card bg
+    rr(x,y,cellW,cellH,14,'#0d1526');
+    // Borde superior del color del grupo
+    ctx.fillStyle=accentCol+'cc'; ctx.fillRect(x,y,cellW,5);
+    ctx.beginPath(); ctx.roundRect(x,y,cellW,cellH,14); ctx.strokeStyle=accentCol+'44'; ctx.lineWidth=1.5; ctx.stroke();
+
+    // Número del ejercicio
+    rr(x+12,y+14,54,54,27,accentCol);
+    t(`${i+1}`,x+39,y+48,32,'#000','center','900');
+
+    // Nombre del ejercicio
+    const desc = getDesc(nombre);
+    const fontSize = nombre.length>22 ? (nEjer===12?22:26) : (nEjer===12?26:30);
+    const nameY = y+82;
+    ctx.font=`900 ${fontSize}px Barlow Condensed, Arial Narrow, Arial, sans-serif`;
+    ctx.fillStyle='#ffffff'; ctx.textAlign='center';
+    const maxNameW = cellW-32;
+    const words=nombre.split(' '); let line=''; let curY=nameY;
+    words.forEach((w,wi)=>{
+      const test=line+w+' ';
+      if(ctx.measureText(test).width>maxNameW && wi>0){
+        ctx.fillText(line.trim(),x+cellW/2,curY);
+        line=w+' '; curY+=fontSize+6;
+      } else line=test;
+    });
+    ctx.fillText(line.trim(),x+cellW/2,curY);
+    curY+=fontSize+10;
+
+    // Línea separadora
+    ctx.strokeStyle=accentCol+'55'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x+20,curY); ctx.lineTo(x+cellW-20,curY); ctx.stroke();
+    curY+=18;
+
+    // Descripción muscular
+    ctx.font=`400 ${nEjer===12?17:20}px Barlow Condensed, Arial Narrow, Arial, sans-serif`;
+    ctx.fillStyle=accentCol+'cc'; ctx.textAlign='center';
+    const dWords=desc.split(' '); let dLine=''; let dY=curY;
+    dWords.forEach((dw,di)=>{
+      const dTest=dLine+dw+' ';
+      if(ctx.measureText(dTest).width>maxNameW-20 && di>0){
+        ctx.fillText(dLine.trim(),x+cellW/2,dY);
+        dLine=dw+' '; dY+=(nEjer===12?20:24);
+      } else dLine=dTest;
+    });
+    ctx.fillText(dLine.trim(),x+cellW/2,dY);
+  });
+
+  // ── SERIES ──
+  const seriesY = gridY + gridH + PAD;
+  rr(PAD,seriesY,W-PAD*2,SERIES_H,16,'#0a1120', accentCol+'66', 2);
+  t('CARGAS DEL DÍA', W/2, seriesY+42, 32, accentCol, 'center', '900');
+
+  const sCount = serieCards.length||4;
+  const sW2 = (W-PAD*2-GAP*(sCount-1))/sCount;
+  serieCards.forEach((s,i)=>{
+    const sx = PAD+i*(sW2+GAP);
+    const sy = seriesY+60;
+    rr(sx,sy,sW2,SERIES_H-75,12,'#0f172a');
+    ctx.fillStyle=accentCol; ctx.fillRect(sx,sy+SERIES_H-79,sW2,5);
+    t(`S${i+1}`,sx+sW2/2,sy+34,24,'#64748b','center','700');
+    t(s.reps,sx+sW2/2,sy+80,nEjer===12?36:42,'#ffffff','center','900');
+    t(s.kg,sx+sW2/2,sy+SERIES_H-95,nEjer===12?40:48,'#facc15','center','900');
+  });
+
+  // ── FOOTER ──
+  const footerY = seriesY+SERIES_H+PAD;
+  rr(0,footerY,W,FOOTER_H,0,'#0a1120');
+  t('ACADEMIA FÁTIMA CALDEA', W/2, footerY+42, 32, '#c9a84c','center','700');
+  t('aprendisajefatima.firebaseapp.com  ·  2026', W/2, footerY+74, 22,'#334155','center','400');
+
+  // ── DESCARGAR ──
+  const a=document.createElement('a');
+  a.download=`Fitness_Dia${dia}_${nEjer}ej_${grupo}_${obj}_Fatima.jpg`;
+  a.href=canvas.toDataURL('image/jpeg',0.95);
+  a.click();
+}
+window.descargarJPG=descargarJPG;
+
+/* ══ CRÉDITOS ══ */
+function _fitLeerCreditos(){ const c=parseInt(localStorage.getItem('fc_credits')); return isNaN(c)?50:c; }
+function _fitDescontarCreditos(cant,concepto){
+  const act=_fitLeerCreditos();
+  if(act<cant){ _fitSinCreditos(cant,act,concepto); return false; }
+  const nuevo=act-cant;
+  localStorage.setItem('fc_credits',nuevo);
+  try{window.parent.postMessage({tipo:'gastarCreditos',tipo_accion:concepto,cantidad:cant,creditos_restantes:nuevo},'*');}catch(e){}
+  _fitToast(concepto,cant,nuevo); return true;
+}
+function _fitToast(concepto,cant,rest){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;top:18px;right:18px;z-index:99999;background:#020617;border:1px solid #3b82f6;border-radius:10px;padding:12px 18px;font-family:Inter,sans-serif;font-size:11px;color:#60a5fa;animation:ftFade 3s forwards;';
+  t.innerHTML=`<div style="font-weight:700;margin-bottom:3px;">💳 -${cant} · ${concepto}</div><div style="color:#334155;font-size:9px;">Quedan: ${rest}</div>`;
+  if(!document.getElementById('_fts')){const s=document.createElement('style');s.id='_fts';s.textContent='@keyframes ftFade{0%{opacity:0;transform:translateY(-8px)}10%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}';document.head.appendChild(s);}
+  document.body.appendChild(t); setTimeout(()=>t.remove(),3200);
+}
+function _fitSinCreditos(nec,tie,concepto){
+  const o=document.createElement('div');
+  o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;align-items:center;justify-content:center;';
+  o.innerHTML=`<div style="background:#0f172a;border:2px solid #ef4444;border-radius:16px;padding:32px 36px;max-width:360px;text-align:center;font-family:Inter,sans-serif;">
+    <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
+    <div style="color:#ef4444;font-weight:700;font-size:13px;margin-bottom:6px;">Créditos insuficientes</div>
+    <div style="color:#64748b;font-size:11px;margin-bottom:20px;line-height:1.8;">Necesitas <strong style="color:#ef4444;">${nec}</strong> para ${concepto}.<br>Tienes: <strong>${tie}</strong></div>
+    <button onclick="this.closest('div[style]').remove();try{window.parent.postMessage({tipo:'abrirCompra'},'*')}catch(e){}" style="width:100%;padding:11px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:11px;cursor:pointer;margin-bottom:8px;">💬 Comprar créditos</button>
+    <button onclick="this.closest('div[style]').remove()" style="width:100%;padding:9px;background:transparent;border:1px solid #334155;border-radius:8px;color:#64748b;font-size:11px;cursor:pointer;">Cancelar</button>
+  </div>`;
+  document.body.appendChild(o);
+}
+
+window.generar=(function(orig){
+  return function(){ if(!_fitDescontarCreditos(5,'Generar plan fitness')) return; orig(); };
+})(_generar);
+
+window.addEventListener('message',e=>{
+  if(e.data&&e.data.tipo==='sincronizarCreditos') localStorage.setItem('fc_credits',e.data.creditos);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Conversor Drive → URL directa · Fátima Pro</title>
+<style>
+:root{
+  --bg:#04060c;--panel:#0a111f;--panel2:#0c1525;--panel3:#0e1a2e;
+  --oro:#c9a84c;--oro2:#e6c869;--oro3:#a07830;--azul:#3b82f6;
+  --txt:#e8edf5;--muted:#7d8aa0;--linea:rgba(201,168,76,.16);--ok:#22c55e;--rojo:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Monaco','Consolas',monospace;}
+html,body{min-height:100%;background:
+  radial-gradient(800px 500px at 85% -10%,rgba(201,168,76,.07),transparent 60%),
+  radial-gradient(700px 500px at 0% 110%,rgba(59,130,246,.05),transparent 55%),var(--bg);
+  color:var(--txt);}
+button{cursor:pointer;border:none;background:none;color:inherit;font-family:inherit;}
+::-webkit-scrollbar{width:8px;height:8px;}::-webkit-scrollbar-thumb{background:rgba(201,168,76,.25);border-radius:4px;}
+
+.wrap{max-width:920px;margin:0 auto;padding:40px 22px 80px;}
+.hd{display:flex;align-items:center;gap:14px;margin-bottom:8px;}
+.hd .ring{width:48px;height:48px;border-radius:14px;border:2px solid var(--oro);color:var(--oro);
+  display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 24px rgba(201,168,76,.18);}
+.hd h1{font-size:19px;letter-spacing:.5px;color:var(--oro);font-weight:700;}
+.hd p{font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:3px;text-transform:uppercase;}
+.lead{font-size:12px;color:#b8c2d4;line-height:1.7;margin:14px 0 24px;max-width:680px;}
+.lead b{color:var(--txt);}
+
+.card{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:22px;margin-bottom:18px;}
+label.fld{display:block;font-size:8px;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;}
+textarea{width:100%;min-height:150px;background:#060c16;border:1px solid var(--linea);border-radius:11px;
+  padding:13px 15px;color:var(--txt);font-size:12px;line-height:1.7;outline:none;resize:vertical;transition:border-color .15s;}
+textarea:focus{border-color:var(--oro);}
+
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-top:16px;}
+.ctl{flex:1;min-width:140px;}
+.ctl select{width:100%;background:#060c16;border:1px solid var(--linea);border-radius:10px;padding:11px 13px;color:var(--txt);font-size:12px;outline:none;}
+.ctl select:focus{border-color:var(--oro);}
+.btn-go{background:linear-gradient(135deg,var(--oro2),var(--oro3));color:#000;font-weight:700;letter-spacing:1px;
+  font-size:11px;padding:13px 26px;border-radius:11px;text-transform:uppercase;transition:filter .15s;white-space:nowrap;}
+.btn-go:hover{filter:brightness(1.08);}
+.btn-ghost{border:1px solid var(--linea);border-radius:10px;padding:12px 18px;font-size:9px;letter-spacing:1px;
+  color:var(--muted);text-transform:uppercase;transition:all .15s;}
+.btn-ghost:hover{border-color:var(--oro);color:var(--oro);}
+
+.results-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.results-head h2{font-size:12px;color:var(--oro);letter-spacing:1px;}
+.results-head .n{font-size:9px;color:var(--muted);}
+.copyall{border:1px solid var(--oro);color:var(--oro);border-radius:9px;padding:8px 15px;font-size:9px;letter-spacing:1px;text-transform:uppercase;transition:all .15s;}
+.copyall:hover{background:rgba(201,168,76,.1);}
+
+.res{display:flex;align-items:center;gap:13px;padding:11px 13px;border:1px solid var(--linea);border-radius:11px;margin-bottom:9px;background:var(--panel3);}
+.res .thumb{width:54px;height:38px;border-radius:7px;flex-shrink:0;object-fit:cover;background:#060c16;border:1px solid var(--linea);}
+.res .thumb-ic{width:54px;height:38px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#060c16;border:1px solid var(--linea);font-size:16px;color:var(--muted);}
+.res .col{flex:1;min-width:0;}
+.res .col .url{font-size:10px;color:var(--oro2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.res .col .src{font-size:8px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;}
+.res .col .bad{color:var(--rojo);}
+.res button.cp{flex-shrink:0;border:1px solid var(--linea);border-radius:8px;padding:8px 13px;font-size:9px;color:var(--muted);letter-spacing:.5px;transition:all .13s;}
+.res button.cp:hover{border-color:var(--ok);color:var(--ok);}
+.res button.cp.done{border-color:var(--ok);color:var(--ok);}
+.empty{padding:34px 18px;text-align:center;color:var(--muted);font-size:10px;letter-spacing:1px;}
+
+.help{background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.18);border-radius:12px;padding:16px 18px;font-size:10px;color:#9fb3d4;line-height:1.8;}
+.help b{color:var(--azul);}
+.help code{background:#060c16;border:1px solid var(--linea);border-radius:4px;padding:1px 6px;color:var(--oro2);font-size:9.5px;}
+
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(160%);z-index:200;
+  background:var(--panel3);border:1px solid var(--oro);border-radius:11px;padding:12px 22px;font-size:11px;
+  color:var(--txt);box-shadow:0 16px 50px rgba(0,0,0,.6);transition:transform .3s;opacity:0;pointer-events:none;white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+@media(max-width:560px){.controls{flex-direction:column;align-items:stretch;}.ctl{min-width:0;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <div class="ring">🪄</div>
+    <div><h1>CONVERSOR DRIVE → URL DIRECTA</h1><p>Fátima Pro · Thumbnail / vista directa</p></div>
+  </div>
+  <p class="lead">Pega tus enlaces de <b>Google Drive</b> (uno por línea, o el ID suelto). El conversor extrae el ID y genera la <b>URL directa tipo thumbnail</b> que el sistema usa para imágenes — lista para pegar en la Biblioteca, tarjetas del hub o cualquier bloque.</p>
+
+  <div class="card">
+    <label class="fld" for="entrada">Enlaces de Drive (uno por línea)</label>
+    <textarea id="entrada" placeholder="https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz012345/view?usp=sharing&#10;https://drive.google.com/open?id=1AbCdEf...&#10;1AbCdEfGhIjKlMnOpQrStUvWxYz012345  (ID suelto también vale)"></textarea>
+    <div class="controls">
+      <div class="ctl">
+        <label class="fld">Formato de salida</label>
+        <select id="formato">
+          <option value="thumb">Thumbnail (recomendado · imágenes)</option>
+          <option value="uc">Vista directa (uc?export=view)</option>
+          <option value="download">Descarga directa (uc?export=download)</option>
+        </select>
+      </div>
+      <div class="ctl">
+        <label class="fld">Tamaño (solo thumbnail)</label>
+        <select id="tam">
+          <option value="w400">w400 · miniatura</option>
+          <option value="w900">w900 · tarjeta</option>
+          <option value="w1400" selected>w1400 · alta (recom.)</option>
+          <option value="w2000">w2000 · máxima</option>
+        </select>
+      </div>
+      <button class="btn-go" onclick="CV.convertir()">⚡ Convertir</button>
+      <button class="btn-ghost" onclick="CV.limpiar()">Limpiar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="results-head">
+      <h2>Resultados <span class="n" id="cuenta"></span></h2>
+      <button class="copyall" onclick="CV.copiarTodo()">📋 Copiar todas</button>
+    </div>
+    <div id="lista"><div class="empty">Pega tus enlaces arriba y pulsa “Convertir”.</div></div>
+  </div>
+
+  <div class="help">
+    <b>¿Cómo obtener el enlace en Drive?</b><br>
+    Clic derecho en el archivo → <b>Compartir</b> → <b>Copiar enlace</b>. Importante: cambia el acceso a <code>Cualquier persona con el enlace</code> para que las imágenes se vean en el sistema público.<br>
+    El conversor acepta cualquier formato de Drive (<code>/file/d/ID/view</code>, <code>open?id=ID</code>, <code>thumbnail?id=ID</code>) e incluso el <b>ID solo</b>.
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const CV=(function(){
+  const $=id=>document.getElementById(id);
+  let resultados=[];
+
+  function extraerId(linea){
+    const s=String(linea).trim();
+    if(!s) return null;
+    // ID suelto (Drive IDs ~25-44 chars alfanum/-/_)
+    if(/^[-\w]{20,}$/.test(s)) return s;
+    // dentro de una URL de drive: primer token largo
+    if(/drive\.google|googleusercontent/i.test(s)){
+      const m=s.match(/[-\w]{25,}/);
+      if(m) return m[0];
+    }
+    // fallback: cualquier token largo en la línea
+    const m2=s.match(/[-\w]{25,}/);
+    return m2?m2[0]:null;
+  }
+
+  function construir(id){
+    const fmt=$('formato').value, tam=$('tam').value;
+    if(fmt==='uc') return `https://drive.google.com/uc?export=view&id=${id}`;
+    if(fmt==='download') return `https://drive.google.com/uc?export=download&id=${id}`;
+    return `https://drive.google.com/thumbnail?id=${id}&sz=${tam}`;
+  }
+
+  function convertir(){
+    const lineas=$('entrada').value.split('\n').map(l=>l.trim()).filter(Boolean);
+    resultados=lineas.map(linea=>{
+      const id=extraerId(linea);
+      return id ? {ok:true, id, url:construir(id), src:linea} : {ok:false, src:linea};
+    });
+    render();
+    const validos=resultados.filter(r=>r.ok).length;
+    toast(validos? `✓ ${validos} enlace(s) convertido(s)` : 'No se detectaron IDs válidos');
+  }
+
+  function render(){
+    const c=$('lista');
+    $('cuenta').textContent = resultados.length? `· ${resultados.filter(r=>r.ok).length}/${resultados.length}` : '';
+    if(!resultados.length){ c.innerHTML='<div class="empty">Pega tus enlaces arriba y pulsa “Convertir”.</div>'; return; }
+    c.innerHTML=resultados.map((r,i)=>{
+      if(!r.ok) return `<div class="res">
+        <div class="thumb-ic">⚠️</div>
+        <div class="col"><div class="url bad">No se detectó un ID de Drive</div><div class="src">${esc(r.src)}</div></div>
+      </div>`;
+      return `<div class="res">
+        <img class="thumb" src="https://drive.google.com/thumbnail?id=${esc(r.id)}&sz=w400" onerror="this.outerHTML='<div class=\\'thumb-ic\\'>🖼️</div>'"/>
+        <div class="col"><div class="url" title="${esc(r.url)}">${esc(r.url)}</div><div class="src">ID: ${esc(r.id)}</div></div>
+        <button class="cp" data-i="${i}" onclick="CV.copiar(${i},this)">Copiar</button>
+      </div>`;
+    }).join('');
+  }
+
+  function copiar(i,btn){
+    const r=resultados[i]; if(!r||!r.ok) return;
+    navText(r.url).then(()=>{ if(btn){ btn.textContent='✓ Copiado'; btn.classList.add('done'); setTimeout(()=>{btn.textContent='Copiar';btn.classList.remove('done');},1400);} });
+  }
+  function copiarTodo(){
+    const urls=resultados.filter(r=>r.ok).map(r=>r.url);
+    if(!urls.length) return toast('Nada que copiar');
+    navText(urls.join('\n')).then(()=>toast(`✓ ${urls.length} URL(s) copiadas`));
+  }
+  function navText(t){
+    if(navigator.clipboard&&navigator.clipboard.writeText) return navigator.clipboard.writeText(t).catch(()=>fallback(t));
+    return Promise.resolve(fallback(t));
+  }
+  function fallback(t){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(_){} ta.remove(); }
+  function limpiar(){ $('entrada').value=''; resultados=[]; render(); }
+
+  let tt=null;
+  function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),2400); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key==='Enter') convertir(); });
+  return { convertir, copiar, copiarTodo, limpiar };
+})();
+</script>
+
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#0a111f"/><text x="50" y="62" font-size="40" text-anchor="middle">🪄</text></svg>
+</template>
+</body>
+</html>

@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>sistema de utilidad de Construcción & Resina Epóxica</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+
+<style>
+:root{
+  --cemento:#4a4a4a;--cemento-claro:#7a7a7a;--cemento-light:#e8e4df;
+  --resina:#1a6b8a;--resina-bright:#00b4d8;--resina-glow:#90e0ef;
+  --dorado:#c9a84c;--dorado-light:#f0d080;
+  --negro:#0f0f0f;--blanco:#fafaf8;--gris-bg:#f2efe9;
+  --error:#c0392b;--exito:#27ae60;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--gris-bg);color:var(--cemento);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(0,0,0,0.03) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(0,0,0,0.03) 40px);pointer-events:none;z-index:0;}
+
+#loader{position:fixed;inset:0;background:var(--negro);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .6s;}
+.loader-logo{font-family:'Playfair Display',serif;font-size:2.5rem;color:var(--dorado);letter-spacing:2px;margin-bottom:.5rem;}
+.loader-sub{font-size:.8rem;color:#888;letter-spacing:4px;text-transform:uppercase;margin-bottom:2rem;}
+.loader-team{font-size:.7rem;color:#555;letter-spacing:2px;margin-bottom:1.5rem;}
+.loader-bar{width:220px;height:3px;background:#222;border-radius:2px;overflow:hidden;}
+.loader-fill{height:100%;width:0;background:linear-gradient(90deg,var(--dorado),var(--resina-bright));border-radius:2px;animation:fill 1.8s ease forwards;}
+@keyframes fill{to{width:100%;}}
+
+#app{display:none;min-height:100vh;position:relative;z-index:1;}
+
+.app-header{background:var(--negro);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:50;border-bottom:1px solid rgba(201,168,76,.2);}
+.header-brand{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--dorado);display:flex;align-items:center;gap:.5rem;}
+.header-brand .sub{font-size:.65rem;color:#666;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif;}
+.header-right{display:flex;align-items:center;gap:.8rem;}
+.credit-pill{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:.3rem .9rem;font-size:.8rem;color:var(--dorado);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:.3rem;}
+.btn-tts-toggle{background:rgba(0,180,216,.15);border:1px solid rgba(0,180,216,.3);border-radius:8px;padding:.35rem .7rem;color:var(--resina-bright);font-size:.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-tts-toggle.muted{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.15);color:#666;}
+.btn-logout{background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:.35rem .7rem;color:#888;font-size:.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-logout:hover{border-color:#ff6b6b;color:#ff6b6b;}
+
+.credit-bar-wrap{background:var(--negro);padding:.4rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.05);}
+.credit-bar-track{height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
+.credit-bar-fill{height:100%;background:linear-gradient(90deg,var(--resina-bright),var(--dorado));border-radius:2px;transition:width .5s;}
+.credit-bar-info{display:flex;justify-content:space-between;font-size:.68rem;color:#555;margin-top:.25rem;}
+
+.tts-banner{background:linear-gradient(90deg,rgba(0,180,216,.1),rgba(201,168,76,.08));border-bottom:1px solid rgba(0,180,216,.2);padding:.5rem 1.5rem;display:flex;align-items:center;gap:.7rem;font-size:.78rem;color:var(--resina-bright);}
+.tts-wave{display:flex;align-items:center;gap:2px;}
+.tts-wave span{width:3px;background:var(--resina-bright);border-radius:2px;animation:wave 1s infinite ease-in-out;}
+.tts-wave span:nth-child(1){height:8px;animation-delay:0s;}
+.tts-wave span:nth-child(2){height:14px;animation-delay:.15s;}
+.tts-wave span:nth-child(3){height:10px;animation-delay:.3s;}
+.tts-wave span:nth-child(4){height:16px;animation-delay:.45s;}
+.tts-wave span:nth-child(5){height:8px;animation-delay:.6s;}
+@keyframes wave{0%,100%{transform:scaleY(1);}50%{transform:scaleY(1.8);}}
+.tts-banner.hidden{display:none;}
+
+.module-nav{background:#fff;border-bottom:2px solid var(--cemento-light);overflow-x:auto;display:flex;padding:0 1rem;scrollbar-width:none;}
+.module-nav::-webkit-scrollbar{display:none;}
+.mod-btn{padding:.9rem 1.2rem;background:transparent;border:none;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;color:var(--cemento-claro);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;transition:all .3s;display:flex;align-items:center;gap:.4rem;}
+.mod-btn.active{color:var(--negro);border-bottom-color:var(--dorado);}
+.mod-btn:hover:not(.active){color:var(--cemento);border-bottom-color:var(--cemento-light);}
+
+.main-content{padding:1.8rem 1.5rem;max-width:1100px;margin:0 auto;}
+.module-page{display:none;}.module-page.active{display:block;}
+
+.book-header{border-radius:18px;padding:2.2rem;margin-bottom:1.8rem;color:#fff;position:relative;overflow:hidden;}
+.book-header.const{background:linear-gradient(135deg,var(--negro),#2a1a0a);}
+.book-header.resin{background:linear-gradient(135deg,#0a1f2e,#1a6b8a);}
+.book-header.pres{background:linear-gradient(135deg,#0f0f0f,#1a1a1a);}
+.book-header.plan{background:linear-gradient(135deg,#0a1a0a,#1a3a1a);}
+.book-header::after{content:'';position:absolute;top:-50%;right:-15%;width:350px;height:350px;background:radial-gradient(circle,rgba(201,168,76,.12),transparent 70%);border-radius:50%;}
+.book-header h2{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--dorado);position:relative;z-index:1;}
+.book-header p{color:#aaa;margin-top:.4rem;font-size:.9rem;position:relative;z-index:1;}
+.book-header .tts-btn-inline{margin-top:.8rem;background:rgba(0,180,216,.15);border:1px solid rgba(0,180,216,.3);border-radius:20px;padding:.3rem .9rem;font-size:.75rem;color:var(--resina-bright);cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;position:relative;z-index:1;}
+.book-header .tts-btn-inline:hover{background:rgba(0,180,216,.25);}
+
+.project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.9rem;margin-bottom:1.8rem;}
+.project-card{background:#fff;border:2px solid var(--cemento-light);border-radius:14px;padding:1.3rem 1rem;text-align:center;cursor:pointer;transition:all .3s;}
+.project-card:hover,.project-card.selected{border-color:var(--dorado);background:rgba(201,168,76,.05);transform:translateY(-3px);box-shadow:0 8px 25px rgba(201,168,76,.15);}
+.project-card .icon{font-size:2.2rem;margin-bottom:.4rem;}
+.project-card .label{font-size:.82rem;font-weight:600;color:var(--cemento);}
+
+.step-container{background:#fff;border-radius:18px;border:1px solid var(--cemento-light);overflow:hidden;margin-bottom:1.3rem;}
+.step-header{background:linear-gradient(90deg,var(--negro),#2a2a2a);padding:1.1rem 1.6rem;display:flex;align-items:center;gap:.9rem;}
+.step-num{width:34px;height:34px;background:var(--dorado);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:.95rem;color:#fff;flex-shrink:0;}
+.step-title{font-family:'Playfair Display',serif;font-size:1.05rem;color:#fff;}
+.step-body{padding:1.6rem;}
+
+.formula-box{background:linear-gradient(135deg,#f8f6f0,#fff);border:1px solid var(--dorado);border-left:4px solid var(--dorado);border-radius:10px;padding:1.1rem 1.4rem;margin-bottom:1.3rem;font-family:'JetBrains Mono',monospace;}
+.formula-label{font-size:.68rem;color:var(--dorado);letter-spacing:2px;text-transform:uppercase;margin-bottom:.4rem;font-family:'DM Sans',sans-serif;}
+.formula-text{font-size:.88rem;color:var(--cemento);font-weight:600;line-height:1.7;}
+
+.calc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.9rem;margin-bottom:1.3rem;}
+.calc-field label{display:block;font-size:.75rem;color:var(--cemento-claro);margin-bottom:.35rem;font-weight:500;}
+.calc-field input,.calc-field select{width:100%;padding:.75rem .9rem;border:1.5px solid var(--cemento-light);border-radius:9px;font-size:.9rem;font-family:'DM Sans',sans-serif;color:var(--negro);background:#fff;transition:border-color .2s;outline:none;}
+.calc-field input:focus,.calc-field select:focus{border-color:var(--dorado);}
+
+.btn-calcular{padding:.9rem 2.2rem;background:linear-gradient(135deg,var(--dorado),#a07830);border:none;border-radius:11px;color:#fff;font-size:.95rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .3s;display:inline-flex;align-items:center;gap:.45rem;}
+.btn-calcular:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(201,168,76,.4);}
+
+.resultado-panel{display:none;background:linear-gradient(135deg,var(--negro),#1a1a2e);border-radius:14px;padding:1.8rem;margin-top:1.3rem;color:#fff;}
+.resultado-panel.visible{display:block;animation:fadeIn .4s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.resultado-panel h3{font-family:'Playfair Display',serif;color:var(--dorado);margin-bottom:1rem;font-size:1.2rem;}
+.resultado-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.9rem;margin-bottom:1.3rem;}
+.resultado-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:1.1rem;}
+.r-label{font-size:.7rem;color:#888;margin-bottom:.25rem;}
+.r-value{font-family:'JetBrains Mono',monospace;font-size:1.2rem;color:var(--dorado);font-weight:600;}
+.r-unit{font-size:.75rem;color:#aaa;margin-top:.1rem;}
+.curado-box{background:rgba(0,180,216,.08);border:1px solid rgba(0,180,216,.2);border-radius:10px;padding:1rem 1.2rem;margin-top:.5rem;}
+.curado-box p{font-size:.82rem;color:var(--resina-glow);line-height:1.7;}
+
+.dl-group{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:.8rem;}
+.btn-descargar{padding:.8rem 1.8rem;background:linear-gradient(135deg,var(--resina),var(--resina-bright));border:none;border-radius:11px;color:#fff;font-size:.87rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .3s;display:inline-flex;align-items:center;gap:.45rem;}
+.btn-descargar:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,180,216,.35);}
+.btn-descargar.pdf-btn{background:linear-gradient(135deg,#c0392b,#e74c3c);}
+.btn-descargar.pdf-btn:hover{box-shadow:0 8px 25px rgba(231,76,60,.35);}
+
+.presupuesto-table{width:100%;border-collapse:collapse;margin-bottom:1.3rem;font-size:.87rem;}
+.presupuesto-table th{background:var(--negro);color:var(--dorado);padding:.85rem 1rem;text-align:left;font-size:.77rem;letter-spacing:1px;}
+.presupuesto-table td{padding:.72rem 1rem;border-bottom:1px solid var(--cemento-light);}
+.presupuesto-table tr:hover td{background:rgba(201,168,76,.03);}
+.presupuesto-table input{border:1px solid var(--cemento-light);border-radius:6px;padding:.38rem .6rem;font-size:.85rem;width:100%;font-family:'DM Sans',sans-serif;outline:none;}
+.presupuesto-table input:focus{border-color:var(--dorado);}
+.btn-add-row{background:transparent;border:1.5px dashed var(--cemento-light);border-radius:9px;padding:.65rem 1.4rem;color:var(--cemento-claro);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85rem;transition:all .2s;margin-bottom:.9rem;}
+.btn-add-row:hover{border-color:var(--dorado);color:var(--dorado);}
+.btn-del-row{background:transparent;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:.2rem .5rem;}
+.btn-del-row:hover{color:var(--error);}
+.total-strip{background:linear-gradient(135deg,var(--negro),#1a1a2e);border-radius:14px;padding:1.4rem 1.6rem;display:flex;flex-wrap:wrap;gap:1.2rem;justify-content:space-between;align-items:center;}
+.total-item .tl{font-size:.7rem;color:#888;letter-spacing:1px;text-transform:uppercase;}
+.total-item .tv{font-family:'JetBrains Mono',monospace;font-size:1.3rem;color:var(--dorado);}
+.total-item.big .tv{font-size:1.8rem;}
+
+.planes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:1.4rem;margin:1.6rem 0;}
+.plan-card{background:#fff;border:2px solid var(--cemento-light);border-radius:18px;padding:1.8rem 1.4rem;text-align:center;transition:all .3s;position:relative;overflow:hidden;}
+.plan-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--cemento-light);transition:background .3s;}
+.plan-card.featured{border-color:var(--dorado);}
+.plan-card.featured::before{background:linear-gradient(90deg,var(--dorado),var(--dorado-light));}
+.plan-badge{position:absolute;top:.9rem;right:.9rem;background:var(--dorado);color:#fff;font-size:.62rem;font-weight:700;padding:.18rem .55rem;border-radius:8px;letter-spacing:1px;}
+.plan-name{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--negro);margin-bottom:.3rem;}
+.plan-price{font-family:'JetBrains Mono',monospace;font-size:2rem;color:var(--dorado);font-weight:700;margin:.9rem 0 .25rem;}
+.plan-credits{font-size:.82rem;color:var(--cemento-claro);margin-bottom:1.3rem;}
+.plan-features{list-style:none;margin-bottom:1.3rem;text-align:left;}
+.plan-features li{font-size:.8rem;color:var(--cemento);padding:.28rem 0;border-bottom:1px solid var(--cemento-light);display:flex;align-items:center;gap:.4rem;}
+.plan-features li::before{content:'✓';color:var(--exito);font-weight:700;flex-shrink:0;}
+.btn-plan-wa{width:100%;padding:.85rem;background:linear-gradient(135deg,#25d366,#128c7e);border:none;border-radius:11px;color:#fff;font-weight:600;font-size:.87rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:.45rem;}
+.btn-plan-wa:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(37,211,102,.35);}
+
+.mo-box{background:linear-gradient(135deg,rgba(39,174,96,.1),rgba(39,174,96,.05));border:1px solid rgba(39,174,96,.3);border-left:4px solid #27ae60;border-radius:12px;padding:1.1rem 1.4rem;margin-top:1rem;}
+.mo-box .mo-title{font-size:.72rem;color:#27ae60;letter-spacing:2px;text-transform:uppercase;margin-bottom:.6rem;font-weight:600;}
+.mo-box .mo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.7rem;margin-bottom:.7rem;}
+.mo-box .mo-item{background:rgba(255,255,255,.6);border-radius:9px;padding:.8rem;text-align:center;}
+.mo-box .mo-item .mil{font-size:.68rem;color:#666;margin-bottom:.2rem;}
+.mo-box .mo-item .miv{font-family:'JetBrains Mono',monospace;font-size:1rem;color:#27ae60;font-weight:700;}
+.mo-box .mo-nota{font-size:.72rem;color:#888;font-style:italic;}
+
+.extra-toggle{background:rgba(201,168,76,.08);border:1px dashed rgba(201,168,76,.4);border-radius:11px;padding:.8rem 1.2rem;margin-top:1rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .3s;}
+.extra-toggle:hover{background:rgba(201,168,76,.15);}
+.extra-toggle span{font-size:.85rem;color:var(--dorado);font-weight:600;}
+.extra-toggle .arrow{transition:transform .3s;color:var(--dorado);}
+.extra-section{display:none;margin-top:.8rem;padding:1.2rem;background:rgba(255,255,255,.5);border-radius:12px;border:1px solid var(--cemento-light);}
+.extra-section.open{display:block;animation:fadeIn .3s ease;}
+.extra-section h4{font-size:.8rem;color:var(--cemento);letter-spacing:1px;text-transform:uppercase;margin-bottom:.9rem;font-weight:600;}
+
+.plano-wrap{margin-top:1.2rem;background:var(--negro);border-radius:14px;padding:1.2rem;overflow:hidden;}
+.plano-wrap h4{font-family:'Playfair Display',serif;color:var(--dorado);font-size:1rem;margin-bottom:.8rem;}
+.plano-canvas{width:100%;border-radius:10px;display:block;background:#0a0a0a;}
+.plano-leyenda{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.7rem;}
+.leyenda-item{display:flex;align-items:center;gap:.35rem;font-size:.72rem;color:#aaa;}
+.leyenda-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+
+.plano-completo-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;}
+.plano-section-title{font-family:'Playfair Display',serif;font-size:1rem;color:var(--dorado);margin:1.2rem 0 .7rem;padding-bottom:.4rem;border-bottom:1px solid rgba(201,168,76,.2);}
+.plano-canvas-wrap{background:var(--negro);border-radius:16px;padding:1.4rem;margin-top:1.2rem;}
+.plano-canvas-wrap h4{font-family:'Playfair Display',serif;color:var(--dorado);margin-bottom:.8rem;font-size:1rem;}
+#plano-completo{width:100%;border-radius:10px;display:block;border:1px solid rgba(201,168,76,.2);}
+.plano-tabs{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;}
+.plano-tab{padding:.5rem 1rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#aaa;font-size:.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .3s;}
+.plano-tab.active{background:rgba(201,168,76,.2);border-color:var(--dorado);color:var(--dorado);}
+.proyecto-tabla{width:100%;border-collapse:collapse;font-size:.83rem;margin-bottom:1rem;}
+.proyecto-tabla th{background:var(--negro);color:var(--dorado);padding:.7rem .9rem;text-align:left;font-size:.72rem;letter-spacing:1px;}
+.proyecto-tabla td{padding:.6rem .9rem;border-bottom:1px solid var(--cemento-light);}
+.proyecto-tabla tr:hover td{background:rgba(201,168,76,.03);}
+.proyecto-tabla .section-row td{background:linear-gradient(90deg,rgba(201,168,76,.15),transparent);color:var(--dorado);font-weight:600;font-size:.78rem;letter-spacing:1px;}
+.proyecto-total{background:linear-gradient(135deg,var(--negro),#1a1a2e);border-radius:14px;padding:1.4rem 1.6rem;margin-top:1rem;display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:center;color:#fff;}
+.proyecto-total .pt-item .ptl{font-size:.7rem;color:#888;letter-spacing:1px;text-transform:uppercase;}
+.proyecto-total .pt-item .ptv{font-family:'JetBrains Mono',monospace;font-size:1.3rem;color:var(--dorado);font-weight:700;}
+.proyecto-total .pt-item.big .ptv{font-size:1.8rem;}
+
+/* CHATBOX — position:fixed desde abajo, nunca sale de pantalla */
+.chat-container{
+  position:fixed;
+  bottom:5.5rem;
+  right:1.5rem;
+  width:295px;
+  z-index:200;
+  display:none;
+  flex-direction:column;
+  max-height:calc(100vh - 8rem);
+}
+.chat-container.open{display:flex;}
+.chat-box{
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
+  border:1px solid rgba(0,180,216,.3);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  max-height:calc(100vh - 8rem);
+}
+.chat-header{background:linear-gradient(135deg,#0a1f2e,#1a6b8a);padding:.9rem 1.1rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.chat-hinfo{display:flex;align-items:center;gap:.6rem;}
+.chat-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--dorado),var(--resina-bright));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.chat-header h4{color:#fff;font-size:.87rem;font-family:'Playfair Display',serif;}
+.chat-header p{color:#90e0ef;font-size:.68rem;}
+.chat-header-btns{display:flex;align-items:center;gap:.5rem;}
+.chat-voice-btn{background:rgba(0,180,216,.2);border:1px solid rgba(0,180,216,.4);border-radius:8px;padding:.25rem .55rem;color:var(--resina-bright);font-size:.75rem;cursor:pointer;}
+.chat-voice-btn.speaking{background:rgba(0,180,216,.4);animation:pulse .8s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+.chat-close{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;cursor:pointer;font-size:.75rem;padding:.28rem .65rem;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.chat-close:hover{background:rgba(231,76,60,.4);border-color:#ff6b6b;}
+
+.chat-tabs{display:flex;border-bottom:1px solid rgba(0,180,216,.15);flex-shrink:0;}
+.chat-tab{flex:1;padding:.5rem;background:transparent;border:none;font-size:.72rem;color:#999;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.chat-tab.active{color:var(--resina-bright);border-bottom:2px solid var(--resina-bright);}
+
+.voice-guide-panel{padding:.8rem;display:none;overflow-y:auto;}
+.voice-guide-panel.active{display:block;}
+.vg-section{margin-bottom:.7rem;}
+.vg-title{font-size:.7rem;color:var(--dorado);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:.4rem;}
+.vg-btn{display:flex;align-items:center;gap:.5rem;width:100%;padding:.5rem .7rem;background:rgba(0,180,216,.06);border:1px solid rgba(0,180,216,.15);border-radius:8px;margin-bottom:.3rem;cursor:pointer;font-size:.78rem;color:var(--cemento);font-family:'DM Sans',sans-serif;text-align:left;transition:all .2s;}
+.vg-btn:hover{background:rgba(0,180,216,.14);border-color:rgba(0,180,216,.35);}
+.vg-btn .vg-ico{font-size:1rem;flex-shrink:0;}
+.vg-btn .vg-txt{flex:1;}
+.vg-btn .vg-play{color:var(--resina-bright);font-size:.8rem;}
+
+.chat-ia-wrap{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+.chat-messages{flex:1;overflow-y:auto;padding:.9rem;display:flex;flex-direction:column;gap:.7rem;scrollbar-width:thin;min-height:0;}
+.chat-msg{padding:.65rem .95rem;border-radius:13px;font-size:.83rem;line-height:1.5;max-width:87%;}
+.chat-msg.bot{background:var(--gris-bg);color:var(--negro);border-radius:4px 13px 13px 13px;align-self:flex-start;}
+.chat-msg.user{background:var(--dorado);color:#fff;border-radius:13px 4px 13px 13px;align-self:flex-end;}
+.chat-msg.typing{display:flex;align-items:center;gap:.25rem;padding:.7rem .95rem;}
+.dot{width:5px;height:5px;background:#888;border-radius:50%;animation:bounce 1.2s infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
+.chat-input-row{padding:.7rem;border-top:1px solid rgba(0,180,216,.15);display:flex;gap:.45rem;flex-shrink:0;}
+.chat-input{flex:1;padding:.58rem .85rem;border:1.5px solid var(--cemento-light);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.83rem;outline:none;}
+.chat-input:focus{border-color:var(--resina-bright);}
+.chat-send{background:var(--resina-bright);border:none;border-radius:9px;width:34px;height:34px;cursor:pointer;color:#fff;font-size:.95rem;transition:background .2s;flex-shrink:0;}
+.chat-send:hover{background:var(--resina);}
+
+.floating-btns{position:fixed;bottom:1.5rem;right:1.5rem;display:flex;flex-direction:column;gap:.7rem;align-items:flex-end;z-index:150;}
+.fab{width:50px;height:50px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 6px 20px rgba(0,0,0,.25);transition:all .3s;}
+.fab:hover{transform:translateY(-3px);}
+.fab-voice{background:linear-gradient(135deg,var(--resina),var(--resina-bright));position:relative;}
+.fab-voice .fab-badge{position:absolute;top:-2px;right:-2px;width:12px;height:12px;background:#27ae60;border-radius:50%;border:2px solid #fff;}
+.fab-wa{background:linear-gradient(135deg,#25d366,#128c7e);}
+
+@media(max-width:768px){
+  .app-header{padding:0 .9rem;}
+  .header-brand .sub{display:none;}
+  .main-content{padding:1.2rem .9rem;}
+  .book-header{padding:1.5rem;}
+  .book-header h2{font-size:1.4rem;}
+  .project-grid{grid-template-columns:repeat(3,1fr);}
+  .planes-grid{grid-template-columns:1fr 1fr;}
+  .chat-container{width:calc(100vw - 2.5rem);right:.75rem;bottom:5rem;}
+  .calc-grid{grid-template-columns:1fr 1fr;}
+  .resultado-grid{grid-template-columns:1fr 1fr;}
+  .plano-completo-grid{grid-template-columns:1fr;}
+}
+@media(max-width:480px){
+  .calc-grid{grid-template-columns:1fr;}
+  .resultado-grid{grid-template-columns:1fr;}
+  .project-grid{grid-template-columns:repeat(2,1fr);}
+  .planes-grid{grid-template-columns:1fr;}
+  .total-strip{flex-direction:column;align-items:flex-start;}
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-logo">🏗️ sistema de construccion</div>
+  <div class="loader-sub">Construcción &amp; Resina Epóxica</div>
+  <div class="loader-team">⚡ Sistema Fátima Hub</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+</div>
+
+<div id="app">
+  <header class="app-header">
+    <div class="header-brand">🏗️ sistema de construccion <span class="sub">Fátima Hub</span></div>
+    <div class="header-right">
+      <div class="credit-pill">⚡ <span id="creditCount">10</span> cr.</div>
+      <button class="btn-tts-toggle" id="ttsToggleBtn" onclick="toggleTTS()">🔊 Voz ON</button>
+      <button class="btn-logout" onclick="salirAlHub()">⬅ Salir</button>
+    </div>
+  </header>
+
+  <div class="credit-bar-wrap">
+    <div class="credit-bar-track"><div class="credit-bar-fill" id="creditBar" style="width:100%"></div></div>
+    <div class="credit-bar-info"><span id="planLabel">sistema de construccion</span><span id="creditInfo">10/créditos</span></div>
+  </div>
+
+  <div class="tts-banner hidden" id="ttsBanner">
+    <div class="tts-wave"><span></span><span></span><span></span><span></span><span></span></div>
+    <span id="ttsBannerText">Asistente de voz activo...</span>
+  </div>
+
+  <nav class="module-nav">
+    <button class="mod-btn active" onclick="showMod(this,'construccion')">🏗️ Construcción</button>
+    <button class="mod-btn" onclick="showMod(this,'resina')">🌊 Resina Epóxica</button>
+    <button class="mod-btn" onclick="showMod(this,'presupuesto')">📄 Presupuesto</button>
+    <button class="mod-btn" onclick="showMod(this,'planes')">💳 Planes</button>
+    <button class="mod-btn" onclick="showMod(this,'plano')">🏠 Proyecto Completo</button>
+  </nav>
+
+  <main class="main-content">
+
+    <!-- CONSTRUCCIÓN -->
+    <div class="module-page active" id="mod-construccion">
+      <div class="book-header const">
+        <h2>🏗️ Calculadora de Construcción</h2>
+        <p>Materiales exactos para bloques, pintura, acero, cerámica, losa y techo — paso a paso</p>
+        <button class="tts-btn-inline" onclick="narrarModulo('construccion')">🔊 Escuchar qué hace este módulo</button>
+      </div>
+      <div class="project-grid">
+        <div class="project-card selected" onclick="selConst(this,'bloques')"><div class="icon">🧱</div><div class="label">Bloques &amp; Cemento</div></div>
+        <div class="project-card" onclick="selConst(this,'pintura')"><div class="icon">🎨</div><div class="label">Pintura</div></div>
+        <div class="project-card" onclick="selConst(this,'acero')"><div class="icon">⚙️</div><div class="label">Acero &amp; Varillas</div></div>
+        <div class="project-card" onclick="selConst(this,'ceramica')"><div class="icon">🏠</div><div class="label">Cerámica</div></div>
+        <div class="project-card" onclick="selConst(this,'losa')"><div class="icon">🏢</div><div class="label">Losa Concreto</div></div>
+        <div class="project-card" onclick="selConst(this,'techo')"><div class="icon">🏘️</div><div class="label">Techo &amp; Láminas</div></div>
+      </div>
+
+      <div id="c-bloques">
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">1</div><div class="step-title">Medidas de la pared o superficie</div></div>
+          <div class="step-body">
+            <div class="formula-box"><div class="formula-label">📐 Fórmulas</div><div class="formula-text">Bloques = (Largo × Alto) ÷ Área/bloque<br>Sacos cemento = m² ÷ rendimiento mezcla<br>Arena ≈ 0.04 m³/saco | Grava ≈ 0.06 m³/saco</div></div>
+            <div class="calc-grid">
+              <div class="calc-field"><label>Largo de pared (m)</label><input type="number" id="bl_largo" placeholder="ej: 5.0" step="0.1"/></div>
+              <div class="calc-field"><label>Alto de pared (m)</label><input type="number" id="bl_alto" placeholder="ej: 3.0" step="0.1"/></div>
+              <div class="calc-field"><label>Tipo de bloque</label><select id="bl_tipo"><option value="0.08">Estándar 20×40cm</option><option value="0.06">Pequeño 15×30cm</option><option value="0.10">Grande 25×40cm</option></select></div>
+              <div class="calc-field"><label>Mezcla de cemento</label><select id="bl_mezcla"><option value="5">1:2:3 General</option><option value="4">1:2:2 Resistente</option><option value="7">1:3:5 Económica</option></select></div>
+              <div class="calc-field"><label>Precio bloque (€/u)</label><input type="number" id="bl_precio" placeholder="ej: 0.50" step="0.05"/></div>
+              <div class="calc-field"><label>Precio saco cemento (€)</label><input type="number" id="bl_pcem" placeholder="ej: 6.50" step="0.5"/></div>
+            </div>
+            <button class="btn-calcular" onclick="calcBloques()">⚡ Calcular — 5 créditos</button>
+            <div class="resultado-panel" id="rp-bloques">
+              <h3>📊 Bloques &amp; Cemento</h3>
+              <div class="resultado-grid" id="rg-bloques"></div>
+              <div class="mo-box" id="mo-bloques" style="display:none;"></div>
+              <div class="extra-toggle" onclick="toggleExtra('elec-bloques',this)">
+                <span>⚡ Calcular Electricidad &amp; Plomería</span><span class="arrow">▼</span>
+              </div>
+              <div class="extra-section" id="elec-bloques">
+                <h4>⚡ Electricidad</h4>
+                <div class="calc-grid">
+                  <div class="calc-field"><label>Nº cuartos</label><input type="number" id="eb_cuartos" value="2" step="1"/></div>
+                  <div class="calc-field"><label>Nº baños</label><input type="number" id="eb_banos" value="1" step="1"/></div>
+                  <div class="calc-field"><label>Precio tubo eléctrico (€/m)</label><input type="number" id="eb_ptub" value="1.50" step="0.1"/></div>
+                  <div class="calc-field"><label>Precio cable (€/m)</label><input type="number" id="eb_pcable" value="2.00" step="0.1"/></div>
+                </div>
+                <h4>🔧 Plomería</h4>
+                <div class="calc-grid">
+                  <div class="calc-field"><label>Precio tubo agua (€/m)</label><input type="number" id="eb_pagua" value="2.00" step="0.1"/></div>
+                  <div class="calc-field"><label>Precio tubo sanitario (€/m)</label><input type="number" id="eb_psan" value="2.50" step="0.1"/></div>
+                </div>
+                <button class="btn-calcular" style="margin-top:.5rem;" onclick="calcExtras()">⚡ Calcular Extras — 5 créditos</button>
+                <div class="resultado-panel" id="rp-extras-bloques" style="margin-top:1rem;">
+                  <h3>📊 Electricidad &amp; Plomería</h3>
+                  <div class="resultado-grid" id="rg-extras-bloques"></div>
+                </div>
+              </div>
+              <div class="plano-wrap" id="plano-bloques-wrap" style="display:none;">
+                <h4>🗺️ Plano Visual del Área</h4>
+                <canvas class="plano-canvas" id="plano-bloques" height="200"></canvas>
+                <div class="plano-leyenda">
+                  <div class="leyenda-item"><div class="leyenda-dot" style="background:#c9a84c;"></div>Pared</div>
+                  <div class="leyenda-item"><div class="leyenda-dot" style="background:#00b4d8;"></div>Área interior</div>
+                </div>
+              </div>
+              <div class="dl-group">
+                <button class="btn-descargar" onclick="dlJPG('rp-bloques','Bloques_Cemento')">📸 JPG — 5 cr.</button>
+                <button class="btn-descargar pdf-btn" onclick="dlPDF('rp-bloques','Bloques_Cemento')">📄 PDF — 5 cr.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="c-pintura" style="display:none;">
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">1</div><div class="step-title">Cálculo de Pintura por m²</div></div>
+          <div class="step-body">
+            <div class="formula-box"><div class="formula-label">📐 Fórmula</div><div class="formula-text">Litros = (Largo × Alto × Nº manos) ÷ Rendimiento</div></div>
+            <div class="calc-grid">
+              <div class="calc-field"><label>Largo (m)</label><input type="number" id="pt_largo" placeholder="ej: 6.0" step="0.1"/></div>
+              <div class="calc-field"><label>Alto (m)</label><input type="number" id="pt_alto" placeholder="ej: 2.8" step="0.1"/></div>
+              <div class="calc-field"><label>Número de manos</label><select id="pt_manos"><option value="1">1 mano</option><option value="2" selected>2 manos</option><option value="3">3 manos</option></select></div>
+              <div class="calc-field"><label>Rendimiento (m²/L)</label><input type="number" id="pt_rend" value="10" step="0.5"/></div>
+              <div class="calc-field"><label>Precio pintura (€/L)</label><input type="number" id="pt_precio" placeholder="ej: 8.0" step="0.5"/></div>
+            </div>
+            <button class="btn-calcular" onclick="calcPintura()">⚡ Calcular — 5 créditos</button>
+            <div class="resultado-panel" id="rp-pintura">
+              <h3>📊 Pintura</h3>
+              <div class="resultado-grid" id="rg-pintura"></div>
+              <div class="mo-box" id="mo-pintura" style="display:none;"></div>
+              <div class="dl-group">
+                <button class="btn-descargar" onclick="dlJPG('rp-pintura','Pintura')">📸 JPG — 5 cr.</button>
+                <button class="btn-descargar pdf-btn" onclick="dlPDF('rp-pintura','Pintura')">📄 PDF — 5 cr.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="c-acero" style="display:none;">
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">1</div><div class="step-title">Acero &amp; Varillas por Losa o Estructura</div></div>
+          <div class="step-body">
+            <div class="formula-box"><div class="formula-label">📐 Fórmula</div><div class="formula-text">Varillas X/Y = ⌈Largo ÷ Sep⌉ + 1 | Alambre ≈ 0.5m/cruce</div></div>
+            <div class="calc-grid">
+              <div class="calc-field"><label>Largo de losa (m)</label><input type="number" id="ac_largo" placeholder="ej: 5.0" step="0.1"/></div>
+              <div class="calc-field"><label>Ancho de losa (m)</label><input type="number" id="ac_ancho" placeholder="ej: 4.0" step="0.1"/></div>
+              <div class="calc-field"><label>Separación entre varillas</label><select id="ac_sep"><option value="0.15">15 cm</option><option value="0.20" selected>20 cm</option><option value="0.25">25 cm</option></select></div>
+              <div class="calc-field"><label>Longitud de varilla (m)</label><select id="ac_lon"><option value="6">6 m</option><option value="9">9 m</option><option value="12">12 m</option></select></div>
+              <div class="calc-field"><label>Precio varilla (€/u)</label><input type="number" id="ac_precio" placeholder="ej: 4.50" step="0.5"/></div>
+            </div>
+            <button class="btn-calcular" onclick="calcAcero()">⚡ Calcular — 5 créditos</button>
+            <div class="resultado-panel" id="rp-acero">
+              <h3>📊 Acero &amp; Varillas</h3>
+              <div class="resultado-grid" id="rg-acero"></div>
+              <div class="mo-box" id="mo-acero" style="display:none;"></div>
+              <div class="dl-group">
+                <button class="btn-descargar" onclick="dlJPG('rp-acero','Acero')">📸 JPG — 5 cr.</button>
+                <button class="btn-descargar pdf-btn" onclick="dlPDF('rp-acero','Acero')">📄 PDF — 5 cr.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="c-ceramica" style="display:none;">
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">1</div><div class="step-title">Cerámica &amp; Porcelanato</div></div>
+          <div class="step-body">
+            <div class="formula-box"><div class="formula-label">📐 Fórmula</div><div class="formula-text">Piezas = m² ÷ Área/pieza × Factor desperdicio</div></div>
+            <div class="calc-grid">
+              <div class="calc-field"><label>Largo del área (m)</label><input type="number" id="cer_largo" placeholder="ej: 4.0" step="0.1"/></div>
+              <div class="calc-field"><label>Ancho del área (m)</label><input type="number" id="cer_ancho" placeholder="ej: 3.0" step="0.1"/></div>
+              <div class="calc-field"><label>Tamaño de pieza</label><select id="cer_tam"><option value="0.09">30×30 cm</option><option value="0.16" selected>40×40 cm</option><option value="0.25">50×50 cm</option><option value="0.36">60×60 cm</option></select></div>
+              <div class="calc-field"><label>% Desperdicio</label><select id="cer_desp"><option value="1.05">5%</option><option value="1.10" selected>10%</option><option value="1.15">15%</option></select></div>
+              <div class="calc-field"><label>Precio pieza (€/u)</label><input type="number" id="cer_precio" placeholder="ej: 2.80" step="0.1"/></div>
+            </div>
+            <button class="btn-calcular" onclick="calcCeramica()">⚡ Calcular — 5 créditos</button>
+            <div class="resultado-panel" id="rp-ceramica">
+              <h3>📊 Cerámica &amp; Porcelanato</h3>
+              <div class="resultado-grid" id="rg-ceramica"></div>
+              <div class="mo-box" id="mo-ceramica" style="display:none;"></div>
+              <div class="dl-group">
+                <button class="btn-descargar" onclick="dlJPG('rp-ceramica','Ceramica')">📸 JPG — 5 cr.</button>
+                <button class="btn-descargar pdf-btn" onclick="dlPDF('rp-ceramica','Ceramica')">📄 PDF — 5 cr.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="c-losa" style="display:none;">
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">1</div><div class="step-title">Losa de Concreto</div></div>
+          <div class="step-body">
+            <div class="formula-box"><div class="formula-label">📐 Fórmula</div><div class="formula-text">Volumen (m³) = Largo × Ancho × Espesor<br>Cemento: 7 sacos/m³</div></div>
+            <div class="calc-grid">
+              <div class="calc-field"><label>Largo (m)</label><input type="number" id="ls_largo" placeholder="ej: 5.0" step="0.1"/></div>
+              <div class="calc-field"><label>Ancho (m)</label><input type="number" id="ls_ancho" placeholder="ej: 4.0" step="0.1"/></div>
+              <div class="calc-field"><label>Espesor</label><select id="ls_esp"><option value="0.08">8 cm — liviana</option><option value="0.10" selected>10 cm — estándar</option><option value="0.12">12 cm — reforzada</option><option value="0.15">15 cm — industrial</option></select></div>
+              <div class="calc-field"><label>Precio saco cemento (€)</label><input type="number" id="ls_pcem" placeholder="ej: 6.50" step="0.5"/></div>
+            </div>
+            <button class="btn-calcular" onclick="calcLosa()">⚡ Calcular — 5 créditos</button>
+            <div class="resultado-panel" id="rp-losa">
+              <h3>📊 Losa de Concreto</h3>
+              <div class="resultado-grid" id="rg-losa"></div>
+              <div class="mo-box" id="mo-losa" style="display:none;"></div>
+              <div class="plano-wrap" id="plano-losa-wrap" style="display:none;">
+                <h4>🗺️ Plano Visual de la Losa</h4>
+                <canvas class="plano-canvas" id="plano-losa" height="200"></canvas>
+              </div>
+              <div class="dl-group">
+                <button class="btn-descargar" onclick="dlJPG('rp-losa','Losa')">📸 JPG — 5 cr.</button>
+                <button class="btn-descargar pdf-btn" onclick="dlPDF('rp-losa','Losa')">📄 PDF — 5 cr.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="c-techo" style="display:none;">
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">1</div><div class="step-title">Techo &amp; Láminas</div></div>
+          <div class="step-body">
+            <div class="formula-box"><div class="formula-label">📐 Fórmula</div><div class="formula-text">Láminas = m² ÷ Área efectiva × 1.10 (traslape)</div></div>
+            <div class="calc-grid">
+              <div class="calc-field"><label>Largo del techo (m)</label><input type="number" id="tc_largo" placeholder="ej: 6.0" step="0.1"/></div>
+              <div class="calc-field"><label>Ancho del techo (m)</label><input type="number" id="tc_ancho" placeholder="ej: 4.0" step="0.1"/></div>
+              <div class="calc-field"><label>Tipo de lámina</label><select id="tc_tipo"><option value="2.16">Zinc 1.2×1.8m</option><option value="2.88" selected>Zinc 1.2×2.4m</option><option value="4.32">Termopanel 1.2×3.6m</option></select></div>
+              <div class="calc-field"><label>Precio lámina (€/u)</label><input type="number" id="tc_precio" placeholder="ej: 18.0" step="1"/></div>
+            </div>
+            <button class="btn-calcular" onclick="calcTecho()">⚡ Calcular — 5 créditos</button>
+            <div class="resultado-panel" id="rp-techo">
+              <h3>📊 Techo &amp; Láminas</h3>
+              <div class="resultado-grid" id="rg-techo"></div>
+              <div class="mo-box" id="mo-techo" style="display:none;"></div>
+              <div class="dl-group">
+                <button class="btn-descargar" onclick="dlJPG('rp-techo','Techo')">📸 JPG — 5 cr.</button>
+                <button class="btn-descargar pdf-btn" onclick="dlPDF('rp-techo','Techo')">📄 PDF — 5 cr.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESINA -->
+    <div class="module-page" id="mod-resina">
+      <div class="book-header resin">
+        <h2>🌊 Calculadora de Resina Epóxica</h2>
+        <p>Resina, endurecedor, pigmentos, costos y tiempos de curado al instante</p>
+        <button class="tts-btn-inline" onclick="narrarModulo('resina')">🔊 Escuchar qué hace este módulo</button>
+      </div>
+      <div class="project-grid">
+        <div class="project-card selected" onclick="selResina(this,'mesa')"><div class="icon">🪑</div><div class="label">Mesa Resina</div></div>
+        <div class="project-card" onclick="selResina(this,'piso')"><div class="icon">🏠</div><div class="label">Piso Epóxico</div></div>
+        <div class="project-card" onclick="selResina(this,'encimera')"><div class="icon">🍳</div><div class="label">Encimera</div></div>
+        <div class="project-card" onclick="selResina(this,'cuadro')"><div class="icon">🎨</div><div class="label">Arte Resina</div></div>
+        <div class="project-card" onclick="selResina(this,'molde')"><div class="icon">🔲</div><div class="label">Moldes</div></div>
+      </div>
+      <div id="r-mesa">
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">1</div><div class="step-title">Mesa de Resina — Medidas y Grosor</div></div>
+          <div class="step-body">
+            <div class="formula-box"><div class="formula-label">📐 Fórmula Ratio 2:1</div><div class="formula-text">Volumen = Largo × Ancho × Grosor × 1000 litros<br>Resina = Vol × 0.667 kg | Endurecedor = Vol × 0.333 kg</div></div>
+            <div class="calc-grid">
+              <div class="calc-field"><label>Largo mesa (m)</label><input type="number" id="ms_largo" placeholder="ej: 1.5" step="0.01"/></div>
+              <div class="calc-field"><label>Ancho mesa (m)</label><input type="number" id="ms_ancho" placeholder="ej: 0.8" step="0.01"/></div>
+              <div class="calc-field"><label>Grosor de capa (cm)</label><input type="number" id="ms_grosor" value="3" step="0.5"/></div>
+              <div class="calc-field"><label>Ratio mezcla</label><select id="ms_ratio"><option value="2">2:1 (estándar)</option><option value="3">3:1 (curado lento)</option></select></div>
+              <div class="calc-field"><label>% Pigmento</label><select id="ms_pig"><option value="0.02">2% sutil</option><option value="0.03" selected>3% estándar</option><option value="0.05">5% intenso</option></select></div>
+              <div class="calc-field"><label>Precio resina (€/kg)</label><input type="number" id="ms_precio" value="15" step="0.5"/></div>
+            </div>
+            <button class="btn-calcular" onclick="calcMesa()">⚡ Calcular — 5 créditos</button>
+            <div class="resultado-panel" id="rp-mesa">
+              <h3>📊 Mesa de Resina</h3>
+              <div class="resultado-grid" id="rg-mesa"></div>
+              <div class="curado-box"><p>⏱️ Gel: 30–60 min | Desmolde: 24 h | Curado completo: 72 h | Temp ideal: 20–25°C</p></div>
+              <div class="dl-group">
+                <button class="btn-descargar" onclick="dlJPG('rp-mesa','Mesa_Resina')">📸 JPG — 5 cr.</button>
+                <button class="btn-descargar pdf-btn" onclick="dlPDF('rp-mesa','Mesa_Resina')">📄 PDF — 5 cr.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="r-piso" style="display:none;">
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">1</div><div class="step-title">Piso Epóxico</div></div>
+          <div class="step-body">
+            <div class="calc-grid">
+              <div class="calc-field"><label>Largo (m)</label><input type="number" id="ps_largo" placeholder="ej: 10.0" step="0.1"/></div>
+              <div class="calc-field"><label>Ancho (m)</label><input type="number" id="ps_ancho" placeholder="ej: 6.0" step="0.1"/></div>
+              <div class="calc-field"><label>Espesor capa</label><select id="ps_esp"><option value="0.001">1mm sellado</option><option value="0.002" selected>2mm estándar</option><option value="0.003">3mm decorativo</option><option value="0.005">5mm industrial</option></select></div>
+              <div class="calc-field"><label>Número de capas</label><select id="ps_capas"><option value="1">1 capa</option><option value="2" selected>2 capas</option><option value="3">3 capas</option></select></div>
+              <div class="calc-field"><label>Precio resina (€/kg)</label><input type="number" id="ps_precio" value="12" step="0.5"/></div>
+            </div>
+            <button class="btn-calcular" onclick="calcPiso()">⚡ Calcular — 5 créditos</button>
+            <div class="resultado-panel" id="rp-piso">
+              <h3>📊 Piso Epóxico</h3>
+              <div class="resultado-grid" id="rg-piso"></div>
+              <div class="curado-box"><p>⏱️ Entre capas: 8–12 h | Tránsito ligero: 24 h | Tránsito completo: 7 días</p></div>
+              <div class="dl-group">
+                <button class="btn-descargar" onclick="dlJPG('rp-piso','Piso_Epoxica')">📸 JPG — 5 cr.</button>
+                <button class="btn-descargar pdf-btn" onclick="dlPDF('rp-piso','Piso_Epoxica')">📄 PDF — 5 cr.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="r-encimera" style="display:none;">
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">1</div><div class="step-title">Encimera de Cocina</div></div>
+          <div class="step-body">
+            <div class="calc-grid">
+              <div class="calc-field"><label>Largo (m)</label><input type="number" id="en_largo" placeholder="ej: 2.0" step="0.1"/></div>
+              <div class="calc-field"><label>Ancho (m)</label><input type="number" id="en_ancho" placeholder="ej: 0.6" step="0.1"/></div>
+              <div class="calc-field"><label>Grosor (cm)</label><input type="number" id="en_grosor" value="3" step="0.5"/></div>
+              <div class="calc-field"><label>Precio resina (€/kg)</label><input type="number" id="en_precio" value="15" step="0.5"/></div>
+            </div>
+            <button class="btn-calcular" onclick="calcEncimera()">⚡ Calcular — 5 créditos</button>
+            <div class="resultado-panel" id="rp-encimera">
+              <h3>📊 Encimera</h3>
+              <div class="resultado-grid" id="rg-encimera"></div>
+              <div class="curado-box"><p>⏱️ Curado completo: 72 h | Apto para uso: 7 días</p></div>
+              <div class="dl-group">
+                <button class="btn-descargar" onclick="dlJPG('rp-encimera','Encimera')">📸 JPG — 5 cr.</button>
+                <button class="btn-descargar pdf-btn" onclick="dlPDF('rp-encimera','Encimera')">📄 PDF — 5 cr.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="r-cuadro" style="display:none;">
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">1</div><div class="step-title">Arte &amp; Cuadros en Resina</div></div>
+          <div class="step-body">
+            <div class="calc-grid">
+              <div class="calc-field"><label>Largo (m)</label><input type="number" id="cu_largo" placeholder="ej: 0.6" step="0.01"/></div>
+              <div class="calc-field"><label>Ancho (m)</label><input type="number" id="cu_ancho" placeholder="ej: 0.4" step="0.01"/></div>
+              <div class="calc-field"><label>Espesor (mm)</label><input type="number" id="cu_esp" value="3" step="0.5"/></div>
+              <div class="calc-field"><label>Precio resina (€/kg)</label><input type="number" id="cu_precio" value="18" step="0.5"/></div>
+            </div>
+            <button class="btn-calcular" onclick="calcCuadro()">⚡ Calcular — 5 créditos</button>
+            <div class="resultado-panel" id="rp-cuadro">
+              <h3>📊 Arte en Resina</h3>
+              <div class="resultado-grid" id="rg-cuadro"></div>
+              <div class="curado-box"><p>🎨 Pigmento 2–3% | Desmolde 24h | Lija 400→800→1500</p></div>
+              <div class="dl-group">
+                <button class="btn-descargar" onclick="dlJPG('rp-cuadro','Arte_Resina')">📸 JPG — 5 cr.</button>
+                <button class="btn-descargar pdf-btn" onclick="dlPDF('rp-cuadro','Arte_Resina')">📄 PDF — 5 cr.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="r-molde" style="display:none;">
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">1</div><div class="step-title">Moldes &amp; Vaciado</div></div>
+          <div class="step-body">
+            <div class="calc-grid">
+              <div class="calc-field"><label>Largo molde (m)</label><input type="number" id="mo_largo" placeholder="ej: 0.3" step="0.01"/></div>
+              <div class="calc-field"><label>Ancho (m)</label><input type="number" id="mo_ancho" placeholder="ej: 0.2" step="0.01"/></div>
+              <div class="calc-field"><label>Alto (m)</label><input type="number" id="mo_alto" placeholder="ej: 0.05" step="0.01"/></div>
+              <div class="calc-field"><label>Cantidad de piezas</label><input type="number" id="mo_cant" value="1" step="1"/></div>
+              <div class="calc-field"><label>Precio resina (€/kg)</label><input type="number" id="mo_precio" value="15" step="0.5"/></div>
+            </div>
+            <button class="btn-calcular" onclick="calcMolde()">⚡ Calcular — 5 créditos</button>
+            <div class="resultado-panel" id="rp-molde">
+              <h3>📊 Moldes &amp; Vaciado</h3>
+              <div class="resultado-grid" id="rg-molde"></div>
+              <div class="curado-box"><p>💡 Desmoldante antes de verter | Max 5cm continuo | Capas cada 12h</p></div>
+              <div class="dl-group">
+                <button class="btn-descargar" onclick="dlJPG('rp-molde','Moldes')">📸 JPG — 5 cr.</button>
+                <button class="btn-descargar pdf-btn" onclick="dlPDF('rp-molde','Moldes')">📄 PDF — 5 cr.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRESUPUESTO -->
+    <div class="module-page" id="mod-presupuesto">
+      <div class="book-header pres">
+        <h2>📄 Generador de Presupuesto</h2>
+        <p>Presupuesto profesional con materiales, mano de obra y margen de ganancia</p>
+        <button class="tts-btn-inline" onclick="narrarModulo('presupuesto')">🔊 Escuchar qué hace este módulo</button>
+      </div>
+      <div class="step-container">
+        <div class="step-header"><div class="step-num">1</div><div class="step-title">Datos del Cliente &amp; Proyecto</div></div>
+        <div class="step-body">
+          <div class="calc-grid">
+            <div class="calc-field"><label>Nombre del cliente</label><input type="text" id="pre_cliente" placeholder="Cliente Ejemplo"/></div>
+            <div class="calc-field"><label>Nombre del proyecto</label><input type="text" id="pre_proyecto" placeholder="Remodelación cocina"/></div>
+            <div class="calc-field"><label>Moneda</label><select id="pre_moneda"><option value="€">€ Euro</option><option value="$">$ Dólar</option><option value="Bs">Bs Bolívar</option></select></div>
+            <div class="calc-field"><label>Margen de ganancia (%)</label><input type="number" id="pre_margen" value="25" step="5"/></div>
+          </div>
+        </div>
+      </div>
+      <div class="step-container">
+        <div class="step-header"><div class="step-num">2</div><div class="step-title">Lista de Materiales &amp; Servicios</div></div>
+        <div class="step-body">
+          <button class="btn-add-row" onclick="addRow()">+ Agregar material / servicio</button>
+          <div style="overflow-x:auto;">
+            <table class="presupuesto-table">
+              <thead><tr><th>Material / Servicio</th><th>Cantidad</th><th>Unidad</th><th>Precio Unit.</th><th>Total</th><th></th></tr></thead>
+              <tbody id="preBody"></tbody>
+            </table>
+          </div>
+          <div class="step-container" style="margin-top:.8rem;">
+            <div class="step-header"><div class="step-num">3</div><div class="step-title">Mano de Obra</div></div>
+            <div class="step-body">
+              <div class="calc-grid">
+                <div class="calc-field"><label>Días de trabajo</label><input type="number" id="pre_dias" value="1" step="1" oninput="calcPre()"/></div>
+                <div class="calc-field"><label>Costo por día</label><input type="number" id="pre_dia_costo" placeholder="ej: 80" step="10" oninput="calcPre()"/></div>
+              </div>
+            </div>
+          </div>
+          <div class="total-strip">
+            <div class="total-item"><div class="tl">Subtotal Materiales</div><div class="tv" id="tv-mat">0.00</div></div>
+            <div class="total-item"><div class="tl">Mano de Obra</div><div class="tv" id="tv-mo">0.00</div></div>
+            <div class="total-item"><div class="tl">Margen Ganancia</div><div class="tv" id="tv-margen" style="color:var(--resina-bright)">0.00</div></div>
+            <div class="total-item big"><div class="tl">TOTAL FINAL</div><div class="tv" id="tv-total">0.00</div></div>
+          </div>
+          <div style="margin-top:1rem;">
+            <button class="btn-calcular" onclick="calcPreFull()">⚡ Calcular — 5 créditos</button>
+            <div class="dl-group" style="margin-top:.8rem;">
+              <button class="btn-descargar" onclick="dlJPG('mod-presupuesto','Presupuesto')">📸 JPG — 5 cr.</button>
+              <button class="btn-descargar pdf-btn" onclick="dlPDF('mod-presupuesto','Presupuesto')">📄 PDF — 5 cr.</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLANES -->
+    <div class="module-page" id="mod-planes">
+      <div class="book-header plan">
+        <h2>💳 Planes &amp; Precios</h2>
+        <p>Elige tu plan — actívalo al instante por WhatsApp</p>
+        <button class="tts-btn-inline" onclick="narrarModulo('planes')">🔊 Escuchar los planes disponibles</button>
+      </div>
+      <div class="planes-grid">
+        <div class="plan-card">
+          <div class="plan-name">🆓 Demo</div>
+          <div class="plan-price">Gratis</div>
+          <div class="plan-credits">10 créditos</div>
+          <ul class="plan-features"><li>Todos los módulos</li><li>10 créditos gratis</li><li>Sin descarga JPG/PDF</li></ul>
+          <button class="btn-plan-wa" onclick="abrirWA('Demo')">🟢 Empezar gratis</button>
+        </div>
+        <div class="plan-card featured">
+          <div class="plan-badge">⭐ POPULAR</div>
+          <div class="plan-name">🗓️ Semanal</div>
+          <div class="plan-price">$9.99</div>
+          <div class="plan-credits">50 créditos — 7 días</div>
+          <ul class="plan-features"><li>Todos los módulos</li><li>50 créditos</li><li>JPG + PDF incluidos</li><li>Soporte WhatsApp</li></ul>
+          <button class="btn-plan-wa" onclick="abrirWA('Plan Semanal')">🟢 Contratar Semanal</button>
+        </div>
+        <div class="plan-card featured">
+          <div class="plan-name">📆 Mensual</div>
+          <div class="plan-price">€24</div>
+          <div class="plan-credits">120 créditos — 30 días</div>
+          <ul class="plan-features"><li>Todos los módulos</li><li>120 créditos</li><li>JPG + PDF ilimitados</li><li>Soporte prioritario</li></ul>
+          <button class="btn-plan-wa" onclick="abrirWA('Plan Mensual')">🟢 Contratar Mensual</button>
+        </div>
+        <div class="plan-card">
+          <div class="plan-name">🏢 Profesional</div>
+          <div class="plan-price">€49</div>
+          <div class="plan-credits">365 créditos — 1 año</div>
+          <ul class="plan-features"><li>Todos los módulos</li><li>365 créditos anuales</li><li>PDF profesional</li><li>Soporte premium</li></ul>
+          <button class="btn-plan-wa" onclick="abrirWA('Plan Profesional')">🟢 Contratar Profesional</button>
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:14px;padding:1.4rem;border:1px solid var(--cemento-light);">
+        <h3 style="font-family:'Playfair Display',serif;margin-bottom:.7rem;">💎 Recargas de Créditos</h3>
+        <p style="color:var(--cemento-claro);font-size:.88rem;margin-bottom:1rem;">¿Necesitas más créditos? 40 créditos = €6</p>
+        <button class="btn-plan-wa" style="width:auto;" onclick="abrirWA('Recarga créditos CalcPro')">🟢 Solicitar Recarga</button>
+      </div>
+    </div>
+
+    <!-- PROYECTO COMPLETO -->
+    <div class="module-page" id="mod-plano">
+      <div class="book-header const" style="background:linear-gradient(135deg,#0a1a0a,#1a2a0a);">
+        <h2>🏠 Proyecto Completo de Construcción</h2>
+        <p>Presupuesto total + planos interactivos de estructura, electricidad y plomería en tiempo real</p>
+        <button class="tts-btn-inline" onclick="narrarModulo('proyecto')">🔊 Escuchar qué hace este módulo</button>
+      </div>
+      <div class="step-container">
+        <div class="step-header"><div class="step-num">1</div><div class="step-title">Datos del Proyecto</div></div>
+        <div class="step-body">
+          <div class="plano-section-title">📐 Dimensiones</div>
+          <div class="plano-completo-grid">
+            <div class="calc-field"><label>Cantidad de cuartos</label><input type="number" id="pc_cuartos" value="3" min="1"/></div>
+            <div class="calc-field"><label>Cantidad de baños</label><input type="number" id="pc_banos" value="2" min="1"/></div>
+            <div class="calc-field"><label>Largo total (m)</label><input type="number" id="pc_largo" value="12" step="0.5"/></div>
+            <div class="calc-field"><label>Ancho total (m)</label><input type="number" id="pc_ancho" value="10" step="0.5"/></div>
+            <div class="calc-field"><label>Altura (m)</label><input type="number" id="pc_altura" value="3" step="0.1"/></div>
+            <div class="calc-field"><label>Margen de ganancia (%)</label><input type="number" id="pc_ganancia" value="25" step="5"/></div>
+            <div class="calc-field"><label>Moneda</label><select id="pc_moneda"><option value="€">€ Euro</option><option value="$">$ Dólar</option><option value="Bs">Bs Bolívar</option></select></div>
+          </div>
+          <div class="plano-section-title">🧱 Construcción</div>
+          <div class="plano-completo-grid">
+            <div class="calc-field"><label>Bloque (€/u)</label><input type="number" id="pc_pbloque" value="0.50" step="0.05"/></div>
+            <div class="calc-field"><label>Tipo cemento</label><select id="pc_tipocemento"><option value="25">Saco 25kg</option><option value="50">Saco 50kg</option></select></div>
+            <div class="calc-field"><label>Cemento (€/saco)</label><input type="number" id="pc_pcemento" value="6.50" step="0.5"/></div>
+            <div class="calc-field"><label>Arena (€/m³)</label><input type="number" id="pc_parena" value="20" step="1"/></div>
+            <div class="calc-field"><label>Grava (€/m³)</label><input type="number" id="pc_pgrava" value="25" step="1"/></div>
+            <div class="calc-field"><label>Cabilla 12m (€/u)</label><input type="number" id="pc_pcab12" value="5.00" step="0.5"/></div>
+            <div class="calc-field"><label>Cabilla 6m (€/u)</label><input type="number" id="pc_pcab6" value="2.50" step="0.5"/></div>
+            <div class="calc-field"><label>Alambre (€/kg)</label><input type="number" id="pc_palambre" value="3.00" step="0.5"/></div>
+          </div>
+          <div class="plano-section-title">⚡ Electricidad</div>
+          <div class="plano-completo-grid">
+            <div class="calc-field"><label>Tubo eléctrico (€/m)</label><input type="number" id="pc_ptub" value="1.50" step="0.1"/></div>
+            <div class="calc-field"><label>Cajas eléctricas (€/u)</label><input type="number" id="pc_pcajas" value="1.50" step="0.1"/></div>
+            <div class="calc-field"><label>Cable (€/m)</label><input type="number" id="pc_pcable" value="2.00" step="0.1"/></div>
+            <div class="calc-field"><label>Lámparas (€/u)</label><input type="number" id="pc_plamparas" value="5.00" step="0.5"/></div>
+            <div class="calc-field"><label>Apagadores (€/u)</label><input type="number" id="pc_papagadores" value="1.50" step="0.1"/></div>
+            <div class="calc-field"><label>Rollo cable</label><select id="pc_rollo"><option value="100">100m estándar</option><option value="50">50m</option><option value="200">200m</option></select></div>
+          </div>
+          <div class="plano-section-title">🔧 Plomería</div>
+          <div class="plano-completo-grid">
+            <div class="calc-field"><label>Tubo agua (€/m)</label><input type="number" id="pc_pagua" value="2.00" step="0.1"/></div>
+            <div class="calc-field"><label>Tubo sanitario (€/m)</label><input type="number" id="pc_psan" value="2.50" step="0.1"/></div>
+            <div class="calc-field"><label>Codos (€/u)</label><input type="number" id="pc_pcodos" value="0.50" step="0.05"/></div>
+            <div class="calc-field"><label>Tees (€/u)</label><input type="number" id="pc_ptees" value="0.75" step="0.05"/></div>
+            <div class="calc-field"><label>Pegamento (€/u)</label><input type="number" id="pc_ppegamento" value="1.00" step="0.1"/></div>
+          </div>
+          <div class="plano-section-title">👷 Mano de Obra</div>
+          <div class="plano-completo-grid">
+            <div class="calc-field"><label>Costo por día (€)</label><input type="number" id="pc_costoDia" value="50" step="5"/></div>
+            <div class="calc-field"><label>Días de trabajo</label><input type="number" id="pc_dias" value="30" step="1"/></div>
+          </div>
+          <button class="btn-calcular" style="margin-top:1rem;" onclick="generarProyectoCompleto()">⚡ Generar Proyecto Completo — 5 créditos</button>
+        </div>
+      </div>
+      <div id="rp-proyecto-completo" style="display:none;">
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">2</div><div class="step-title">Desglose de Materiales y Costos</div></div>
+          <div class="step-body">
+            <div style="overflow-x:auto;"><table class="proyecto-tabla" id="tabla-proyecto"></table></div>
+            <div class="proyecto-total" id="total-proyecto"></div>
+            <div class="dl-group" style="margin-top:1rem;">
+              <button class="btn-descargar" onclick="dlJPG('rp-proyecto-completo','Proyecto_Completo')">📸 JPG — 5 cr.</button>
+              <button class="btn-descargar pdf-btn" onclick="dlPDF('rp-proyecto-completo','Proyecto_Completo')">📄 PDF — 5 cr.</button>
+            </div>
+          </div>
+        </div>
+        <div class="step-container">
+          <div class="step-header"><div class="step-num">3</div><div class="step-title">Planos Interactivos en Tiempo Real</div></div>
+          <div class="step-body">
+            <div class="plano-tabs">
+              <button class="plano-tab active" onclick="cambiarVistaPlano('estructura',this)">🏗️ Estructura</button>
+              <button class="plano-tab" onclick="cambiarVistaPlano('electricidad',this)">⚡ Electricidad</button>
+              <button class="plano-tab" onclick="cambiarVistaPlano('agua',this)">🔧 Plomería</button>
+            </div>
+            <div class="plano-canvas-wrap">
+              <h4>🗺️ Plano Proporcional del Proyecto</h4>
+              <canvas id="plano-completo" height="500"></canvas>
+              <div class="plano-leyenda" style="margin-top:.8rem;">
+                <div class="leyenda-item"><div class="leyenda-dot" style="background:#00b4d8;"></div>Cuartos</div>
+                <div class="leyenda-item"><div class="leyenda-dot" style="background:#e74c3c;"></div>Baños</div>
+                <div class="leyenda-item"><div class="leyenda-dot" style="background:#f39c12;"></div>Sala</div>
+                <div class="leyenda-item"><div class="leyenda-dot" style="background:#ffff00;"></div>Eléctrico</div>
+                <div class="leyenda-item"><div class="leyenda-dot" style="background:#00ffff;"></div>Plomería</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ASISTENTE DE VOZ -->
+<div class="chat-container" id="chatBox">
+  <div class="chat-box">
+    <div class="chat-header">
+      <div class="chat-hinfo">
+        <div class="chat-avatar">🏗️</div>
+        <div><h4>Asistente de fatima caldea</h4><p>Guía de voz · IA interactiva</p></div>
+      </div>
+      <div class="chat-header-btns">
+        <button class="chat-voice-btn" id="voiceStatusBtn" onclick="stopSpeech()">🔊 Parar</button>
+        <button class="chat-close" onclick="toggleChat()">✕ Cerrar</button>
+      </div>
+    </div>
+    <div class="chat-tabs">
+      <button class="chat-tab active" onclick="switchChatTab('guia',event)">🎙️ Guía de Voz</button>
+      <button class="chat-tab" onclick="switchChatTab('ia',event)">🤖 Asistente IA</button>
+    </div>
+    <div class="voice-guide-panel active" id="panel-guia">
+      <div class="vg-section">
+        <div class="vg-title">🏗️ Módulos de Construcción</div>
+        <button class="vg-btn" onclick="hablar(GUIAS.construccion)"><span class="vg-ico">🧱</span><span class="vg-txt">¿Qué es la Calculadora de Construcción?</span><span class="vg-play">▶</span></button>
+        <button class="vg-btn" onclick="hablar(GUIAS.bloques)"><span class="vg-ico">🧱</span><span class="vg-txt">Bloques y Cemento — ¿qué calcula?</span><span class="vg-play">▶</span></button>
+        <button class="vg-btn" onclick="hablar(GUIAS.losa)"><span class="vg-ico">🏢</span><span class="vg-txt">Losa de Concreto — ¿para qué sirve?</span><span class="vg-play">▶</span></button>
+        <button class="vg-btn" onclick="hablar(GUIAS.planos)"><span class="vg-ico">🗺️</span><span class="vg-txt">Planos en tiempo real — ¿cómo funcionan?</span><span class="vg-play">▶</span></button>
+      </div>
+      <div class="vg-section">
+        <div class="vg-title">🌊 Resina Epóxica</div>
+        <button class="vg-btn" onclick="hablar(GUIAS.resina)"><span class="vg-ico">🌊</span><span class="vg-txt">¿Qué es la Calculadora de Resina?</span><span class="vg-play">▶</span></button>
+      </div>
+      <div class="vg-section">
+        <div class="vg-title">📊 Herramientas Pro</div>
+        <button class="vg-btn" onclick="hablar(GUIAS.presupuesto)"><span class="vg-ico">📄</span><span class="vg-txt">Generador de Presupuesto Profesional</span><span class="vg-play">▶</span></button>
+        <button class="vg-btn" onclick="hablar(GUIAS.proyecto)"><span class="vg-ico">🏠</span><span class="vg-txt">Proyecto Completo — todo incluido</span><span class="vg-play">▶</span></button>
+        <button class="vg-btn" onclick="hablar(GUIAS.bienvenida)"><span class="vg-ico">⭐</span><span class="vg-txt">Presentación completa de construccion</span><span class="vg-play">▶</span></button>
+      </div>
+    </div>
+    <div class="chat-ia-wrap" id="panel-ia" style="display:none;">
+      <div class="chat-messages" id="chatMsgs">
+        <div class="chat-msg bot">¡Hola! Soy el asistente de fatima caldea 🏗️ Pregúntame sobre construcción, resina epóxica, créditos o cualquier cálculo. También puedo leer mis respuestas en voz alta.</div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chatInput" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')sendChat()"/>
+        <button class="chat-send" onclick="sendChat()">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FLOTANTES -->
+<div class="floating-btns" id="fabBtns">
+  <button class="fab fab-voice" onclick="toggleChat()" title="Asistente de Voz">
+    🎙️<div class="fab-badge"></div>
+  </button>
+  <button class="fab fab-wa" onclick="abrirWA('')" title="WhatsApp">💬</button>
+</div>
+
+<script>
+(function loadFirebase(cb){
+  const s1=document.createElement('script');
+  s1.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
+  s1.onload=()=>{
+    const s2=document.createElement('script');
+    s2.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js';
+    s2.onload=cb;
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s1);
+})(initFirebase);
+
+const FB_CFG={
+  apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",
+  authDomain:"aprendisajefatima.firebaseapp.com",
+  projectId:"aprendisajefatima",
+  storageBucket:"aprendisajefatima.firebasestorage.app",
+  messagingSenderId:"744176967394",
+  appId:"1:744176967394:web:743b7c2a455e1e6ba7c8bb"
+};
+let db,currentUID='',currentEmail='';
+let credits=10,maxCredits=10,planActivo='demo';
+const _w=(s=>s)(atob('MzQ2MDQ4')+atob('MjIyNjU='));
+let ttsActivo=true;
+
+const GUIAS={
+  bienvenida:'Bienvenida a sistema de construccion, la herramienta de productividad profesional de construcción y resina epóxica, creada por Fátima caldea. Esta calculadora está diseñada para profesionales de la construcción, albañiles, decoradores y artesanos.puedes calcular materiales exactos para cualquier obra, generar presupuestos profesionales, y obtener planos visuales interactivos en tiempo real de la estructura, instalación eléctrica y red de plomería de tu proyecto completo.',
+  construccion:'El módulo de Construcción te permite calcular de forma exacta todos los materiales que necesitas para tu obra. Puedes elegir entre seis tipos de trabajo: bloques y cemento, pintura, acero y varillas, cerámica y porcelanato, losa de concreto, y techo con láminas.',
+  bloques:'El calculador de bloques y cemento calcula automáticamente cuántos bloques necesitas, los sacos de cemento, arena, grava y el costo total.',
+  losa:'El calculador de losa calcula el volumen exacto de concreto, sacos de cemento, arena, grava y agua según el espesor elegido.',
+  resina:'El módulo de Resina Epóxica calcula la cantidad exacta de resina y endurecedor para mesas, pisos, encimeras, cuadros y moldes con los tiempos de curado ideales.',
+  presupuesto:'El Generador de Presupuesto Profesional permite crear cotizaciones completas con materiales, mano de obra y margen de ganancia descargables en JPG o PDF.',
+  proyecto:'El módulo de Proyecto Completo genera el presupuesto total de construcción, electricidad y plomería junto con tres planos interactivos en tiempo real.',
+  planos:'Los planos en tiempo real dibujan automáticamente la estructura, el circuito eléctrico y la red de plomería de forma proporcional y visual.'
+};
+
+let speechSynth=window.speechSynthesis;
+let currentUtterance=null;
+
+function hablar(texto){
+  if(!ttsActivo)return;
+  stopSpeech();
+  currentUtterance=new SpeechSynthesisUtterance(texto);
+  currentUtterance.lang='es-ES';
+  currentUtterance.rate=0.95;
+  currentUtterance.pitch=1.05;
+  currentUtterance.volume=1;
+  const voces=speechSynth.getVoices();
+  const voz=voces.find(v=>v.lang==='es-ES'&&v.name.toLowerCase().includes('google'))||
+             voces.find(v=>v.lang==='es-ES')||
+             voces.find(v=>v.lang.startsWith('es'));
+  if(voz)currentUtterance.voice=voz;
+  const banner=document.getElementById('ttsBanner');
+  const bannerTxt=document.getElementById('ttsBannerText');
+  currentUtterance.onstart=()=>{banner.classList.remove('hidden');bannerTxt.textContent='Reproduciendo guía de voz...';document.getElementById('voiceStatusBtn').classList.add('speaking');};
+  currentUtterance.onend=()=>{banner.classList.add('hidden');document.getElementById('voiceStatusBtn').classList.remove('speaking');};
+  currentUtterance.onerror=()=>banner.classList.add('hidden');
+  speechSynth.speak(currentUtterance);
+}
+
+function stopSpeech(){
+  if(speechSynth.speaking)speechSynth.cancel();
+  document.getElementById('ttsBanner').classList.add('hidden');
+  document.getElementById('voiceStatusBtn').classList.remove('speaking');
+}
+
+function toggleTTS(){
+  ttsActivo=!ttsActivo;
+  const btn=document.getElementById('ttsToggleBtn');
+  if(ttsActivo){btn.textContent='🔊 Voz ON';btn.classList.remove('muted');}
+  else{btn.textContent='🔇 Voz OFF';btn.classList.add('muted');stopSpeech();}
+}
+
+function narrarModulo(mod){
+  const mapa={construccion:GUIAS.construccion,resina:GUIAS.resina,presupuesto:GUIAS.presupuesto,planes:GUIAS.bienvenida,proyecto:GUIAS.proyecto};
+  if(mapa[mod])hablar(mapa[mod]);
+}
+
+if(speechSynthesis.onvoiceschanged!==undefined){speechSynthesis.onvoiceschanged=()=>speechSynth.getVoices();}
+
+function initFirebase(){
+  try{if(!firebase.apps.length)firebase.initializeApp(FB_CFG);db=firebase.firestore();}
+  catch(e){console.warn('Firebase init:',e);}
+}
+
+window.addEventListener('message',e=>{
+  const d=e.data;
+  if(!d||typeof d!=='object')return;
+  if(d.tipo==='hubSesion'||d.tipo==='session'){
+    currentUID=d.uid||'';currentEmail=d.email||'';
+    if(d.creditos_b8!==undefined){credits=parseInt(d.creditos_b8)||10;maxCredits=credits;planActivo=credits>10?'activo':'demo';}
+    updateUI();
+  }
+});
+
+async function _B8_gastarFirebase(n,accion){
+  if(!db||!currentUID)return;
+  try{
+    await db.collection('usuarios_bloques').doc(currentUID).set({cr_b8:firebase.firestore.FieldValue.increment(-n)},{merge:true});
+    await db.collection('registros_bloques').add({uid:currentUID,email:currentEmail,bloque:'B8_construccion',accion,creditos_gastados:n,fecha:new Date()});
+  }catch(e){console.warn('B8 Firebase:',e);}
+}
+
+window.addEventListener('load',()=>{
+  addRow();addRow();
+  const saved=localStorage.getItem('sistema de construccion_b8_cr');
+  if(saved)credits=parseInt(saved)||10;
+  setTimeout(()=>{
+    document.getElementById('loader').style.opacity='0';
+    setTimeout(()=>{
+      document.getElementById('loader').style.display='none';
+      document.getElementById('app').style.display='block';
+      updateUI();
+      setTimeout(()=>hablar(GUIAS.bienvenida),1200);
+    },600);
+  },1800);
+});
+
+function updateUI(){
+  document.getElementById('creditCount').textContent=credits;
+  document.getElementById('creditInfo').textContent=credits+'/'+maxCredits+' cr.';
+  document.getElementById('planLabel').textContent=planActivo==='demo'?'sistema de construccion Demo':'calculador Activo';
+  const pct=Math.min(100,Math.round(credits/Math.max(maxCredits,1)*100));
+  document.getElementById('creditBar').style.width=pct+'%';
+}
+
+function gastar(n,accion){
+  if(credits<n){alert('Sin créditos para '+accion+'.\nNecesitas '+n+', tienes '+credits+'.\nContáctanos por WhatsApp para recargar.');return false;}
+  credits-=n;localStorage.setItem('sistema de construccion_b8_cr',credits);_B8_gastarFirebase(n,accion);updateUI();return true;
+}
+
+function showMod(btn,mod){
+  document.querySelectorAll('.module-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.mod-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mod-'+mod).classList.add('active');
+  if(btn&&btn.classList)btn.classList.add('active');
+  setTimeout(()=>narrarModulo(mod),400);
+}
+
+function selConst(el,tipo){
+  document.querySelectorAll('#mod-construccion .project-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  ['bloques','pintura','acero','ceramica','losa','techo'].forEach(t=>{document.getElementById('c-'+t).style.display=t===tipo?'block':'none';});
+  const guiaTipo=GUIAS[tipo]||GUIAS.construccion;
+  setTimeout(()=>hablar(guiaTipo),200);
+}
+
+function selResina(el,tipo){
+  document.querySelectorAll('#mod-resina .project-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  ['mesa','piso','encimera','cuadro','molde'].forEach(t=>{document.getElementById('r-'+t).style.display=t===tipo?'block':'none';});
+  hablar(GUIAS.resina);
+}
+
+function v(id){return parseFloat(document.getElementById(id)?.value)||0;}
+function sv(id){return document.getElementById(id)?.value||'';}
+function fmt(n,dec=2){return Number(n).toFixed(dec);}
+
+function mostrar(gridId,panelId,items){
+  document.getElementById(gridId).innerHTML=items.map(i=>`<div class="resultado-item"><div class="r-label">${i.l}</div><div class="r-value">${i.v}</div><div class="r-unit">${i.u||''}</div></div>`).join('');
+  const p=document.getElementById(panelId);p.style.display='block';p.classList.add('visible');
+  p.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+const MO_RATES={bloques:{min:8,max:14,unit:'m²',label:'Albañilería — pared de bloques'},pintura:{min:4,max:7,unit:'m²',label:'Pintor — 2 manos'},acero:{min:12,max:20,unit:'m²',label:'Ferrallista — colocación varillas'},ceramica:{min:10,max:16,unit:'m²',label:'Alicatador — cerámica/porcelanato'},losa:{min:18,max:28,unit:'m²',label:'Encofrador + hormigonero'},techo:{min:10,max:18,unit:'m²',label:'Techador — láminas'}};
+
+function mostrarMO(tipo,m2){
+  const box=document.getElementById('mo-'+tipo);if(!box)return;
+  const r=MO_RATES[tipo];if(!r)return;
+  box.style.display='block';
+  const moMin=(m2*r.min).toFixed(2),moMax=(m2*r.max).toFixed(2);
+  box.innerHTML=`<div class="mo-title">💼 Mano de Obra — ${r.label}</div><div class="mo-grid"><div class="mo-item"><div class="mil">Tarifa mínima</div><div class="miv">€${r.min}/${r.unit}</div></div><div class="mo-item"><div class="mil">Tarifa máxima</div><div class="miv">€${r.max}/${r.unit}</div></div><div class="mo-item"><div class="mil">Total mín.</div><div class="miv">€${moMin}</div></div><div class="mo-item"><div class="mil">Total máx.</div><div class="miv">€${moMax}</div></div></div><div class="mo-nota">* Precios orientativos España 2025.</div>`;
+}
+
+function toggleExtra(id,btn){
+  const sec=document.getElementById(id);sec.classList.toggle('open');
+  const arrow=btn.querySelector('.arrow');if(arrow)arrow.textContent=sec.classList.contains('open')?'▲':'▼';
+}
+
+function calcBloques(){
+  if(!gastar(5,'calcular bloques'))return;
+  const L=v('bl_largo'),H=v('bl_alto');
+  if(!L||!H){alert('Ingresa largo y alto');credits+=5;updateUI();return;}
+  const m2=L*H,tb=parseFloat(sv('bl_tipo')),mz=parseFloat(sv('bl_mezcla'));
+  const bloques=Math.ceil(m2/tb),bExtra=Math.ceil(bloques*1.05);
+  const sacos=Math.ceil(m2/mz);
+  const arena=fmt(sacos*0.04,3),grava=fmt(sacos*0.06,3),agua=fmt(sacos*20,0);
+  const pb=v('bl_precio'),pc=v('bl_pcem');
+  const costo=pb>0&&pc>0?'€'+fmt(bExtra*pb+sacos*pc):'—';
+  mostrar('rg-bloques','rp-bloques',[{l:'Área total',v:fmt(m2),u:'m²'},{l:'Bloques exacto',v:bloques,u:'unidades'},{l:'Bloques +5%',v:bExtra,u:'unidades'},{l:'Sacos cemento 25kg',v:sacos,u:'sacos'},{l:'Arena',v:arena,u:'m³'},{l:'Grava',v:grava,u:'m³'},{l:'Agua aprox.',v:agua,u:'litros'},{l:'Costo estimado',v:costo,u:'materiales'}]);
+  mostrarMO('bloques',m2);
+  setTimeout(()=>{if(L&&H){dibujarPlano('plano-bloques',L,H,'bloques');document.getElementById('plano-bloques-wrap').style.display='block';}},200);
+}
+
+function calcPintura(){
+  if(!gastar(5,'calcular pintura'))return;
+  const L=v('pt_largo'),H=v('pt_alto');
+  if(!L||!H){alert('Ingresa largo y alto');credits+=5;updateUI();return;}
+  const m2=L*H,manos=v('pt_manos'),rend=v('pt_rend')||10;
+  const litros=m2*manos/rend,galones=litros/3.785;
+  const pp=v('pt_precio');const costo=pp>0?'€'+fmt(litros*pp):'—';
+  mostrar('rg-pintura','rp-pintura',[{l:'Área total',v:fmt(m2),u:'m²'},{l:'Litros de pintura',v:fmt(litros),u:'litros'},{l:'Galones aprox.',v:fmt(galones,1),u:'galones'},{l:'Manos aplicadas',v:manos,u:'manos'},{l:'Costo estimado',v:costo,u:''}]);
+  mostrarMO('pintura',m2);
+}
+
+function calcAcero(){
+  if(!gastar(5,'calcular acero'))return;
+  const L=v('ac_largo'),A=v('ac_ancho');
+  if(!L||!A){alert('Ingresa largo y ancho');credits+=5;updateUI();return;}
+  const sep=parseFloat(sv('ac_sep')),lon=parseFloat(sv('ac_lon'));
+  const varX=Math.ceil(A/sep)+1,varY=Math.ceil(L/sep)+1;
+  const varillasNec=Math.ceil((varX*L+varY*A)/lon);
+  const cruces=varX*varY,alambre=fmt(cruces*0.5);
+  const pp=v('ac_precio');const costo=pp>0?'€'+fmt(varillasNec*pp):'—';
+  mostrar('rg-acero','rp-acero',[{l:'Área total',v:fmt(L*A),u:'m²'},{l:'Varillas eje X',v:varX,u:'varillas'},{l:'Varillas eje Y',v:varY,u:'varillas'},{l:'Total varillas '+lon+'m',v:varillasNec,u:'varillas'},{l:'Cruces de amarre',v:cruces,u:'cruces'},{l:'Alambre',v:alambre,u:'metros'},{l:'Costo estimado',v:costo,u:''}]);
+  mostrarMO('acero',L*A);
+}
+
+function calcCeramica(){
+  if(!gastar(5,'calcular cerámica'))return;
+  const L=v('cer_largo'),A=v('cer_ancho');
+  if(!L||!A){alert('Ingresa largo y ancho');credits+=5;updateUI();return;}
+  const m2=L*A,tam=parseFloat(sv('cer_tam')),desp=parseFloat(sv('cer_desp'));
+  const piezas=Math.ceil(m2/tam*desp),sacosPega=Math.ceil(m2/5);
+  const pp=v('cer_precio');const costo=pp>0?'€'+fmt(piezas*pp):'—';
+  mostrar('rg-ceramica','rp-ceramica',[{l:'Área total',v:fmt(m2),u:'m²'},{l:'Piezas necesarias',v:piezas,u:'piezas'},{l:'Sacos pega cerámica',v:sacosPega,u:'sacos 25kg'},{l:'Desperdicio',v:Math.round((desp-1)*100),u:'%'},{l:'Costo estimado',v:costo,u:''}]);
+  mostrarMO('ceramica',m2);
+}
+
+function calcLosa(){
+  if(!gastar(5,'calcular losa'))return;
+  const L=v('ls_largo'),A=v('ls_ancho'),esp=parseFloat(sv('ls_esp'));
+  if(!L||!A){alert('Ingresa largo y ancho');credits+=5;updateUI();return;}
+  const vol=L*A*esp,sacos=Math.ceil(vol*7);
+  const arena=fmt(vol*0.5),grava=fmt(vol*0.75),agua=fmt(vol*180);
+  const pc=v('ls_pcem');const costo=pc>0?'€'+fmt(sacos*pc):'—';
+  mostrar('rg-losa','rp-losa',[{l:'Área total',v:fmt(L*A),u:'m²'},{l:'Volumen concreto',v:fmt(vol,3),u:'m³'},{l:'Sacos cemento 25kg',v:sacos,u:'sacos'},{l:'Arena',v:arena,u:'m³'},{l:'Grava',v:grava,u:'m³'},{l:'Agua aprox.',v:agua,u:'litros'},{l:'Costo cemento',v:costo,u:''}]);
+  mostrarMO('losa',L*A);
+  setTimeout(()=>{if(L&&A){dibujarPlano('plano-losa',L,A,'losa');document.getElementById('plano-losa-wrap').style.display='block';}},200);
+}
+
+function calcTecho(){
+  if(!gastar(5,'calcular techo'))return;
+  const L=v('tc_largo'),A=v('tc_ancho');
+  if(!L||!A){alert('Ingresa largo y ancho');credits+=5;updateUI();return;}
+  const m2=L*A,areaLam=parseFloat(sv('tc_tipo'));
+  const laminas=Math.ceil(m2/areaLam*1.10),tornillos=laminas*16;
+  const pp=v('tc_precio');const costo=pp>0?'€'+fmt(laminas*pp):'—';
+  mostrar('rg-techo','rp-techo',[{l:'Área de techo',v:fmt(m2),u:'m²'},{l:'Láminas necesarias',v:laminas,u:'láminas'},{l:'Tornillos aprox.',v:tornillos,u:'tornillos'},{l:'Traslape',v:'10',u:'%'},{l:'Costo estimado',v:costo,u:''}]);
+  mostrarMO('techo',m2);
+}
+
+function calcExtras(){
+  if(!gastar(5,'calcular extras'))return;
+  const cuartos=v('eb_cuartos')||2,banos=v('eb_banos')||1;
+  const ptub=v('eb_ptub')||1.5,pcable=v('eb_pcable')||2;
+  const pagua=v('eb_pagua')||2,psan=v('eb_psan')||2.5;
+  const metrosTub=cuartos*6+banos*4+5,cajas=cuartos*4+banos*2+2;
+  const metrosCable=metrosTub*1.5,rollos=Math.ceil(metrosCable/100);
+  const costoElec=fmt(metrosTub*ptub+metrosCable*pcable);
+  const mAgua=banos*5+cuartos*2+5,mSan=banos*4;
+  const codos=banos*3+cuartos+2,tees=banos*2+1;
+  const costoPlom=fmt(mAgua*pagua+mSan*psan);
+  mostrar('rg-extras-bloques','rp-extras-bloques',[{l:'Tubo eléctrico',v:fmt(metrosTub),u:'metros'},{l:'Cajas eléctricas',v:cajas,u:'unidades'},{l:'Cable eléctrico',v:fmt(metrosCable),u:'metros'},{l:'Rollos cable 100m',v:rollos,u:'rollos'},{l:'Costo electricidad',v:'€'+costoElec,u:'estimado'},{l:'Tubo agua fría',v:fmt(mAgua),u:'metros'},{l:'Tubo sanitario',v:fmt(mSan),u:'metros'},{l:'Codos',v:codos,u:'unidades'},{l:'Tees',v:tees,u:'unidades'},{l:'Costo plomería',v:'€'+costoPlom,u:'estimado'}]);
+}
+
+function calcResina(largo,ancho,grosorM,ratio,pigPct,precioKg){
+  const volL=largo*ancho*grosorM*1000;
+  const r=ratio===2?0.667:0.75,e=ratio===2?0.333:0.25;
+  const resina=volL*r*1.1,endur=volL*e*1.1;
+  const total=resina+endur,pig=total*pigPct;
+  const costo=precioKg>0?fmt(total*precioKg):'—';
+  return{volL:fmt(volL,2),resina:fmt(resina,2),endur:fmt(endur,2),total:fmt(total,2),pig:fmt(pig,1),costo};
+}
+
+function calcMesa(){if(!gastar(5,'calcular resina mesa'))return;const L=v('ms_largo'),A=v('ms_ancho'),G=v('ms_grosor');if(!L||!A||!G){alert('Completa todos los campos');credits+=5;updateUI();return;}const r=calcResina(L,A,G/100,parseInt(sv('ms_ratio')),parseFloat(sv('ms_pig')),v('ms_precio'));mostrar('rg-mesa','rp-mesa',[{l:'Área total',v:fmt(L*A,2),u:'m²'},{l:'Volumen mezcla',v:r.volL,u:'litros'},{l:'Resina parte A',v:r.resina,u:'kg'},{l:'Endurecedor B',v:r.endur,u:'kg'},{l:'Total mezcla',v:r.total,u:'kg'},{l:'Pigmento',v:r.pig,u:'g'},{l:'Costo estimado',v:r.costo!=='—'?'€'+r.costo:r.costo,u:''}]);}
+function calcPiso(){if(!gastar(5,'calcular piso epóxico'))return;const L=v('ps_largo'),A=v('ps_ancho');if(!L||!A){alert('Ingresa largo y ancho');credits+=5;updateUI();return;}const r=calcResina(L,A,parseFloat(sv('ps_esp'))*parseInt(sv('ps_capas')),2,0.02,v('ps_precio'));mostrar('rg-piso','rp-piso',[{l:'Área total',v:fmt(L*A,2),u:'m²'},{l:'Capas',v:sv('ps_capas'),u:'capas'},{l:'Volumen mezcla',v:r.volL,u:'litros'},{l:'Resina A',v:r.resina,u:'kg'},{l:'Endurecedor B',v:r.endur,u:'kg'},{l:'Total',v:r.total,u:'kg'},{l:'Costo',v:r.costo!=='—'?'€'+r.costo:r.costo,u:''}]);}
+function calcEncimera(){if(!gastar(5,'calcular encimera'))return;const L=v('en_largo'),A=v('en_ancho');if(!L||!A){alert('Ingresa largo y ancho');credits+=5;updateUI();return;}const r=calcResina(L,A,v('en_grosor')/100,2,0.03,v('en_precio'));mostrar('rg-encimera','rp-encimera',[{l:'Área',v:fmt(L*A,2),u:'m²'},{l:'Volumen',v:r.volL,u:'litros'},{l:'Resina A',v:r.resina,u:'kg'},{l:'Endurecedor B',v:r.endur,u:'kg'},{l:'Total',v:r.total,u:'kg'},{l:'Costo',v:r.costo!=='—'?'€'+r.costo:r.costo,u:''}]);}
+function calcCuadro(){if(!gastar(5,'calcular cuadro resina'))return;const L=v('cu_largo'),A=v('cu_ancho');if(!L||!A){alert('Ingresa largo y ancho');credits+=5;updateUI();return;}const r=calcResina(L,A,v('cu_esp')/1000,2,0.03,v('cu_precio'));mostrar('rg-cuadro','rp-cuadro',[{l:'Área',v:fmt(L*A*1000,0),u:'dm²'},{l:'Volumen',v:r.volL,u:'litros'},{l:'Resina A',v:r.resina,u:'kg'},{l:'Endurecedor B',v:r.endur,u:'kg'},{l:'Pigmento 3%',v:r.pig,u:'g'},{l:'Costo',v:r.costo!=='—'?'€'+r.costo:r.costo,u:''}]);}
+function calcMolde(){if(!gastar(5,'calcular molde'))return;const L=v('mo_largo'),A=v('mo_ancho'),H=v('mo_alto'),cant=v('mo_cant')||1;if(!L||!A||!H){alert('Completa las medidas');credits+=5;updateUI();return;}const r=calcResina(L,A,H*cant,2,0.02,v('mo_precio'));mostrar('rg-molde','rp-molde',[{l:'Vol/pieza',v:fmt(L*A*H*1000,1),u:'litros'},{l:'Piezas',v:cant,u:'piezas'},{l:'Resina A',v:r.resina,u:'kg'},{l:'Endurecedor B',v:r.endur,u:'kg'},{l:'Total',v:r.total,u:'kg'},{l:'Costo',v:r.costo!=='—'?'€'+r.costo:r.costo,u:''}]);}
+
+let rowId=0;
+function addRow(){rowId++;const rid=rowId;const tr=document.createElement('tr');tr.id='row-'+rid;tr.innerHTML=`<td><input type="text" placeholder="Material o servicio" oninput="calcPre()"/></td><td><input type="number" placeholder="0" step="0.1" oninput="calcPre()" style="width:80px;"/></td><td><input type="text" placeholder="m², u, kg" oninput="calcPre()" style="width:70px;"/></td><td><input type="number" placeholder="0.00" step="0.01" oninput="calcPre()" style="width:90px;"/></td><td id="tot-${rid}" style="font-family:'JetBrains Mono',monospace;font-weight:600;">0.00</td><td><button class="btn-del-row" onclick="delRow(${rid})">✕</button></td>`;document.getElementById('preBody').appendChild(tr);calcPre();}
+function delRow(id){const el=document.getElementById('row-'+id);if(el)el.remove();calcPre();}
+function calcPre(){const moneda=sv('pre_moneda');let subtotal=0;document.querySelectorAll('#preBody tr').forEach(tr=>{const inputs=tr.querySelectorAll('input');if(inputs.length<4)return;const qty=parseFloat(inputs[1].value)||0,pu=parseFloat(inputs[3].value)||0;const tot=qty*pu;subtotal+=tot;const id=tr.id.replace('row-','');const td=document.getElementById('tot-'+id);if(td)td.textContent=fmt(tot);});const mo=(v('pre_dias')||0)*(v('pre_dia_costo')||0);const margenPct=(v('pre_margen')||0)/100;const base=subtotal+mo,margen=base*margenPct,total=base+margen;document.getElementById('tv-mat').textContent=moneda+fmt(subtotal);document.getElementById('tv-mo').textContent=moneda+fmt(mo);document.getElementById('tv-margen').textContent=moneda+fmt(margen);document.getElementById('tv-total').textContent=moneda+fmt(total);}
+function calcPreFull(){if(!gastar(5,'calcular presupuesto'))return;calcPre();}
+
+function dibujarPlano(canvasId,largo,alto,tipo){
+  const wrapId=canvasId+'-wrap';const wrap=document.getElementById(wrapId);if(wrap)wrap.style.display='block';
+  const canvas=document.getElementById(canvasId);if(!canvas)return;canvas.style.display='block';
+  const ctx=canvas.getContext('2d');const W=canvas.offsetWidth>0?canvas.offsetWidth:560;canvas.width=W;canvas.height=220;ctx.clearRect(0,0,W,220);
+  const pad=30,maxW=W-pad*2,maxH=160;const escala=Math.min(maxW/largo,maxH/alto);const pw=largo*escala,ph=alto*escala;const ox=(W-pw)/2,oy=(200-ph)/2;
+  if(tipo==='bloques'){ctx.fillStyle='rgba(0,180,216,0.15)';ctx.fillRect(ox,oy,pw,ph);ctx.strokeStyle='#c9a84c';ctx.lineWidth=8;ctx.strokeRect(ox,oy,pw,ph);ctx.strokeStyle='rgba(201,168,76,0.3)';ctx.lineWidth=1;const bh=escala*0.2,bw=escala*0.4;for(let y=oy;y<oy+ph;y+=bh)for(let x=ox;x<ox+pw;x+=bw)ctx.strokeRect(x,y,bw,bh);}
+  else if(tipo==='losa'){ctx.fillStyle='rgba(201,168,76,0.1)';ctx.fillRect(ox,oy,pw,ph);ctx.strokeStyle='#c9a84c';ctx.lineWidth=6;ctx.strokeRect(ox,oy,pw,ph);ctx.strokeStyle='rgba(231,76,60,0.7)';ctx.lineWidth=1.5;const sep=escala*0.2;for(let x=ox+sep;x<ox+pw;x+=sep){ctx.beginPath();ctx.moveTo(x,oy);ctx.lineTo(x,oy+ph);ctx.stroke();}for(let y=oy+sep;y<oy+ph;y+=sep){ctx.beginPath();ctx.moveTo(ox,y);ctx.lineTo(ox+pw,y);ctx.stroke();}}
+  ctx.fillStyle='#27ae60';ctx.font='bold 12px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText(largo+'m',ox+pw/2,oy-8);ctx.save();ctx.translate(ox-10,oy+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText(alto+'m',0,0);ctx.restore();ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='11px DM Sans,sans-serif';ctx.fillText('Área: '+(largo*alto).toFixed(2)+' m²',ox+pw/2,oy+ph/2+6);
+}
+
+async function dlJPG(elId,nombre){
+  if(!gastar(5,'descargar JPG'))return;
+  try{
+    const el=document.getElementById(elId);
+    if(!window.html2canvas){const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r);}
+    const canvas=await window.html2canvas(el,{scale:2,backgroundColor:'#0f0f0f',useCORS:true});
+    const link=document.createElement('a');link.download='CalcPro_'+nombre+'_'+Date.now()+'.jpg';link.href=canvas.toDataURL('image/jpeg',0.92);link.click();
+  }catch(e){alert('Error al generar JPG. Intenta de nuevo.');credits+=5;updateUI();}
+}
+
+async function dlPDF(elId,nombre){
+  if(!gastar(5,'descargar PDF'))return;
+  try{
+    const el=document.getElementById(elId);
+    if(!window.html2canvas){const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r);}
+    if(!window.jspdf){const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';document.head.appendChild(s);await new Promise(r=>s.onload=r);}
+    const canvas=await window.html2canvas(el,{scale:2,backgroundColor:'#0f0f0f',useCORS:true});
+    const imgData=canvas.toDataURL('image/jpeg',0.92);
+    const{jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pdfW=pdf.internal.pageSize.getWidth();const pdfH=(canvas.height*pdfW)/canvas.width;
+    pdf.setFillColor(15,15,15);pdf.rect(0,0,pdfW,18,'F');pdf.setTextColor(201,168,76);pdf.setFontSize(13);pdf.text('🏗️ sistema de Construcción & Resina Epóxica',10,12);pdf.setFontSize(8);pdf.setTextColor(150,150,150);pdf.text('Sistema Fátima Hub · '+new Date().toLocaleDateString('es-ES'),pdfW-10,12,{align:'right'});
+    const imgY=22;const availH=pdf.internal.pageSize.getHeight()-imgY-15;const finalH=Math.min(pdfH,availH);pdf.addImage(imgData,'JPEG',5,imgY,pdfW-10,finalH);
+    pdf.setFontSize(7);pdf.setTextColor(100,100,100);pdf.text('Generado por· Sistema Fátima caldea Hub · '+nombre,pdfW/2,pdf.internal.pageSize.getHeight()-5,{align:'center'});
+    pdf.save('CalcPro_'+nombre+'_'+Date.now()+'.pdf');
+  }catch(e){alert('Error al generar PDF. Intenta de nuevo.');credits+=5;updateUI();}
+}
+
+function salirAlHub(){
+  stopSpeech();
+  if(window.parent!==window){window.parent.postMessage({tipo:'salirBloque',destino:'index.html'},'*');}
+  else{window.location.href='index.html';}
+}
+
+function abrirWA(plan){
+  let msg='Hola, me interesa sistema herramienta de Construcción y Resina Epóxica';
+  if(plan&&plan!=='Demo')msg='Hola, quiero contratar el '+plan+' de sistema de construccion. ¿Cómo procedo?';
+  window.open('https://wa.me/'+_w+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+function toggleChat(){
+  const c=document.getElementById('chatBox');
+  c.classList.toggle('open');
+}
+
+function switchChatTab(tab, ev){
+  document.querySelectorAll('.chat-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-guia').classList.remove('active');
+  document.getElementById('panel-guia').style.display='none';
+  document.getElementById('panel-ia').style.display='none';
+  if(ev && ev.target) ev.target.classList.add('active');
+  if(tab==='guia'){
+    document.getElementById('panel-guia').style.display='block';
+    document.getElementById('panel-guia').classList.add('active');
+  } else {
+    document.getElementById('panel-ia').style.display='flex';
+  }
+}
+
+function appendMsg(txt,tipo){
+  const div=document.createElement('div');div.className='chat-msg '+tipo;div.textContent=txt;
+  document.getElementById('chatMsgs').appendChild(div);
+  document.getElementById('chatMsgs').scrollTop=9999;
+  return div;
+}
+
+function respuestaLocal(txt){
+  const t=txt.toLowerCase();
+  if(t.includes('bloque')||t.includes('cemento')||t.includes('pared'))return'Para calcular bloques y cemento, ve al módulo 🏗️ Construcción y selecciona "Bloques & Cemento". Ingresa el largo y alto de la pared y CalcPro calcula automáticamente bloques, sacos de cemento, arena, grava y costo total.';
+  if(t.includes('resina')||t.includes('epóxi')||t.includes('mesa')||t.includes('piso'))return'El módulo de 🌊 Resina Epóxica calcula la cantidad exacta de resina y endurecedor para mesas, pisos, encimeras, cuadros y moldes. Usa la fórmula ratio 2:1 e incluye tiempos de curado ideales.';
+  if(t.includes('presupuesto')||t.includes('cotiz')||t.includes('precio'))return'El módulo 📄 Presupuesto genera cotizaciones profesionales. Agrega materiales, mano de obra y margen de ganancia. Descarga en JPG o PDF para enviar a tu cliente al instante.';
+  if(t.includes('plano')||t.includes('electricidad')||t.includes('plomería')||t.includes('proyecto'))return'El módulo 🏠 Proyecto Completo genera en tiempo real tres planos interactivos: estructura con cuartos y baños, circuito eléctrico con derivaciones, y red de plomería. Todo con presupuesto total incluido.';
+  if(t.includes('credit')||t.includes('plan')||t.includes('pago'))return'CalcPro tiene plan Demo gratuito con 10 créditos. Plan Semanal 50 créditos por $9.99, Plan Mensual 120 créditos por €24, y Plan Profesional 365 créditos por €49. Recargas de 40 créditos por €6. Contáctanos por WhatsApp para activar.';
+  if(t.includes('pdf')||t.includes('jpg')||t.includes('descargar'))return'Puedes descargar cualquier resultado en JPG o PDF con 5 créditos cada descarga. Los botones 📸 JPG y 📄 PDF aparecen en cada módulo después de calcular.';
+  if(t.includes('acero')||t.includes('varilla')||t.includes('losa'))return'Para acero y varillas, selecciona ese módulo en Construcción. Calcula el número exacto de varillas, cruces de amarre y alambre. También puedes calcular losa de concreto con volumen exacto y refuerzo.';
+  if(t.includes('hola')||t.includes('buenos')||t.includes('buenas'))return'¡Hola! Soy el asistente de CalcPro 🏗️ Puedo orientarte sobre construcción, resina epóxica, presupuestos y planos en tiempo real. ¿En qué te ayudo?';
+  return'sistema de construccion es una herramienta de productividad profesional para construcción y resina epóxica. Puedes calcular materiales exactos, generar presupuestos descargables en JPG y PDF, y obtener planos interactivos en tiempo real. ¿Quieres saber más sobre algún módulo específico?';
+}
+
+// ✅ CORREGIDO: sendChat usa respuestas locales, sin API externa
+function sendChat(){
+  const inp=document.getElementById('chatInput');
+  const txt=inp.value.trim();
+  if(!txt)return;
+  inp.value='';
+  appendMsg(txt,'user');
+  const typing=appendMsg('','bot typing');
+  typing.innerHTML='<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+  setTimeout(()=>{
+    typing.remove();
+    const reply=respuestaLocal(txt);
+    appendMsg(reply,'bot');
+    if(ttsActivo)hablar(reply);
+  },700);
+}
+
+let vistaPlanoActual='estructura';
+function vp(id){return parseFloat(document.getElementById(id)?.value)||0;}
+function svp(id){return document.getElementById(id)?.value||'';}
+
+function generarProyectoCompleto(){
+  if(!gastar(5,'generar proyecto completo'))return;
+  const cuartos=vp('pc_cuartos')||3,banos=vp('pc_banos')||2;
+  const largo=vp('pc_largo')||12,ancho=vp('pc_ancho')||10;
+  const altura=vp('pc_altura')||3,ganancia=vp('pc_ganancia')||25;
+  const moneda=svp('pc_moneda')||'€',tipoCem=vp('pc_tipocemento')||25;
+  const areaMuros=(largo+ancho)*2*altura;
+  const bloques=Math.ceil(areaMuros/0.12),sacos=Math.ceil(areaMuros/6);
+  const arena=areaMuros*0.03,grava=areaMuros*0.04;
+  const kgHierro=areaMuros*5+(cuartos+banos+2)*8+(cuartos+1)*6;
+  const cab12=Math.floor(kgHierro/5),cab6=Math.ceil((kgHierro-cab12*5)/2.5);
+  const alambre=kgHierro*0.1;
+  const items_const=[{n:'Bloques',c:bloques,u:'u',p:vp('pc_pbloque')},{n:'Cemento '+tipoCem+'kg',c:sacos,u:'sacos',p:vp('pc_pcemento')},{n:'Arena',c:parseFloat(arena.toFixed(2)),u:'m³',p:vp('pc_parena')},{n:'Grava',c:parseFloat(grava.toFixed(2)),u:'m³',p:vp('pc_pgrava')},{n:'Cabilla 12m',c:cab12,u:'u',p:vp('pc_pcab12')},{n:'Cabilla 6m',c:cab6,u:'u',p:vp('pc_pcab6')},{n:'Alambre',c:parseFloat(alambre.toFixed(2)),u:'kg',p:vp('pc_palambre')}];
+  const mTub=cuartos*6+banos*4+5,cajas=cuartos*4+banos*2+2;
+  const mCable=mTub*1.5,rollo=vp('pc_rollo')||100,rollos=Math.ceil(mCable/rollo);
+  const items_elec=[{n:'Tubo eléctrico',c:parseFloat(mTub.toFixed(1)),u:'m',p:vp('pc_ptub')},{n:'Cajas eléctricas',c:cajas,u:'u',p:vp('pc_pcajas')},{n:'Cable eléctrico',c:rollos,u:'rollos '+rollo+'m',p:vp('pc_pcable')*rollo},{n:'Lámparas',c:cuartos+banos+1,u:'u',p:vp('pc_plamparas')},{n:'Apagadores',c:cuartos+banos+1,u:'u',p:vp('pc_papagadores')}];
+  const mAgua=banos*5+cuartos*2+5,mSan=banos*4;
+  const codos=banos*3+cuartos+2,tees=banos*2+1;
+  const items_plom=[{n:'Tubo agua fría',c:mAgua,u:'m',p:vp('pc_pagua')},{n:'Tubo sanitario',c:mSan,u:'m',p:vp('pc_psan')},{n:'Codos',c:codos,u:'u',p:vp('pc_pcodos')},{n:'Tees',c:tees,u:'u',p:vp('pc_ptees')},{n:'Pegamento PVC',c:banos+cuartos+1,u:'u',p:vp('pc_ppegamento')}];
+  const costoDia=vp('pc_costoDia')||50,dias=vp('pc_dias')||30,costoMO=costoDia*dias;
+  const sumCat=items=>items.reduce((s,i)=>s+(i.c*i.p),0);
+  const tConst=sumCat(items_const),tElec=sumCat(items_elec),tPlom=sumCat(items_plom);
+  const subtotal=tConst+tElec+tPlom+costoMO;
+  const margen=subtotal*ganancia/100,total=subtotal+margen;
+  const renderCat=(titulo,items,tot)=>{let h=`<tr class="section-row"><td colspan="5">📦 ${titulo} — ${moneda}${tot.toFixed(2)}</td></tr>`;h+=`<tr style="background:rgba(0,0,0,.04);"><th>Material</th><th>Cant.</th><th>Unid.</th><th>Precio</th><th>Subtotal</th></tr>`;items.forEach(i=>{const sub=i.c*i.p;h+=`<tr><td>${i.n}</td><td>${typeof i.c==='number'?i.c.toFixed(2):i.c}</td><td>${i.u}</td><td>${moneda}${i.p.toFixed(2)}</td><td>${moneda}${sub.toFixed(2)}</td></tr>`;});return h;};
+  let tablaHTML=renderCat('Construcción',items_const,tConst)+renderCat('Electricidad',items_elec,tElec)+renderCat('Plomería',items_plom,tPlom);
+  tablaHTML+=`<tr class="section-row"><td colspan="5">👷 Mano de Obra — ${moneda}${costoMO.toFixed(2)}</td></tr><tr style="background:rgba(0,0,0,.04);"><th>Concepto</th><th>Días</th><th></th><th>€/día</th><th>Total</th></tr><tr><td>Construcción</td><td>${dias}</td><td></td><td>${moneda}${costoDia.toFixed(2)}</td><td>${moneda}${costoMO.toFixed(2)}</td></tr>`;
+  document.getElementById('tabla-proyecto').innerHTML=tablaHTML;
+  document.getElementById('total-proyecto').innerHTML=`<div class="pt-item"><div class="ptl">Construcción</div><div class="ptv">${moneda}${tConst.toFixed(2)}</div></div><div class="pt-item"><div class="ptl">Electricidad</div><div class="ptv">${moneda}${tElec.toFixed(2)}</div></div><div class="pt-item"><div class="ptl">Plomería</div><div class="ptv">${moneda}${tPlom.toFixed(2)}</div></div><div class="pt-item"><div class="ptl">Mano de Obra</div><div class="ptv">${moneda}${costoMO.toFixed(2)}</div></div><div class="pt-item"><div class="ptl">Margen ${ganancia}%</div><div class="ptv" style="color:var(--resina-bright)">${moneda}${margen.toFixed(2)}</div></div><div class="pt-item big"><div class="ptl">TOTAL PROYECTO</div><div class="ptv">${moneda}${total.toFixed(2)}</div></div>`;
+  const rp=document.getElementById('rp-proyecto-completo');rp.style.display='block';rp.scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(()=>dibujarPlanoCompleto(cuartos,banos,largo,ancho,vistaPlanoActual),300);
+  setTimeout(()=>hablar(`Proyecto completo generado. Total estimado: ${moneda}${total.toFixed(2)}. Incluye ${tConst.toFixed(0)} euros en construcción, ${tElec.toFixed(0)} en electricidad, ${tPlom.toFixed(0)} en plomería y ${costoMO.toFixed(0)} en mano de obra.`),800);
+}
+
+function cambiarVistaPlano(vista,btn){
+  vistaPlanoActual=vista;
+  document.querySelectorAll('.plano-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const cuartos=vp('pc_cuartos')||3,banos=vp('pc_banos')||2;
+  const largo=vp('pc_largo')||12,ancho=vp('pc_ancho')||10;
+  dibujarPlanoCompleto(cuartos,banos,largo,ancho,vista);
+  const msgs={estructura:'Vista de estructura: distribución de cuartos, sala y baños.',electricidad:'Vista eléctrica: circuito principal y derivaciones a cada habitación.',agua:'Vista de plomería: red de agua fría y tuberías sanitarias.'};
+  if(ttsActivo)hablar(msgs[vista]||'');
+}
+
+function dibujarPlanoCompleto(cuartos,banos,largo,ancho,vista){
+  const canvas=document.getElementById('plano-completo');if(!canvas)return;
+  const W=canvas.offsetWidth>0?canvas.offsetWidth:700;canvas.width=W;canvas.height=500;
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,W,500);
+  ctx.fillStyle='#0a0f14';ctx.fillRect(0,0,W,500);
+  ctx.strokeStyle='rgba(201,168,76,0.08)';ctx.lineWidth=1;
+  for(let x=0;x<W;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,500);ctx.stroke();}
+  for(let y=0;y<500;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  const pad=50,maxW=W-pad*2,maxH=400;const esc=Math.min(maxW/largo,maxH/ancho);const pw=largo*esc,ph=ancho*esc;const ox=(W-pw)/2,oy=(500-ph)/2;
+  if(vista==='estructura'||vista==='electricidad'||vista==='agua'){
+    ctx.strokeStyle='#c9a84c';ctx.lineWidth=4;ctx.strokeRect(ox,oy,pw,ph);ctx.fillStyle='rgba(201,168,76,0.04)';ctx.fillRect(ox,oy,pw,ph);
+    const anchoSala=pw*0.35,anchoCuarto=(pw-anchoSala)/cuartos,altoBano=ph*0.3;
+    ctx.fillStyle='rgba(243,156,18,0.2)';ctx.fillRect(ox,oy,anchoSala,ph);ctx.strokeStyle='rgba(243,156,18,0.8)';ctx.lineWidth=1.5;ctx.strokeRect(ox,oy,anchoSala,ph);
+    dibujarTexto(ctx,'🛋️ Sala',ox+anchoSala/2,oy+ph/2,'#f39c12',13);
+    for(let i=0;i<cuartos;i++){const cx=ox+anchoSala+i*anchoCuarto,cy=oy,cw=anchoCuarto,ch=ph-altoBano;ctx.fillStyle='rgba(0,180,216,0.15)';ctx.fillRect(cx,cy,cw,ch);ctx.strokeStyle='rgba(0,180,216,0.7)';ctx.lineWidth=1.5;ctx.strokeRect(cx,cy,cw,ch);dibujarTexto(ctx,`🛏️ C${i+1}`,cx+cw/2,cy+ch/2,'#00b4d8',11);ctx.fillStyle='#a52a2a';ctx.fillRect(cx+cw*0.3,cy+ch-6,cw*0.3,6);ctx.fillStyle='#87ceeb';ctx.fillRect(cx+cw*0.2,cy+4,cw*0.6,5);}
+    const anchoBano=(pw-anchoSala)/Math.max(banos,1);
+    for(let i=0;i<banos;i++){const bx=ox+anchoSala+i*anchoBano,by=oy+ph-altoBano,bw=anchoBano,bh=altoBano;ctx.fillStyle='rgba(231,76,60,0.2)';ctx.fillRect(bx,by,bw,bh);ctx.strokeStyle='rgba(231,76,60,0.7)';ctx.lineWidth=1.5;ctx.strokeRect(bx,by,bw,bh);dibujarTexto(ctx,`🚿 B${i+1}`,bx+bw/2,by+bh/2,'#e74c3c',11);ctx.fillStyle='#a52a2a';ctx.fillRect(bx+bw*0.3,by+2,bw*0.3,5);}
+    ctx.fillStyle='#27ae60';ctx.font='bold 12px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText(largo+'m',ox+pw/2,oy-10);ctx.save();ctx.translate(ox-15,oy+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText(ancho+'m',0,0);ctx.restore();
+    ctx.fillStyle='rgba(201,168,76,0.8)';ctx.font='11px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText('Área: '+(largo*ancho).toFixed(1)+' m²',ox+pw/2,oy+ph+20);
+  }
+  if(vista==='electricidad'){ctx.strokeStyle='#ffff00';ctx.lineWidth=2;ctx.setLineDash([8,4]);ctx.beginPath();ctx.moveTo(ox+20,oy+ph/2);ctx.lineTo(ox+pw-20,oy+ph/2);ctx.stroke();const anchoSala=pw*0.35,anchoCuarto=(pw-anchoSala)/cuartos;for(let i=0;i<cuartos;i++){const cx=ox+anchoSala+i*anchoCuarto+anchoCuarto/2;ctx.beginPath();ctx.moveTo(cx,oy+ph/2);ctx.lineTo(cx,oy+30);ctx.stroke();ctx.fillStyle='#ffff00';ctx.beginPath();ctx.arc(cx,oy+22,6,0,Math.PI*2);ctx.fill();}ctx.setLineDash([]);ctx.fillStyle='#ffff00';ctx.font='11px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText('⚡ Vista Eléctrica — Circuito principal + derivaciones',W/2,25);}
+  if(vista==='agua'){const anchoSala=pw*0.35,anchoBano=(pw-anchoSala)/Math.max(banos,1),altoBano=ph*0.3;ctx.strokeStyle='#00ffff';ctx.lineWidth=2.5;ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(ox,oy+ph-altoBano/2);ctx.lineTo(ox+pw,oy+ph-altoBano/2);ctx.stroke();for(let i=0;i<banos;i++){const bx=ox+anchoSala+i*anchoBano+anchoBano/2;ctx.beginPath();ctx.moveTo(bx,oy+ph-altoBano/2);ctx.lineTo(bx,oy+ph-10);ctx.stroke();ctx.fillStyle='#00ffff';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.fillText('🚿',bx,oy+ph-altoBano/2-8);}ctx.setLineDash([]);ctx.fillStyle='#00ffff';ctx.font='11px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText('💧 Vista Plomería — Red de agua y sanitaria',W/2,25);}
+}
+
+function dibujarTexto(ctx,txt,x,y,color,size){ctx.fillStyle=color;ctx.font=`bold ${size}px DM Sans,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,x,y);ctx.textBaseline='alphabetic';}
+</script>
+<script src="hub_credito_bridge.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "Fátima Pro Hub · Academia",
+  "short_name": "Fátima Pro",
+  "description": "Sistema de formación profesional: peluquería, colorimetría, academia, nutrición y fitness.",
+  "start_url": "fatima_hub.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#020408",
+  "theme_color": "#0a111f",
+  "lang": "es",
+  "categories": ["education", "lifestyle", "beauty"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Academia", "url": "bloque3_academia_pagos.html" },
+    { "name": "Neural Fitness", "url": "bloque5_fitness.html" },
+    { "name": "Motor de Corte", "url": "bloque1_motor_corte.html" }
+  ]
+}

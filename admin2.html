@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin (reemplazado) · Fátima Caldea</title>
+<!-- ════════════════════════════════════════════════════════════════
+     ADMIN 2 (VIEJO) — RETIRADO
+     ----------------------------------------------------------------
+     Este panel usaba el sistema viejo de créditos por bloque
+     (colección usuarios_bloques: cr_b6/b7/b8/b9), que RESTABA sin tope
+     y mostraba saldos negativos.
+
+     Fue sustituido por el sistema NUEVO de pozo global de créditos:
+        · panel_admin.html  → recargar / fijar créditos (usuarios.creditos)
+        · admin_motores.html → seleccionar y bloquear las clases por alumna
+
+     Se redirige automáticamente a panel_admin.html.
+     La versión antigua quedó respaldada en _respaldo/admin2_VIEJO.html.bak
+     ════════════════════════════════════════════════════════════════ -->
+<meta http-equiv="refresh" content="3;url=panel_admin.html"/>
+<style>
+  :root{ --oro:#c9a84c; --bg:#0a0a0f; --pan:#13131c; --txt:#e8e8f0; --txt2:#8a8a9a; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--txt);
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .card{
+    max-width:520px; width:100%; background:var(--pan); border:1px solid rgba(201,168,76,.25);
+    border-radius:16px; padding:40px 34px; text-align:center;
+    box-shadow:0 24px 60px rgba(0,0,0,.5);
+  }
+  .ico{ font-size:2.4rem; margin-bottom:14px; }
+  h1{ font-size:1.25rem; letter-spacing:.5px; color:var(--oro); margin-bottom:14px; font-weight:700; }
+  p{ font-size:.92rem; line-height:1.65; color:var(--txt2); margin-bottom:10px; }
+  .muted{ font-size:.78rem; color:#5c5c6a; margin-top:6px; }
+  .btns{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:24px; }
+  a.btn{
+    display:inline-block; text-decoration:none; padding:13px 22px; border-radius:10px;
+    font-weight:700; font-size:.86rem; letter-spacing:.3px; transition:transform .12s, filter .12s;
+  }
+  a.btn:hover{ transform:translateY(-2px); filter:brightness(1.08); }
+  a.primary{ background:linear-gradient(135deg,#d9bd5e,#b3922f); color:#1a1407; }
+  a.ghost{ background:transparent; border:1px solid rgba(201,168,76,.35); color:var(--oro); }
+  .bar{ height:3px; background:rgba(201,168,76,.15); border-radius:99px; overflow:hidden; margin-top:26px; }
+  .bar span{ display:block; height:100%; width:0; background:var(--oro); animation:fill 3s linear forwards; }
+  @keyframes fill{ to{ width:100%; } }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="ico">🔁</div>
+    <h1>Este panel fue reemplazado</h1>
+    <p>El <strong>Admin de Bloques 6–9</strong> usaba el sistema viejo de créditos
+       por bloque (los que mostraban saldos negativos). Ese sistema se unificó en un
+       <strong>pozo global de créditos</strong>.</p>
+    <p>Ahora gestiona todo desde los paneles nuevos:</p>
+    <div class="btns">
+      <a class="btn primary" href="panel_admin.html">⚡ Créditos &amp; Usuarios</a>
+      <a class="btn ghost" href="admin_motores.html">🔑 Clases por alumna</a>
+    </div>
+    <p class="muted">Te llevamos al panel de créditos en unos segundos…</p>
+    <div class="bar"><span></span></div>
+  </div>
+</body>
+</html>
