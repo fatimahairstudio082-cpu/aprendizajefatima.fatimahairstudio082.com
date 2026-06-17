@@ -714,19 +714,138 @@ const EJERCICIOS_VIDEO={
   }
 };
 
+// ════════════════════════════════════════════════════════════
+// LISTA OFICIAL DE EJERCICIOS — IDÉNTICA a la del Módulo 1 (Imagen)
+// Así el VIDEO y la IMAGEN muestran EXACTAMENTE los mismos ejercicios.
+// ════════════════════════════════════════════════════════════
+const EJ_VIDEO_OFICIAL = {
+  gluteo: {
+    mancuerna: {
+      '6': ['Hip thrust con mancuerna','Sentadilla sumo con mancuerna','Zancada inversa con mancuerna','Peso muerto rumano con mancuerna','Abducción de cadera de pie con mancuerna','Elevación de glúteo en suelo (puente)'],
+      '8': ['Hip thrust con mancuerna y pausa de 2 segundos','Sentadilla búlgara con mancuernas','Peso muerto rumano unilateral con mancuerna','Zancada caminando con mancuernas','Step-up lateral con mancuerna','Sentadilla sumo con mancuerna','Abducción de cadera de pie con mancuerna','Buenos días (Good morning) con mancuerna'],
+      '12': ['Hip thrust con mancuerna pesada','Sentadilla búlgara con mancuernas','Peso muerto rumano unilateral','Zancada caminando con mancuernas','Step-up lateral con mancuerna','Buenos días (Good morning) con mancuerna','Sentadilla sumo con mancuerna pesada','Abducción de cadera de pie','Zancada inversa con mancuerna','Hip thrust unilateral con mancuerna','Sentadilla copa con mancuerna','Extensión de cadera inclinada con mancuerna']
+    },
+    maquina: {
+      '6': ['Prensa de pierna (pie alto y ancho)','Abductora sentada en máquina','Hip thrust en máquina Smith','Extensión de cadera en polea baja','Kickback de glúteo en polea','Sentadilla en máquina Smith (pie adelantado)'],
+      '8': ['Hip thrust en máquina Smith','Prensa de pierna (pie alto y ancho)','Abductora sentada en máquina','Kickback de glúteo en polea','Extensión de cadera en polea baja','Sentadilla en máquina Smith','Curl femoral tumbado','Aducción en máquina sentada'],
+      '12': ['Hip thrust en máquina Smith pesado','Prensa de pierna pie alto','Abductora sentada en máquina','Kickback de glúteo en polea','Extensión de cadera en polea baja','Sentadilla en máquina Smith','Curl femoral tumbado','Aducción en máquina','Prensa horizontal unilateral','Hip thrust en banco con barra en Smith','Sentadilla hack en máquina','Abductora de pie en polea baja (énfasis glúteo medio)']
+    },
+    corporal: {
+      '6': ['Puente de glúteo en suelo','Sentadilla profunda','Zancada lateral','Patada de glúteo en cuadrupedia','Puente de glúteo unilateral','Sentadilla isométrica en pared'],
+      '8': ['Hip thrust en banco con pausa isométrica','Sentadilla búlgara (peso corporal)','Zancada caminando','Step-up en banco','Puente de glúteo unilateral con pausa','Patada de glúteo en cuadrupedia con extensión','Sentadilla sumo profunda','Abducción lateral tumbada (clamshell)'],
+      '12': ['Hip thrust en banco con pausa larga','Sentadilla búlgara','Zancada caminando','Step-up con rodilla elevada','Puente de glúteo unilateral','Sentadilla pistol asistida','Abducción lateral con banda de resistencia','Patada de glúteo en cuadrupedia','Zancada lateral','Sentadilla sumo profunda','Frog pumps en suelo (alta repetición)','Sentadilla búlgara isométrica con pausa de 3 segundos']
+    }
+  },
+  pierna: {
+    mancuerna: {
+      '6': ['Sentadilla con mancuernas','Peso muerto rumano con mancuernas','Zancada inversa con mancuerna','Step-up con mancuerna','Sentadilla sumo con mancuerna','Extensión de pantorrilla de pie con mancuerna'],
+      '8': ['Sentadilla goblet con mancuerna','Peso muerto rumano con mancuernas','Zancada búlgara con mancuernas','Step-up lateral con mancuerna','Zancada caminando con mancuernas','Sentadilla sumo con mancuerna','Curl femoral de pie con mancuerna','Elevación de pantorrilla con mancuerna'],
+      '12': ['Sentadilla goblet pesada','Peso muerto rumano con mancuernas','Zancada búlgara con mancuernas','Step-up lateral con mancuerna','Zancada caminando con mancuernas','Sentadilla sumo pesada','Curl femoral de pie con mancuerna','Elevación de pantorrilla unilateral','Zancada cruzada hacia atrás (Curtsy lunge) con mancuernas','Zancada inversa con mancuerna','Sentadilla copa con mancuerna','Peso muerto sumo con mancuerna']
+    },
+    maquina: {
+      '6': ['Prensa de pierna a 45 grados','Extensión de cuádriceps sentada','Curl femoral tumbado','Abductora sentada','Sentadilla en máquina Smith','Elevación de pantorrilla en prensa'],
+      '8': ['Prensa de pierna a 45 grados','Extensión de cuádriceps sentada','Curl femoral tumbado','Sentadilla hack en máquina','Abductora sentada','Aductora sentada','Elevación de pantorrilla en prensa','Sentadilla en máquina Smith'],
+      '12': ['Prensa de pierna 45 grados','Extensión de cuádriceps','Curl femoral tumbado','Sentadilla hack','Abductora sentada','Aductora sentada','Elevación de pantorrilla en prensa','Sentadilla Smith','Curl femoral sentado','Prensa horizontal','Extensión lumbar en máquina','Leg press unilateral']
+    },
+    corporal: {
+      '6': ['Sentadilla profunda','Zancada inversa','Step-up en banco','Sentadilla isométrica en pared','Elevación de pantorrilla de pie','Sentadilla sumo'],
+      '8': ['Sentadilla búlgara','Zancada caminando','Step-up con rodilla elevada','Sentadilla isométrica en pared','Sentadilla pistol asistida','Zancada lateral','Elevación de pantorrilla unilateral','Sentadilla sumo profunda'],
+      '12': ['Sentadilla búlgara','Sentadilla pistol (libre)','Zancada caminando','Step-up con salto (explosivo)','Zancada lateral','Sentadilla isométrica prolongada','Elevación de pantorrilla unilateral','Sentadilla sumo profunda con pausa','Zancada inversa con rodilla al suelo','Sentadilla con salto','Step-up lateral','Elevación de talones en escalón']
+    }
+  },
+  superior: {
+    mancuerna: {
+      '6': ['Press de hombro con mancuernas sentado','Curl de bíceps con mancuernas','Extensión de tríceps sobre la cabeza','Remo con mancuerna a un brazo','Press de pecho con mancuernas en suelo','Crunch abdominal con mancuerna en el pecho'],
+      '8': ['Press de hombro con mancuernas de pie','Curl de bíceps alterno con mancuernas','Extensión de tríceps con mancuerna tras nuca','Remo inclinado con mancuernas','Press de pecho con mancuernas en banco plano','Elevación lateral de hombros','Giro ruso con mancuerna (oblicuos)','Sit-ups completos con mancuerna'],
+      '12': ['Press de hombro con mancuernas de pie','Curl de bíceps alterno','Extensión de tríceps sobre la cabeza','Remo inclinado con mancuernas','Press de pecho con mancuernas','Elevación lateral de hombros','Remo vertical (Upright row) con mancuernas','Press Arnold para hombros','Curl concentrado de bíceps','Press de pecho inclinado con mancuernas','V-ups con mancuerna (abdomen)','Giro ruso con mancuerna pesada (oblicuos)']
+    },
+    maquina: {
+      '6': ['Press de pecho en máquina','Remo en máquina sentado','Jalón al pecho en polea alta','Press de hombro en máquina','Extensión de tríceps en polea con cuerda','Crunch abdominal en polea alta'],
+      '8': ['Press de pecho en máquina sit-down','Remo en máquina agarre prono','Jalón al pecho en polea alta','Press de hombros en máquina articulada','Curl de bíceps en polea baja con barra recta','Extensión de tríceps en polea alta con cuerda','Cruce de poleas para pectoral mayor','Elevación de rodillas en torre de fondos (abdomen)'],
+      '12': ['Press de pecho en máquina unilateral','Remo en máquina con apoyo al pecho','Jalón al pecho agarre abierto en polea','Press de hombros Arnold en máquina Smith','Curl de bíceps en banco Scott','Extensión de tríceps sobre la cabeza en polea baja','Cruce de poleas altas (pectoral inferior)','Face pull con doble cuerda (estabilidad escapular)','Jalón al pecho con agarre supino y cerrado','Remo unilateral en polea baja para dorsal','Press inclinado en máquina Smith','Crunch abdominal en máquina de placas con carga pesada']
+    },
+    corporal: {
+      '6': ['Flexión de brazos (push-up) asistida','Fondos en banco para tríceps','Superman en suelo (espalda baja)','Pike push-up (hombros)','Plancha isométrica tradicional (abdomen)','Elevación de rodillas en suelo (abdomen inferior)'],
+      '8': ['Flexión de brazos (push-up) completa','Flexión diamante (tríceps)','Fondos en paralelas','Pull-up (dominada pronada)','Flexión pike para hombros','Plancha lateral dinámica (oblicuos)','Plancha isométrica con toque de hombros (estabilidad)','Tijeras de piernas tumbado (abdomen inferior)'],
+      '12': ['Flexión de brazos (push-up)','Flexión diamante para tríceps','Fondos en paralelas','Pull-up (dominada estricta)','Flexión pike para hombros','Flexión con rotación de torso','Flexión declinada (pies elevados)','Pull-up con agarre supino','Flexión explosiva (clapping push-up)','Elevación de piernas colgado en barra (abdomen inferior)','Plancha isométrica Hollow body (abdomen completo)','Abdominales bicicleta a alta velocidad (oblicuos)']
+    }
+  }
+};
+
+function listaEjerciciosFitness(){
+  return EJ_VIDEO_OFICIAL[MV._fitG]?.[MV._fitE]?.[MV._fitN] || null;
+}
+function slugFit(s){
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,42);
+}
+
+// Vista previa: describe el LOTE que se generará (un video por ejercicio)
 function construirPromptFitness(){
-  const lista=EJERCICIOS_VIDEO[MV._fitG]?.[MV._fitE]?.[MV._fitN];
+  const lista=listaEjerciciosFitness();
   if(!lista)return null;
+  return `🎬 Se generarán ${lista.length} VIDEOS separados (uno por ejercicio): `+
+    lista.map((e,i)=>`${i+1}. ${e}`).join('  ·  ');
+}
+
+// Prompt LIMPIO de UN solo ejercicio (sin paneles, sin collage)
+function construirPromptEjercicioVideo(ejercicio,idx,total){
   const fps=document.getElementById('pFps').value;
   const res=document.getElementById('pRes').value;
   const ratio=document.getElementById('pRatio').value;
   const dur=document.getElementById('pDur').value;
-  const gLabel=MV._fitG==='gluteo'?'glute':MV._fitG==='pierna'?'leg':'upper body';
-  const eLabel=MV._fitE==='mancuerna'?'dumbbells':MV._fitE==='maquina'?'gym machines':'bodyweight';
+  const gLabel=MV._fitG==='gluteo'?'glute and hip':MV._fitG==='pierna'?'leg':'upper body';
+  const eLabel=MV._fitE==='mancuerna'?'dumbbells':MV._fitE==='maquina'?'a gym machine':'bodyweight only';
   const nLabel=MV._fitN==='6'?'beginner':MV._fitN==='8'?'intermediate':'advanced';
-  const mLabel=MV._fitM==='masa'?'hypertrophy':MV._fitM==='perder'?'fat loss':'maintenance';
-  const listaStr=lista.map((e,i)=>`${i+1}. ${e}`).join(', ');
-  return `Professional fitness tutorial video showing ${MV._fitN} ${gLabel} exercises with ${eLabel} for ${nLabel} ${mLabel} training. Sequential demonstration panels: ${listaStr}. Each exercise shown with perfect form and muscle activation visualization in orange. Cinematic quality ${fps}fps ${res} ${ratio}, smooth camera movement, professional gym lighting, stable frame consistency, ${dur} seconds per exercise, dark professional background, high detail 8k quality.`;
+  const mLabel=MV._fitM==='masa'?'hypertrophy muscle building':MV._fitM==='perder'?'fat loss':'maintenance strength';
+  return `Professional fitness instructional video of ONE single ${nLabel} athlete performing the exercise "${ejercicio}" using ${eLabel} in a professional gym. The athlete demonstrates the COMPLETE movement with correct form and full range of motion, slow and controlled, so viewers learn exactly how to perform it. ${mLabel} training, ${gLabel} muscles clearly engaged. Three-quarter side camera angle, the whole body stays inside the frame during the entire repetition. Cinematic ${fps}fps ${res} ${ratio}, professional gym lighting, ultra-stable camera, photorealistic, high detail. STRICT: a single person doing a single exercise, one continuous shot, NO split screen, NO multiple panels, NO grid, NO text, NO numbers on screen.`;
+}
+
+// Genera EN LOTE: un video limpio por cada ejercicio del nivel (6 / 8 / 12)
+async function generarLoteFitness(){
+  if(MV.engine==='pollinations'){
+    setStatus('⚠️ El motor gratis no genera video. Elige Replicate (puntito verde) y vuelve a intentar.','err');
+    return;
+  }
+  const lista=listaEjerciciosFitness();
+  if(!lista||!lista.length){ setStatus('⚠️ Sin ejercicios para esta combinación','err'); return; }
+  const N=lista.length;
+  if(!confirm('🎬 Vas a generar '+N+' VIDEOS (uno por ejercicio) con el motor '+MV.engine+'.\n\n⚠️ Son '+N+' generaciones = '+N+' cobros de Replicate y puede tardar varios minutos (cada video ~1-3 min).\n\n¿Continuar?')) return;
+
+  document.getElementById('genBtn').disabled=true;
+  let ok=0;
+  for(let i=0;i<N;i++){
+    const ej=lista[i];
+    videoPH.style.display='none';
+    mainVideo.style.display='none';
+    spinner.style.display='flex';
+    document.getElementById('spinnerTxt').textContent='GENERANDO '+(i+1)+' DE '+N;
+    document.getElementById('spinnerSub').textContent=ej;
+    setStatus('Generando ejercicio '+(i+1)+'/'+N+': '+ej,'info');
+    const prompt=construirPromptEjercicioVideo(ej,i+1,N);
+    document.getElementById('promptPreviewTxt').textContent=prompt;
+    try{
+      const result=await callVideoEngine(MV.engine,prompt);
+      if(result&&result.url){
+        MV.currentUrl=result.url; MV.currentBlob=result.blob||null;
+        mainVideo.src=result.url; mainVideo.style.display='block'; spinner.style.display='none';
+        MV.sessionCount++;
+        document.getElementById('ftSes').textContent=MV.sessionCount;
+        document.getElementById('ftGen').textContent=MV.sessionCount;
+        const nombre=MV._fitEtiqueta.replace(/_v1$/,'')+'_'+String(i+1).padStart(2,'0')+'_'+slugFit(ej);
+        addToGallery(result.url,result.blob,nombre);
+        ok++;
+      }
+    }catch(err){
+      spinner.style.display='none';
+      setStatus('❌ Falló ejercicio '+(i+1)+' ('+ej+'): '+err.message,'err');
+      if(!confirm('Falló el ejercicio '+(i+1)+' ('+ej+'):\n'+err.message+'\n\n¿Seguir con los demás ejercicios?')) break;
+    }
+    await delay(600);
+  }
+  spinner.style.display='none';
+  document.getElementById('genBtn').disabled=false;
+  setStatus('✓ Lote terminado · '+ok+'/'+N+' videos generados · cada uno un ejercicio limpio','ok');
 }
 
 function construirPromptCats(){
@@ -861,6 +980,8 @@ function loadKey(e){return localStorage.getItem('fc_vidkey_'+e)||'';}
 // GENERAR VIDEO — Motor universal
 // ════════════════════════════════════════════════════════════
 async function generar(){
+  // Cerebro Fitness → genera un VIDEO LIMPIO por cada ejercicio (lote)
+  if(MV.cerebro==='fitness'){ return generarLoteFitness(); }
   const prompt=buildPromptFinal();
   if(!prompt){setStatus('⚠️ Sin prompt — activa un cerebro o escribe algo','err');return;}
 
@@ -1166,8 +1287,8 @@ function resolverNombre(){
   return etiq||tit||'video_'+Date.now();
 }
 
-function addToGallery(url,blob){
-  const nombre=resolverNombre();
+function addToGallery(url,blob,nombreForzado){
+  const nombre=nombreForzado||resolverNombre();
   const item={id:'v'+Date.now(),url,blob,nombre,label:nombre,ruta:MV.ruta,fecha:new Date().toLocaleDateString('es-ES'),engine:MV.engine,cerebro:MV.cerebro};
   MV.gallery.unshift(item);
   if(MV.gallery.length>30)MV.gallery.pop();
