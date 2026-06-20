@@ -305,7 +305,7 @@ async function optimizarYSubirTodo(){
   await subirFirebase();
 }
 
-async function optimizarLote(lista){const overlay=document.getElementById('optOverlay');const progFill=document.getElementById('optProgFill');const progTxt=document.getElementById('optProgTxt');const log=document.getElementById('optLog');const sub=document.getElementById('optSubtitle');overlay.classList.add('show');log.innerHTML='';document.getElementById('btnCerrarOpt').style.display='none';let ok=0,err=0;for(let i=0;i<lista.length;i++){const item=lista[i];const pct=Math.round((i/lista.length)*100);progFill.style.width=pct+'%';progTxt.textContent=`${i+1} / ${lista.length} archivos`;sub.textContent='Optimizando: '+item.name;try{let result=null;if(item.type==='img'&&document.getElementById('optImg').checked){addLog(log,'⚡ Imagen: '+item.name+'...','info');result=await optimizarImagen(item.file);if(result){item.blob=result.blob;item.sizeOpt=result.blob.size;item.estado='optimizado';item.thumb=URL.createObjectURL(result.blob);C.totalOpt+=result.blob.size;const ahorro=Math.round((1-result.blob.size/item.sizeOrig)*100);addLog(log,'✅ '+item.name+' → -'+ahorro+'% · '+formatKB(result.blob.size),'ok');ok++;}}else if(item.type==='vid'&&document.getElementById('optVid').checked){addLog(log,'🎬 Video: '+item.name+'...','info');result=await optimizarVideo(item.file);if(result){item.blob=result.blob;item.sizeOpt=result.blob.size;item.estado='optimizado';C.totalOpt+=result.blob.size;const ahorro=Math.round((1-result.blob.size/item.sizeOrig)*100);addLog(log,'✅ '+item.name+' → -'+ahorro+'%','ok');ok++;}}else{item.blob=item.file;item.sizeOpt=item.file.size;item.estado='optimizado';C.totalOpt+=item.file.size;addLog(log,'✅ '+item.name+' → listo','ok');ok++;}}catch(e){item.estado='error';addLog(log,'❌ '+item.name+': '+e.message);err++;}renderGrid();updateStats();}progFill.style.width='100%';progTxt.textContent='✓ '+ok+' optimizados · '+err+' errores';sub.textContent='Optimización completada';document.getElementById('btnCerrarOpt').style.display='inline-block';setStatus('✓ '+ok+' optimizados · ahorro: '+calcAhorro()+'%','ok');}
+async function optimizarLote(lista){const overlay=document.getElementById('optOverlay');const progFill=document.getElementById('optProgFill');const progTxt=document.getElementById('optProgTxt');const log=document.getElementById('optLog');const sub=document.getElementById('optSubtitle');overlay.classList.add('show');log.innerHTML='';document.getElementById('btnCerrarOpt').style.display='none';let ok=0,err=0;for(let i=0;i<lista.length;i++){const item=lista[i];const pct=Math.round((i/lista.length)*100);progFill.style.width=pct+'%';progTxt.textContent=`${i+1} / ${lista.length} archivos`;sub.textContent='Optimizando: '+item.name;try{await _m4AsegurarBytes(item);let result=null;if(item.type==='img'&&document.getElementById('optImg').checked){addLog(log,'⚡ Imagen: '+item.name+'...','info');result=await optimizarImagen(item.file);if(result){item.blob=result.blob;item.sizeOpt=result.blob.size;item.estado='optimizado';item.thumb=URL.createObjectURL(result.blob);C.totalOpt+=result.blob.size;const ahorro=Math.round((1-result.blob.size/item.sizeOrig)*100);addLog(log,'✅ '+item.name+' → -'+ahorro+'% · '+formatKB(result.blob.size),'ok');ok++;}}else if(item.type==='vid'&&document.getElementById('optVid').checked){addLog(log,'🎬 Video: '+item.name+'...','info');result=await optimizarVideo(item.file);if(result){item.blob=result.blob;item.sizeOpt=result.blob.size;item.estado='optimizado';C.totalOpt+=result.blob.size;const ahorro=Math.round((1-result.blob.size/item.sizeOrig)*100);addLog(log,'✅ '+item.name+' → -'+ahorro+'%','ok');ok++;}}else{item.blob=item.file;item.sizeOpt=item.file.size;item.estado='optimizado';C.totalOpt+=item.file.size;addLog(log,'✅ '+item.name+' → listo','ok');ok++;}}catch(e){item.estado='error';addLog(log,'❌ '+item.name+': '+e.message);err++;}renderGrid();updateStats();}progFill.style.width='100%';progTxt.textContent='✓ '+ok+' optimizados · '+err+' errores';sub.textContent='Optimización completada';document.getElementById('btnCerrarOpt').style.display='inline-block';setStatus('✓ '+ok+' optimizados · ahorro: '+calcAhorro()+'%','ok');}
 
 function addLog(container,msg,type=''){const d=document.createElement('div');d.className=type==='ok'?'ok':type==='info'?'info':'';d.textContent=msg;container.appendChild(d);container.scrollTop=container.scrollHeight;}
 
@@ -362,7 +362,7 @@ function formatKB(bytes){if(bytes>1048576)return (bytes/1048576).toFixed(1)+' MB
   queue.forEach(item=>{
     try{
       // Si dataUrl es una URL externa (video), crear entrada directamente
-      let blob,file,thumbImg=null;
+      let blob,file,thumbImg=null,srcUrl=null;
       if(item.dataUrl&&item.dataUrl.startsWith('data:')){
         const arr=item.dataUrl.split(',');
         const mime=arr[0].match(/:(.*?);/)[1];
@@ -373,13 +373,14 @@ function formatKB(bytes){if(bytes>1048576)return (bytes/1048576).toFixed(1)+' MB
         file=new File([blob],item.label,{type:mime});
         if(item.tipo==='img')thumbImg=item.dataUrl;
       } else {
-        // URL externa (ej video de API)
-        blob=null;file=null;
+        // URL externa (ej. video de API tipo Replicate) → guardamos el enlace y
+        // bajamos los BYTES luego (sin bytes el video llega vacío y «no sube nada»).
+        blob=null;file=null;srcUrl=item.dataUrl||item.srcFallback||item.url||null;
       }
       const tipo=item.tipo||'img';
       const id='f'+Date.now()+Math.random().toString(36).slice(2,5);
       const sizeOrig=blob?blob.size:(item.size||0);
-      C.files.unshift({id,file:file||{name:item.label,size:sizeOrig,type:tipo},type:tipo,name:item.label,sizeOrig,sizeOpt:null,blob:null,thumb:thumbImg,estado:'pendiente',selected:false,origen:item.motor||'M1/M2/M3',claseId:item.claseId||null,cat:item.cat||null,slug:item.slug||null,niv:item.niv||null,titulo:item.titulo||null,targetPath:item.targetPath||null});
+      C.files.unshift({id,file:file||{name:item.label,size:sizeOrig,type:tipo},type:tipo,name:item.label,sizeOrig,sizeOpt:null,blob:blob||null,srcUrl:srcUrl,thumb:thumbImg,estado:'pendiente',selected:false,origen:item.motor||'M1/M2/M3',claseId:item.claseId||null,cat:item.cat||null,slug:item.slug||null,niv:item.niv||null,titulo:item.titulo||null,targetPath:item.targetPath||null});
       C.totalOrig+=sizeOrig;
       importados++;
     }catch(e){console.warn('Error importando item:',item.label,e);}
@@ -389,8 +390,41 @@ function formatKB(bytes){if(bytes>1048576)return (bytes/1048576).toFixed(1)+' MB
     document.getElementById('btnOptimize').disabled=false;
     document.getElementById('btnOptimize').style.opacity='1';
     setStatus('✓ '+importados+' archivo(s) recibidos de otros módulos · Listos para optimizar','ok');
+    descargarBytesPendientes();
   }
 })();
+
+// ══════ BAJAR BYTES DE ITEMS QUE LLEGARON COMO URL EXTERNA (video de API) ══════
+// El enlace de Replicate caduca en ~1h; por eso lo hacemos al abrir M4. Sin esto
+// el video llega vacío, no se puede optimizar ni subir a Firebase.
+async function _m4AsegurarBytes(item){
+  if(item.blob instanceof Blob) return;
+  if(item.file instanceof Blob){ item.blob=item.file; return; }
+  if(!item.srcUrl) return;
+  const r=await fetch(item.srcUrl,{mode:'cors'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const b=await r.blob();
+  const mime=b.type||(item.type==='vid'?'video/mp4':item.type==='aud'?'audio/mpeg':'application/octet-stream');
+  item.blob=b;
+  item.file=new File([b],item.name,{type:mime});
+  item.sizeOrig=b.size;
+  if(item.type==='img'){ try{ item.thumb=URL.createObjectURL(b); }catch(_){} }
+}
+async function descargarBytesPendientes(){
+  const pend=C.files.filter(f=>!(f.blob instanceof Blob) && f.srcUrl);
+  for(const f of pend){
+    try{
+      setStatus('⬇️ Descargando bytes de «'+f.name+'»…','info');
+      await _m4AsegurarBytes(f);
+      C.totalOrig+=(f.blob?f.blob.size:0);
+      renderGrid();updateStats();
+      setStatus('✓ Bytes de «'+f.name+'» descargados ('+formatKB(f.blob.size)+') · listo para optimizar','ok');
+    }catch(e){
+      console.warn('No se pudieron bajar los bytes de',f.name,e);
+      setStatus('⚠️ El enlace de «'+f.name+'» caducó o no es accesible (CORS). Regenéralo en M2 y reenvíalo a M4.','err');
+    }
+  }
+}
 </script>
 
 <!-- ════════ MOTOR BRIDGE — biblioteca de las 360 clases ════════ -->
@@ -399,6 +433,7 @@ function formatKB(bytes){if(bytes>1048576)return (bytes/1048576).toFixed(1)+' MB
 <script src="motor_p3_morfologia_alertas.js"></script>
 <script src="motor_helper.js"></script>
 <script src="m4_motor_bridge.js"></script>
+<script src="puente_catalogo_m2.js"></script>
 
 </body>
 </html>

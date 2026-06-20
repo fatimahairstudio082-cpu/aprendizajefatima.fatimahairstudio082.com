@@ -154,6 +154,37 @@ input,select,textarea{font-family:inherit;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 
 @media(max-width:560px){.row3{grid-template-columns:1fr;}.wrap{padding:18px 14px 60px;}.tb-title span{display:none;}}
+
+/* ░░ CATÁLOGO (motor de conocimiento inyectado) ░░ */
+.cat-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px;}
+.cat-bar select,.cat-bar input{background:#060c16;border:1px solid var(--linea);border-radius:9px;padding:9px 11px;color:var(--txt);font-size:11px;outline:none;}
+.cat-bar input:focus,.cat-bar select:focus{border-color:var(--naranja);}
+.cat-bar .chk{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);letter-spacing:.5px;}
+.cat-prog{margin-left:auto;font-size:11px;color:var(--muted);letter-spacing:.5px;}
+.cat-prog b{color:var(--ok);}
+.cat-sec{margin-bottom:22px;}
+.cat-sec h3{font-size:10px;letter-spacing:1.5px;color:var(--oro);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.cat-sec h3 .count{color:var(--muted);font-size:9px;}
+.cat-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;}
+.cat-card{border:1px solid var(--linea);border-radius:13px;padding:13px;background:var(--panel3);transition:border-color .13s;}
+.cat-card.pend{border-color:var(--linea2);}
+.cat-card.ok{border-color:rgba(34,197,94,.35);}
+.cat-card.cat-card-actual{border-color:var(--naranja);border-width:2px;box-shadow:0 0 0 1px rgba(249,115,22,.25),0 0 18px rgba(249,115,22,.15);}
+.cat-card:hover{border-color:var(--naranja);}
+.cc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.cc-ico{font-size:18px;}
+.cc-badge{font-size:7px;letter-spacing:1px;padding:3px 7px;border-radius:20px;font-weight:700;}
+.cc-badge.b-ok{background:rgba(34,197,94,.14);color:var(--ok);}
+.cc-badge.b-pend{background:rgba(249,115,22,.12);color:var(--naranja);}
+.cc-n{font-size:11px;color:var(--txt);font-weight:700;line-height:1.3;margin-bottom:3px;}
+.cc-sub{font-size:8px;color:var(--muted);letter-spacing:.5px;margin-bottom:7px;text-transform:uppercase;}
+.cc-key{font-size:9px;color:var(--naranja);word-break:break-all;background:#060c16;border:1px dashed var(--linea2);border-radius:7px;padding:5px 7px;margin-bottom:9px;}
+.cc-acts{display:flex;gap:6px;}
+.cc-acts button{flex:1;border:1px solid var(--naranja);background:rgba(249,115,22,.1);color:var(--naranja);border-radius:8px;padding:7px 4px;font-size:8px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;transition:all .13s;}
+.cc-acts button:hover{background:rgba(249,115,22,.2);}
+.cc-acts button.alt{border-color:var(--linea);background:transparent;color:var(--muted);}
+.cc-acts button.alt:hover{border-color:var(--oro);color:var(--oro);}
+.cc-ejlist::-webkit-scrollbar{width:6px;}
 </style>
 </head>
 <body>
@@ -191,6 +222,7 @@ input,select,textarea{font-family:inherit;}
       <button class="tab" data-t="imgs" onclick="BIB.tab('imgs')"><span class="ic">🖼️</span> Láminas / Imágenes</button>
       <button class="tab" data-t="corte" onclick="BIB.tab('corte')"><span class="ic">✂️</span> Motor de Corte M1–M7</button>
       <button class="tab" data-t="hub" onclick="BIB.tab('hub')"><span class="ic">🧩</span> Hub: tarjetas, login, chat</button>
+      <button class="tab" data-t="catalogo" onclick="BIB.tab('catalogo')"><span class="ic">📋</span> Catálogo · Generar</button>
     </div>
 
     <!-- ░░ VIDEOS ░░ -->
@@ -198,10 +230,10 @@ input,select,textarea{font-family:inherit;}
       <div class="grid2">
         <div class="card">
           <h2><span class="ic">🎬</span> Añadir / editar video</h2>
-          <p class="hint">Selecciona <b>día</b>, <b>motor</b> y <b>grupo muscular</b>. La biblioteca calcula la clave exacta que lee el bloque de fitness y guarda el video en Firebase.</p>
+          <p class="hint">Selecciona <b>día</b>, <b>motor</b> y <b>grupo muscular</b>. La biblioteca calcula la clave exacta que lee el bloque de fitness y guarda el video en Firebase. Biblioteca de contenido planificada hasta el <b>día 365</b>: puedes ir cargando los videos poco a poco, día por día y grupo por grupo.</p>
           <div class="frm">
             <div class="row3">
-              <div><label>Día (1–30)</label><input id="v_dia" type="number" min="1" max="30" value="1" oninput="BIB.vKey()"/></div>
+              <div><label>Día (1–365)</label><input id="v_dia" type="number" min="1" max="365" value="1" oninput="BIB.vKey()"/></div>
               <div><label>Motor</label><select id="v_obj" onchange="BIB.vKey()">
                 <option value="masa">Masa</option><option value="perder">Perder grasa</option><option value="mantener">Mantener</option>
               </select></div>
@@ -347,6 +379,36 @@ input,select,textarea{font-family:inherit;}
         <div class="hubgrid" id="hub_grid"><div class="empty-list">Cargando…</div></div>
       </div>
     </div>
+
+    <!-- ░░ CATÁLOGO · GENERAR (motor de conocimiento) ░░ -->
+    <div class="pane" id="pane-catalogo">
+      <div class="card">
+        <h2><span class="ic">📋</span> Catálogo de contenido · Generar por día</h2>
+        <p class="hint">Cada tarjeta es una <b>clase</b> (día + grupo + motor + equipo + nivel). Toca <b>"Ver ejercicios"</b> para desplegar la lista real del motor de conocimiento: cada ejercicio tiene su botón <b>🎬 Video</b> que abre <b>M2</b> ya con el ID exacto que lee tu Bloque 5 (con día y sin día). El botón <b>🎨 Lámina clase</b> abre <b>M1</b> con la clave de la lámina general de esa combinación. Nada se genera aquí mismo: el módulo correspondiente sube a Firebase y esta tarjeta se actualiza sola en tiempo real. Usa el filtro de <b>Día</b> para no cargar las 365 jornadas a la vez.</p>
+        <div id="cat_ultima" style="display:none;align-items:center;gap:6px;background:rgba(249,115,22,.08);border:1px solid var(--linea2);border-radius:10px;padding:9px 14px;margin-bottom:14px;font-size:11px;letter-spacing:.3px;"></div>
+        <div class="cat-bar">
+          <select id="cat_grupo" onchange="BIB.catFiltro('grupo', this.value)">
+            <option value="">Todos los grupos</option><option value="gluteo">Glúteo</option><option value="pierna">Pierna</option><option value="superior">Tren Superior</option>
+          </select>
+          <select id="cat_motor" onchange="BIB.catFiltro('motor', this.value)">
+            <option value="">Todos los motores</option><option value="masa">Masa</option><option value="perder">Perder grasa</option><option value="mantener">Mantener</option>
+          </select>
+          <select id="cat_equipo" onchange="BIB.catFiltro('equipo', this.value)">
+            <option value="">Todos los equipos</option><option value="maquina">⚙️ Máquina</option><option value="mancuerna">🏋️ Mancuerna</option><option value="corporal">🤸 Corporal (sin máquina)</option>
+          </select>
+          <select id="cat_niv" onchange="BIB.catFiltro('nej', this.value)">
+            <option value="">Todos los niveles</option><option value="6">🟢 Principiante · 6 ej</option><option value="8">🔵 Intermedio · 8 ej</option><option value="12">🟣 Avanzado · 12 ej</option>
+          </select>
+          <select id="cat_dia" onchange="BIB.catFiltro('dia', this.value)">
+            <option value="">Todos los días</option>
+          </select>
+          <input id="cat_q" type="text" placeholder="Buscar clave…" oninput="BIB.catFiltro('q', this.value)" style="min-width:150px;"/>
+          <label class="chk"><input type="checkbox" id="cat_pend" onchange="BIB.catFiltro('pend', this.checked)"/> Solo pendientes</label>
+          <span class="cat-prog" id="cat_prog">—</span>
+        </div>
+        <div id="cat_grid"><div class="empty-list">Cargando catálogo…</div></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -399,6 +461,29 @@ input,select,textarea{font-family:inherit;}
 </div>
 
 <div id="toast"></div>
+<script src="motor_conocimiento_fitness.js"></script>
 <script src="biblioteca.js"></script>
+<script>
+/* Pobla el <select> de día (1..365) en la barra del catálogo.
+   No toca nada más: solo agrega opciones a un select ya existente. */
+(function(){
+  function poblarDias(){
+    var sel = document.getElementById('cat_dia');
+    if(!sel || sel.dataset.poblado) return;
+    var max = (window.MOTOR_FITNESS && window.MOTOR_FITNESS.taxonomia && window.MOTOR_FITNESS.taxonomia.dias) || 365;
+    for(var d=1; d<=max; d++){
+      var o=document.createElement('option');
+      o.value=String(d); o.textContent='Día '+d;
+      sel.appendChild(o);
+    }
+    sel.dataset.poblado='1';
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', poblarDias);
+  } else {
+    poblarDias();
+  }
+})();
+</script>
 </body>
 </html>

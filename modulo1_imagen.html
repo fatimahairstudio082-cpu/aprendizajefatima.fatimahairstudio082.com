@@ -993,15 +993,15 @@ async function generar(){
   let promptFinal = prompt;
 
   if(hasRef){
-    if(S.engine === 'stability' || S.engine === 'dalle'){
-      // Motores que SÍ reciben la imagen (image-to-image real)
-      promptFinal = prompt + ', maintain exact body position posture geometry and structural lines from the reference image, professional photography high detail';
-      setStatus(`🖼️ Referencia activa (${Math.round(intensity*100)}%) · image-to-image con ${S.engine}`,'info');
+    if(S.engine === 'stability'){
+      // Stability tiene image-to-image NATIVO (recibe la foto directamente)
+      promptFinal = prompt + ', keep the exact same face and facial identity, same body position posture and proportions from the reference image, professional photography, high detail';
+      setStatus(`🖼️ Referencia activa (${Math.round(intensity*100)}%) · image-to-image con Stability`,'info');
     } else {
-      // Motor GRATIS (Pollinations/HF/Together): no hace image-to-image.
-      // Generamos del prompt limpio (sin inflar la URL) y avisamos.
+      // Cualquier otro motor (Replicate / OpenAI / Pollinations / HF / Together):
+      // la FOTO se envía a FLUX Kontext Pro (Replicate) que CONSERVA el rostro y rasgos.
       promptFinal = prompt;
-      setStatus('ℹ️ El motor gratis no hace image-to-image. Se genera con el prompt. Para usar tu imagen de referencia REAL, elige Stability o DALL·E (con tu clave).','info');
+      setStatus('🧬 Referencia activa · tu foto se enviará a FLUX Kontext Pro para conservar el rostro y los rasgos físicos','info');
     }
   }
 
@@ -1237,8 +1237,63 @@ function mostrarAyudaPollinations(){
   if(inp){ inp.classList.add('show'); try{ inp.focus(); }catch(_){} }
 }
 
+// ═════════════════════════════════════════════════════
+// REPLICATE · puente robusto (FLUX schnell texto + FLUX Kontext Pro rostro)
+//  · Acepta la clave r8_ de la UI O el REPLICATE_API_TOKEN del servidor (proxy).
+//  · No depende solo de Prefer:wait: hace polling hasta terminar (maneja canceled).
+// ═════════════════════════════════════════════════════
+async function replicatePredict(modelPath, input){
+  const PROXY = window.REPLICATE_PROXY || (location.origin + '/.netlify/functions/replicate');
+  const uiKey = loadKey('replicate'); // opcional (si el proxy ya tiene REPLICATE_API_TOKEN)
+  const headers = { 'Content-Type':'application/json', 'Prefer':'wait' };
+  if(uiKey) headers['Authorization'] = 'Bearer ' + uiKey;
+  let r = await fetch(PROXY + '/v1/models/' + modelPath + '/predictions',
+    { method:'POST', headers, body: JSON.stringify({ input }) });
+  let d;
+  try { d = await r.json(); } catch(_){ throw new Error('Replicate: el puente no devolvió JSON (HTTP '+r.status+')'); }
+  if(d.error) throw new Error('Replicate: '+(typeof d.error==='string'?d.error:JSON.stringify(d.error)));
+  if(!d.id && !d.status && d.output===undefined)
+    throw new Error('Replicate: el puente no respondió. Pega tu clave r8_… o define REPLICATE_API_TOKEN en Netlify.');
+  const pollHeaders = uiKey ? { 'Authorization':'Bearer '+uiKey } : {};
+  let intentos = 0;
+  while(d.status && d.status!=='succeeded' && d.status!=='failed' && d.status!=='canceled' && intentos < 60){
+    await new Promise(res=>setTimeout(res,1500));
+    const pr = await fetch(PROXY + '/v1/predictions/' + d.id, { headers: pollHeaders });
+    d = await pr.json(); intentos++;
+  }
+  if(d.status==='failed')   throw new Error('Replicate: generación fallida · '+(d.error||'sin detalle'));
+  if(d.status==='canceled') throw new Error('Replicate: generación cancelada');
+  const out = Array.isArray(d.output) ? d.output[d.output.length-1] : d.output;
+  if(!out) throw new Error('Replicate: sin imagen en la respuesta (¿crédito agotado?)');
+  return out;
+}
+
+// FLUX Kontext Pro: recibe TU foto (input_image) + prompt y CONSERVA tu identidad/rostro.
+async function callReplicateKontext(prompt, refB64){
+  setStatus('🧬 Replicate · FLUX Kontext Pro — conservando el rostro y rasgos de tu referencia…','info');
+  const promptFiel = `${prompt}, keep the exact same face, facial identity and physical features from the reference person, photorealistic, professional studio quality, sharp focus`;
+  return await replicatePredict('black-forest-labs/flux-kontext-pro', {
+    prompt: promptFiel,
+    input_image: 'data:image/jpeg;base64,' + refB64,
+    aspect_ratio: 'match_input_image',
+    output_format: 'jpg',
+    safety_tolerance: 2
+  });
+}
+
 async function callEngine(engine, prompt, seed, refB64){
   const intensity = parseInt(document.getElementById('refIntSl').value) / 100;
+
+  // ── REFERENCIA (rostro/persona) → FLUX Kontext Pro: ENVÍA la FOTO y conserva la identidad ──
+  //    Excepción: Stability usa su image-to-image nativo más abajo.
+  if(refB64 && engine !== 'stability'){
+    return await callReplicateKontext(prompt, refB64);
+  }
+  // ── Replicate texto→imagen (FLUX schnell) robusto + token de servidor opcional ──
+  if(engine === 'replicate'){
+    return await replicatePredict('black-forest-labs/flux-schnell',
+      { prompt: `${prompt}, professional studio quality, ultra-detailed, sharp focus, high resolution`, aspect_ratio:'1:1', output_format:'jpg', num_outputs:1 });
+  }
 
   if(engine === 'flux' || engine === 'turbo'){
     let promptFinal = prompt;
@@ -1339,27 +1394,7 @@ async function callEngine(engine, prompt, seed, refB64){
     return d.data?.[0]?.url || null;
   }
 
-  if(engine === 'replicate'){
-    // Replicate · FLUX schnell · vía puente Netlify (esquiva el bloqueo CORS)
-    const PROXY = window.REPLICATE_PROXY || (location.origin + '/.netlify/functions/replicate');
-    const base = PROXY + '/v1/models/black-forest-labs/flux-schnell/predictions';
-    const promptFinal = refB64 ? `${prompt}, following exact reference image composition and structure` : prompt;
-    const r = await fetch(base,{method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json','Prefer':'wait'},
-      body: JSON.stringify({ input:{prompt:promptFinal, aspect_ratio:'1:1', output_format:'jpg', num_outputs:1}})});
-    let d = await r.json();
-    if(d.error) throw new Error(typeof d.error==='string'?d.error:JSON.stringify(d.error));
-    // polling si no vino con Prefer:wait
-    let intentos=0;
-    while(d.status && d.status!=='succeeded' && d.status!=='failed' && intentos<40){
-      await new Promise(res=>setTimeout(res,1500));
-      const pr = await fetch(PROXY+'/v1/predictions/'+d.id,{headers:{'Authorization':'Bearer '+key}});
-      d = await pr.json(); intentos++;
-    }
-    if(d.status==='failed') throw new Error('Replicate: generación fallida');
-    const out = Array.isArray(d.output)?d.output[0]:d.output;
-    if(!out) throw new Error('Replicate: sin resultado (revisa el puente)');
-    return out;
-  }
+  // (Replicate — texto y referencia — se maneja al INICIO de callEngine con replicatePredict/Kontext)
 
   throw new Error('Motor no reconocido: '+engine);
 }
@@ -1701,6 +1736,7 @@ window._FIT_IMGS = window._FIT_IMGS || {};
 <script src="motor_p3_morfologia_alertas.js"></script>
 <script src="motor_helper.js"></script>
 <script src="m1_motor_bridge.js"></script>
+<script src="puente_catalogo_m2.js"></script>
 
 </body>
 </html>
