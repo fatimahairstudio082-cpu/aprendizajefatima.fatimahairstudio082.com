@@ -1149,12 +1149,14 @@ function construirPromptFitness(){
   const m = S._fitM;
   const lista = EJERCICIOS[g]?.[e]?.[n];
   if(!lista || !lista.length){ console.warn('Sin lista para:', g, e, n); return null; }
-  const grupoLabel = g==='gluteo'?'glute':g==='pierna'?'leg':'upper body';
-  const equipoLabel = e==='mancuerna'?'dumbbells':e==='maquina'?'gym machines':'bodyweight only';
-  const nivelLabel  = n==='6'?'beginner':n==='8'?'intermediate':'advanced';
-  const motorLabel  = m==='masa'?'hypertrophy muscle building':m==='perder'?'fat loss high reps':'maintenance strength';
-  const listaPrompt = lista.map((ej,i)=>`${i+1}. ${ej}`).join(', ');
-  return `Professional fitness reference infographic grid on dark background showing exactly ${n} different ${grupoLabel} exercises with ${equipoLabel} for ${nivelLabel} level ${motorLabel} training. Each exercise in its own clearly separated numbered panel: ${listaPrompt}. Show correct body posture and form for each exercise, anatomical muscle activation highlighted in orange, numbered panels clearly labeled 1 to ${n}, clean professional layout, high detail 8k quality, no text overlapping.`;
+  const grupoLabel  = g==='gluteo'?'glutes and hips':g==='pierna'?'legs (quadriceps, hamstrings, calves)':'upper body (chest, back, shoulders, arms)';
+  const equipoLabel = e==='mancuerna'?'dumbbells and free weights':e==='maquina'?'professional gym machines':'bodyweight only, no equipment';
+  const nivelLabel  = n==='6'?'beginner (6 exercises)':n==='8'?'intermediate (8 exercises)':'advanced (12 exercises)';
+  const motorLabel  = m==='masa'?'hypertrophy and muscle mass building, heavy load, low reps':m==='perder'?'fat loss, high intensity, high reps, metabolic training':'strength maintenance, controlled technique';
+  // Lista numerada de ejercicios reales del sistema
+  const listaPrompt = lista.map((ej,i)=>`${i+1}. ${ej}`).join(' | ');
+  // Prompt profesional optimizado para ideogram-v2-turbo: texto legible + grilla estructurada
+  return `Professional sports fitness reference poster. Dark premium gym background with neon blue and orange accent lighting. ${parseInt(n)}-panel grid layout (${parseInt(n)===6?'3x2':parseInt(n)===8?'4x2':'4x3'} columns x rows), each panel shows a real athletic person performing the exercise with perfect technique. Exercises: ${listaPrompt}. Each panel has a clearly readable bold white exercise name label at the top. Training focus: ${grupoLabel}. Equipment: ${equipoLabel}. Level: ${nivelLabel}. Goal: ${motorLabel}. Muscle activation highlighted in orange on anatomical silhouette. Professional photography quality, 8K detail. Bottom center watermark: FATIMA CALDEA ESTUDIO. No extra text outside panels.`;
 }
 
 async function analizarReferenciaConClaude(refB64){
@@ -1294,8 +1296,18 @@ async function callEngine(engine, prompt, seed, refB64){
   if(refB64 && engine !== 'stability'){
     return await callReplicateKontext(prompt, refB64);
   }
-  // ── Replicate texto→imagen (FLUX schnell) robusto + token de servidor opcional ──
+  // ── Replicate texto→imagen: FITNESS usa ideogram-v2-turbo (texto legible + grillas profesionales)
+  //    Resto de modos usa flux-schnell (rápido y universal para foto/peluquería/libre) ──
   if(engine === 'replicate'){
+    const _modoFit = document.getElementById('swFitness') && document.getElementById('swFitness').checked;
+    if(_modoFit){
+      return await replicatePredict('ideogram-ai/ideogram-v2-turbo', {
+        prompt: prompt,
+        aspect_ratio: '3:4',
+        magic_prompt_option: 'Off',
+        resolution: '1280x960'
+      });
+    }
     return await replicatePredict('black-forest-labs/flux-schnell',
       { prompt: `${prompt}, professional studio quality, ultra-detailed, sharp focus, high resolution`, aspect_ratio:'1:1', output_format:'jpg', num_outputs:1 });
   }
@@ -1740,9 +1752,10 @@ window._FIT_IMGS = window._FIT_IMGS || {};
 <script src="motor_p2_queratina_elevaciones.js"></script>
 <script src="motor_p3_morfologia_alertas.js"></script>
 <script src="motor_helper.js"></script>
+<script src="motor_conocimiento_fitness.js"></script>
+<script src="biblioteca.js"></script>
 <script src="m1_motor_bridge.js"></script>
 <script src="puente_catalogo_m2.js"></script>
-<script src="motor_conocimiento_fitness.js">
 
 </body>
 </html>
