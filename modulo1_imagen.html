@@ -1265,7 +1265,12 @@ async function replicatePredict(modelPath, input){
   if(d.status==='canceled') throw new Error('Replicate: generación cancelada');
   const out = Array.isArray(d.output) ? d.output[d.output.length-1] : d.output;
   if(!out) throw new Error('Replicate: sin imagen en la respuesta (¿crédito agotado?)');
-  return out;
+  // PARCHE: convertir URL temporal de Replicate a blob local para evitar expiración y errores CORS
+  try {
+    const imgResp = await fetch(out);
+    if(imgResp.ok){ const blob = await imgResp.blob(); return URL.createObjectURL(blob); }
+  } catch(_){}
+  return out; // fallback: URL directa si el fetch falla
 }
 
 // FLUX Kontext Pro: recibe TU foto (input_image) + prompt y CONSERVA tu identidad/rostro.
