@@ -119,7 +119,7 @@ body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospa
   <a href="modulo3_voz.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-right:1px solid rgba(201,168,76,.08);font-size:8px;color:#7A6130;text-decoration:none;white-space:nowrap;"><div style="width:6px;height:6px;border-radius:50%;background:#4a4535;"></div>🔊 M3 · Voz</a>
   <a href="modulo4_carpeta.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;font-size:8px;color:#C9A84C;background:rgba(201,168,76,.1);border-bottom:2px solid #C9A84C;text-decoration:none;white-space:nowrap;"><div style="width:6px;height:6px;border-radius:50%;background:#C9A84C;"></div>📁 M4 · Carpeta<span style="font-size:5.5px;padding:1px 4px;background:#C9A84C;color:#000;border-radius:2px;font-weight:700;">ACTIVO</span></a>
   <!-- 🔧 PARCHE: link a Admin -->
-  <a href="panel_hadmin.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-left:1px solid rgba(201,168,76,.15);font-size:8px;color:#7A6130;text-decoration:none;white-space:nowrap;"><div style="width:6px;height:6px;border-radius:50%;background:#4a4535;"></div>🛠️ Admin</a>
+  <a href="admin.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-left:1px solid rgba(201,168,76,.15);font-size:8px;color:#7A6130;text-decoration:none;white-space:nowrap;"><div style="width:6px;height:6px;border-radius:50%;background:#4a4535;"></div>🛠️ Admin</a>
   <!-- 🆕 link al Admin de Academia (motores de 360 clases) -->
   <a href="admin_motores.html" style="display:flex;align-items:center;gap:5px;padding:0 14px;height:44px;border-left:1px solid rgba(0,242,255,.2);font-size:8px;color:#00bcd4;text-decoration:none;white-space:nowrap;transition:.15s;background:rgba(0,242,255,.04);">
     <div style="width:6px;height:6px;border-radius:50%;background:#00bcd4;"></div>
@@ -270,6 +270,7 @@ body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospa
 <script>
 // ════════ ESTADO ════════
 const C={files:[],selected:new Set(),filter:'todo',totalOrig:0,totalOpt:0};
+window.C = C; // PARCHE: exponer globalmente para m4_motor_bridge.js
 
 function setStatus(msg,type=''){const sb=document.getElementById('statusBar');sb.innerHTML=type==='ok'?`<span class="s-ok">✓ ${msg}</span>`:type==='err'?`<span class="s-err">⚠ ${msg}</span>`:type==='info'?`<span class="s-info">ℹ ${msg}</span>`:msg;}
 
@@ -312,7 +313,80 @@ function addLog(container,msg,type=''){const d=document.createElement('div');d.c
 // ════════ ACCIONES BULK ════════
 async function descargarSeleccionados(){const sel=C.files.filter(f=>C.selected.has(f.id));if(!sel.length){setStatus('Selecciona archivos primero','err');return;}setStatus('Descargando '+sel.length+' archivos...','info');for(const item of sel){const blob=item.blob||item.file;const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=item.name;a.click();await new Promise(r=>setTimeout(r,300));}setStatus('✓ '+sel.length+' archivos descargados','ok');}
 
-async function subirFirebase(){const sel=C.files.filter(f=>C.selected.has(f.id)&&f.estado==='optimizado');if(!sel.length){setStatus('Optimiza los archivos antes de subir a Firebase','err');return;}const folder=document.getElementById('fbFolder').value;const payload=sel.map(item=>({nombre:item.name,tipo:item.type,folder,claseId:item.claseId||null,cat:item.cat||null,slug:item.slug||null,niv:item.niv||null,titulo:item.titulo||null,targetPath:item.targetPath||null,sizeOrig:item.sizeOrig,sizeOpt:item.sizeOpt,ahorro:Math.round((1-item.sizeOpt/item.sizeOrig)*100)}));try{if(window.opener)window.opener.postMessage({tipo:'carpeta:subir',files:payload},'*');console.log('FIREBASE PAYLOAD:',payload);setStatus('✓ '+sel.length+' archivos listos · -'+calcAhorro()+'% peso · carpeta: '+folder+'/','ok');sel.forEach(item=>{item.estado='subido';});renderGrid();}catch(e){setStatus('Error preparando subida: '+e.message,'err');}}
+async function subirFirebase(){
+  // PARCHE: si el bridge ya envolvió esta función, él la maneja
+  // Esta versión base hace la subida REAL a Firebase Storage + Firestore
+  const sel=C.files.filter(f=>C.selected.has(f.id)&&f.estado==='optimizado');
+  if(!sel.length){setStatus('Optimiza los archivos antes de subir a Firebase','err');return;}
+  const folder=document.getElementById('fbFolder').value;
+  setStatus('☁️ Iniciando subida a Firebase · '+sel.length+' archivos…','info');
+  try{
+    // Importar Firebase dinámicamente
+    const [{initializeApp},{getStorage,ref:sRef,uploadBytes,getDownloadURL},{getFirestore,doc,setDoc}]=await Promise.all([
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')
+    ]);
+    const CFG={apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",authDomain:"aprendisajefatima.firebaseapp.com",projectId:"aprendisajefatima",storageBucket:"aprendisajefatima.firebasestorage.app",messagingSenderId:"744176967394",appId:"1:744176967394:web:743b7c2a455e1e6ba7c8bb"};
+    let app; try{app=initializeApp(CFG,'m4-main');}catch(e){app=initializeApp(CFG);}
+    const storage=getStorage(app);
+    const db=getFirestore(app);
+    let ok=0,fail=0;
+    for(const item of sel){
+      try{
+        await _m4AsegurarBytes(item);
+        const blob=item.blob||item.file;
+        if(!blob){throw new Error('sin blob');}
+        // Determinar ruta Storage
+        let path=item.targetPath||null;
+        if(!path){
+          const ext=item.type==='img'?'jpg':item.type==='vid'?'mp4':item.type==='aud'?'mp3':'pdf';
+          const fname=item.type==='img'?'imagen.jpg':item.type==='vid'?'video.mp4':item.type==='aud'?'audio.mp3':'guion.pdf';
+          if(item.claseId && item.cat==='fitness'){
+            path='fitness/'+item.claseId+'/'+fname;
+          } else if(item.claseId){
+            path='academia/'+(item.slug||item.claseId)+'/'+item.claseId+'/'+fname;
+          } else {
+            path=folder+'/'+item.name;
+          }
+        }
+        // Subir a Storage
+        const storRef=sRef(storage,path);
+        await uploadBytes(storRef,blob);
+        const url=await getDownloadURL(storRef);
+        item.url=url;
+        // Escribir en Firestore según destino
+        if(item.claseId && item.cat==='fitness'){
+          const coleccion=item.type==='vid'?'fitness_videos':'fitness_imgs';
+          const patch=item.type==='vid'
+            ?{url_video:url,path_video:path,claseId:item.claseId,titulo:item.titulo||item.name,videoActualizadoEn:new Date().toISOString()}
+            :{url:url,url_path:path,claseId:item.claseId,imgActualizadoEn:new Date().toISOString()};
+          await setDoc(doc(db,coleccion,item.claseId),patch,{merge:true});
+        } else if(item.claseId){
+          const fm=item.type==='vid'?{f:'url_video',p:'path_video',d:'videoActualizadoEn'}
+                  :item.type==='aud'?{f:'url_audio',p:'path_audio',d:'audioActualizadoEn'}
+                  :item.type==='pdf'?{f:'url_pdf',p:'path_pdf',d:'pdfActualizadoEn'}
+                  :{f:'url_jpg',p:'url_jpg_path',d:'imgActualizadoEn'};
+          const patch={[fm.f]:url,[fm.p]:path,[fm.d]:new Date().toISOString(),claseId:item.claseId,cat:item.cat||'academia',niv:item.niv||'p'};
+          if(item.type==='img') patch.url=url;
+          await setDoc(doc(db,'clases_imgs',item.claseId),patch,{merge:true});
+        }
+        item.estado='subido';
+        ok++;
+        setStatus('☁️ Subido: '+item.name+' → '+path,'info');
+      }catch(e){
+        console.error('[M4] error subiendo',item.name,e);
+        item.estado='error';
+        fail++;
+      }
+    }
+    renderGrid();updateStats();
+    setStatus('✅ '+ok+' subido(s) a Firebase · '+fail+' error(es) · carpeta: '+folder+'/','ok');
+  }catch(e){
+    setStatus('❌ Error Firebase: '+e.message,'err');
+    console.error('[M4] subirFirebase error:',e);
+  }
+}
 
 async function crearFichaPDF(){const sel=C.files.filter(f=>C.selected.has(f.id)&&f.type==='img');if(!sel.length){setStatus('Selecciona imágenes para crear la ficha PDF','err');return;}const imgs=sel.map(i=>i.thumb||URL.createObjectURL(i.blob||i.file));const W=window.open('','_blank');if(!W){setStatus('Permite ventanas emergentes','err');return;}const html=imgs.map((src,i)=>`<div style="page-break-after:always;text-align:center;padding:10mm;"><div style="font-family:monospace;font-size:14pt;color:#C9A84C;margin-bottom:5mm;">✦ FÁTIMA CALDEA ESTUDIO</div><img src="${src}" style="max-width:100%;max-height:250mm;border:1px solid #C9A84C;"><div style="font-size:9pt;color:#7A6130;margin-top:5mm;">${sel[i].name}</div></div>`).join('');W.document.write(`<!DOCTYPE html><html><head><style>@page{size:A4;margin:8mm;}body{background:#fff;margin:0;}</style></head><body>${html}<script>window.onload=()=>window.print()<\/script></body></html>`);W.document.close();setStatus('✓ Ficha PDF con '+sel.length+' imágenes generada','ok');}
 
@@ -433,8 +507,6 @@ async function descargarBytesPendientes(){
 <script src="motor_p3_morfologia_alertas.js"></script>
 <script src="motor_helper.js"></script>
 <script src="m4_motor_bridge.js"></script>
-<script src="motor_conocimiento_fitness.js"></script>
-<script src="m1_motor_bridge.js"></script>
 <script src="puente_catalogo_m2.js"></script>
 
 </body>

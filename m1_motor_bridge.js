@@ -1,25 +1,8 @@
 /**
  * ═══════════════════════════════════════════════════════════════
  *  M1 MOTOR BRIDGE · Fátima Caldera Studio
- *  ────────────────────────────────────────────────────────────────
- *  Puente entre admin_motores (biblioteca) y modulo1_imagen.html.
- *  Hace 3 cosas:
- *    1. Si vienes de admin_motores con una clase seleccionada,
- *       muestra un banner "🎯 Generando para bio_p01..."
- *    2. Pre-llena el prompt con el título de la clase (si está vacío)
- *    3. Cuando M1 envía a M4, automáticamente etiqueta el item
- *       con claseId / cat / slug / targetPath
- *
- *  CÓMO USAR:
- *    Pegar ANTES del </body> de modulo1_imagen.html:
- *      <script src="motor_p1_bioseg_balayage.js"></script>
- *      <script src="motor_p2_queratina_elevaciones.js"></script>
- *      <script src="motor_p3_morfologia_alertas.js"></script>
- *      <script src="motor_helper.js"></script>
- *      <script src="m1_motor_bridge.js"></script>
- *
- *  CERO modificación al HTML original.
- *  Si no hay target en localStorage, este script no hace nada.
+ *  PARCHE APLICADO: waitForPrompt no contamina con peluquería
+ *  cuando el contexto es de peluquería → activa modo cats directamente
  * ═══════════════════════════════════════════════════════════════
  */
 (function(){
@@ -27,15 +10,12 @@
   if(window._M1_BRIDGE_LOADED) return;
   window._M1_BRIDGE_LOADED = true;
 
-  // ── 1. Leer target ──────────────────────────────────────────
   const target = (typeof window.MOTOR_PEEK_TARGET === 'function')
     ? window.MOTOR_PEEK_TARGET()
     : (function(){ try{ return JSON.parse(localStorage.getItem('fc_admin_target')||'null'); }catch(e){ return null; } })();
 
-  // ── 2. Interceptar la cola SIEMPRE (aunque no haya target) ─
   installQueueInterceptor();
 
-  // Si no hay target → nada más que hacer
   if(!target || !target.claseId){
     console.log('%c[M1 BRIDGE] sin target activo · M1 funciona en modo libre', 'color:#7A6130');
     return;
@@ -44,13 +24,8 @@
   console.log('%c[M1 BRIDGE] 🎯 target activo: ' + target.claseId + ' (' + target.cat + ')',
               'color:#fbbf24;font-weight:700');
 
-  // ── 3. Inyectar banner ─────────────────────────────────────
   injectBanner(target);
-
-  // ── 4. Pre-llenar prompt cuando esté disponible ────────────
   waitForPrompt(target);
-
-  /* ────────── HELPERS ────────── */
 
   function injectBanner(t){
     const css = `
@@ -95,14 +70,13 @@
         <span class="b-id">${t.claseId}</span>
         <span class="b-niv ${t.niv||'p'}">${(t.nivName||t.niv||'').toUpperCase()}</span>
         <br/>
-        <b>${escapeHtml(t.titulo||'')}</b>
-        <span style="opacity:.7;"> · ${escapeHtml(t.cat||'')}</span>
+        <b>${escapeHtml(t.titulo||'')} </b>
+        <span style="opacity:.7;"> · ${escapeHtml(t.cat||'')} </span>
         <br/>
-        <span class="b-path">📁 ${t.targetPath||'—'}</span>
+        <span class="b-path">📁 ${t.targetPath||'—'} </span>
       </div>
       <button class="b-x" onclick="window._M1_BRIDGE_CLEAR()">✕ Modo libre</button>
     `;
-    // Insertar al principio del body (justo después de cualquier sticky bridge superior)
     if(document.body.firstChild){
       document.body.insertBefore(bar, document.body.firstChild);
     } else {
@@ -114,15 +88,11 @@
       else try{ localStorage.removeItem('fc_admin_target'); }catch(e){}
       const el = document.getElementById('m1-bridge-banner');
       if(el) el.remove();
-      // Recargar para limpiar el estado
-      // (opcional — comentado para no perder el trabajo del usuario)
-      // location.reload();
     };
   }
 
   function waitForPrompt(t, tries){
     tries = tries || 0;
-    // Posibles IDs del input de prompt en M1
     const ids = ['txtPrompt','prompt','promptInput','txt-prompt'];
     let input = null;
     for(const id of ids){
@@ -133,15 +103,35 @@
     }
     if(!input){
       if(tries < 50) return setTimeout(()=>waitForPrompt(t, tries+1), 200);
-      console.warn('[M1 BRIDGE] no encontré el input de prompt — se omite el pre-fill');
       return;
     }
-    // Solo pre-llenar si está vacío (no pisar lo que la usuaria escribió)
-    if(input.value && input.value.trim().length > 0) return;
 
+    // PARCHE: Si es peluquería (academia), NO tocar el textarea
+    // Activar modo cats para que M1 use sus prompts profesionales de CATS[]
+    const esPeluqueria = t.cat && t.cat.toLowerCase() !== 'fitness';
+    if(esPeluqueria){
+      setTimeout(function(){
+        if(typeof window.activarModo === 'function') window.activarModo('cats');
+        // Intentar seleccionar la categoría correcta en CATS[]
+        if(window.CATS && Array.isArray(window.CATS)){
+          const catLower = (t.cat||'').toLowerCase();
+          const idx = window.CATS.findIndex(c =>
+            catLower.includes(c.id) ||
+            (c.label||c.id||''). toLowerCase().replace(/[^a-z]/g,'').includes(catLower.replace(/[^a-z]/g,'').slice(0,5))
+          );
+          if(idx >= 0 && window.S){ window.S.catIdx = idx; }
+        }
+        if(typeof window.updateModeUI === 'function') window.updateModeUI();
+        console.log('[M1 BRIDGE] peluquería → modo cats activado, textarea intacto');
+      }, 200);
+      return; // NO pre-llenar textarea con prompt de peluquería
+    }
+
+    // FITNESS: solo pre-llenar si está vacío
+    if(input.value && input.value.trim().length > 0) return;
     const suggestion = buildPromptSuggestion(t);
+    if(!suggestion) return;
     input.value = suggestion;
-    // Disparar eventos para que el módulo se entere
     ['input','change','keyup'].forEach(ev => {
       try{ input.dispatchEvent(new Event(ev, {bubbles:true})); }catch(e){}
     });
@@ -149,29 +139,17 @@
   }
 
   function buildPromptSuggestion(t){
-    // Generar prompt base según la categoría
     const base = (t.titulo||'').trim();
-    const ctx = (t.cat||'').replace(/[^\w\s]/g,'').trim();
-    // Plantillas por familia (puedes editar a gusto)
     const lower = (t.cat||'').toLowerCase();
-    let style = 'fotografía profesional de peluquería, alta calidad, iluminación cinematográfica, fondo neutro';
-    if(lower.includes('bioseguridad'))   style = 'peluquero profesional con EPP completo, ambiente clínico de salón, alta calidad';
-    else if(lower.includes('herramientas')) style = 'primer plano de herramientas de peluquería sobre mesa de madera, fondo neutro';
-    else if(lower.includes('lavado'))    style = 'lavado de cabello profesional en lavabo de salón, agua templada, manos del peluquero visibles';
-    else if(lower.includes('tinte'))     style = 'aplicación de tinte capilar en mechones definidos, pincel y bowl visibles';
-    else if(lower.includes('mechas'))    style = 'técnica de mechas con papel aluminio, sección de cabello definida';
-    else if(lower.includes('balayage'))  style = 'técnica balayage natural, mano del peluquero con pincel ancho, sin papel';
-    else if(lower.includes('queratina')) style = 'aplicación de queratina alisadora, vapor visible, plancha cerca';
-    else if(lower.includes('corte'))     style = 'corte de cabello profesional con tijera, sección horizontal definida';
-    else if(lower.includes('planchado')) style = 'planchado capilar profesional, vapor brillante, cabello liso';
-    else if(lower.includes('morfolog'))  style = 'rostro de modelo con corte adaptado a su morfología facial';
-    else if(lower.includes('alerta'))    style = 'consulta peluquero-cliente, ficha técnica visible, expresión profesional';
-
-    return `${base} — ${style}, ${ctx}, sin texto, sin marcas`;
+    // Solo construir prompt para fitness — peluquería usa CATS[] directamente
+    if(lower !== 'fitness') return '';
+    const grupoEn = {gluteo:'glutes and hips',pierna:'legs (quadriceps, hamstrings, calves)',superior:'upper body (chest, back, shoulders, arms)'}[t.grupo] || t.grupo;
+    const equipoEn = {maquina:'using professional gym machines',mancuerna:'using dumbbells and free weights',corporal:'using bodyweight only, no equipment'}[t.equipo] || t.equipo;
+    const motorEn = {masa:'hypertrophy training, heavy load, focused on building muscle mass',perder:'high-intensity metabolic training, focused on fat loss',mantener:'controlled strength-maintenance training'}[t.motor] || t.motor;
+    return base + ' — professional fitness training, ' + grupoEn + ', ' + equipoEn + ', ' + motorEn + ', no text, no watermark';
   }
 
   function installQueueInterceptor(){
-    // Interceptamos localStorage.setItem para enriquecer la cola SIEMPRE que se escriba con un target activo
     const origSet = localStorage.setItem.bind(localStorage);
     if(origSet._m1_wrapped) return;
     const wrapped = function(key, val){
@@ -183,7 +161,6 @@
           if(t && t.claseId){
             const queue = JSON.parse(val);
             if(Array.isArray(queue) && queue.length){
-              // Etiquetamos los items que NO tengan ya claseId
               queue.forEach(item => {
                 if(item && !item.claseId){
                   const itemKind = item.tipo || 'img';
@@ -204,7 +181,6 @@
                 }
               });
               val = JSON.stringify(queue);
-              // Si tiene ID, hacemos un beep visual
               flashSuccess('✓ Enviado a M4 etiquetado como ' + t.claseId);
             }
           }
