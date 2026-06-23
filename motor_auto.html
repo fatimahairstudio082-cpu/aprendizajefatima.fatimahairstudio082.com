@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motor Automático · Fátima Caldea Studio</title>
+<style>
+  :root{
+    --bg:#0e1117; --bg2:#161b25; --bg3:#1e2533; --border:#2a3344;
+    --text:#e6e9ef; --muted:#7c879b; --gold:#C9A84C; --gold2:#e3c869;
+    --green:#22c55e; --red:#E74C3C; --blue:#3b82f6; --cyan:#00bcd4;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:13px;}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .logo{font-weight:800;letter-spacing:.5px;}
+  .logo span{color:var(--gold);}
+  .sub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .pill{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);}
+  .pill.ok{color:var(--green);border-color:rgba(34,197,94,.4);}
+  .pill.no{color:var(--red);border-color:rgba(231,76,60,.4);cursor:pointer;}
+  .wrap{max-width:1100px;margin:0 auto;padding:22px;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:18px;}
+  .card h2{margin:0 0 4px;font-size:14px;}
+  .card p.h{margin:0 0 14px;font-size:11px;color:var(--muted);}
+  .row{display:flex;gap:18px;flex-wrap:wrap;}
+  .group{flex:1;min-width:180px;}
+  .group label{display:block;font-size:11px;color:var(--gold2);margin-bottom:6px;letter-spacing:.3px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{padding:6px 12px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;font-size:12px;user-select:none;transition:.12s;}
+  .chip.on{background:rgba(201,168,76,.16);border-color:var(--gold);color:var(--gold2);}
+  .opts{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:14px;font-size:12px;}
+  .opts label{display:flex;align-items:center;gap:6px;color:var(--muted);cursor:pointer;}
+  .btn{border:none;border-radius:8px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;}
+  .btn-go{background:linear-gradient(135deg,#22c55e,#16a34a);color:#04210f;}
+  .btn-go:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-stop{background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.4);color:var(--red);}
+  .btn-ghost{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-weight:600;}
+  .count{font-family:'JetBrains Mono',monospace;color:var(--gold2);}
+  .progwrap{height:10px;background:var(--bg3);border-radius:6px;overflow:hidden;margin:14px 0 8px;}
+  .progfill{height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .25s;}
+  .progtxt{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+  .log{background:#0a0d13;border:1px solid var(--border);border-radius:8px;padding:12px;height:240px;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;margin-top:12px;}
+  .log .ok{color:var(--green);} .log .err{color:var(--red);} .log .skip{color:var(--muted);} .log .info{color:var(--cyan);}
+  .preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px;}
+  .preview img{width:100%;border:1px solid var(--border);border-radius:6px;}
+  .keybox{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;}
+  .keybox input{flex:1;min-width:220px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:9px 11px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+  .note{font-size:11px;color:var(--muted);line-height:1.6;}
+  .note b{color:var(--gold2);}
+  /* galería de revisión */
+  .review{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-top:14px;}
+  .rv{background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative;transition:.15s;}
+  .rv.aprobado{border-color:var(--green);box-shadow:0 0 0 1px var(--green) inset;}
+  .rv.descartado{opacity:.4;border-color:var(--red);}
+  .rv .media{width:100%;height:200px;background:#0a0d13;display:flex;align-items:center;justify-content:center;}
+  .rv .media img,.rv .media video{width:100%;height:100%;object-fit:cover;}
+  .rv .lbl{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--muted);padding:6px 8px;border-top:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .rv .acts{display:flex;border-top:1px solid var(--border);}
+  .rv .acts button{flex:1;border:none;background:transparent;color:var(--text);padding:9px 0;cursor:pointer;font-size:14px;border-right:1px solid var(--border);transition:.12s;}
+  .rv .acts button:last-child{border-right:none;}
+  .rv .acts button:hover{background:var(--bg2);}
+  .rv .acts .ap.on{background:rgba(34,197,94,.2);}
+  .rv .acts .ds.on{background:rgba(231,76,60,.2);}
+  .rv .badge{position:absolute;top:6px;left:6px;font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.7);}
+  .rv .badge.pend{color:var(--gold2);} .rv .badge.ap{color:var(--green);} .rv .badge.ds{color:var(--red);}
+  .reviewbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .seg button{background:var(--bg3);border:none;color:var(--muted);padding:8px 14px;cursor:pointer;font-size:12px;font-weight:600;}
+  .seg button.on{background:rgba(201,168,76,.16);color:var(--gold2);}
+  .drivebox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+  .drivebox input{flex:1;min-width:240px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:9px 11px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+  /* lista de clases peluquería */
+  .clist{border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:340px;overflow-y:auto;}
+  .crow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;}
+  .crow:last-child{border-bottom:none;}
+  .crow .cid{font-family:'JetBrains Mono',monospace;color:var(--gold2);min-width:90px;}
+  .crow .ctit{flex:1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .crow .cniv{font-size:10px;color:var(--muted);}
+  .crow .cst{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid var(--border);}
+  .crow .cst.has{color:var(--green);border-color:rgba(34,197,94,.4);}
+  .crow .cst.no{color:var(--muted);}
+  .chead{background:var(--bg3);font-weight:700;color:var(--gold2);}</style>
+</head>
+<body>
+
+<div class="top">
+  <div>
+    <div class="logo">FÁTIMA CALDEA — <span>MOTOR AUTOMÁTICO</span></div>
+    <div class="sub">Genera y sube láminas de fitness a Firebase en lote · alimenta el Bloque 5 en tiempo real</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="pill" id="pillEngine">⚙️ Replicate · flux-dev</span>
+    <span class="pill no" id="pillAuth" title="Clic para iniciar sesión">🔒 sin sesión</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- CLAVES -->
+  <div class="card">
+    <h2>🔑 Claves (privadas · solo en este navegador)</h2>
+    <p class="h">Se comparten con el Estudio (M1). Si ya pegaste tu token de Replicate en M1, aquí aparece solo.</p>
+    <div class="keybox">
+      <input id="keyReplicate" type="password" placeholder="Replicate token r8_…" autocomplete="off">
+      <button class="btn btn-ghost" onclick="guardarKey()">Guardar</button>
+    </div>
+    <div class="note" style="margin-top:8px;">El proxy <b id="proxyTxt"></b> también puede tener <b>REPLICATE_API_TOKEN</b> en Netlify; en ese caso el token de arriba es opcional.</div>
+  </div>
+
+  <!-- MODO -->
+  <div class="card">
+    <h2>🧭 ¿Qué sistema vas a alimentar?</h2>
+    <div class="opts" style="margin-top:4px;">
+      <label><input type="radio" name="modo" value="fitness" checked onchange="setModo('fitness')"> 🏋️ Fitness (Bloque 5)</label>
+      <label><input type="radio" name="modo" value="pelu" onchange="setModo('pelu')"> ✂️ Peluquería (Academia)</label>
+      <label><input type="radio" name="modo" value="hub" onchange="setModo('hub')"> 🎴 Tarjetas del Hub</label>
+      <label><input type="radio" name="modo" value="corte" onchange="setModo('corte')"> ✂️ Motor de Corte M1-M7</label>
+    </div>
+    <div class="reviewbar">
+      <span style="color:var(--gold2);font-size:12px;">Modo de trabajo:</span>
+      <div class="seg" id="segGen">
+        <button class="on" data-gen="revisar" onclick="setGen('revisar')">👁️ Generar y revisar</button>
+        <button data-gen="auto" onclick="setGen('auto')">⚡ Automático (subir directo)</button>
+      </div>
+      <span class="note" id="genHint" style="margin-left:auto;max-width:380px;">En <b>revisar</b>: genera todo a una galería; tú apruebas y luego subes solo lo aprobado.</span>
+    </div>
+  </div>
+
+  <!-- GOOGLE DRIVE -->
+  <div class="card">
+    <h2>☁️ Respaldo en Google Drive <span class="pill no" id="pillDrive" style="cursor:pointer;">🔌 sin conectar</span></h2>
+    <p class="h">Cada imagen/video que se sube a Firebase se copia también a una carpeta de tu Drive (respaldo de todo lo generado). Necesita tu <b>Client ID de Google OAuth</b> (consola de Google Cloud · scope drive.file).</p>
+    <div class="drivebox">
+      <input id="driveClientId" type="text" placeholder="Client ID de Google OAuth · xxxxx.apps.googleusercontent.com" autocomplete="off">
+      <button class="btn btn-ghost" onclick="guardarDriveId()">Guardar</button>
+      <button class="btn btn-ghost" id="btnDrive" onclick="conectarDrive()">Conectar Drive</button>
+    </div>
+    <div class="note" style="margin-top:8px;">Carpeta de respaldo: <b>Fátima Caldea · Generados</b> (se crea sola). Si no conectas Drive, todo sigue funcionando solo con Firebase.</div>
+  </div>
+
+  <!-- SELECCIÓN · FITNESS -->
+  <div class="card" id="cardFitness">
+    <h2>🎯 ¿Qué láminas generar?</h2>
+    <p class="h">La imagen de fitness depende solo de <b>grupo × motor × equipo × cantidad</b> (no del día): son <b>81 láminas únicas</b>. Elige el lote.</p>
+    <div class="row">
+      <div class="group">
+        <label>Grupo muscular</label>
+        <div class="chips" id="chGrupo"></div>
+      </div>
+      <div class="group">
+        <label>Motor (objetivo)</label>
+        <div class="chips" id="chMotor"></div>
+      </div>
+      <div class="group">
+        <label>Equipamiento</label>
+        <div class="chips" id="chEquipo"></div>
+      </div>
+      <div class="group">
+        <label>Cantidad de ejercicios</label>
+        <div class="chips" id="chNej"></div>
+      </div>
+    </div>
+    <div class="opts" style="margin-top:6px;">
+      <span style="color:var(--gold2);">Tipo de contenido:</span>
+      <label><input type="radio" name="tipo" value="img" checked> 🖼️ Láminas (imágenes)</label>
+      <label><input type="radio" name="tipo" value="vid"> 🎬 Videos por ejercicio</label>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="optSkip" checked> Omitir las que ya están en Firebase (reanudar)</label>
+      <label><input type="checkbox" id="optRegen"> Forzar regenerar (sube versión nueva)</label>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="selTodo()">Seleccionar todo</button>
+      <button class="btn btn-ghost" onclick="selNada()">Limpiar</button>
+      <span class="count" id="selCount">0 láminas seleccionadas</span>
+    </div>
+  </div>
+
+  <!-- SELECCIÓN · PELUQUERÍA -->
+  <div class="card" id="cardPelu" style="display:none;">
+    <h2>✂️ ¿Qué clases de la Academia generar?</h2>
+    <p class="h">Cada clase genera <b>1 imagen</b> → Storage <code>academia/{slug}/{claseId}/imagen.jpg</code> + Firestore <code>clases_imgs/{claseId}</code>. La Academia se actualiza en tiempo real.</p>
+    <div class="row">
+      <div class="group" style="flex:1;min-width:240px;">
+        <label>Bloque / categoría</label>
+        <div class="chips" id="chPeluCat"></div>
+      </div>
+      <div class="group">
+        <label>Nivel</label>
+        <div class="chips" id="chPeluNiv"></div>
+      </div>
+      <div class="group">
+        <label>Variante de imagen</label>
+        <div class="chips" id="chPeluVar"></div>
+      </div>
+    </div>
+    <div class="opts" style="margin-top:6px;">
+      <span style="color:var(--gold2);">Tipo de contenido:</span>
+      <label><input type="radio" name="tipoP" value="img" checked> 🖼️ Imagen</label>
+      <label><input type="radio" name="tipoP" value="vid"> 🎬 Video por clase</label>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="optSkipP" checked> Omitir las que ya tienen imagen (reanudar)</label>
+      <label><input type="checkbox" id="optRegenP"> Forzar regenerar</label>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="selPeluTodo()">Seleccionar todas las categorías</button>
+      <button class="btn btn-ghost" onclick="selPeluNada()">Limpiar</button>
+      <button class="btn btn-ghost" onclick="verClasesPelu()">👁️ Ver las clases que se generarán</button>
+      <span class="count" id="selCountP">0 clases seleccionadas</span>
+    </div>
+    <div id="peluClaseList" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- SELECCIÓN · HUB -->
+  <div class="card" id="cardHub" style="display:none;">
+    <h2>🎴 Tarjetas del Fátima Hub</h2>
+    <p class="h">Genera la imagen de cada tarjeta de la portada → Firestore <code>hub_tarjetas/{n}</code> (campo <code>imgUrl</code>). El Hub se actualiza en tiempo real, igual que desde la biblioteca.</p>
+    <div class="group" style="margin-bottom:8px;">
+      <label>Tarjetas y portadas</label>
+      <div class="chips" id="chHub"></div>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="optSkipH"> Omitir las que ya tienen imagen</label>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="selHubTodo()">Seleccionar todas</button>
+      <button class="btn btn-ghost" onclick="selHubNada()">Limpiar</button>
+      <span class="count" id="selCountH">0 tarjetas seleccionadas</span>
+    </div>
+  </div>
+
+  <!-- SELECCIÓN · MOTOR DE CORTE -->
+  <div class="card" id="cardCorte" style="display:none;">
+    <h2>✂️ Motor de Corte · Módulos M1-M7</h2>
+    <p class="h">Genera la imagen de cada módulo del Bloque 1 → Firestore <code>corte_modulos/{M1..M7}</code> (campo <code>imgUrl</code>). El Bloque 1 lo lee en tiempo real.</p>
+    <div class="group" style="margin-bottom:8px;">
+      <label>Módulos</label>
+      <div class="chips" id="chCorte"></div>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="optSkipC"> Omitir los que ya tienen imagen</label>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="selCorteTodo()">Seleccionar todos</button>
+      <button class="btn btn-ghost" onclick="selCorteNada()">Limpiar</button>
+      <span class="count" id="selCountC">0 módulos seleccionados</span>
+    </div>
+  </div>
+
+  <!-- SUBIDA INTELIGENTE · DRIVE / ARCHIVO -->
+  <div class="card" id="cardManual">
+    <h2>📎 Subida inteligente · desde Google Drive o tu PC</h2>
+    <p class="h">¿Ya tienes la imagen o el video hecho? Pega su enlace de <b>Google Drive</b> o elige un archivo de tu computadora y el sistema lo envía a la clase correcta (sin pasar por la IA). Pensado para los bloques más complejos: <b>Fitness</b> y <b>Peluquería</b>.</p>
+    <div class="row">
+      <div class="group">
+        <label>¿A qué sistema va?</label>
+        <select id="manSys" onchange="manSysChange()">
+          <option value="pelu">✂️ Peluquería (clase de academia)</option>
+          <option value="fitness">🏋️ Fitness (clave de lámina/video)</option>
+          <option value="hub">🎴 Tarjeta del Hub</option>
+          <option value="corte">✂️ Módulo de Corte M1-M7</option>
+        </select>
+      </div>
+      <div class="group" style="flex:1;min-width:220px;">
+        <label id="manTargetLbl">Clase destino</label>
+        <input id="manTarget" type="text" list="manTargetList" placeholder="escribe para buscar… (claseId o título)" autocomplete="off" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:9px 11px;font-family:'JetBrains Mono',monospace;font-size:12px;">
+        <datalist id="manTargetList"></datalist>
+      </div>
+      <div class="group">
+        <label>Tipo</label>
+        <select id="manKind"><option value="img">🖼️ Imagen</option><option value="vid">🎬 Video</option></select>
+      </div>
+    </div>
+    <div class="reviewbar" style="border:none;padding-top:6px;margin-top:4px;">
+      <div class="seg" id="segSrc">
+        <button class="on" data-src="drive" onclick="manSetSrc('drive')">☁️ Enlace de Drive</button>
+        <button data-src="file" onclick="manSetSrc('file')">📁 Archivo de mi PC</button>
+      </div>
+    </div>
+    <div class="drivebox" id="manDriveBox">
+      <input id="manDriveLink" type="text" placeholder="Pega aquí el enlace de Google Drive (o el ID)" autocomplete="off">
+    </div>
+    <div class="drivebox" id="manFileBox" style="display:none;">
+      <input id="manFile" type="file" accept="image/*,video/*" style="border:none;padding:0;">
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="manAdd()">➕ Añadir a revisión</button>
+      <span class="note" id="manHint">Se añade a la galería de abajo; revisas y pulsas “Subir aprobadas”.</span>
+    </div>
+  </div>
+
+  <!-- EJECUCIÓN -->
+  <div class="card">
+    <h2>🚀 Generar y subir</h2>
+    <p class="h">Por cada lámina: genera 1 imagen por ejercicio (flux-dev) → compone la grilla → sube a Firebase Storage + Firestore <b>fitness_imgs</b>.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-go" id="btnGo" onclick="iniciar()">▶️ Iniciar lote</button>
+      <button class="btn btn-stop" id="btnStop" onclick="detener()" style="display:none;">⏹ Detener</button>
+    </div>
+    <div class="progwrap"><div class="progfill" id="progFill"></div></div>
+    <div class="progtxt" id="progTxt">Listo.</div>
+    <div class="log" id="log"></div>
+    <div class="preview" id="preview"></div>
+
+    <!-- GALERÍA DE REVISIÓN -->
+    <div id="reviewWrap" style="display:none;">
+      <div class="reviewbar">
+        <b style="color:var(--gold2);">👁️ Revisión</b>
+        <span class="count" id="rvStats">0 generadas</span>
+        <button class="btn btn-ghost" onclick="rvAprobarTodas()">✅ Aprobar todas</button>
+        <button class="btn btn-ghost" onclick="rvLimpiar()">🗑 Vaciar galería</button>
+        <button class="btn btn-go" id="btnSubirAp" onclick="subirAprobadas()" style="margin-left:auto;">☁️ Subir aprobadas</button>
+      </div>
+      <div class="review" id="review"></div>
+    </div>
+  </div>
+
+  <div class="note">
+    ℹ️ <b>Cómo alimenta el sistema:</b> Fitness → Storage <code>fitness/…</code> + Firestore <code>fitness_imgs</code> / <code>fitness_videos</code> (Bloque 5). Peluquería → <code>academia/{slug}/{claseId}/</code> + <code>clases_imgs</code> (Academia). Marca <b>"Omitir las que ya están"</b> para reanudar sin gastar generaciones de más.
+  </div>
+</div>
+
+<!-- Motor de conocimiento fitness -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="motor_conocimiento_fitness.js"></script>
+<!-- Motores de conocimiento de peluquería (mismos que usa el admin) -->
+<script src="motor_p1_bioseg_balayage.js"></script>
+<script src="motor_p2_queratina_elevaciones.js"></script>
+<script src="motor_p3_morfologia_alertas.js"></script>
+<!-- Librería única de prompts -->
+<script src="motor_prompts.js"></script>
+<script>
+/* ════════ CONFIG ════════ */
+const FB_CFG = {apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",authDomain:"aprendisajefatima.firebaseapp.com",projectId:"aprendisajefatima",storageBucket:"aprendisajefatima.firebasestorage.app",messagingSenderId:"744176967394",appId:"1:744176967394:web:743b7c2a455e1e6ba7c8bb"};
+const ADMIN_EMAIL = 'fatimahairstudio082@gmail.com';
+const PROXY = (window.REPLICATE_PROXY) || (location.origin + '/.netlify/functions/replicate');
+document.getElementById('proxyTxt').textContent = PROXY;
+
+const LBL = {
+  grupo:{gluteo:'🍑 Glúteo',pierna:'🦵 Pierna',superior:'💪 Tren Superior'},
+  motor:{masa:'Ganar masa',perder:'Perder grasa',mantener:'Mantener'},
+  equipo:{maquina:'Máquina',mancuerna:'Mancuerna',corporal:'Corporal'},
+  nej:{6:'6 ej · Principiante',8:'8 ej · Intermedio',12:'12 ej · Avanzado'}
+};
+const SEL = {grupo:new Set(),motor:new Set(),equipo:new Set(),nej:new Set()};
+let RUNNING=false, STOP=false;
+
+/* ════════ CHIPS ════════ */
+function buildChips(dim, contId){
+  const cont=document.getElementById(contId);
+  Object.keys(LBL[dim]).forEach(k=>{
+    const d=document.createElement('div');
+    d.className='chip'; d.textContent=LBL[dim][k];
+    d.onclick=()=>{ if(SEL[dim].has(k)){SEL[dim].delete(k);d.classList.remove('on');}else{SEL[dim].add(k);d.classList.add('on');} updateCount(); };
+    cont.appendChild(d);
+  });
+}
+buildChips('grupo','chGrupo'); buildChips('motor','chMotor'); buildChips('equipo','chEquipo'); buildChips('nej','chNej');
+
+function selTodo(){ ['grupo','motor','equipo','nej'].forEach(dim=>{Object.keys(LBL[dim]).forEach(k=>SEL[dim].add(isNaN(+k)?k:+k));}); document.querySelectorAll('.chip').forEach(c=>c.classList.add('on')); updateCount(); }
+function selNada(){ ['grupo','motor','equipo','nej'].forEach(dim=>SEL[dim].clear()); document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); updateCount(); }
+
+function combosSeleccionados(){
+  const todos = MOTOR_PROMPTS.fitnessCombos();
+  const g=SEL.grupo, m=SEL.motor, e=SEL.equipo, n=SEL.nej;
+  return todos.filter(c =>
+    (g.size?g.has(c.grupo):true) &&
+    (m.size?m.has(c.motor):true) &&
+    (e.size?e.has(c.equipo):true) &&
+    (n.size?n.has(c.nej):true)
+  );
+}
+function updateCount(){
+  const k = combosSeleccionados().length;
+  document.getElementById('selCount').textContent = k+' lámina(s) seleccionada(s)';
+  document.getElementById('btnGo').disabled = (k===0||RUNNING);
+}
+updateCount();
+
+/* ════════ PELUQUERÍA ════════ */
+const NIV_LBL = {p:'🌱 Principiante', i:'⚡ Intermedio', a:'🔥 Avanzado'};
+const VAR_LBL = {cliente:'Cliente (resultado)', peluquero:'Técnica', protocolo:'Protocolo', alertas:'Alertas'};
+let MODO='fitness';
+let PELU_FLAT=[];                       // [{id, cat, slug, titulo, niv}]
+let PELU_CATS=[];                       // [cat,...]
+const SELP={cat:new Set(), niv:new Set(), var:new Set(['cliente'])};
+
+function catToSlug(cat){ return String(cat).replace(/[^\w\s]/g,'').trim().toLowerCase().replace(/\s+/g,'_'); }
+
+function cargarPelu(){
+  PELU_FLAT=[]; const catSet=new Set();
+  [window.CONOCIMIENTO_P1, window.CONOCIMIENTO_P2, window.CONOCIMIENTO_P3].forEach(blk=>{
+    if(!blk) return;
+    Object.entries(blk).forEach(([cat,arr])=>{
+      if(!Array.isArray(arr)) return;
+      catSet.add(cat);
+      arr.forEach(c=>{
+        PELU_FLAT.push({ id:c.id, cat, slug:catToSlug(cat), titulo:c.n||c.titulo||c.id, niv:c.niv||'p' });
+      });
+    });
+  });
+  PELU_CATS=[...catSet];
+}
+
+function buildPeluChips(){
+  cargarPelu();
+  const cc=document.getElementById('chPeluCat'); cc.innerHTML='';
+  if(!PELU_CATS.length){
+    cc.innerHTML='<span class="h" style="color:var(--gold2)">⚠️ No se cargaron los motores P1/P2/P3. Súbelos a este hosting (motor_p1_…js, etc.).</span>';
+  }
+  PELU_CATS.forEach(cat=>{
+    const n=PELU_FLAT.filter(c=>c.cat===cat).length;
+    const d=document.createElement('div'); d.className='chip'; d.textContent=cat+' ('+n+')';
+    d.onclick=()=>{ if(SELP.cat.has(cat)){SELP.cat.delete(cat);d.classList.remove('on');}else{SELP.cat.add(cat);d.classList.add('on');} updateCountP(); };
+    cc.appendChild(d);
+  });
+  const nc=document.getElementById('chPeluNiv'); nc.innerHTML='';
+  Object.keys(NIV_LBL).forEach(k=>{
+    const d=document.createElement('div'); d.className='chip'; d.textContent=NIV_LBL[k];
+    d.onclick=()=>{ if(SELP.niv.has(k)){SELP.niv.delete(k);d.classList.remove('on');}else{SELP.niv.add(k);d.classList.add('on');} updateCountP(); };
+    nc.appendChild(d);
+  });
+  const vc=document.getElementById('chPeluVar'); vc.innerHTML='';
+  Object.keys(VAR_LBL).forEach(k=>{
+    const d=document.createElement('div'); d.className='chip'+(k==='cliente'?' on':''); d.textContent=VAR_LBL[k];
+    d.onclick=()=>{ if(SELP.var.has(k)){SELP.var.delete(k);d.classList.remove('on');}else{SELP.var.add(k);d.classList.add('on');} updateCountP(); };
+    vc.appendChild(d);
+  });
+  updateCountP();
+}
+function clasesPeluSeleccionadas(){
+  return PELU_FLAT.filter(c =>
+    (SELP.cat.size?SELP.cat.has(c.cat):false) &&
+    (SELP.niv.size?SELP.niv.has(c.niv):true)
+  );
+}
+function updateCountP(){
+  const k=clasesPeluSeleccionadas().length;
+  const nv=SELP.var.size||1;
+  document.getElementById('selCountP').textContent = k+' clase(s) × '+nv+' variante(s) = '+(k*nv)+' imágenes';
+  if(MODO==='pelu') document.getElementById('btnGo').disabled = (k===0||RUNNING);
+}
+function selPeluTodo(){ PELU_CATS.forEach(c=>SELP.cat.add(c)); document.querySelectorAll('#chPeluCat .chip').forEach(c=>c.classList.add('on')); updateCountP(); }
+function selPeluNada(){ SELP.cat.clear(); document.querySelectorAll('#chPeluCat .chip').forEach(c=>c.classList.remove('on')); updateCountP(); }
+
+// Lista las clases que se generarán, con su claseId y si ya tienen imagen/video.
+async function verClasesPelu(){
+  const clases=clasesPeluSeleccionadas();
+  const cont=document.getElementById('peluClaseList');
+  if(!clases.length){ cont.innerHTML='<div class="note">Selecciona al menos una categoría para ver sus clases.</div>'; return; }
+  cont.innerHTML='<div class="note">⏳ Consultando estado en Firebase…</div>';
+  await fbInit();
+  // leer estado actual de cada clase
+  const rows=await Promise.all(clases.map(async c=>{
+    let img=false, vid=false;
+    try{ const s=await FB.getDoc(FB.doc(FB.db,'clases_imgs',c.id)); if(s.exists()){ const d=s.data(); img=!!(d.url_jpg||d.url); vid=!!d.url_video; } }catch(_){}
+    return {c, img, vid};
+  }));
+  cont.innerHTML =
+    '<div class="clist">'+
+    '<div class="crow chead"><span class="cid">claseId</span><span class="ctit">Título</span><span class="cniv">Nivel</span><span class="cst">Imagen</span><span class="cst">Video</span></div>'+
+    rows.map(({c,img,vid})=>`<div class="crow">
+        <span class="cid">${esc(c.id)}</span>
+        <span class="ctit" title="${esc(c.titulo)}">${esc(c.titulo)}</span>
+        <span class="cniv">${esc((NIV_LBL[c.niv]||c.niv))}</span>
+        <span class="cst ${img?'has':'no'}">${img?'✓ sí':'— no'}</span>
+        <span class="cst ${vid?'has':'no'}">${vid?'✓ sí':'— no'}</span>
+      </div>`).join('')+
+    '</div>'+
+    '<div class="note" style="margin-top:8px;">📁 Cada clase sube a <b>academia/'+esc(clases[0].slug)+'/{claseId}/</b> · doc Firestore <b>clases_imgs/{claseId}</b>. Ese <b>claseId</b> es el que lee la Academia en tiempo real.</div>';
+}
+
+function setModo(m){
+  MODO=m;
+  document.getElementById('cardFitness').style.display = m==='fitness'?'':'none';
+  document.getElementById('cardPelu').style.display    = m==='pelu'?'':'none';
+  document.getElementById('cardHub').style.display     = m==='hub'?'':'none';
+  document.getElementById('cardCorte').style.display   = m==='corte'?'':'none';
+  if(m==='pelu'){ if(!PELU_FLAT.length) buildPeluChips(); updateCountP(); }
+  else if(m==='hub'){ if(!document.getElementById('chHub').children.length) buildHubChips(); updateCountH(); }
+  else if(m==='corte'){ if(!document.getElementById('chCorte').children.length) buildCorteChips(); updateCountC(); }
+  else updateCount();
+}
+
+// helper de cierre de lote
+function finLote(done,total,ok,omit,err,nombre){
+  setProg(done,total,`Terminado · ✅ ${ok} · ⏭️ ${omit} · ❌ ${err}`);
+  const cola = (GEN==='revisar') ? ' · revisa la galería y pulsa "Subir aprobadas".' : ' · sistema actualizado en tiempo real.';
+  logLine(`🏁 ${nombre} · ${ok} generada(s) · ${omit} omitida(s) · ${err} error(es)`+cola, 'ok');
+  RUNNING=false;
+  document.getElementById('btnGo').style.display='inline-block';
+  document.getElementById('btnStop').style.display='none';
+  if(MODO==='pelu') updateCountP(); else if(MODO==='hub') updateCountH(); else if(MODO==='corte') updateCountC(); else updateCount();
+}
+
+// ── existencia / subida peluquería ──
+async function yaExistePelu(claseId){
+  try{ const s=await FB.getDoc(FB.doc(FB.db,'clases_imgs',claseId)); return s.exists() && (s.data().url_jpg||s.data().url); }catch(_){ return false; }
+}
+async function subirPelu(clase, blob, variant){
+  // Variante 'cliente' → imagen.jpg principal (la que lee la Academia).
+  // Otras variantes → imagen_{variant}.jpg (no pisan la principal).
+  const fname = variant==='cliente' ? 'imagen.jpg' : ('imagen_'+variant+'.jpg');
+  const path  = 'academia/'+clase.slug+'/'+clase.id+'/'+fname;
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  const ts=new Date().toISOString();
+  const patch = { claseId:clase.id, cat:clase.cat, niv:clase.niv, imgActualizadoEn:ts };
+  if(variant==='cliente'){ patch.url_jpg=url; patch.url=url; patch.url_jpg_path=path; }
+  else { patch['url_'+variant]=url; patch['url_'+variant+'_path']=path; }
+  await FB.setDoc(FB.doc(FB.db,'clases_imgs',clase.id), patch, {merge:true});
+  return url;
+}
+
+// ── subida de VIDEO de academia → clases_imgs/{claseId}.url_video ──
+async function subirPeluVideo(clase, blob){
+  const path='academia/'+clase.slug+'/'+clase.id+'/video.mp4';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  await FB.setDoc(FB.doc(FB.db,'clases_imgs',clase.id),{ claseId:clase.id, cat:clase.cat, niv:clase.niv, url_video:url, path_video:path, videoActualizadoEn:new Date().toISOString() },{merge:true});
+  return url;
+}
+
+async function iniciarPelu(){
+  const clases=clasesPeluSeleccionadas();
+  const tipoP=(document.querySelector('input[name="tipoP"]:checked')||{}).value||'img';
+  const vars = tipoP==='vid' ? ['video'] : ([...SELP.var].length?[...SELP.var]:['cliente']);
+  if(!clases.length){ logLine('Selecciona al menos una categoría.','err'); return; }
+  if(!replicateKey()){ if(!confirm('No hay token de Replicate guardado. ¿El proxy ya tiene REPLICATE_API_TOKEN? Aceptar para continuar.')) return; }
+  if(GEN==='auto'){ const user=await ensureAuth(); if(!user){ logLine('Sin sesión admin no se puede subir.','err'); return; } }
+
+  RUNNING=true; STOP=false;
+  document.getElementById('btnGo').style.display='none';
+  document.getElementById('btnStop').style.display='inline-block';
+  document.getElementById('preview').innerHTML='';
+  const skip=document.getElementById('optSkipP').checked;
+  const regen=document.getElementById('optRegenP').checked;
+  const total=clases.length*vars.length;
+  logLine('▶️ Peluquería · '+clases.length+' clase(s) × '+vars.length+' '+(tipoP==='vid'?'video(s)':'variante(s)')+' = '+total,'info');
+
+  let done=0, ok=0, omit=0, err=0;
+  for(const clase of clases){
+    if(STOP) break;
+    for(const variant of vars){
+      if(STOP) break;
+      setProg(done,total,clase.id+' · '+variant+' ('+(done+1)+'/'+total+')');
+      try{
+        if(tipoP==='vid'){
+          // ── VIDEO de la clase ──
+          logLine('🎬 '+clase.id+' · video · generando…','info');
+          const genV=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.build({cat:clase.cat,catId:clase.cat,titulo:clase.titulo},'vid').prompt));
+          const blob=await genV();
+          await addJob({ label:clase.id+' · 🎬 video', blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_video.mp4', upload:(bl)=>subirPeluVideo(clase,bl), regen:genV });
+          ok++; done++; continue;
+        }
+        if(skip && !regen && variant==='cliente' && await yaExistePelu(clase.id)){ logLine('⏭️ '+clase.id+' ya tiene imagen · omitida','skip'); omit++; done++; continue; }
+        logLine('🎨 '+clase.id+' · '+variant+' · generando…','info');
+        const gen=async()=>fetchToBlob(await genImagen(MOTOR_PROMPTS.peluqueria(clase.cat, variant)));
+        const blob=await gen();
+        await addJob({ label:clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen });
+        ok++; done++;
+      }catch(e){ err++; done++; logLine('❌ '+clase.id+' · '+variant+': '+(e.message||e),'err'); }
+    }
+  }
+  finLote(done,total,ok,omit,err,'Peluquería');
+}
+
+/* ════════ HUB · TARJETAS ════════ */
+const HUB_CARDS = [
+  {n:'1', ico:'✂️', nom:'Motor de Corte & Diagnóstico'},
+  {n:'2', ico:'🎨', nom:'Colorimetría · Calculadora Cromática'},
+  {n:'3', ico:'📚', nom:'Academia & Biblioteca'},
+  {n:'4', ico:'🥗', nom:'Nutrición & Alimentación Fitness'},
+  {n:'5', ico:'💪', nom:'Entrenamientos Fitness'},
+  {n:'6', ico:'🧰', nom:'Optimizador · Herramientas'}
+];
+const HUB_PORTADAS = [
+  {n:'hero', ico:'🌅', nom:'Portada / Hero'},
+  {n:'login', ico:'🔑', nom:'Fondo de Login'},
+  {n:'chatbox', ico:'💬', nom:'Imagen del Chat'}
+];
+const HUB_PROMPT = {
+  '1':'Professional hairstyling scissors and hair diagnosis, elegant salon, close-up of cutting technique, warm gold tones, photorealistic, no text',
+  '2':'Hair colorimetry palette and color swatches, professional hairdresser mixing color, vibrant tones on a clean studio table, photorealistic, no text',
+  '3':'Beauty academy classroom with hairstyling students learning, elegant studio, books and mannequin heads, warm professional lighting, photorealistic, no text',
+  '4':'Healthy fitness nutrition flat lay, fresh balanced meal, vegetables lean protein, clean bright kitchen, top view, photorealistic, no text',
+  '5':'Athletic person training in a modern gym, dynamic fitness workout, motivational professional lighting, photorealistic, no text',
+  '6':'Professional digital tools and optimization dashboard concept, sleek modern workspace, gold and dark elegant palette, photorealistic, no text',
+  'hero':'Elegant luxury hair and beauty studio hero banner, sophisticated dark and gold ambiance, professional photorealistic, cinematic wide shot, no text',
+  'login':'Soft elegant beauty salon background for a login screen, blurred bokeh, dark gold luxury tones, photorealistic, no text',
+  'chatbox':'Friendly professional beauty assistant concept, warm elegant studio, soft lighting, photorealistic, no text'
+};
+const SELH=new Set();
+function buildHubChips(){
+  const c=document.getElementById('chHub'); c.innerHTML='';
+  [...HUB_CARDS, ...HUB_PORTADAS].forEach(b=>{
+    const d=document.createElement('div'); d.className='chip'; d.textContent=b.ico+' '+b.nom;
+    d.onclick=()=>{ if(SELH.has(b.n)){SELH.delete(b.n);d.classList.remove('on');}else{SELH.add(b.n);d.classList.add('on');} updateCountH(); };
+    c.appendChild(d);
+  });
+  updateCountH();
+}
+function updateCountH(){
+  document.getElementById('selCountH').textContent = SELH.size+' tarjeta(s) seleccionada(s)';
+  if(MODO==='hub') document.getElementById('btnGo').disabled=(SELH.size===0||RUNNING);
+}
+function selHubTodo(){ [...HUB_CARDS,...HUB_PORTADAS].forEach(b=>SELH.add(b.n)); document.querySelectorAll('#chHub .chip').forEach(c=>c.classList.add('on')); updateCountH(); }
+function selHubNada(){ SELH.clear(); document.querySelectorAll('#chHub .chip').forEach(c=>c.classList.remove('on')); updateCountH(); }
+
+async function yaExisteHub(n){
+  try{ const s=await FB.getDoc(FB.doc(FB.db,'hub_tarjetas',n)); return s.exists() && s.data().imgUrl; }catch(_){ return false; }
+}
+async function subirHub(n, blob){
+  const meta=[...HUB_CARDS,...HUB_PORTADAS].find(b=>b.n===n)||{};
+  const path='hub/'+n+'.jpg';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  const patch={ imgUrl:url, imgActualizadoEn:new Date().toISOString() };
+  if(meta.nom && (n!=='hero'&&n!=='login'&&n!=='chatbox')) patch.nom=meta.nom;
+  await FB.setDoc(FB.doc(FB.db,'hub_tarjetas',n), patch, {merge:true});
+  return url;
+}
+
+async function iniciarHub(){
+  const sel=[...HUB_CARDS,...HUB_PORTADAS].filter(b=>SELH.has(b.n));
+  if(!sel.length){ logLine('Selecciona al menos una tarjeta.','err'); return; }
+  if(!replicateKey()){ if(!confirm('No hay token de Replicate guardado. ¿El proxy ya tiene REPLICATE_API_TOKEN? Aceptar para continuar.')) return; }
+  if(GEN==='auto'){ const u=await ensureAuth(); if(!u){ logLine('Sin sesión admin no se puede subir.','err'); return; } }
+
+  RUNNING=true; STOP=false;
+  document.getElementById('btnGo').style.display='none';
+  document.getElementById('btnStop').style.display='inline-block';
+  document.getElementById('preview').innerHTML='';
+  const skip=document.getElementById('optSkipH').checked;
+  logLine('▶️ Hub · '+sel.length+' tarjeta(s)','info');
+
+  let done=0, ok=0, omit=0, err=0;
+  for(const b of sel){
+    if(STOP) break;
+    setProg(done,sel.length,'Tarjeta '+b.nom+' ('+(done+1)+'/'+sel.length+')');
+    try{
+      if(skip && await yaExisteHub(b.n)){ logLine('⏭️ '+b.nom+' ya tiene imagen','skip'); omit++; done++; continue; }
+      logLine('🎨 '+b.nom+' · generando…','info');
+      const gen=async()=>fetchToBlob(await genImagen(HUB_PROMPT[b.n]||('Professional elegant image about '+b.nom+', photorealistic, no text')));
+      const blob=await gen();
+      await addJob({ label:'Hub · '+b.nom, blob, driveName:'hub_'+b.n+'.jpg', upload:(bl)=>subirHub(b.n,bl), regen:gen });
+      ok++; done++;
+    }catch(e){ err++; done++; logLine('❌ '+b.nom+': '+(e.message||e),'err'); }
+  }
+  finLote(done,sel.length,ok,omit,err,'Hub');
+}
+
+/* ════════ MOTOR DE CORTE · M1-M7 ════════ */
+const CORTE_LBL={M1:'Protocolo de Limpieza',M2:'Herramientas Profesionales',M3:'Técnica Lógica de Corte',M4:'Avatar Fátima Caldea',M5:'Secciones y Divisiones',M6:'Elevaciones y Proyecciones',M7:'Geometría del Corte'};
+const CORTE_PROMPT={
+  M1:'Professional hair salon hygiene and sanitation protocol, clean sterilized tools, elegant studio, photorealistic, no text',
+  M2:'Professional hairdressing tools arranged elegantly, scissors razors combs clippers, studio close-up, photorealistic, no text',
+  M3:'Hairdresser demonstrating logical haircut technique on a client, professional salon, photorealistic, no text',
+  M4:'Elegant professional female hairstylist avatar portrait, confident, luxury salon, photorealistic, no text',
+  M5:'Hair sectioning and parting technique, clips dividing hair into sections, professional close-up, photorealistic, no text',
+  M6:'Hair elevation and projection angles demonstration, geometric cutting technique, professional salon, photorealistic, no text',
+  M7:'Geometry of haircut, angles and lines on hair, professional precision cutting, studio, photorealistic, no text'
+};
+const SELC=new Set();
+function buildCorteChips(){
+  const c=document.getElementById('chCorte'); c.innerHTML='';
+  Object.keys(CORTE_LBL).forEach(id=>{
+    const d=document.createElement('div'); d.className='chip'; d.textContent=id+' · '+CORTE_LBL[id];
+    d.onclick=()=>{ if(SELC.has(id)){SELC.delete(id);d.classList.remove('on');}else{SELC.add(id);d.classList.add('on');} updateCountC(); };
+    c.appendChild(d);
+  });
+  updateCountC();
+}
+function updateCountC(){ document.getElementById('selCountC').textContent=SELC.size+' módulo(s) seleccionado(s)'; if(MODO==='corte') document.getElementById('btnGo').disabled=(SELC.size===0||RUNNING); }
+function selCorteTodo(){ Object.keys(CORTE_LBL).forEach(id=>SELC.add(id)); document.querySelectorAll('#chCorte .chip').forEach(c=>c.classList.add('on')); updateCountC(); }
+function selCorteNada(){ SELC.clear(); document.querySelectorAll('#chCorte .chip').forEach(c=>c.classList.remove('on')); updateCountC(); }
+async function yaExisteCorte(id){ try{ const s=await FB.getDoc(FB.doc(FB.db,'corte_modulos',id)); return s.exists() && s.data().imgUrl; }catch(_){ return false; } }
+async function subirCorte(id, blob){
+  const path='corte/'+id+'.jpg';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  await FB.setDoc(FB.doc(FB.db,'corte_modulos',id),{ imgUrl:url, titulo:CORTE_LBL[id], imgActualizadoEn:new Date().toISOString() },{merge:true});
+  return url;
+}
+// Guarda una URL de Drive directamente (sin re-subir), igual que la biblioteca
+async function subirCorteRef(id, urlNorm, kind){
+  const patch = kind==='vid' ? { videoUrl:urlNorm } : { imgUrl:urlNorm };
+  patch.titulo=CORTE_LBL[id]; patch.actualizado=new Date().toISOString();
+  await FB.setDoc(FB.doc(FB.db,'corte_modulos',id), patch, {merge:true});
+}
+async function iniciarCorte(){
+  const sel=Object.keys(CORTE_LBL).filter(id=>SELC.has(id));
+  if(!sel.length){ logLine('Selecciona al menos un módulo.','err'); return; }
+  if(!replicateKey()){ if(!confirm('No hay token de Replicate guardado. ¿El proxy ya tiene REPLICATE_API_TOKEN? Aceptar para continuar.')) return; }
+  if(GEN==='auto'){ const u=await ensureAuth(); if(!u){ logLine('Sin sesión admin no se puede subir.','err'); return; } }
+  RUNNING=true; STOP=false;
+  document.getElementById('btnGo').style.display='none';
+  document.getElementById('btnStop').style.display='inline-block';
+  document.getElementById('preview').innerHTML='';
+  const skip=document.getElementById('optSkipC').checked;
+  logLine('▶️ Motor de Corte · '+sel.length+' módulo(s)','info');
+  let done=0, ok=0, omit=0, err=0;
+  for(const id of sel){
+    if(STOP) break;
+    setProg(done,sel.length,id+' · '+CORTE_LBL[id]+' ('+(done+1)+'/'+sel.length+')');
+    try{
+      if(skip && await yaExisteCorte(id)){ logLine('⏭️ '+id+' ya tiene imagen','skip'); omit++; done++; continue; }
+      logLine('🎨 '+id+' · generando…','info');
+      const gen=async()=>fetchToBlob(await genImagen(CORTE_PROMPT[id]));
+      const blob=await gen();
+      await addJob({ label:id+' · '+CORTE_LBL[id], blob, driveName:'corte_'+id+'.jpg', upload:(bl)=>subirCorte(id,bl), regen:gen });
+      ok++; done++;
+    }catch(e){ err++; done++; logLine('❌ '+id+': '+(e.message||e),'err'); }
+  }
+  finLote(done,sel.length,ok,omit,err,'Motor de Corte');
+}
+
+/* ════════ SUBIDA INTELIGENTE · DRIVE / ARCHIVO ════════ */
+let MAN_SRC='drive';
+function manSetSrc(s){ MAN_SRC=s; document.querySelectorAll('#segSrc button').forEach(b=>b.classList.toggle('on',b.dataset.src===s)); document.getElementById('manDriveBox').style.display=s==='drive'?'flex':'none'; document.getElementById('manFileBox').style.display=s==='file'?'flex':'none'; }
+function manSysChange(){
+  const sys=document.getElementById('manSys').value;
+  const lbl=document.getElementById('manTargetLbl');
+  const dl=document.getElementById('manTargetList');
+  const inp=document.getElementById('manTarget');
+  let opts=[];
+  if(sys==='pelu'){ lbl.textContent='Clase destino (claseId)'; if(!PELU_FLAT.length) cargarPelu(); opts=PELU_FLAT.map(c=>({v:c.id, t:c.titulo})); }
+  else if(sys==='fitness'){ lbl.textContent='Clave de fitness'; opts=fitnessClavesManual(); }
+  else if(sys==='hub'){ lbl.textContent='Tarjeta'; opts=[...HUB_CARDS,...HUB_PORTADAS].map(b=>({v:b.n,t:b.nom})); }
+  else if(sys==='corte'){ lbl.textContent='Módulo'; opts=Object.keys(CORTE_LBL).map(id=>({v:id,t:CORTE_LBL[id]})); }
+  dl.innerHTML=opts.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+  inp.value='';
+}
+function fitnessClavesManual(){
+  try{ return (MOTOR_PROMPTS.fitnessCombos()||[]).map(c=>({v:c.claveImgBase, t:c.claveImgBase})); }catch(_){ return []; }
+}
+async function manAdd(){
+  const sys=document.getElementById('manSys').value;
+  const target=document.getElementById('manTarget').value.trim();
+  const kind=document.getElementById('manKind').value;
+  if(!target){ logLine('Escribe la clase/tarjeta destino.','err'); return; }
+  let blob, label, driveName, upload;
+  try{
+    if(MAN_SRC==='drive'){
+      const link=document.getElementById('manDriveLink').value.trim();
+      if(!link){ logLine('Pega el enlace de Drive.','err'); return; }
+      logLine('☁️ Trayendo de Drive…','info');
+      blob=await driveToBlob(link, kind==='vid');
+    } else {
+      const f=document.getElementById('manFile').files[0];
+      if(!f){ logLine('Elige un archivo.','err'); return; }
+      blob=f;
+    }
+  }catch(e){ logLine('❌ '+(e.message||e),'err'); return; }
+
+  // resolver destino + función de subida (mismos contratos de producción)
+  if(sys==='pelu'){
+    if(!PELU_FLAT.length) cargarPelu();
+    const clase=PELU_FLAT.find(c=>c.id===target) || {id:target, slug:'academia', cat:'', niv:'p'};
+    label='Academia · '+clase.id+' · '+(kind==='vid'?'🎬':'🖼️');
+    driveName=clase.slug+'_'+clase.id+'_'+kind+'.jpg';
+    upload=(bl)=> kind==='vid' ? subirPeluVideo(clase,bl) : subirPelu(clase,bl,'cliente');
+  } else if(sys==='fitness'){
+    label='Fitness · '+target+' · '+(kind==='vid'?'🎬':'🖼️');
+    driveName='fitness_'+target+'.'+(kind==='vid'?'mp4':'jpg');
+    upload=(bl)=> kind==='vid' ? subirVideo(target,bl,target) : subir(target,bl);
+  } else if(sys==='hub'){
+    label='Hub · '+target; driveName='hub_'+target+'.jpg'; upload=(bl)=>subirHub(target,bl);
+  } else {
+    label='Corte · '+target; driveName='corte_'+target+'.jpg'; upload=(bl)=>subirCorte(target,bl);
+  }
+  const isVideo = kind==='vid';
+  await addJob({ label, blob, isVideo, driveName, upload, regen:async()=>blob });
+  logLine('➕ Añadido a revisión: '+label,'ok');
+  document.getElementById('manDriveLink').value=''; 
+  if(document.getElementById('manFile')) document.getElementById('manFile').value='';
+}
+
+/* ════════ LOG / PROGRESO ════════ */
+function logLine(msg,type){ const l=document.getElementById('log'); const d=document.createElement('div'); if(type)d.className=type; d.textContent=msg; l.appendChild(d); l.scrollTop=l.scrollHeight; }
+function setProg(done,total,txt){ document.getElementById('progFill').style.width=(total?Math.round(done/total*100):0)+'%'; document.getElementById('progTxt').textContent=txt||`${done}/${total}`; }
+
+/* ════════ FUENTE: GOOGLE DRIVE / ARCHIVO LOCAL ════════ */
+// Normaliza una imagen: acepta URL directa o ID/enlace de Drive (idéntico a producción)
+function normImg(v){
+  if(!v) return '';
+  const s=String(v).trim();
+  if(/^https?:\/\//i.test(s)){
+    if(s.indexOf('drive.google')>=0){ const m=s.match(/[-\w]{25,}/); if(m) return `https://drive.google.com/thumbnail?id=${m[0]}&sz=w1400`; }
+    return s;
+  }
+  if(/^[-\w]{20,}$/.test(s)) return `https://drive.google.com/thumbnail?id=${s}&sz=w1400`;
+  return s;
+}
+// Extrae el ID de un enlace de Drive (para descargar el archivo real)
+function driveId(v){ const m=String(v||'').match(/[-\w]{25,}/); return m?m[0]:''; }
+// Convierte un enlace de Drive a URL de descarga directa
+function driveDownloadURL(v){ const id=driveId(v); return id?`https://drive.google.com/uc?export=download&id=${id}`:String(v||''); }
+// Intenta traer el archivo de Drive como blob (requiere que sea público / o sesión Drive)
+async function driveToBlob(link, isVideo){
+  const id=driveId(link);
+  // 1) si conectaste Drive con OAuth, baja el binario autenticado
+  if(id && DRIVE.token){
+    try{
+      const r=await fetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media',{headers:{Authorization:'Bearer '+DRIVE.token}});
+      if(r.ok) return await r.blob();
+    }catch(_){}
+  }
+  // 2) público: imagen via thumbnail, video/archivo via uc?export=download
+  const url = isVideo ? driveDownloadURL(link) : (normImg(link)||driveDownloadURL(link));
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok) throw new Error('No se pudo leer de Drive (¿es público o tienes Drive conectado?) · HTTP '+r.status);
+  return await r.blob();
+}
+
+/* ════════ MODO DE TRABAJO (auto / revisar) ════════ */
+let GEN='revisar';                  // 'revisar' | 'auto'
+const JPG_Q=0.95;                   // calidad de optimización
+function setGen(m){
+  GEN=m;
+  document.querySelectorAll('#segGen button').forEach(b=>b.classList.toggle('on', b.dataset.gen===m));
+  document.getElementById('genHint').innerHTML = m==='auto'
+    ? 'En <b>automático</b>: cada item se sube apenas se genera (sin revisión). Úsalo cuando ya confíes en el resultado.'
+    : 'En <b>revisar</b>: genera todo a una galería; tú apruebas y luego subes solo lo aprobado.';
+}
+
+/* ════════ OPTIMIZACIÓN DE IMAGEN (canvas, sin perder calidad) ════════ */
+async function optimizarImg(blob, q){
+  q = q||JPG_Q;
+  try{
+    const bmp = await createImageBitmap(blob);
+    const MAX = 1600;                       // tope de lado largo (nítido y liviano)
+    let {width:w, height:h} = bmp;
+    if(Math.max(w,h) > MAX){ const s=MAX/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    cv.getContext('2d').drawImage(bmp,0,0,w,h);
+    const out = await new Promise(res=>cv.toBlob(res,'image/jpeg',q));
+    bmp.close && bmp.close();
+    return (out && out.size < blob.size) ? out : blob;   // nunca empeora
+  }catch(_){ return blob; }                                // si falla, sube el original
+}
+
+/* ════════ GOOGLE DRIVE (OAuth GIS · respaldo) ════════ */
+const DRIVE = { token:null, tokenClient:null, folderId:null };
+function driveClientId(){ return localStorage.getItem('fc_drive_client_id')||''; }
+function guardarDriveId(){ const v=document.getElementById('driveClientId').value.trim(); if(v){localStorage.setItem('fc_drive_client_id',v); logLine('✓ Client ID de Drive guardado','ok');} }
+(function loadDriveId(){ const v=driveClientId(); if(v) document.getElementById('driveClientId').value=v; })();
+function renderDrive(){ const p=document.getElementById('pillDrive'); if(DRIVE.token){p.textContent='✅ Drive conectado';p.className='pill ok';}else{p.textContent='🔌 sin conectar';p.className='pill no';} }
+function conectarDrive(){
+  const cid=driveClientId();
+  if(!cid){ logLine('Pega tu Client ID de Google OAuth primero.','err'); return; }
+  if(!window.google||!google.accounts||!google.accounts.oauth2){ logLine('Google Identity aún no carga; reintenta en un momento.','err'); return; }
+  DRIVE.tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: cid,
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: (resp)=>{ if(resp&&resp.access_token){ DRIVE.token=resp.access_token; renderDrive(); logLine('✅ Google Drive conectado','ok'); } else { logLine('❌ No se obtuvo permiso de Drive','err'); } }
+  });
+  DRIVE.tokenClient.requestAccessToken({prompt:''});
+}
+async function driveFolder(){
+  if(DRIVE.folderId) return DRIVE.folderId;
+  // buscar carpeta existente
+  const q=encodeURIComponent("name='Fátima Caldea · Generados' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+  const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)',{headers:{Authorization:'Bearer '+DRIVE.token}});
+  const d=await r.json();
+  if(d.files&&d.files.length){ DRIVE.folderId=d.files[0].id; return DRIVE.folderId; }
+  const cr=await fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token,'Content-Type':'application/json'},body:JSON.stringify({name:'Fátima Caldea · Generados',mimeType:'application/vnd.google-apps.folder'})});
+  const cd=await cr.json(); DRIVE.folderId=cd.id; return DRIVE.folderId;
+}
+async function driveBackup(blob, nombre){
+  if(!DRIVE.token) return;
+  try{
+    const folder=await driveFolder();
+    const meta={name:nombre, parents:[folder]};
+    const fd=new FormData();
+    fd.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
+    fd.append('file', blob);
+    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token},body:fd});
+    logLine('   ↳ ☁️ respaldo en Drive: '+nombre,'skip');
+  }catch(e){ logLine('   ↳ ⚠️ Drive falló: '+(e.message||e),'err'); }
+}
+
+/* ════════ SISTEMA DE JOBS / REVISIÓN ════════ */
+// Cada generación produce un job. En 'auto' sube al instante; en 'revisar'
+// va a la galería y solo sube lo aprobado.
+let JOBS=[];                                  // {id,label,blob,objUrl,isVideo,driveName,estado,upload,regen}
+let JOBSEQ=0;
+function resetReview(){ JOBS.forEach(j=>{try{URL.revokeObjectURL(j.objUrl);}catch(_){}}); JOBS=[]; document.getElementById('review').innerHTML=''; document.getElementById('reviewWrap').style.display='none'; }
+
+// addJob(meta): meta = { label, blob, isVideo, driveName, upload:async()=>{}, regen:async()=>blob }
+async function addJob(meta){
+  if(GEN==='auto'){
+    // subir inmediato (optimiza si es imagen)
+    let blob=meta.blob;
+    if(!meta.isVideo) blob=await optimizarImg(blob, JPG_Q);
+    await meta.upload(blob);
+    await driveBackup(blob, meta.driveName);
+    return {subido:true};
+  }
+  // modo revisar → encolar
+  const id='j'+(++JOBSEQ);
+  const job={ id, label:meta.label, blob:meta.blob, isVideo:!!meta.isVideo, driveName:meta.driveName, estado:'pendiente', upload:meta.upload, regen:meta.regen };
+  job.objUrl=URL.createObjectURL(job.blob);
+  JOBS.push(job);
+  renderReview();
+  return {encolado:true};
+}
+function renderReview(){
+  const wrap=document.getElementById('reviewWrap'); const grid=document.getElementById('review');
+  if(!JOBS.length){ wrap.style.display='none'; grid.innerHTML=''; return; }
+  wrap.style.display='block';
+  grid.innerHTML=JOBS.map(j=>{
+    const media = j.isVideo
+      ? `<video src="${j.objUrl}" muted loop playsinline onmouseover="this.play()" onmouseout="this.pause()"></video>`
+      : `<img src="${j.objUrl}"/>`;
+    const bcl = j.estado==='aprobado'?'ap':j.estado==='descartado'?'ds':'pend';
+    const btxt= j.estado==='aprobado'?'aprobada':j.estado==='descartado'?'descartada':'pendiente';
+    return `<div class="rv ${j.estado}" id="rv-${j.id}">
+      <span class="badge ${bcl}">${btxt}</span>
+      <div class="media">${media}</div>
+      <div class="lbl" title="${esc(j.label)}">${esc(j.label)}</div>
+      <div class="acts">
+        <button class="ap ${j.estado==='aprobado'?'on':''}" title="Aprobar" onclick="rvSet('${j.id}','aprobado')">✅</button>
+        <button title="Regenerar" onclick="rvRegen('${j.id}')">🔄</button>
+        <button class="ds ${j.estado==='descartado'?'on':''}" title="Descartar" onclick="rvSet('${j.id}','descartado')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+  const ap=JOBS.filter(j=>j.estado==='aprobado').length;
+  document.getElementById('rvStats').textContent = JOBS.length+' generadas · '+ap+' aprobadas';
+}
+function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function rvSet(id,estado){ const j=JOBS.find(x=>x.id===id); if(!j)return; j.estado = (j.estado===estado)?'pendiente':estado; renderReview(); }
+function rvAprobarTodas(){ JOBS.forEach(j=>{ if(j.estado!=='descartado') j.estado='aprobado'; }); renderReview(); }
+function rvLimpiar(){ if(JOBS.length && !confirm('¿Vaciar la galería? Lo no subido se pierde.')) return; resetReview(); }
+async function rvRegen(id){
+  const j=JOBS.find(x=>x.id===id); if(!j||!j.regen) return;
+  const el=document.getElementById('rv-'+id); if(el) el.style.opacity='.5';
+  try{
+    const nb=await j.regen();
+    try{URL.revokeObjectURL(j.objUrl);}catch(_){}
+    j.blob=nb; j.objUrl=URL.createObjectURL(nb); j.estado='pendiente';
+    logLine('🔄 regenerada · '+j.label,'info');
+  }catch(e){ logLine('❌ regenerar '+j.label+': '+(e.message||e),'err'); }
+  renderReview();
+}
+async function subirAprobadas(){
+  const ap=JOBS.filter(j=>j.estado==='aprobado');
+  if(!ap.length){ logLine('No hay imágenes aprobadas.','err'); return; }
+  const user=await ensureAuth(); if(!user){ logLine('Sin sesión admin no se puede subir.','err'); return; }
+  logLine('☁️ Subiendo '+ap.length+' aprobada(s)…','info');
+  let ok=0,err=0;
+  for(let i=0;i<ap.length;i++){
+    const j=ap[i];
+    setProg(i,ap.length,'Subiendo '+j.label+' ('+(i+1)+'/'+ap.length+')');
+    try{
+      let blob=j.blob;
+      if(!j.isVideo) blob=await optimizarImg(blob, JPG_Q);
+      await j.upload(blob);
+      await driveBackup(blob, j.driveName);
+      ok++; j.estado='subido';
+      logLine('✅ subida · '+j.label,'ok');
+    }catch(e){ err++; logLine('❌ '+j.label+': '+(e.message||e),'err'); }
+  }
+  setProg(ap.length,ap.length,`Subidas ${ok} · errores ${err}`);
+  logLine(`🏁 ${ok} subida(s) · ${err} error(es) · sistema público actualizado en tiempo real.`,'ok');
+  // quitar las subidas de la galería
+  JOBS=JOBS.filter(j=>j.estado!=='subido'); renderReview();
+}
+
+/* ════════ REPLICATE ════════ */
+function replicateKey(){ return localStorage.getItem('fc_key_replicate')||''; }
+function guardarKey(){ const v=document.getElementById('keyReplicate').value.trim(); if(v){localStorage.setItem('fc_key_replicate',v); logLine('✓ Token Replicate guardado','ok'); document.getElementById('keyReplicate').value='';} }
+(function loadKey(){ const k=replicateKey(); if(k) document.getElementById('keyReplicate').placeholder='Replicate token guardado ✓'; })();
+
+async function replicatePredict(modelPath, input){
+  const uiKey=replicateKey();
+  const headers={'Content-Type':'application/json','Prefer':'wait'};
+  if(uiKey) headers['Authorization']='Bearer '+uiKey;
+  let r=await fetch(PROXY+'/v1/models/'+modelPath+'/predictions',{method:'POST',headers,body:JSON.stringify({input})});
+  let d; try{ d=await r.json(); }catch(_){ throw new Error('Replicate: respuesta no-JSON (HTTP '+r.status+')'); }
+  if(d.error) throw new Error('Replicate: '+(typeof d.error==='string'?d.error:JSON.stringify(d.error)));
+  const pollHeaders=uiKey?{'Authorization':'Bearer '+uiKey}:{};
+  let intentos=0;
+  while(d.status && d.status!=='succeeded' && d.status!=='failed' && d.status!=='canceled' && intentos<60){
+    await new Promise(res=>setTimeout(res,1500));
+    const pr=await fetch(PROXY+'/v1/predictions/'+d.id,{headers:pollHeaders});
+    d=await pr.json(); intentos++;
+  }
+  if(d.status==='failed') throw new Error('Replicate: generación fallida · '+(d.error||'sin detalle'));
+  if(d.status==='canceled') throw new Error('Replicate: cancelada');
+  const out=Array.isArray(d.output)?d.output[d.output.length-1]:d.output;
+  if(!out) throw new Error('Replicate: sin imagen (¿crédito agotado?)');
+  return out; // URL
+}
+
+async function genImagen(prompt){
+  const out = await replicatePredict('black-forest-labs/flux-dev',{prompt,aspect_ratio:'3:4',output_format:'jpg',num_outputs:1,guidance:3.5,num_inference_steps:30});
+  return out;
+}
+
+// VIDEO · mismo modelo que M2 (Replicate wan-2.2-t2v-fast). Poll largo (videos lentos).
+async function genVideo(prompt){
+  const uiKey=replicateKey();
+  const headers={'Content-Type':'application/json'};
+  if(uiKey) headers['Authorization']='Bearer '+uiKey;
+  const model = MOTOR_PROMPTS.MODELOS.video; // wan-video/wan-2.2-t2v-fast
+  const startR=await fetch(PROXY+'/v1/models/'+model+'/predictions',{method:'POST',headers,body:JSON.stringify({input:{prompt}})});
+  const pred=await startR.json();
+  if(pred.error) throw new Error('Replicate: '+(typeof pred.error==='string'?pred.error:JSON.stringify(pred.error)));
+  if(!pred.id && pred.output===undefined) throw new Error('Replicate: respuesta inesperada (¿token/proxy?)');
+  let d=pred;
+  const pollHeaders=uiKey?{'Authorization':'Bearer '+uiKey}:{};
+  let i=0;
+  while(d.status && d.status!=='succeeded' && d.status!=='failed' && d.status!=='canceled' && i<160){
+    await new Promise(r=>setTimeout(r,3000));
+    const r=await fetch(PROXY+'/v1/predictions/'+d.id,{headers:pollHeaders});
+    d=await r.json(); i++;
+  }
+  if(d.status==='failed'||d.status==='canceled') throw new Error('Replicate video: '+(d.error||'fallida'));
+  const out=Array.isArray(d.output)?d.output[d.output.length-1]:d.output;
+  if(!out) throw new Error('Replicate: sin video en la respuesta');
+  return out; // URL mp4 (temporal)
+}
+
+async function fetchToBlob(url){ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error('descarga HTTP '+r.status); return await r.blob(); }
+
+/* ════════ COMPOSICIÓN DE LÁMINA (igual estilo Bloque 5) ════════ */
+function loadImgSafe(src){
+  return new Promise(async(resolve)=>{
+    let url=src;
+    try{ if(/^https?:/.test(src)){ const r=await fetch(src,{cache:'no-store'}); if(r.ok){ const b=await r.blob(); if(b&&b.size>1024) url=URL.createObjectURL(b);} } }catch(_){}
+    const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>resolve(im); im.onerror=()=>resolve(null); im.src=url;
+  });
+}
+function drawCover(x,img,dx,dy,dw,dh){const ir=img.width/img.height,rr=dw/dh;let sw,sh,sx,sy;if(ir>rr){sh=img.height;sw=sh*rr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/rr;sx=0;sy=(img.height-sh)/2;}x.drawImage(img,sx,sy,sw,sh,dx,dy,dw,dh);}
+function wrapTop(x,text,px,py,maxW,lh,maxLines){const words=String(text).split(' ');let line='';const out=[];for(const w of words){const t=line?line+' '+w:w;if(x.measureText(t).width>maxW&&line){out.push(line);line=w;if(out.length>=maxLines-1)break;}else line=t;}if(line&&out.length<maxLines)out.push(line);out.forEach((ln,i)=>x.fillText(ln,px,py+i*lh));}
+function componerLamina(imgs, lista, grupo, equipo){
+  const N=lista.length, cols=N===6?3:N===8?4:4, rows=N===6?2:N===8?2:3;
+  const cw=440,ch=440,head=92,bd=4, W=cols*cw, H=head+rows*ch;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const x=cv.getContext('2d');
+  x.fillStyle='#0e1526'; x.fillRect(0,0,W,H);
+  x.fillStyle='#16213e'; x.fillRect(0,0,W,head);
+  const gT=grupo==='gluteo'?'GLÚTEOS':grupo==='pierna'?'PIERNAS':'TREN SUPERIOR';
+  const eT=equipo==='mancuerna'?'MANCUERNA':equipo==='maquina'?'MÁQUINA':'PESO CORPORAL';
+  x.fillStyle='#f3e3c0'; x.textAlign='center'; x.textBaseline='middle'; x.font='bold 30px Arial,sans-serif';
+  x.fillText(`GUÍA DE ${N} EJERCICIOS · ${gT} · ${eT}`, W/2, head/2);
+  lista.forEach((nombre,i)=>{
+    const c=i%cols,r=Math.floor(i/cols),px=c*cw,py=head+r*ch,im=imgs[i];
+    x.save(); x.beginPath(); x.rect(px,py,cw,ch); x.clip();
+    if(im) drawCover(x,im,px,py,cw,ch); else { x.fillStyle='#1b2740'; x.fillRect(px,py,cw,ch); }
+    let gt=x.createLinearGradient(0,py,0,py+135); gt.addColorStop(0,'rgba(8,12,22,.88)'); gt.addColorStop(1,'rgba(8,12,22,0)'); x.fillStyle=gt; x.fillRect(px,py,cw,135);
+    let gb=x.createLinearGradient(0,py+ch-70,0,py+ch); gb.addColorStop(0,'rgba(8,12,22,0)'); gb.addColorStop(1,'rgba(8,12,22,.9)'); x.fillStyle=gb; x.fillRect(px,py+ch-70,cw,70);
+    x.fillStyle='#f3e3c0'; x.textAlign='left'; x.textBaseline='top'; x.font='bold 23px Arial,sans-serif';
+    wrapTop(x, `${i+1}. ${String(nombre).toUpperCase()}`, px+16, py+14, cw-32, 27, 3);
+    x.restore();
+    x.strokeStyle='#c8662a'; x.lineWidth=bd; x.strokeRect(px+bd/2,py+bd/2,cw-bd,ch-bd);
+  });
+  return new Promise(res=>cv.toBlob(b=>res(b),'image/jpeg',.9));
+}
+
+/* ════════ FIREBASE ════════ */
+let FB=null;
+async function fbInit(){
+  if(FB) return FB;
+  const [appMod,fs,fst,authMod]=await Promise.all([
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js')
+  ]);
+  const app=appMod.getApps().length?appMod.getApp():appMod.initializeApp(FB_CFG);
+  FB={ app, storage:fs.getStorage(app), sRef:fs.ref, uploadBytes:fs.uploadBytes, getDownloadURL:fs.getDownloadURL,
+       db:fst.getFirestore(app), doc:fst.doc, setDoc:fst.setDoc, getDoc:fst.getDoc,
+       auth:authMod.getAuth(app), onAuth:authMod.onAuthStateChanged, signIn:authMod.signInWithEmailAndPassword };
+  FB.onAuth(FB.auth, ()=>renderAuth());
+  return FB;
+}
+function renderAuth(){
+  const p=document.getElementById('pillAuth'); const u=FB&&FB.auth&&FB.auth.currentUser;
+  if(u){ p.textContent='✅ '+(u.email||u.uid); p.className='pill ok'; }
+  else { p.textContent='🔒 sin sesión'; p.className='pill no'; }
+}
+async function ensureAuth(){
+  await fbInit();
+  let user=FB.auth.currentUser;
+  if(!user) user=await new Promise(res=>{const off=FB.onAuth(FB.auth,u=>{off();res(u);});});
+  if(!user){
+    const email=prompt('Inicia sesión como administrador para subir.\nCorreo:',ADMIN_EMAIL);
+    if(email){ const pass=prompt('Contraseña:'); try{ const c=await FB.signIn(FB.auth,String(email).trim(),pass||''); user=c.user; }catch(e){ logLine('❌ Login: '+(e.code||e.message),'err'); return null; } }
+  }
+  renderAuth();
+  if(user && user.email && user.email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()) logLine('⚠️ '+user.email+' no es el admin; las reglas pueden rechazar la escritura.','err');
+  return user||null;
+}
+document.getElementById('pillAuth').onclick=()=>ensureAuth();
+
+async function yaExiste(claseId){
+  try{ const s=await FB.getDoc(FB.doc(FB.db,'fitness_imgs',claseId)); return s.exists() && (s.data().url||s.data().url_jpg); }catch(_){ return false; }
+}
+async function subir(base, blob){
+  // 1 sola imagen en Storage; 12 docs en Firestore (v1..v12) apuntando a ella,
+  // igual que "aplicar a las 12 versiones" de la biblioteca → el picker
+  // aleatorio del Bloque 5 (getDriveURL) SIEMPRE acierta.
+  const path='fitness/'+base+'/imagen.jpg';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  const ts=new Date().toISOString();
+  const writes=[];
+  for(let v=1; v<=12; v++){
+    writes.push(FB.setDoc(FB.doc(FB.db,'fitness_imgs',base+'_v'+v),{url,url_path:path,claseId:base+'_v'+v,cat:'fitness',imgActualizadoEn:ts},{merge:true}));
+  }
+  await Promise.all(writes);
+  return url;
+}
+
+// ── VIDEO · clave canónica del Bloque 5 (sin día): grupo_obj_equipo_nej_NN_slug ──
+function claveVideoEj(combo, i, nombreEj){
+  if(window.MOTOR_FITNESS && window.MOTOR_FITNESS.claveVideoEjSinDia)
+    return window.MOTOR_FITNESS.claveVideoEjSinDia(combo.grupo, combo.motor, combo.equipo, combo.nej, i, nombreEj);
+  // fallback
+  const slug = String(nombreEj).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[°.]/g,'').replace(/[\s-]+/g,'_').replace(/[^a-z0-9_]/g,'').replace(/_+/g,'_').replace(/^_|_$/g,'');
+  return combo.grupo+'_'+combo.motor+'_'+combo.equipo+'_'+combo.nej+'_'+String(i).padStart(2,'0')+'_'+slug;
+}
+async function yaExisteVideo(clave){
+  try{ const s=await FB.getDoc(FB.doc(FB.db,'fitness_videos',clave)); return s.exists() && s.data().url_video; }catch(_){ return false; }
+}
+async function subirVideo(clave, blob, titulo){
+  const path='fitness/videos/'+clave+'.mp4';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  await FB.setDoc(FB.doc(FB.db,'fitness_videos',clave),{url_video:url,path_video:path,titulo:titulo||clave,cat:'fitness',videoActualizadoEn:new Date().toISOString()},{merge:true});
+  return url;
+}
+function detener(){ STOP=true; logLine('⏹ Deteniendo tras la lámina actual…','info'); }
+
+async function iniciar(){
+  if(MODO==='pelu') return iniciarPelu();
+  if(MODO==='hub')  return iniciarHub();
+  if(MODO==='corte') return iniciarCorte();
+  const combos=combosSeleccionados();
+  if(!combos.length){ logLine('Selecciona al menos un lote.','err'); return; }
+  if(!replicateKey()){ if(!confirm('No hay token de Replicate guardado. ¿El proxy de Netlify ya tiene REPLICATE_API_TOKEN? Pulsa Aceptar para continuar igualmente.')) return; }
+  if(GEN==='auto'){ const user=await ensureAuth(); if(!user){ logLine('Sin sesión admin no se puede subir.','err'); return; } }
+
+  RUNNING=true; STOP=false;
+  document.getElementById('btnGo').style.display='none';
+  document.getElementById('btnStop').style.display='inline-block';
+  document.getElementById('preview').innerHTML='';
+  const tipo = (document.querySelector('input[name="tipo"]:checked')||{}).value || 'img';
+  logLine('▶️ Lote iniciado · '+combos.length+' lote(s) · tipo: '+(tipo==='vid'?'VIDEOS':'LÁMINAS'),'info');
+
+  const skip=document.getElementById('optSkip').checked;
+  const regen=document.getElementById('optRegen').checked;
+  let done=0, ok=0, omit=0, err=0;
+
+  for(const combo of combos){
+    if(STOP) break;
+    const base = combo.claveImgBase;          // grupo_obj_equipo_nej
+    const lista = combo.ejercicios && combo.ejercicios.length ? combo.ejercicios : MOTOR_PROMPTS.ejerciciosDe(combo.grupo,combo.equipo,combo.nej);
+
+    if(tipo==='vid'){
+      // ── UN VIDEO LIMPIO POR EJERCICIO → fitness_videos/{clave sin día} ──
+      if(!lista.length){ logLine('⚠️ '+base+' sin ejercicios','err'); done++; continue; }
+      for(let i=0;i<lista.length;i++){
+        if(STOP) break;
+        const nombreEj=lista[i];
+        const clave=claveVideoEj(combo, i+1, nombreEj);
+        setProg(done,combos.length,`${base} · video ${i+1}/${lista.length}`);
+        try{
+          if(skip && !regen && await yaExisteVideo(clave)){ logLine('⏭️ '+clave+' ya existe · omitido','skip'); omit++; continue; }
+          logLine('🎬 '+clave+' · generando…','info');
+          const gen=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.fitnessVideo(combo.grupo,combo.equipo,combo.motor,nombreEj)));
+          const blob=await gen();
+          await addJob({ label:'🎬 '+clave, blob, isVideo:true, driveName:clave+'.mp4', upload:(bl)=>subirVideo(clave,bl,nombreEj), regen:gen });
+          ok++;
+        }catch(e){ err++; logLine('❌ '+clave+': '+(e.message||e),'err'); }
+      }
+      done++;
+      continue;
+    }
+
+    // ── LÁMINA DE IMÁGENES ──
+    const claseId = base + '_v1';
+    setProg(done,combos.length,`Procesando ${base} (${done+1}/${combos.length})`);
+    try{
+      if(skip && !regen && await yaExiste(claseId)){ logLine('⏭️ '+base+' ya existe · omitida','skip'); omit++; done++; continue; }
+      if(!lista.length){ logLine('⚠️ '+base+' sin ejercicios','err'); err++; done++; continue; }
+      const armarLamina=async()=>{
+        const srcs=[];
+        for(let i=0;i<lista.length;i++){
+          if(STOP) break;
+          const p=MOTOR_PROMPTS.fitnessSingle(combo.grupo,combo.equipo,combo.motor,lista[i]);
+          srcs.push(await genImagen(p));
+          setProg(done,combos.length,`${base} · ejercicio ${i+1}/${lista.length}`);
+        }
+        const imgs=await Promise.all(srcs.map(loadImgSafe));
+        return componerLamina(imgs,lista,combo.grupo,combo.equipo);
+      };
+      logLine('🎨 '+base+' · generando '+lista.length+' imágenes…','info');
+      const blob=await armarLamina();
+      if(STOP) break;
+      await addJob({ label:base+' · lámina', blob, driveName:base+'.jpg', upload:(bl)=>subir(base,bl), regen:armarLamina });
+      ok++; done++;
+      logLine('✅ '+base+' lista ('+Math.round(blob.size/1024)+' KB)','ok');
+    }catch(e){
+      err++; done++;
+      logLine('❌ '+base+': '+(e.message||e),'err');
+    }
+  }
+  finLote(done,combos.length,ok,omit,err,'Fitness');
+}
+
+fbInit().then(()=>{ FB.onAuth(FB.auth,()=>renderAuth()); renderAuth(); });
+renderDrive(); setGen('revisar'); manSysChange();
+document.getElementById('pillDrive').onclick=conectarDrive;
+</script>
+</body>
+</html>
