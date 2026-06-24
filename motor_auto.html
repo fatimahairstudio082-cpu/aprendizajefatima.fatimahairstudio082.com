@@ -346,6 +346,14 @@
         <button data-src="file" onclick="manSetSrc('file')">📁 Archivo de mi PC</button>
       </div>
     </div>
+    <div class="reviewbar" style="border:none;padding-top:0;margin-top:2px;">
+      <span class="note" style="margin-right:6px;">💾 ¿Dónde guardar?</span>
+      <div class="seg" id="segDest">
+        <button class="on" data-dest="fb" onclick="manSetDest('fb')">🔥 Firebase (archivo)</button>
+        <button data-dest="drive" onclick="manSetDest('drive')">🔗 Drive · solo el link (ligero)</button>
+      </div>
+    </div>
+    <div class="note" id="destHint" style="margin-top:6px;">🔥 <b>Firebase</b>: el archivo se guarda en tu Storage (lo de siempre).</div>
     <div class="drivebox" id="manDriveBox">
       <input id="manDriveLink" type="text" placeholder="Pega aquí el enlace de Google Drive (o el ID)" autocomplete="off">
     </div>
@@ -829,6 +837,14 @@ async function iniciarCorte(){
 
 /* ════════ SUBIDA INTELIGENTE · DRIVE / ARCHIVO ════════ */
 let MAN_SRC='drive';
+let MAN_DEST='fb';
+function manSetDest(d){
+  MAN_DEST=d;
+  document.querySelectorAll('#segDest button').forEach(b=>b.classList.toggle('on',b.dataset.dest===d));
+  document.getElementById('destHint').innerHTML = d==='drive'
+    ? '🔗 <b>Drive · solo link</b>: el archivo se sube a tu Google Drive (carpeta «Fátima Caldea · Generados»), se hace público y en Firebase se guarda <b>solo el enlace</b>. No ocupa memoria de Firebase. Requiere Drive conectado arriba.'
+    : '🔥 <b>Firebase</b>: el archivo se guarda en tu Storage (lo de siempre).';
+}
 function manSetSrc(s){ MAN_SRC=s; document.querySelectorAll('#segSrc button').forEach(b=>b.classList.toggle('on',b.dataset.src===s)); document.getElementById('manDriveBox').style.display=s==='drive'?'flex':'none'; document.getElementById('manFileBox').style.display=s==='file'?'flex':'none'; }
 function manSysChange(){
   const sys=document.getElementById('manSys').value;
@@ -865,26 +881,41 @@ async function manAdd(){
     }
   }catch(e){ logLine('❌ '+(e.message||e),'err'); return; }
 
+  const isVideo = kind==='vid';
+  let regLink;
   // resolver destino + función de subida (mismos contratos de producción)
   if(sys==='pelu'){
     if(!PELU_FLAT.length) cargarPelu();
     const clase=PELU_FLAT.find(c=>c.id===target) || {id:target, slug:'academia', cat:'', niv:'p'};
-    label='Academia · '+clase.id+' · '+(kind==='vid'?'🎬':'🖼️');
-    driveName=clase.slug+'_'+clase.id+'_'+kind+'.jpg';
-    upload=(bl)=> kind==='vid' ? subirPeluVideo(clase,bl) : subirPelu(clase,bl,'cliente');
+    label='Academia · '+clase.id+' · '+(isVideo?'🎬':'🖼️');
+    driveName=clase.slug+'_'+clase.id+'_'+kind+(isVideo?'.mp4':'.jpg');
+    upload=(bl)=> isVideo ? subirPeluVideo(clase,bl) : subirPelu(clase,bl,'cliente');
+    regLink=(url)=> isVideo ? regPeluVideo(clase,url) : regPeluImg(clase,url);
   } else if(sys==='fitness'){
-    label='Fitness · '+target+' · '+(kind==='vid'?'🎬':'🖼️');
-    driveName='fitness_'+target+'.'+(kind==='vid'?'mp4':'jpg');
-    // img: clave de lámina {grupo}_{obj}_{equipo}_{nej} (subir aplica v1..v12)
-    // vid: el target DEBE ser la clave del día dia{N}_{obj}_{grupo} (lo que lee el Bloque 5)
-    upload=(bl)=> kind==='vid' ? subirVideo(target,bl,target) : subir(target,bl);
+    label='Fitness · '+target+' · '+(isVideo?'🎬':'🖼️');
+    driveName='fitness_'+target+(isVideo?'.mp4':'.jpg');
+    upload=(bl)=> isVideo ? subirVideo(target,bl,target) : subir(target,bl);
+    regLink=(url)=> isVideo ? regFitVideo(target,url) : regFitImg(target,url);
   } else if(sys==='hub'){
-    label='Hub · '+target; driveName='hub_'+target+'.jpg'; upload=(bl)=>subirHub(target,bl);
+    label='Hub · '+target; driveName='hub_'+target+'.jpg';
+    upload=(bl)=>subirHub(target,bl); regLink=(url)=>regHub(target,url);
   } else {
-    label='Corte · '+target; driveName='corte_'+target+'.jpg'; upload=(bl)=>subirCorte(target,bl);
+    label='Corte · '+target; driveName='corte_'+target+(isVideo?'.mp4':'.jpg');
+    upload=(bl)=>subirCorte(target,bl); regLink=(url)=>regCorte(target,url,kind);
   }
-  const isVideo = kind==='vid';
-  await addJob({ label, blob, isVideo, driveName, upload, regen:async()=>blob });
+  // destino DRIVE → subir a Drive + registrar solo el link (no toca Storage)
+  let finalUpload=upload, noBackup=false;
+  if(MAN_DEST==='drive'){
+    if(!DRIVE.token){ logLine('❌ Conecta Google Drive arriba para usar «solo el link».','err'); return; }
+    noBackup=true;
+    const dname=driveName;
+    finalUpload=async(bl)=>{
+      const link=await driveUploadPublic(bl, dname, isVideo);
+      await regLink(link);
+      logLine('🔗 Guardado en Drive · solo link en Firebase: '+link,'ok');
+    };
+  }
+  await addJob({ label:label+(MAN_DEST==='drive'?' · 🔗 Drive':''), blob, isVideo, driveName, upload:finalUpload, regen:async()=>blob, noBackup });
   logLine('➕ Añadido a revisión: '+label,'ok');
   document.getElementById('manDriveLink').value=''; 
   if(document.getElementById('manFile')) document.getElementById('manFile').value='';
@@ -994,6 +1025,38 @@ async function driveBackup(blob, nombre){
   }catch(e){ logLine('   ↳ ⚠️ Drive falló: '+(e.message||e),'err'); }
 }
 
+/* ════ DRIVE · SUBIR Y GUARDAR SOLO EL LINK (memoria ligera) ════ */
+// Sube el blob a Drive, lo hace público (lectura por enlace) y devuelve el link
+// YA CONVERTIDO al formato que el sistema público lee directamente.
+async function driveUploadPublic(blob, nombre, isVideo){
+  if(!DRIVE.token) throw new Error('Conecta Google Drive primero.');
+  const folder=await driveFolder();
+  const meta={name:nombre, parents:[folder]};
+  const fd=new FormData();
+  fd.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
+  fd.append('file', blob);
+  const up=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token},body:fd});
+  if(!up.ok) throw new Error('Drive subida HTTP '+up.status);
+  const j=await up.json(); const id=j.id;
+  if(!id) throw new Error('Drive no devolvió ID');
+  // permiso: cualquiera con el enlace puede LEER (para que el sistema lo muestre)
+  try{
+    await fetch('https://www.googleapis.com/drive/v3/files/'+id+'/permissions',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token,'Content-Type':'application/json'},body:JSON.stringify({role:'reader',type:'anyone'})});
+  }catch(_){}
+  // link convertido (directo) — igual al que ya normaliza tu sistema
+  return isVideo
+    ? 'https://drive.google.com/uc?export=download&id='+id
+    : 'https://drive.google.com/thumbnail?id='+id+'&sz=w1400';
+}
+
+/* ════ REGISTRO DE SOLO-LINK · mismos docs/campos que la subida normal ════ */
+async function regPeluImg(clase, url){ await FB.setDoc(FB.doc(FB.db,'clases_imgs',clase.id),{ claseId:clase.id, cat:clase.cat, niv:clase.niv, url_jpg:url, url:url, imgActualizadoEn:new Date().toISOString() },{merge:true}); }
+async function regPeluVideo(clase, url){ await FB.setDoc(FB.doc(FB.db,'clases_imgs',clase.id),{ claseId:clase.id, cat:clase.cat, niv:clase.niv, url_video:url, videoActualizadoEn:new Date().toISOString() },{merge:true}); }
+async function regFitImg(base, url){ const ts=new Date().toISOString(); const w=[]; for(let v=1; v<=12; v++) w.push(FB.setDoc(FB.doc(FB.db,'fitness_imgs',base+'_v'+v),{ url, claseId:base+'_v'+v, cat:'fitness', imgActualizadoEn:ts },{merge:true})); await Promise.all(w); }
+async function regFitVideo(clave, url){ await FB.setDoc(FB.doc(FB.db,'fitness_videos',clave),{ url_video:url, titulo:clave, cat:'fitness', videoActualizadoEn:new Date().toISOString() },{merge:true}); }
+async function regHub(n, url){ const meta=[...HUB_CARDS,...HUB_PORTADAS].find(b=>b.n===n)||{}; const patch={ imgUrl:url, imgActualizadoEn:new Date().toISOString() }; if(meta.nom && (n!=='hero'&&n!=='login'&&n!=='chatbox')) patch.nom=meta.nom; await FB.setDoc(FB.doc(FB.db,'hub_tarjetas',n),patch,{merge:true}); }
+async function regCorte(id, url, kind){ const patch = kind==='vid' ? { videoUrl:url } : { imgUrl:url }; patch.titulo=CORTE_LBL[id]; patch.actualizado=new Date().toISOString(); await FB.setDoc(FB.doc(FB.db,'corte_modulos',id),patch,{merge:true}); }
+
 /* ════════ SISTEMA DE JOBS / REVISIÓN ════════ */
 // Cada generación produce un job. En 'auto' sube al instante; en 'revisar'
 // va a la galería y solo sube lo aprobado.
@@ -1008,12 +1071,12 @@ async function addJob(meta){
     let blob=meta.blob;
     if(!meta.isVideo) blob=await optimizarImg(blob, JPG_Q);
     await meta.upload(blob);
-    await driveBackup(blob, meta.driveName);
+    if(!meta.noBackup) await driveBackup(blob, meta.driveName);
     return {subido:true};
   }
   // modo revisar → encolar
   const id='j'+(++JOBSEQ);
-  const job={ id, label:meta.label, blob:meta.blob, isVideo:!!meta.isVideo, driveName:meta.driveName, estado:'pendiente', upload:meta.upload, regen:meta.regen };
+  const job={ id, label:meta.label, blob:meta.blob, isVideo:!!meta.isVideo, driveName:meta.driveName, noBackup:!!meta.noBackup, estado:'pendiente', upload:meta.upload, regen:meta.regen };
   job.objUrl=URL.createObjectURL(job.blob);
   JOBS.push(job);
   renderReview();
@@ -1071,7 +1134,7 @@ async function subirAprobadas(){
       let blob=j.blob;
       if(!j.isVideo) blob=await optimizarImg(blob, JPG_Q);
       await j.upload(blob);
-      await driveBackup(blob, j.driveName);
+      if(!j.noBackup) await driveBackup(blob, j.driveName);
       ok++; j.estado='subido';
       logLine('✅ subida · '+j.label,'ok');
     }catch(e){ err++; logLine('❌ '+j.label+': '+(e.message||e),'err'); }
