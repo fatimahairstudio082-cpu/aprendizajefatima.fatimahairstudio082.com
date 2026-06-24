@@ -5,11 +5,19 @@ Genera imágenes y videos con la IA, los **revisas**, y los sube a Firebase
 de Fitness, Hub y Motor de Corte M1-M7.**
 
 ═══════════════════════════════════════════════════════════════
-## 📦 QUÉ SUBIR (solo 2 archivos nuevos)
-  1) motor_auto.html      ← el panel
-  2) motor_prompts.js     ← la librería de prompts
+## 📦 QUÉ SUBIR (4 archivos)
+  1) motor_auto.html               ← el panel (videos por clip + paso a paso)
+  2) motor_prompts.js              ← la librería de prompts
+  3) bloque5_fitness.html          ← el Bloque 5 con CARRUSEL de clips
+  4) academia_carrusel_pasos.js    ← carrusel paso a paso de la Academia
 
 Van en la **misma carpeta** que ya publicas (junto a admin_motores.html).
+El bloque5_fitness.html REEMPLAZA al viejo (el de un solo video).
+
+⚡ PARA ACTIVAR EL CARRUSEL DE LA ACADEMIA (1 sola línea):
+  En bloque3_academia_pagos.html, justo DESPUÉS de <script src="app.js"></script>,
+  añade:   <script src="academia_carrusel_pasos.js"></script>
+  (No borra nada. Si una clase no tiene clips de pasos, se ve igual que antes.)
 
 Estos YA están en tu repo y NO se tocan:
   · netlify/functions/replicate.js   (el puente a Replicate)
@@ -62,8 +70,12 @@ que ve la alumna. Si en admin_motores el badge pasa de gris a 🖼/🎥, quedó 
 ═══════════════════════════════════════════════════════════════
 ## ✅ DÓNDE CAE CADA COSA (contrato, idéntico a producción)
   Fitness lámina  → fitness_imgs/{clave}_v1..v12  (campo url)
-  Fitness video   → fitness_videos/{clave}        (url_video)
+  Fitness CLIPS   → fitness_videos/{grupo}_{obj}_{equipo}_{nej}_{NN}_{ejercicio}
+                    (1 clip por ejercicio · el CARRUSEL del Bloque 5 los ordena por _NN_)
   Academia img    → clases_imgs/{claseId}          (url_jpg + url)
+  Academia video  → academia/{slug}/{claseId}/video.mp4   (1 video de apoyo)
+  Academia PASOS  → academia/{slug}/{claseId}/paso_01.mp4 , paso_02.mp4 …
+                    (1 clip por paso · el CARRUSEL de la Academia los muestra en orden)
   Academia video  → clases_imgs/{claseId}          (url_video)
   Hub tarjeta     → hub_tarjetas/{n}               (imgUrl)
   Corte módulo    → corte_modulos/{M1..M7}         (imgUrl)

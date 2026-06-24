@@ -170,6 +170,40 @@ const GUIONES_FIT = {
 /* ══ CLAVE FIREBASE VIDEO ══ */
 function getVideoKey(dia,obj,grupo){ return `dia${dia}_${obj}_${grupo}`; }
 
+/* ══ CLIPS DE LA CLASE (CARRUSEL) ══════════════════════════════
+   M2 genera la clase como VARIOS clips (uno por ejercicio):
+     grupo_obj_equipo_nivel_NN_ejercicio   (ej. gluteo_masa_mancuerna_6_01_hip_thrust)
+   y los sube a fitness_videos con ese mismo ID (claseId).
+   Esta función reúne TODOS los clips de una clase y los ordena por
+   su índice _NN_ para mostrarlos como carrusel. Prioridad:
+     1) clips con día:  dia{N}_grupo_obj_equipo_nivel_...
+     2) clips de clase: grupo_obj_equipo_nivel_...        ← lo que produce M2 hoy
+     3) video único antiguo: dia{N}_obj_grupo            ← compatibilidad
+   No borra ni cambia nada del sistema anterior. */
+function getClaseVideoClips(dia,obj,grupo,equipo,nEjer){
+  const V = window._FIT_VIDEOS || {};
+  const claseBase = `${grupo}_${obj}_${equipo}_${nEjer}`;
+  const diaBase   = `dia${dia}_${grupo}_${obj}_${equipo}_${nEjer}`;
+  const legacyKey = getVideoKey(dia,obj,grupo);
+
+  const recolectar = (prefijo) => Object.keys(V)
+    .filter(k => k===prefijo || k.indexOf(prefijo+'_')===0)
+    .map(k => Object.assign({ id:k }, V[k]));
+
+  let clips = recolectar(diaBase);
+  if(!clips.length) clips = recolectar(claseBase);
+  if(!clips.length && V[legacyKey]) clips = [ Object.assign({ id:legacyKey }, V[legacyKey]) ];
+
+  const idxOf = (id) => {
+    const m = id.match(/_(\d{2})_/) || id.match(/_v?(\d{1,2})$/);
+    return m ? parseInt(m[1]) : 999;
+  };
+  clips.sort((a,b)=> idxOf(a.id)-idxOf(b.id) || a.id.localeCompare(b.id));
+
+  clips.forEach(c => { c.url = c.url_video || c.url || ''; });
+  return clips.filter(c => c.url);
+}
+
 /* ══ IMAGEN FIREBASE ══ */
 const DRIVE_IDS={};
 function getDriveURL(nombre){
@@ -248,27 +282,75 @@ function crearBloqueImagen(imgSrc, nombreArchivo, placeholderURL){
   return wrap;
 }
 
-/* ══ BLOQUE MULTIMEDIA — VIDEO + VOZ IA ══ */
-function crearBloqueMultimedia(dia,obj,grupo,equipo,series){
-  const key  = getVideoKey(dia,obj,grupo);
-  const data = (window._FIT_VIDEOS&&window._FIT_VIDEOS[key])||{};
-  const videoUrl = data.url_video||'';
-  const titulo   = data.titulo||`Día ${dia} · ${obj.toUpperCase()} · ${grupo.toUpperCase()}`;
-  const guion    = data.guion||GUIONES_FIT[obj](dia,grupo,series,equipo);
-  const uid      = `${dia}_${obj}_${grupo}_${Date.now()}`;
+/* ══ BLOQUE MULTIMEDIA — CARRUSEL DE VIDEOS + VOZ IA ══
+   Muestra TODOS los clips de la clase (uno por ejercicio) como carrusel:
+   ◀ ▶ + contador "Ejercicio 1 / N" + puntos + nombre del ejercicio.
+   El nivel lo marca el nº de ejercicios: 6 principiante · 8 intermedio · 12 avanzado. */
+function crearBloqueMultimedia(dia,obj,grupo,equipo,series,nEjer){
+  nEjer = nEjer || document.getElementById('cantidadEjercicios').value;
+  const clips = getClaseVideoClips(dia,obj,grupo,equipo,nEjer);
+  const total = clips.length;
+
+  // nombres de ejercicio para etiquetar cada clip
+  let ejercicios = [];
+  try{ ejercicios = (EJERCICIOS_DB[grupo] && EJERCICIOS_DB[grupo][obj] && EJERCICIOS_DB[grupo][obj][equipo] && EJERCICIOS_DB[grupo][obj][equipo][nEjer]) || []; }catch(e){}
+
+  const tituloClase  = `Día ${dia} · ${obj.toUpperCase()} · ${grupo.toUpperCase()}`;
+  const guionGeneral = GUIONES_FIT[obj](dia,grupo,series,equipo);
+  const uid = `${dia}_${obj}_${grupo}_${nEjer}_${Date.now()}`;
+  const nivelLabel = String(nEjer)==='6' ? 'PRINCIPIANTE' : String(nEjer)==='8' ? 'INTERMEDIO' : 'AVANZADO';
+
+  const labelClip = (c,i) => {
+    if(ejercicios[i]) return ejercicios[i];
+    const m = c.id.match(/_\d{2}_(.+)$/);
+    if(m) return m[1].replace(/_/g,' ');
+    if(c.titulo) return c.titulo;
+    return `Ejercicio ${i+1}`;
+  };
 
   const wrap=document.createElement('div');
   wrap.className='fcmd-block';
+
+  // Sin clips → placeholder informativo (no rompe nada)
+  if(!total){
+    wrap.innerHTML=`
+      <div class="fcmd-h">
+        <div class="em">🎬</div>
+        <div class="tt">${tituloClase}</div>
+        <span class="badge2">DÍA ${dia} · ${nivelLabel}</span>
+      </div>
+      <div class="fcmd-vid"><div class="ph"><div class="ic">🎬</div>Vídeos próximamente
+        <div class="sub">Clase: ${grupo}_${obj}_${equipo}_${nEjer} · ${nEjer} ejercicios<br>Genera los clips en M2 y envíalos a Firebase</div></div></div>
+      <div class="fcmd-script"><h4>📝 Guión · Día ${dia}</h4><p>${guionGeneral}</p></div>`;
+    return wrap;
+  }
+
+  let cur = 0;
   wrap.innerHTML=`
     <div class="fcmd-h">
       <div class="em">🎬</div>
-      <div class="tt">${titulo}</div>
-      <span class="badge2">DÍA ${dia} · ${obj.toUpperCase()}</span>
+      <div class="tt">${tituloClase}</div>
+      <span class="badge2">DÍA ${dia} · ${nivelLabel} · ${total} VIDEO${total>1?'S':''}</span>
     </div>
-    ${videoUrl
-      ?`<div class="fcmd-vid"><video src="${videoUrl}" controls playsinline preload="metadata"></video></div>`
-      :`<div class="fcmd-vid"><div class="ph"><div class="ic">🎬</div>Vídeo próximamente<div class="sub">Día ${dia} · ${obj} · ${grupo}</div></div></div>`
-    }
+
+    <div class="fcmd-vid" style="position:relative;">
+      <video id="fvid-${uid}" src="${clips[0].url}" controls playsinline preload="metadata"></video>
+      ${total>1?`
+        <button id="fprev-${uid}" aria-label="Anterior" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:5;background:rgba(2,6,23,.78);color:#fff;border:1px solid #1e3a5f;border-radius:50%;width:46px;height:46px;font-size:18px;cursor:pointer;">◀</button>
+        <button id="fnext-${uid}" aria-label="Siguiente" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:5;background:rgba(2,6,23,.78);color:#fff;border:1px solid #1e3a5f;border-radius:50%;width:46px;height:46px;font-size:18px;cursor:pointer;">▶</button>
+      `:''}
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px 2px;flex-wrap:wrap;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;text-transform:uppercase;letter-spacing:.5px;">
+        <span id="fcount-${uid}" style="color:#60a5fa;">Ejercicio 1 / ${total}</span>
+        <span id="fname-${uid}" style="color:#e2e8f0;font-weight:700;"> · ${labelClip(clips[0],0)}</span>
+      </div>
+      <div id="fdots-${uid}" style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${clips.map((c,i)=>`<button data-i="${i}" class="fdot" aria-label="Ir al ejercicio ${i+1}" style="width:11px;height:11px;border-radius:50%;border:none;cursor:pointer;background:${i===0?'#3b82f6':'#1e293b'};padding:0;"></button>`).join('')}
+      </div>
+    </div>
+
     <div class="fcmd-controls" id="fctr-${uid}">
       <button class="fcmd-btn" id="fplay-${uid}">▶ Escuchar narración</button>
       <button class="fcmd-btn stop" id="fstop-${uid}">■ Detener</button>
@@ -281,20 +363,44 @@ function crearBloqueMultimedia(dia,obj,grupo,equipo,series){
     </div>
     <div class="fcmd-script">
       <h4>📝 Guión · Día ${dia}</h4>
-      <p>${guion}</p>
+      <p id="fguion-${uid}">${clips[0].guion || guionGeneral}</p>
     </div>`;
 
   setTimeout(()=>{
-    const play=document.getElementById(`fplay-${uid}`);
-    const stop=document.getElementById(`fstop-${uid}`);
-    const rate=document.getElementById(`frate-${uid}`);
-    const rl  =document.getElementById(`frl-${uid}`);
-    const ctr =document.getElementById(`fctr-${uid}`);
-    if(!play) return;
-    rate.oninput=()=>rl.textContent=parseFloat(rate.value).toFixed(2)+'×';
-    play.onclick=()=>{
+    const vid   = document.getElementById(`fvid-${uid}`);
+    const count = document.getElementById(`fcount-${uid}`);
+    const name  = document.getElementById(`fname-${uid}`);
+    const guionP= document.getElementById(`fguion-${uid}`);
+    const dots  = wrap.querySelectorAll('.fdot');
+    const play  = document.getElementById(`fplay-${uid}`);
+    const stop  = document.getElementById(`fstop-${uid}`);
+    const rate  = document.getElementById(`frate-${uid}`);
+    const rl    = document.getElementById(`frl-${uid}`);
+    const ctr   = document.getElementById(`fctr-${uid}`);
+    if(!vid) return;
+
+    function show(i){
+      cur = (i+total)%total;
+      const c = clips[cur];
       try{speechSynthesis.cancel();}catch(e){}
-      const u=new SpeechSynthesisUtterance(guion);
+      ctr && ctr.classList.remove('playing');
+      vid.pause(); vid.src = c.url; vid.load();
+      count.textContent  = `Ejercicio ${cur+1} / ${total}`;
+      name.textContent   = ' · ' + labelClip(c,cur);
+      guionP.textContent = c.guion || guionGeneral;
+      dots.forEach((d,di)=> d.style.background = di===cur ? '#3b82f6' : '#1e293b');
+    }
+
+    const prev=document.getElementById(`fprev-${uid}`);
+    const next=document.getElementById(`fnext-${uid}`);
+    if(prev) prev.onclick=()=>show(cur-1);
+    if(next) next.onclick=()=>show(cur+1);
+    dots.forEach(d=> d.onclick=()=>show(parseInt(d.dataset.i)));
+
+    if(rate) rate.oninput=()=>rl.textContent=parseFloat(rate.value).toFixed(2)+'×';
+    if(play) play.onclick=()=>{
+      try{speechSynthesis.cancel();}catch(e){}
+      const u=new SpeechSynthesisUtterance(clips[cur].guion || guionGeneral);
       u.lang='es-ES'; u.rate=parseFloat(rate.value);
       const vx=speechSynthesis.getVoices();
       const fem=vx.find(v=>/es[-_]/i.test(v.lang)&&/female|mujer|monica|paulina|lucia/i.test(v.name))
@@ -304,13 +410,7 @@ function crearBloqueMultimedia(dia,obj,grupo,equipo,series){
       u.onend  =()=>ctr.classList.remove('playing');
       speechSynthesis.speak(u);
     };
-    stop.onclick=()=>{try{speechSynthesis.cancel();}catch(e){}ctr.classList.remove('playing');};
-    const vid=wrap.querySelector('video');
-    if(vid){
-      vid.addEventListener('play', ()=>setTimeout(()=>play.click(),200));
-      vid.addEventListener('pause',()=>stop.click());
-      vid.addEventListener('ended',()=>stop.click());
-    }
+    if(stop) stop.onclick=()=>{try{speechSynthesis.cancel();}catch(e){}ctr.classList.remove('playing');};
     if(window.speechSynthesis) speechSynthesis.getVoices();
   },200);
 
@@ -421,9 +521,9 @@ function _generar(){
     crearBloqueImagen(imgFinal, nombreArchivo, placeholderURL)
   );
 
-  // ── Inyectar video + audio ──
+  // ── Inyectar video + audio (CARRUSEL de clips de la clase) ──
   document.getElementById('fit-media-slot').appendChild(
-    crearBloqueMultimedia(dia,obj,grupo,equipo,series)
+    crearBloqueMultimedia(dia,obj,grupo,equipo,series,nEjer)
   );
 }
 

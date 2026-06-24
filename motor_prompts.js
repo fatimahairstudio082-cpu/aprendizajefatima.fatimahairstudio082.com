@@ -50,6 +50,55 @@
   var NIV_BY_NEJ = { 6: 'p', 8: 'i', 12: 'a' };
   var NIV_LBL = { p: 'beginner', i: 'intermediate', a: 'advanced' };
 
+  /* ── Traducción de cada ejercicio al INGLÉS (clave para que la IA NO
+     alucine). Copia de la tabla del motor de conocimiento. Si el motor
+     de conocimiento expone su propia tabla/función, se prefiere esa
+     (fuente única); si no, se usa esta. ── */
+  var EJERCICIO_EN = {
+    'Hip Thrust Máquina':'Machine Hip Thrust','Prensa Glúteo 45°':'45° Glute Press','Kickback Cable':'Cable Kickback',
+    'Abducción Sentada':'Seated Hip Abduction','Step-Up con Carga':'Loaded Step-Up','Extensión Cadera':'Hip Extension',
+    'Sentadilla Smith':'Smith Machine Squat','Curl Femoral':'Lying Hamstring Curl','Hiperextensión':'Back Hyperextension',
+    'Peso Muerto Máquina':'Machine Deadlift','Patada Trasera':'Glute Kickback','Aducción Sentada':'Seated Hip Adduction',
+    'Hip Thrust Mancuerna':'Dumbbell Hip Thrust','Sentadilla Goblet':'Goblet Squat','Peso Muerto Rumano':'Romanian Deadlift',
+    'Zancada Lateral':'Lateral Lunge','Step-Up Mancuerna':'Dumbbell Step-Up','Patada de Burro':'Donkey Kick',
+    'Sentadilla Sumo':'Sumo Squat','Zancada Búlgara':'Bulgarian Split Squat','Hip Hinge':'Hip Hinge',
+    'Abducción de Pie':'Standing Hip Abduction','Peso Muerto Copa':'Goblet Deadlift','Sentadilla Pulso':'Pulse Squat',
+    'Hip Thrust Peso Corp.':'Bodyweight Hip Thrust','Sentadilla Búlgara':'Bulgarian Split Squat','Puente de Glúteo':'Glute Bridge',
+    'Step-Up Sin Peso':'Bodyweight Step-Up','Sentadilla Pistol':'Pistol Squat','Clamshell':'Clamshell',
+    'Puente Unilateral':'Single-Leg Glute Bridge','Sentadilla Lateral':'Lateral Squat','Patada Lateral':'Side Leg Kick',
+    'Abducción Máquina':'Machine Hip Abduction','Prensa Pies Altos':'High Foot Leg Press','Aducción Máquina':'Machine Hip Adduction',
+    'Sentadilla Hack':'Hack Squat','Patada Cable':'Cable Glute Kickback','Extensión Lumbar':'Lower Back Extension',
+    'Zancada Frontal':'Forward Lunge','Step-Up Máquina':'Machine Step-Up','Zancada Alterna':'Alternating Lunge',
+    'Hip Hinge Unilat.':'Single-Leg Hip Hinge','Marcha Glúteo':'Glute March','Prensa Glúteo':'Glute Leg Press',
+    'Hip Thrust Unilat.':'Single-Leg Hip Thrust',
+    'Sentadilla Trasera Barra':'Back Barbell Squat','Zancada Lateral Mancuerna':'Dumbbell Lateral Lunge',
+    'Peso Muerto Sumo':'Sumo Deadlift','Extensión Pantorrilla':'Standing Calf Raise','Sentadilla Copa':'Goblet Squat',
+    'Prensa 45°':'45° Leg Press','Extensión Cuádriceps':'Leg Extension','Prensa Pies Bajos':'Low Foot Leg Press',
+    'Curl Fem. Parado':'Standing Hamstring Curl','Prensa Unilateral':'Single-Leg Press','Sentadilla Sissy':'Sissy Squat',
+    'Sentadilla Libre':'Bodyweight Squat','Wall Sit':'Wall Sit','Salto Sentadilla':'Jump Squat','Caminata Isométrica':'Isometric Wall Sit Walk',
+    'Prensa 45° Ligera':'Light 45° Leg Press','Aducción':'Hip Adduction','Curl Isquiotibial':'Hamstring Curl',
+    'Zancada Reversa':'Reverse Lunge','Marcha Alta':'High Knee March','Zancada Salta':'Jumping Lunge',
+    'Press Pecho Máquina':'Machine Chest Press','Jalón al Pecho':'Lat Pulldown','Remo Máquina':'Machine Row',
+    'Press Hombro':'Shoulder Press','Curl Bíceps':'Bicep Curl','Extensión Tríceps':'Tricep Extension',
+    'Cruce Poleas':'Cable Crossover','Face Pull':'Face Pull','Mariposa Máquina':'Machine Pec Fly',
+    'Remo Sentado':'Seated Cable Row','Press Arnold Máquina':'Machine Arnold Press','Pushdown Cable':'Cable Tricep Pushdown',
+    'Press Banca Mancuerna':'Dumbbell Bench Press','Remo Unilateral':'Single-Arm Dumbbell Row','Press Hombro Mancuerna':'Dumbbell Shoulder Press',
+    'Curl Alternado':'Alternating Dumbbell Curl','Pullover':'Dumbbell Pullover','Elevación Lateral':'Lateral Raise','Curl Martillo':'Hammer Curl',
+    'Mariposa Mancuerna':'Dumbbell Chest Fly','Remo Inclinado':'Bent-Over Row','Arnold Press':'Arnold Press','Patada Tríceps':'Tricep Kickback',
+    'Flexiones':'Push-Up','Dominadas':'Pull-Up','Fondos Tríceps':'Tricep Dips','Remo Invertido':'Inverted Row',
+    'Pike Push-Up':'Pike Push-Up','Superman':'Superman Exercise','Flexión Diamante':'Diamond Push-Up','Flexión Ancha':'Wide Push-Up',
+    'Archer Push-Up':'Archer Push-Up','L-Sit':'L-Sit Hold','Curl Isométrico':'Isometric Curl','Elevación Frontal':'Front Raise',
+    'Curl Cable':'Cable Curl','Mariposa':'Pec Fly','Press Arnold':'Arnold Press','Curl Predikador':'Preacher Curl',
+    'Press Banca':'Bench Press','Pseudo Planche':'Pseudo Planche Push-Up','Flexión Lenta':'Slow Tempo Push-Up','Isométrico Pecho':'Isometric Chest Hold',
+    'Curl Concentrado':'Concentration Curl'
+  };
+  function ejercicioEN(nombreEs){
+    if (window.MOTOR_FITNESS && typeof window.MOTOR_FITNESS.ejercicioEN === 'function'){
+      var r = window.MOTOR_FITNESS.ejercicioEN(nombreEs); if (r) return r;
+    }
+    return EJERCICIO_EN[nombreEs] || nombreEs;
+  }
+
   /* ── Modelos por defecto (Replicate · API privada) ── */
   var MODELOS = {
     imagen: 'black-forest-labs/flux-dev',
@@ -119,25 +168,29 @@
     return out;
   }
 
-  /* ── PROMPT · 1 ejercicio fitness (imagen, panel de la lámina) ── */
+  /* ── PROMPT · 1 ejercicio fitness (imagen, panel de la lámina) ──
+     El nombre se traduce al INGLÉS para que la IA represente el ejercicio
+     CORRECTO (sin alucinar). El panel = un solo ejercicio real. */
   function fitnessSingle(grupo, equipo, motor, nombreEj) {
-    return 'Professional fitness photo of a single real athletic person performing "' + nombreEj +
-      '" with perfect controlled technique, ' + (GRUPO_EN[grupo] || grupo) + ', ' + (EQUIPO_EN[equipo] || equipo) + '. ' +
-      (MOTOR_EN[motor] || motor) + '. The working ' + (MUSCLE_EN[grupo] || 'muscles') +
-      ' highlighted with a glowing orange anatomical muscle overlay on the body. ' +
-      'Full body clearly visible, correct posture, fitted dark athletic wear, modern premium gym with equipment in background, ' +
-      'clean composition, soft professional studio lighting. Photorealistic, sharp focus, natural anatomy, single person only, ' +
-      'centered, no text, no labels, no watermark, no collage, no split panels. Vertical 3:4 portrait.';
+    var en = ejercicioEN(nombreEj);
+    return 'Professional fitness photo of ONE single real athletic person performing the exercise "' + en +
+      '" (' + (EQUIPO_EN[equipo] || equipo) + ') with perfect, anatomically correct technique. ' +
+      'This must clearly and unmistakably be the "' + en + '" exercise, training ' + (GRUPO_EN[grupo] || grupo) + '. ' +
+      (MOTOR_EN[motor] || motor) + '. The working muscles (' + (MUSCLE_EN[grupo] || 'muscles') +
+      ') subtly highlighted with a glowing orange anatomical overlay. ' +
+      'Full body in frame, correct posture mid-movement, fitted dark athletic wear, modern premium gym background, ' +
+      'soft professional studio lighting. Photorealistic, sharp focus, natural anatomy, ONE person only, centered. ' +
+      'STRICT: no text, no labels, no numbers, no watermark, no collage, no split panels, no multiple people. Vertical 3:4 portrait.';
   }
 
-  /* ── PROMPT · 1 ejercicio fitness (video) ── alineado con M2:
-     una sola persona, un solo ejercicio, plano fijo 3/4, sin paneles. */
+  /* ── PROMPT · 1 ejercicio fitness (video) ── nombre en inglés, 1 persona, 1 ejercicio. */
   function fitnessVideo(grupo, equipo, motor, nombreEj) {
-    var nLabel = ''; // nivel no aplica al video individual
-    return 'Professional fitness instructional video of ONE single athlete performing the exercise "' + nombreEj +
-      '" ' + (EQUIPO_EN[equipo] || equipo) + ' in a professional gym. The athlete demonstrates the COMPLETE movement with correct form and full range of motion, slow and controlled. ' +
+    var en = ejercicioEN(nombreEj);
+    return 'Professional fitness instructional video of ONE single athlete performing the exercise "' + en +
+      '" ' + (EQUIPO_EN[equipo] || equipo) + ' in a professional gym. This must clearly be the "' + en + '" movement. ' +
+      'The athlete demonstrates the COMPLETE repetition with correct form and full range of motion, slow and controlled. ' +
       (MOTOR_EN[motor] || motor) + ', ' + (GRUPO_EN[grupo] || grupo) + ' clearly engaged. ' +
-      'Three-quarter side camera angle, the whole body stays inside the frame during the entire repetition. ' +
+      'Three-quarter side camera angle, whole body inside frame during the entire repetition. ' +
       'Cinematic 60fps 1080p, professional gym lighting, ultra-stable camera, photorealistic, high detail. ' +
       'STRICT: a single person doing a single exercise, one continuous shot, NO split screen, NO multiple panels, NO grid, NO text, NO numbers on screen, no watermark.';
   }
@@ -148,13 +201,50 @@
      el id/título de la categoría. variant: cliente|peluquero|protocolo|alertas */
   var VARIANT_EN = {
     cliente: 'clean elegant client-facing result photo, professional salon, soft flattering lighting',
-    peluquero: 'professional technique demonstration, hands and tools in focus, step-by-step clarity',
-    protocolo: 'clear technical protocol diagram on mannequin head, clean professional illustration, labeled sections',
+    peluquero: 'professional technique demonstration, hairdresser hands and tools in focus, step-by-step clarity',
+    protocolo: 'clear technical protocol on a mannequin head, clean professional illustration, labeled sections',
     alertas: 'safety and warning visual, highlighting risks and contraindications, clinical clean background'
   };
-  function peluqueria(catIdOrLabel, variant) {
+  /* Detección de tema por palabra clave → contexto en INGLÉS específico,
+     para que la IA represente la técnica real y no algo genérico. */
+  var PELU_TEMA_EN = [
+    [/balayage|mechas|babylight|highlight/i, 'balayage / hair highlighting technique, painted lightened strands, natural sun-kissed blonde result'],
+    [/querat|alis|botox capilar|nanoplast/i, 'keratin smoothing / straightening treatment, sleek glossy straight hair, flat iron sealing'],
+    [/tinte|coloraci|color|tono|cromat|matiz/i, 'professional hair coloring, color application with brush and bowl, vivid even color result'],
+    [/decolora|blanque|platino|rubio/i, 'hair bleaching / lightening, platinum blonde result, foils and lightener'],
+    [/peine|cepillo|tijera|plancha|secador|rizador|pincel|herramient|navaja/i, 'professional hairdressing tools close-up, scissors combs brushes flat iron arranged on a clean salon station'],
+    [/lavado|champ|enjuague|hidrata|mascar|nutri|tratam/i, 'professional hair washing and treatment at the salon basin, foam and water, healthy shiny hydrated hair'],
+    [/divisi|secci|zona|mapa|zigzag|pulgada|medida/i, 'professional hair sectioning and parting with a tail comb and clips on a mannequin head, neat divided sections'],
+    [/corte|capas|fleco|bob|degrad/i, 'professional haircut technique, precise scissor cutting, clean layered finish'],
+    [/morfolog|rostro|diagn|consulta/i, 'face shape analysis and hair diagnosis consultation, matching haircut to face morphology'],
+    [/bioseg|higien|desinfec|esteril|epp|guante|mascar|alergia|hongo|embaraz/i, 'salon hygiene and biosafety protocol, sterilized tools, gloves and mask, clean sanitized station'],
+    [/eleva|proyec|geometr|angulo/i, 'haircut elevation and projection angles, geometric sectioning on a mannequin head'],
+    [/recogid|peinad|updo|trenza|onda|rizo|volumen/i, 'professional hairstyling and updo, elegant finished styling with brushes and tools'],
+    [/extensi|peluca|postiz/i, 'hair extensions application, attaching wefts, long voluminous result']
+  ];
+  function temaPeluEN(label){
+    var s = String(label || '');
+    for (var i = 0; i < PELU_TEMA_EN.length; i++){ if (PELU_TEMA_EN[i][0].test(s)) return PELU_TEMA_EN[i][1]; }
+    return 'professional hairdressing technique in an elegant salon';
+  }
+  /* ── PROMPT · 1 PASO de una clase de peluquería (video del carrusel) ──
+     Toma el texto real del paso (de la lámina) + el tema detectado y arma
+     un clip cinematográfico de ESE paso concreto. */
+  function peluqueriaPaso(catIdOrLabel, titulo, niv, stepText) {
+    var tema = temaPeluEN(String(catIdOrLabel || '') + ' ' + String(titulo || ''));
+    var nivEN = niv === 'a' ? 'advanced professional level' : niv === 'i' ? 'intermediate level' : 'beginner-friendly';
+    var step = String(stepText || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    return 'Cinematic professional hairdressing tutorial video, ' + nivEN + ', technique: ' + tema + '. ' +
+      'This clip shows ONE concrete step of the process: ' + step + '. ' +
+      'A real hairstylist performing exactly this step with accurate professional movements, close-up on the hands, hair and tools. ' +
+      'Luxury elegant salon, soft cinematic lighting, warm gold tones, shallow depth of field, ultra-stable camera, slow controlled motion, photorealistic 1080p. ' +
+      'STRICT: one continuous shot, anatomically correct hands, accurate professional technique, no text, no numbers on screen, no watermark, no split screen. Vertical 9:16.';
+  }
+
+  function peluqueria(catIdOrLabel, variant, clase) {
     variant = variant || 'cliente';
-    // 1) reutiliza CATS de M1 si existe (prompt curado)
+    clase = clase || {};
+    // 1) reutiliza CATS de M1 si existe (prompt curado por ti)
     if (window.CATS && Array.isArray(window.CATS)) {
       var c = window.CATS.find(function (x) {
         return x.id === catIdOrLabel ||
@@ -164,10 +254,17 @@
         return c.prompts[variant] || c.prompts.cliente;
       }
     }
-    // 2) genérico coherente
-    var tema = String(catIdOrLabel || 'professional hairdressing').replace(/[^\wáéíóúñ\s-]/gi, '').trim();
-    return 'Professional hairdressing academy image about "' + tema + '", ' + (VARIANT_EN[variant] || VARIANT_EN.cliente) +
-      '. Modern salon, realistic high-quality photography, clean composition, no text, no watermark, high resolution, 4:3.';
+    // 2) prompt ESPECÍFICO en inglés. Tema detectado en categoría O título
+    //    (lo que primero coincida), para que cada clase varíe y sea correcta.
+    var titulo = clase.titulo || clase.n || '';
+    var tema = temaPeluEN(catIdOrLabel + ' ' + titulo);
+    var nivEN = clase.niv === 'a' ? 'advanced professional level' : clase.niv === 'i' ? 'intermediate level' : 'clear beginner-friendly';
+    return 'Editorial high-end hairdressing academy photograph, ' + nivEN + ', showing ' + tema + '. ' +
+      (VARIANT_EN[variant] || VARIANT_EN.cliente) + '. ' +
+      'Shot like a luxury hair magazine cover: cinematic soft directional lighting, shallow depth of field, ' +
+      'rich elegant color grading with warm gold tones, pristine modern salon, immaculate styling, ' +
+      'ultra-realistic skin and hair detail, glossy healthy hair, professional retouch quality, 8k, photorealistic. ' +
+      'STRICT: anatomically correct hands, accurate professional technique, no text, no labels, no watermark, no collage. Vertical 4:3 portrait.';
   }
 
   /* ── ENTRADA UNIFICADA · build(clase, kind) ──
@@ -215,7 +312,10 @@
       aspect: kind === 'vid' ? '9:16' : '4:3',
       compuesto: false,
       prompt: kind === 'vid'
-        ? 'Short professional hairdressing technique video about "' + (clase.titulo || clase.catId || clase.cat) + '", realistic salon, clear step demonstration, no text, no watermark, 9:16.'
+        ? ('Cinematic professional hairdressing video, ' + temaPeluEN((clase.catId || clase.cat || '') + ' ' + (clase.titulo || '')) + '. ' +
+           'A real professional hairstylist demonstrating the technique with accurate, controlled movements, close-up on the hands and hair. ' +
+           'Luxury elegant salon, soft cinematic lighting, warm gold tones, shallow depth of field, ultra-stable camera, slow controlled motion, photorealistic 1080p. ' +
+           'STRICT: one continuous shot, anatomically correct hands, accurate professional technique, no text, no numbers on screen, no watermark, no split screen. Vertical 9:16.')
         : peluqueria(clase.catId || clase.cat || clase.titulo, variant)
     };
   }
@@ -229,6 +329,7 @@
     fitnessSingle: fitnessSingle,
     fitnessVideo: fitnessVideo,
     peluqueria: peluqueria,
+    peluqueriaPaso: peluqueriaPaso,
     build: build
   };
   console.log('%c[MOTOR_PROMPTS] librería única de prompts cargada', 'color:#22c55e;font-weight:700');
