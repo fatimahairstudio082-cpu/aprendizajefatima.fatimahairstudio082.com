@@ -4,6 +4,15 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>FATIMA PRO HUB</title>
+<!-- ══ PWA · instalable como app ══ -->
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#020408"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Fátima Pro"/>
+<link rel="apple-touch-icon" href="apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1517,7 +1526,24 @@ window.toast=toast;
 HUB_TTS.init();
 </script>
 <script src="fatima_modules.js"></script>
-<script src="hub_core_parche.js"></script> ```
+<script src="hub_core_parche.js"></script>
 <script src="peluqueria_hub_bridge.js"></script>
+<!-- PWA: registrar service worker (hace instalable la app) -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(function () { console.log('[Fatima] Service worker activo - app instalable'); })
+        .catch(function (e) { console.warn('[Fatima] SW no registrado:', e); });
+    });
+  }
+  var fatimaDefer = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault(); fatimaDefer = e;
+    var b = document.getElementById('fatimaInstall');
+    if (b) { b.hidden = false; b.onclick = function () { fatimaDefer.prompt(); fatimaDefer.userChoice.finally(function(){ fatimaDefer = null; b.hidden = true; }); }; }
+  });
+  window.addEventListener('appinstalled', function () { var b = document.getElementById('fatimaInstall'); if (b) b.hidden = true; });
+</script>
 </body>
 </html>
