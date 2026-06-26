@@ -159,7 +159,11 @@
               grupo: grupo, motor: motor, equipo: equipo, nej: nej,
               niv: NIV_BY_NEJ[nej],
               claveImgBase: grupo + '_' + motor + '_' + equipo + '_' + nej,
-              ejercicios: ejerciciosDe(grupo, equipo, nej)
+              // FIX CONFLICTO DE ID: se pasa el OBJETIVO (motor) para que cada
+              // objetivo (masa/perder/mantener) traiga SU lista real de ejercicios.
+              // Antes se omitía → todas las láminas reusaban la lista de "masa",
+              // y los IDs de video quedaban con ejercicios que no correspondían.
+              ejercicios: ejerciciosDe(grupo, equipo, nej, motor)
             });
           });
         });
@@ -280,7 +284,7 @@
       var nej = parseInt(clase.nej || clase.n || 6, 10);
       var ejercicios = (clase.ejercicios && clase.ejercicios.length)
         ? clase.ejercicios.map(function (e) { return e.nombre || e; })
-        : ejerciciosDe(clase.grupo, clase.equipo, nej);
+        : ejerciciosDe(clase.grupo, clase.equipo, nej, clase.motor);
       var panels = ejercicios.map(function (nom) {
         return {
           nombre: nom,

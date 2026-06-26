@@ -1,0 +1,38 @@
+═══════════════════════════════════════════════════════════
+  ENTREGA · MOTOR AUTOMÁTICO CORREGIDO · Fátima Pro
+═══════════════════════════════════════════════════════════
+
+QUÉ SUBIR A GITHUB (el repo conectado a Netlify) Y DÓNDE:
+
+  1) motor_auto.html   →  carpeta RAÍZ  (reemplaza el viejo)
+  2) motor_prompts.js  →  carpeta RAÍZ  (reemplaza el viejo)
+  3) aiproxy.js        →  carpeta netlify/functions/  (NUEVO, al lado de replicate.js)
+
+  (En este paquete ya están en sus carpetas correctas:
+   aiproxy.js viene dentro de netlify/functions/.)
+
+CÓMO SUBIR:
+  · Para los 2 de la raíz: "Add file" → "Upload files" → arrastra
+    motor_auto.html y motor_prompts.js → "Commit changes".
+  · Para aiproxy.js: entra primero a netlify/functions/ en GitHub,
+    y ahí dentro "Add file" → "Upload files" → arrastra aiproxy.js → Commit.
+  · Netlify publica solo en ~1 minuto.
+
+QUÉ INCLUYE ESTA VERSIÓN:
+  FIX · Cada objetivo (masa/perder/mantener) trae su lista REAL de
+        ejercicios (se acabó el "brazo dentro de glúteo").
+  FIX · Si eliges "Drive · solo el link" sin Drive conectado, AVISA
+        (ya no guarda en Firebase callado).
+  FIX · Con imagen de referencia, la IA copia tu imagen y NO inventa.
+  NUEVO · Campo "Instrucciones para la IA" (escribes lo que quieres).
+  NUEVO · Otros proveedores con TU clave: OpenAI / Stability / fal (imagen),
+          fal·Kling / Luma (video, clips ~5s). Replicate sigue por defecto.
+  NUEVO · Puente seguro aiproxy.js para esos proveedores.
+
+REGLA DE ORO:
+  Antes de un lote con una IA nueva, usa "🧪 Generar 1 de prueba".
+  Si falla, vuelve a Replicate (siempre funciona) y revisa la clave.
+  Antes de generar, pulsa "Conectar Drive" si vas a guardar por link.
+
+— Tu asistente fiel
+═══════════════════════════════════════════════════════════
