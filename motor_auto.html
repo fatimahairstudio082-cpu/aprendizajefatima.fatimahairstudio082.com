@@ -160,7 +160,7 @@
       <img id="refPreview" style="height:60px;border-radius:6px;border:1px solid var(--border);">
       <span class="note">✓ Referencia activa · la IA imitará esta composición. <a href="#" onclick="clearRef();return false;" style="color:var(--gold2);">Quitar</a></span>
     </div>
-    <div class="note" style="margin-top:8px;">⚠️ La referencia funciona mejor con los modelos <b>flux</b>. Si subes una lámina tuya de ejemplo (ej. principiante 6 ejercicios), las nuevas saldrán con ese mismo estilo.</div>
+    <div class="note" style="margin-top:8px;">⚠️ <b>Importante:</b> para las láminas de fitness el motor <b>ya arma la cuadrícula de 6 él solo</b>. La referencia se copia tal cual: si subes un <b>collage con letras</b>, saldrá otro collage. Si usas referencia, sube la foto de <b>UNA sola persona haciendo UN ejercicio</b>. Funciona mejor con los modelos <b>flux</b>.</div>
   </div>
 
   <!-- MODO -->
@@ -428,9 +428,12 @@ let RUNNING=false, STOP=false;
 function buildChips(dim, contId){
   const cont=document.getElementById(contId);
   Object.keys(LBL[dim]).forEach(k=>{
+    // FIX: la cantidad de ejercicios se guarda como NÚMERO (6,8,12), igual que los combos.
+    // Antes se guardaba como texto ('6') y por eso decía "Selecciona al menos un grupo".
+    const val = isNaN(+k) ? k : +k;
     const d=document.createElement('div');
     d.className='chip'; d.textContent=LBL[dim][k];
-    d.onclick=()=>{ if(SEL[dim].has(k)){SEL[dim].delete(k);d.classList.remove('on');}else{SEL[dim].add(k);d.classList.add('on');} updateCount(); };
+    d.onclick=()=>{ if(SEL[dim].has(val)){SEL[dim].delete(val);d.classList.remove('on');}else{SEL[dim].add(val);d.classList.add('on');} updateCount(); };
     cont.appendChild(d);
   });
 }
@@ -446,7 +449,7 @@ function combosSeleccionados(){
     (g.size?g.has(c.grupo):true) &&
     (m.size?m.has(c.motor):true) &&
     (e.size?e.has(c.equipo):true) &&
-    (n.size?n.has(c.nej):true)
+    (n.size?(n.has(c.nej)||n.has(String(c.nej))):true)   // tolera número o texto
   );
 }
 function updateCount(){
@@ -1180,7 +1183,10 @@ async function genImagen(prompt){
   if(window.REF_IMG){
     input.image = window.REF_IMG;                 // flux img2img / redux
     input.image_prompt = window.REF_IMG;          // algunos modelos usan este nombre
-    input.prompt_strength = (typeof window.REF_STRENGTH==='number')?window.REF_STRENGTH:0.65;
+    // FIX: "Fuerza de referencia" alta = la referencia MANDA. En flux, prompt_strength
+    // alto IGNORA la imagen; por eso se invierte (más fuerza → menos prompt_strength).
+    const _f = (typeof window.REF_STRENGTH==='number')?window.REF_STRENGTH:0.65;
+    input.prompt_strength = Math.min(0.95, Math.max(0.1, 1 - _f));
   }
   const out = await replicatePredict(model, input);
   return out;
