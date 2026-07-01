@@ -30,9 +30,19 @@
       return url;
     }
     function html(url,opts){ url=clean(url); opts=opts||{}; if(!url) return '';
-      var isYT=!!youtubeId(url), isVM=!!vimeoId(url), isDrive=url.indexOf('drive.google')>=0;
-      if(!isYT&&!isVM&&!isDrive&&isFile(url)){ var a=opts.autoplay?' autoplay muted':'';
+      var yt=youtubeId(url), vm=vimeoId(url), dr=driveId(url);
+      // Archivo directo (MP4/WEBM/Firebase Storage) → <video> normal
+      if(!yt&&!vm&&!dr&&isFile(url)){ var a=opts.autoplay?' autoplay muted':'';
         return '<video src="'+url+'" controls playsinline preload="metadata"'+a+' style="width:100%;height:100%;display:block;background:#000;"></video>'; }
+      // GOOGLE DRIVE → primero intenta REPRODUCIR DIRECTO (sin cookies, como video normal).
+      // Si el navegador no lo logra, cae solo al modo vista previa (iframe). Doble red.
+      if(dr){
+        var stream='https://drive.usercontent.google.com/download?id='+dr+'&export=download';
+        var prev='https://drive.google.com/file/d/'+dr+'/preview';
+        var fb="this.onerror=null;var f=document.createElement('iframe');f.src='"+prev+"';f.setAttribute('allow','autoplay; encrypted-media; fullscreen');f.setAttribute('allowfullscreen','');f.style.cssText='width:100%;height:100%;border:0;display:block;background:#000';this.replaceWith(f);";
+        return '<video src="'+stream+'" controls playsinline preload="metadata" style="width:100%;height:100%;display:block;background:#000;" onerror="'+fb+'"></video>';
+      }
+      // YouTube / Vimeo → iframe
       var src=embedUrl(url,opts);
       return '<iframe src="'+src+'" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" style="width:100%;height:100%;display:block;border:0;background:#000;"></iframe>';
     }
@@ -434,10 +444,6 @@ function crearBloqueMultimedia(dia,obj,grupo,equipo,series,nEjer){
       </div>
     </div>
 
-    <div style="padding:0 12px 8px;">
-      <a id="fopen-${uid}" href="${fvOpenUrl(clips[0].url)}" target="_blank" rel="noopener" style="font-size:11px;color:#60a5fa;text-decoration:none;">↗ ¿No se ve el video? Ábrelo en una pestaña</a>
-    </div>
-
     <div class="fcmd-controls" id="fctr-${uid}">
       <button class="fcmd-btn" id="fplay-${uid}">▶ Escuchar narración</button>
       <button class="fcmd-btn stop" id="fstop-${uid}">■ Detener</button>
@@ -472,8 +478,6 @@ function crearBloqueMultimedia(dia,obj,grupo,equipo,series,nEjer){
       try{speechSynthesis.cancel();}catch(e){}
       ctr && ctr.classList.remove('playing');
       player.innerHTML = fvPlayer(c.url);   // reproductor correcto según el enlace
-      const openLink = document.getElementById(`fopen-${uid}`);
-      if(openLink) openLink.href = fvOpenUrl(c.url);
       count.textContent  = `Ejercicio ${cur+1} / ${total}`;
       name.textContent   = ' · ' + labelClip(c,cur);
       guionP.textContent = c.guion || guionGeneral;
