@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motor Automático · Fátima Caldea Studio</title>
+<style>
+  :root{
+    --bg:#0e1117; --bg2:#161b25; --bg3:#1e2533; --border:#2a3344;
+    --text:#e6e9ef; --muted:#7c879b; --gold:#C9A84C; --gold2:#e3c869;
+    --green:#22c55e; --red:#E74C3C; --blue:#3b82f6; --cyan:#00bcd4;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:13px;}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .logo{font-weight:800;letter-spacing:.5px;}
+  .logo span{color:var(--gold);}
+  .sub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .pill{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);}
+  .pill.ok{color:var(--green);border-color:rgba(34,197,94,.4);}
+  .pill.no{color:var(--red);border-color:rgba(231,76,60,.4);cursor:pointer;}
+  .wrap{max-width:1100px;margin:0 auto;padding:22px;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:18px;}
+  .card h2{margin:0 0 4px;font-size:14px;}
+  .card p.h{margin:0 0 14px;font-size:11px;color:var(--muted);}
+  .row{display:flex;gap:18px;flex-wrap:wrap;}
+  .group{flex:1;min-width:180px;}
+  .group label{display:block;font-size:11px;color:var(--gold2);margin-bottom:6px;letter-spacing:.3px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{padding:6px 12px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;font-size:12px;user-select:none;transition:.12s;}
+  .chip.on{background:rgba(201,168,76,.16);border-color:var(--gold);color:var(--gold2);}
+  .opts{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:14px;font-size:12px;}
+  .opts label{display:flex;align-items:center;gap:6px;color:var(--muted);cursor:pointer;}
+  .btn{border:none;border-radius:8px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;}
+  .btn-go{background:linear-gradient(135deg,#22c55e,#16a34a);color:#04210f;}
+  .btn-go:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-stop{background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.4);color:var(--red);}
+  .btn-ghost{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-weight:600;}
+  .count{font-family:'JetBrains Mono',monospace;color:var(--gold2);}
+  .progwrap{height:10px;background:var(--bg3);border-radius:6px;overflow:hidden;margin:14px 0 8px;}
+  .progfill{height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .25s;}
+  .progtxt{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+  .log{background:#0a0d13;border:1px solid var(--border);border-radius:8px;padding:12px;height:240px;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;margin-top:12px;}
+  .log .ok{color:var(--green);} .log .err{color:var(--red);} .log .skip{color:var(--muted);} .log .info{color:var(--cyan);}
+  .preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px;}
+  .preview img{width:100%;border:1px solid var(--border);border-radius:6px;}
+  .keybox{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;}
+  .keybox input{flex:1;min-width:220px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:9px 11px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+  .note{font-size:11px;color:var(--muted);line-height:1.6;}
+  .note b{color:var(--gold2);}
+  /* galería de revisión */
+  .review{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-top:14px;}
+  .rv{background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative;transition:.15s;}
+  .rv.aprobado{border-color:var(--green);box-shadow:0 0 0 1px var(--green) inset;}
+  .rv.descartado{opacity:.4;border-color:var(--red);}
+  .rv .media{width:100%;height:200px;background:#0a0d13;display:flex;align-items:center;justify-content:center;}
+  .rv .media img,.rv .media video{width:100%;height:100%;object-fit:cover;}
+  .rv .lbl{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--muted);padding:6px 8px;border-top:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .rv .acts{display:flex;border-top:1px solid var(--border);}
+  .rv .acts button{flex:1;border:none;background:transparent;color:var(--text);padding:9px 0;cursor:pointer;font-size:14px;border-right:1px solid var(--border);transition:.12s;}
+  .rv .acts button:last-child{border-right:none;}
+  .rv .acts button:hover{background:var(--bg2);}
+  .rv .acts .ap.on{background:rgba(34,197,94,.2);}
+  .rv .acts .ds.on{background:rgba(231,76,60,.2);}
+  .rv .badge{position:absolute;top:6px;left:6px;font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.7);}
+  .rv .badge.pend{color:var(--gold2);} .rv .badge.ap{color:var(--green);} .rv .badge.ds{color:var(--red);}
+  .reviewbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .seg button{background:var(--bg3);border:none;color:var(--muted);padding:8px 14px;cursor:pointer;font-size:12px;font-weight:600;}
+  .seg button.on{background:rgba(201,168,76,.16);color:var(--gold2);}
+  .drivebox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+  .drivebox input{flex:1;min-width:240px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:9px 11px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+  /* lista de clases peluquería */
+  .clist{border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:340px;overflow-y:auto;}
+  .crow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;}
+  .crow:last-child{border-bottom:none;}
+  .crow .cid{font-family:'JetBrains Mono',monospace;color:var(--gold2);min-width:90px;}
+  .crow .ctit{flex:1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .crow .cniv{font-size:10px;color:var(--muted);}
+  .crow .cst{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid var(--border);}
+  .crow .cst.has{color:var(--green);border-color:rgba(34,197,94,.4);}
+  .crow .cst.no{color:var(--muted);}
+  .chead{background:var(--bg3);font-weight:700;color:var(--gold2);}</style>
+</head>
+<body>
+
+<div class="top">
+  <div>
+    <div class="logo">FÁTIMA CALDEA — <span>MOTOR AUTOMÁTICO</span></div>
+    <div class="sub">Genera y sube láminas de fitness a Firebase en lote · alimenta el Bloque 5 en tiempo real</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="pill" id="pillEngine">⚙️ Replicate · flux-dev</span>
+    <span class="pill no" id="pillAuth" title="Clic para iniciar sesión">🔒 sin sesión</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- 🔒 CANDADO DE SEGURIDAD · solo admin Firebase entra -->
+  <div id="authGate" style="position:fixed;inset:0;z-index:9999;background:rgba(8,10,14,.97);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
+    <div style="background:var(--bg2,#11151c);border:1px solid var(--border,#2a2f3a);border-radius:16px;padding:34px 30px;max-width:380px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6);">
+      <div style="font-size:40px;margin-bottom:8px;">🔒</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--gold2,#c9a84c);letter-spacing:1px;">MOTOR AUTOMÁTICO</div>
+      <div style="font-size:12px;color:var(--muted,#8b93a5);margin:6px 0 20px;">Acceso solo para administración.<br>Inicia sesión para proteger tu clave de generación.</div>
+      <input id="gateEmail" type="email" placeholder="Correo admin" autocomplete="username" style="width:100%;background:var(--bg3,#0c0f15);border:1px solid var(--border,#2a2f3a);border-radius:8px;color:#fff;padding:11px 12px;font-size:13px;margin-bottom:9px;box-sizing:border-box;">
+      <input id="gatePass" type="password" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')gateLogin()" style="width:100%;background:var(--bg3,#0c0f15);border:1px solid var(--border,#2a2f3a);border-radius:8px;color:#fff;padding:11px 12px;font-size:13px;margin-bottom:14px;box-sizing:border-box;">
+      <button class="btn btn-go" onclick="gateLogin()" style="width:100%;justify-content:center;">🔓 Entrar</button>
+      <div id="gateMsg" style="font-size:11px;color:#E74C3C;margin-top:10px;min-height:14px;"></div>
+    </div>
+  </div>
+
+  <!-- CLAVES -->
+  <div class="card">
+    <h2>🔑 Claves (privadas · solo en este navegador)</h2>
+    <p class="h">Se comparten con el Estudio (M1). Si ya pegaste tu token de Replicate en M1, aquí aparece solo.</p>
+    <div class="keybox">
+      <input id="keyReplicate" type="password" placeholder="Replicate token r8_…" autocomplete="off">
+      <button class="btn btn-ghost" onclick="guardarKey()">Guardar</button>
+    </div>
+    <div class="note" style="margin-top:8px;">El proxy <b id="proxyTxt"></b> también puede tener <b>REPLICATE_API_TOKEN</b> en Netlify; en ese caso el token de arriba es opcional.</div>
+  </div>
+
+  <!-- MODELO + REFERENCIA -->
+  <div class="card">
+    <h2>🎨 Modelo de generación + lámina de referencia</h2>
+    <p class="h">Elige el motor de Replicate y, si quieres, sube una <b>lámina/imagen de referencia</b> para que la IA imite ese estilo (image-to-image) y no malgastes generaciones.</p>
+    <div class="row">
+      <div class="group" id="grpImgModel" style="flex:1;min-width:240px;">
+        <label>Modelo de imagen (Replicate)</label>
+        <select id="imgModel" onchange="setImgModel()">
+          <option value="black-forest-labs/flux-dev">flux-dev · equilibrado (recomendado)</option>
+          <option value="black-forest-labs/flux-1.1-pro">flux 1.1 pro · máxima calidad</option>
+          <option value="black-forest-labs/flux-schnell">flux-schnell · rápido y barato</option>
+          <option value="stability-ai/stable-diffusion-3.5-large">SD 3.5 large</option>
+          <option value="google/imagen-3">Google Imagen 3</option>
+          <option value="ideogram-ai/ideogram-v2">Ideogram v2 · bueno con texto</option>
+        </select>
+      </div>
+      <div class="group" id="grpVidModel" style="flex:1;min-width:240px;">
+        <label>Modelo de VIDEO (Replicate) · de mejor a más económico</label>
+        <select id="vidModel" onchange="setVidModel()">
+          <option value="minimax/video-01">🥇 Hailuo / MiniMax · máxima calidad (caro)</option>
+          <option value="kwaivgi/kling-v1.6-standard">🥈 Kling 1.6 · alta calidad</option>
+          <option value="tencent/hunyuan-video">🥉 Hunyuan · buena calidad</option>
+          <option value="wan-video/wan-2.2-t2v-fast" selected>⚡ Wan 2.2 fast · económico (recomendado)</option>
+          <option value="lightricks/ltx-video">💸 LTX · el más rápido y barato</option>
+        </select>
+      </div>
+      <div class="group" id="grpRef" style="flex:1;min-width:240px;">
+        <label>Lámina de referencia (opcional)</label>
+        <input id="refImg" type="file" accept="image/*" onchange="setRefImg()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:12px;">
+      </div>
+      <div class="group" id="refStrengthBox" style="display:none;">
+        <label>Fuerza de referencia: <b id="refStrengthVal">0.65</b></label>
+        <input id="refStrength" type="range" min="0.2" max="0.9" step="0.05" value="0.65" oninput="setRefStrength()" style="width:140px;">
+      </div>
+    </div>
+    <div class="reviewbar" id="refPreviewBox" style="display:none;border:none;padding-top:6px;margin-top:4px;">
+      <img id="refPreview" style="height:60px;border-radius:6px;border:1px solid var(--border);">
+      <span class="note">✓ Referencia activa · la IA imitará esta composición. <a href="#" onclick="clearRef();return false;" style="color:var(--gold2);">Quitar</a></span>
+    </div>
+    <div class="group" style="margin-top:14px;">
+      <label>📝 Instrucciones para la IA (opcional) · escribe lo que quieres y NO inventará</label>
+      <textarea id="refNotas" rows="3" oninput="setRefNotas()" placeholder="Ej: Mujer latina, cabello recogido en moño, ropa deportiva negra, fondo de gimnasio oscuro con luz dorada. Respeta exactamente la imagen de referencia, no agregues texto ni personas." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:10px 12px;font-family:inherit;font-size:12px;resize:vertical;"></textarea>
+      <div class="note" style="margin-top:6px;">Si subes una <b>imagen de referencia</b> + escribes aquí, la IA usa <b>las dos</b>: ve tu imagen y sigue tus palabras, sin inventar. Si solo escribes (sin imagen), tus instrucciones se suman al prompt automático.</div>
+    </div>
+    <div class="note" style="margin-top:8px;">⚠️ <b>Qué es la "cuadrícula":</b> la lámina de fitness es una <b>cuadrícula de 6, 8 o 12 ejercicios DISTINTOS</b>. El motor genera una foto por cada ejercicio (una persona, un ejercicio) y luego <b>las une él solo</b> en la cuadrícula. Tú eliges 6/8/12 y eliges grupo+objetivo+equipo; el motor pone el ejercicio correcto en cada casilla. La <b>referencia</b> se copia en cada casilla: por eso, si la usas, sube la foto de <b>UNA sola persona haciendo UN ejercicio</b> (nunca un collage). Funciona mejor con los modelos <b>flux</b>.</div>
+  </div>
+
+  <!-- OTROS PROVEEDORES (MULTI-API) -->
+  <div class="card">
+    <h2>🔌 Otros proveedores de IA <span class="pill ok" style="cursor:default;">Replicate sigue activo</span></h2>
+    <p class="h">Replicate es tu proveedor por defecto. Si compraste créditos en otra IA, elígela aquí y pega <b>TU clave</b>. Las claves se guardan solo en este navegador y pasan por tu propio Netlify (puente <b>aiproxy</b>). Prueba siempre con "🧪 Generar 1 de prueba" antes de un lote.</p>
+    <div class="row">
+      <div class="group" style="flex:1;min-width:220px;">
+        <label>Proveedor de IMAGEN</label>
+        <select id="imgProvider" onchange="setImgProvider()">
+          <option value="replicate">Replicate · por defecto</option>
+          <option value="openai">OpenAI · gpt-image-1</option>
+          <option value="stability">Stability AI · SDXL</option>
+          <option value="fal">fal.ai · Flux</option>
+        </select>
+      </div>
+      <div class="group" style="flex:1;min-width:220px;">
+        <label>Proveedor de VIDEO</label>
+        <select id="vidProvider" onchange="setVidProvider()">
+          <option value="replicate">Replicate · por defecto</option>
+          <option value="fal">fal.ai · Kling (clip 5s)</option>
+          <option value="luma">Luma · Dream Machine (clip 5s)</option>
+        </select>
+      </div>
+    </div>
+    <div id="provKeysBox" style="margin-top:8px;"></div>
+    <div class="note" style="margin-top:8px;">⚠️ Cada proveedor cobra por su cuenta con TU clave. Si una IA te da error, vuelve a <b>Replicate</b> (siempre funciona) y revisa que pegaste bien la clave.</div>
+  </div>
+
+  <!-- MODO -->
+  <div class="card">
+    <h2>🧭 ¿Qué sistema vas a alimentar?</h2>
+    <div class="opts" style="margin-top:4px;">
+      <label><input type="radio" name="modo" value="fitness" checked onchange="setModo('fitness')"> 🏋️ Fitness (Bloque 5)</label>
+      <label><input type="radio" name="modo" value="pelu" onchange="setModo('pelu')"> ✂️ Peluquería (Academia)</label>
+      <label><input type="radio" name="modo" value="hub" onchange="setModo('hub')"> 🎴 Tarjetas del Hub</label>
+      <label><input type="radio" name="modo" value="corte" onchange="setModo('corte')"> ✂️ Motor de Corte M1-M7</label>
+    </div>
+    <div class="reviewbar">
+      <span style="color:var(--gold2);font-size:12px;">Modo de trabajo:</span>
+      <div class="seg" id="segGen">
+        <button class="on" data-gen="revisar" onclick="setGen('revisar')">👁️ Generar y revisar</button>
+        <button data-gen="auto" onclick="setGen('auto')">⚡ Automático (subir directo)</button>
+      </div>
+      <span class="note" id="genHint" style="margin-left:auto;max-width:380px;">En <b>revisar</b>: genera todo a una galería; tú apruebas y luego subes solo lo aprobado.</span>
+    </div>
+  </div>
+
+  <!-- GOOGLE DRIVE -->
+  <div class="card">
+    <h2>☁️ Respaldo en Google Drive <span class="pill no" id="pillDrive" style="cursor:pointer;">🔌 sin conectar</span></h2>
+    <p class="h">Cada imagen/video que se sube a Firebase se copia también a una carpeta de tu Drive (respaldo de todo lo generado). Necesita tu <b>Client ID de Google OAuth</b> (consola de Google Cloud · scope drive.file).</p>
+    <div class="drivebox">
+      <input id="driveClientId" type="text" placeholder="Client ID de Google OAuth · xxxxx.apps.googleusercontent.com" autocomplete="off">
+      <button class="btn btn-ghost" onclick="guardarDriveId()">Guardar</button>
+      <button class="btn btn-ghost" id="btnDrive" onclick="conectarDrive()">Conectar Drive</button>
+    </div>
+    <div class="note" style="margin-top:8px;">Carpeta de respaldo: <b>Fátima Caldea · Generados</b> (se crea sola). Si no conectas Drive, todo sigue funcionando solo con Firebase.</div>
+  </div>
+
+  <!-- SELECCIÓN · FITNESS -->
+  <div class="card" id="cardFitness">
+    <h2>🎯 ¿Qué láminas generar?</h2>
+    <p class="h">La imagen de fitness depende solo de <b>grupo × motor × equipo × cantidad</b> (no del día): son <b>81 láminas únicas</b>. Elige el lote.</p>
+    <div class="row">
+      <div class="group">
+        <label>Grupo muscular</label>
+        <div class="chips" id="chGrupo"></div>
+      </div>
+      <div class="group">
+        <label>Motor (objetivo)</label>
+        <div class="chips" id="chMotor"></div>
+      </div>
+      <div class="group">
+        <label>Equipamiento</label>
+        <div class="chips" id="chEquipo"></div>
+      </div>
+      <div class="group">
+        <label>Cantidad de ejercicios</label>
+        <div class="chips" id="chNej"></div>
+      </div>
+    </div>
+    <div class="opts" style="margin-top:6px;">
+      <span style="color:var(--gold2);">Tipo de contenido:</span>
+      <label><input type="radio" name="tipo" value="img" checked onchange="toggleDia()"> 🖼️ Láminas (imágenes)</label>
+      <label><input type="radio" name="tipo" value="vid" onchange="toggleDia()"> 🎬 Videos por ejercicio (carrusel)</label>
+    </div>
+    <div class="opts" id="diaBox" style="display:none;margin-top:6px;">
+      <span style="color:var(--gold2);">Día(s) del plan:</span>
+      <input id="diaDesde" type="number" min="1" max="365" value="1" style="width:70px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 9px;font-family:'JetBrains Mono',monospace;">
+      <span class="h">a</span>
+      <input id="diaHasta" type="number" min="1" max="365" value="1" style="width:70px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 9px;font-family:'JetBrains Mono',monospace;">
+      <span class="h">· clave Bloque 5: <code>dia{N}_{objetivo}_{grupo}</code> (1 video por día/objetivo/grupo)</span>
+    </div>
+    <div class="opts" id="verBox" style="margin-top:6px;">
+      <span style="color:var(--gold2);">Versiones distintas por lámina:</span>
+      <input id="nVer" type="number" min="1" max="12" value="3" style="width:70px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 9px;font-family:'JetBrains Mono',monospace;">
+      <span class="h">cada versión es una lámina diferente (v1, v2…). El Bloque 5 las rota al azar → más versiones = más variedad en los 30 días.</span>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="optSkip" checked> Omitir las que ya están en Firebase (reanudar)</label>
+      <label><input type="checkbox" id="optRegen"> Forzar regenerar (sube versión nueva)</label>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="selTodo()">Seleccionar todo</button>
+      <button class="btn btn-ghost" onclick="selNada()">Limpiar</button>
+      <span class="count" id="selCount">0 láminas seleccionadas</span>
+    </div>
+  </div>
+
+  <!-- SELECCIÓN · PELUQUERÍA -->
+  <div class="card" id="cardPelu" style="display:none;">
+    <h2>✂️ ¿Qué clases de la Academia generar?</h2>
+    <p class="h">Cada clase genera <b>1 imagen</b> → Storage <code>academia/{slug}/{claseId}/imagen.jpg</code> + Firestore <code>clases_imgs/{claseId}</code>. La Academia se actualiza en tiempo real.</p>
+    <div class="row">
+      <div class="group" style="flex:1;min-width:240px;">
+        <label>Bloque / categoría</label>
+        <div class="chips" id="chPeluCat"></div>
+      </div>
+      <div class="group">
+        <label>Nivel</label>
+        <div class="chips" id="chPeluNiv"></div>
+      </div>
+      <div class="group">
+        <label>Variante de imagen</label>
+        <div class="chips" id="chPeluVar"></div>
+      </div>
+    </div>
+    <div class="opts" style="margin-top:6px;">
+      <span style="color:var(--gold2);">Tipo de contenido:</span>
+      <label><input type="radio" name="tipoP" value="img" checked onchange="refreshModelSelectors()"> 🖼️ Imagen</label>
+      <label><input type="radio" name="tipoP" value="vid" onchange="refreshModelSelectors()"> 🎬 Video paso a paso (carrusel)</label>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="optSkipP" checked> Omitir las que ya tienen imagen (reanudar)</label>
+      <label><input type="checkbox" id="optRegenP"> Forzar regenerar</label>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="selPeluTodo()">Seleccionar todas las categorías</button>
+      <button class="btn btn-ghost" onclick="selPeluNada()">Limpiar</button>
+      <button class="btn btn-ghost" onclick="verClasesPelu()">👁️ Ver las clases que se generarán</button>
+      <span class="count" id="selCountP">0 clases seleccionadas</span>
+    </div>
+    <div id="peluClaseList" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- SELECCIÓN · HUB -->
+  <div class="card" id="cardHub" style="display:none;">
+    <h2>🎴 Tarjetas del Fátima Hub</h2>
+    <p class="h">Genera la imagen de cada tarjeta de la portada → Firestore <code>hub_tarjetas/{n}</code> (campo <code>imgUrl</code>). El Hub se actualiza en tiempo real, igual que desde la biblioteca.</p>
+    <div class="group" style="margin-bottom:8px;">
+      <label>Tarjetas y portadas</label>
+      <div class="chips" id="chHub"></div>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="optSkipH"> Omitir las que ya tienen imagen</label>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="selHubTodo()">Seleccionar todas</button>
+      <button class="btn btn-ghost" onclick="selHubNada()">Limpiar</button>
+      <span class="count" id="selCountH">0 tarjetas seleccionadas</span>
+    </div>
+  </div>
+
+  <!-- SELECCIÓN · MOTOR DE CORTE -->
+  <div class="card" id="cardCorte" style="display:none;">
+    <h2>✂️ Motor de Corte · Módulos M1-M7</h2>
+    <p class="h">Genera la imagen de cada módulo del Bloque 1 → Firestore <code>corte_modulos/{M1..M7}</code> (campo <code>imgUrl</code>). El Bloque 1 lo lee en tiempo real.</p>
+    <div class="group" style="margin-bottom:8px;">
+      <label>Módulos</label>
+      <div class="chips" id="chCorte"></div>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="optSkipC"> Omitir los que ya tienen imagen</label>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="selCorteTodo()">Seleccionar todos</button>
+      <button class="btn btn-ghost" onclick="selCorteNada()">Limpiar</button>
+      <span class="count" id="selCountC">0 módulos seleccionados</span>
+    </div>
+  </div>
+
+  <!-- SUBIDA INTELIGENTE · DRIVE / ARCHIVO -->
+  <div class="card" id="cardManual">
+    <h2>📎 Subida inteligente · desde Google Drive o tu PC</h2>
+    <p class="h">¿Ya tienes la imagen o el video hecho? Pega su enlace de <b>Google Drive</b> o elige un archivo de tu computadora y el sistema lo envía a la clase correcta (sin pasar por la IA). Pensado para los bloques más complejos: <b>Fitness</b> y <b>Peluquería</b>.</p>
+    <div class="row">
+      <div class="group">
+        <label>¿A qué sistema va?</label>
+        <select id="manSys" onchange="manSysChange()">
+          <option value="pelu">✂️ Peluquería (clase de academia)</option>
+          <option value="fitness">🏋️ Fitness (clave de lámina/video)</option>
+          <option value="hub">🎴 Tarjeta del Hub</option>
+          <option value="corte">✂️ Módulo de Corte M1-M7</option>
+        </select>
+      </div>
+      <div class="group" style="flex:1;min-width:220px;">
+        <label id="manTargetLbl">Clase destino</label>
+        <input id="manTarget" type="text" list="manTargetList" placeholder="escribe para buscar… (claseId o título)" autocomplete="off" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:9px 11px;font-family:'JetBrains Mono',monospace;font-size:12px;">
+        <datalist id="manTargetList"></datalist>
+      </div>
+      <div class="group">
+        <label>Tipo</label>
+        <select id="manKind"><option value="img">🖼️ Imagen</option><option value="vid">🎬 Video</option></select>
+      </div>
+    </div>
+    <div class="reviewbar" style="border:none;padding-top:6px;margin-top:4px;">
+      <div class="seg" id="segSrc">
+        <button class="on" data-src="drive" onclick="manSetSrc('drive')">☁️ Enlace de Drive</button>
+        <button data-src="file" onclick="manSetSrc('file')">📁 Archivo de mi PC</button>
+      </div>
+    </div>
+    <div class="reviewbar" style="border:none;padding-top:0;margin-top:2px;">
+      <span class="note" style="margin-right:6px;">💾 ¿Dónde guardar?</span>
+      <div class="seg" id="segDest">
+        <button class="on" data-dest="fb" onclick="manSetDest('fb')">🔥 Firebase (archivo)</button>
+        <button data-dest="drive" onclick="manSetDest('drive')">🔗 Drive · solo el link (ligero)</button>
+      </div>
+    </div>
+    <div class="note" id="destHint" style="margin-top:6px;">🔥 <b>Firebase</b>: el archivo se guarda en tu Storage (lo de siempre).</div>
+    <div class="drivebox" id="manDriveBox">
+      <input id="manDriveLink" type="text" placeholder="Pega aquí el enlace de Google Drive (o el ID)" autocomplete="off">
+    </div>
+    <div class="drivebox" id="manFileBox" style="display:none;">
+      <input id="manFile" type="file" accept="image/*,video/*" style="border:none;padding:0;">
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="manAdd()">➕ Añadir a revisión</button>
+      <span class="note" id="manHint">Se añade a la galería de abajo; revisas y pulsas “Subir aprobadas”.</span>
+    </div>
+  </div>
+
+  <!-- EJECUCIÓN -->
+  <div class="card">
+    <h2>🚀 Generar y subir</h2>
+    <p class="h">Por cada lámina: genera 1 imagen por ejercicio (flux-dev) → compone la grilla → sube a Firebase Storage + Firestore <b>fitness_imgs</b>.</p>
+    <div class="reviewbar" style="border:none;padding-top:4px;margin-top:4px;">
+      <span class="note" style="margin-right:6px;">💾 ¿Dónde guardar lo generado?</span>
+      <div class="seg" id="segGenDest">
+        <button class="on" data-gd="fb" onclick="setGenDest('fb')">🔥 Firebase</button>
+        <button data-gd="drive" onclick="setGenDest('drive')">🔗 Drive · solo el link (ligero)</button>
+      </div>
+    </div>
+    <div class="note" id="genDestHint" style="margin-top:6px;">🔥 <b>Firebase</b>: cada archivo se guarda en Firebase (lo de siempre) + copia de respaldo en Drive.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-ghost" id="btnPrueba" onclick="pruebaUna()" style="border-color:var(--gold2);color:var(--gold2);">🧪 Generar 1 de prueba</button>
+      <button class="btn btn-go" id="btnGo" onclick="iniciar()">▶️ Iniciar lote</button>
+      <button class="btn btn-stop" id="btnStop" onclick="detener()" style="display:none;">⏹ Detener</button>
+    </div>
+    <div class="note" style="margin-top:6px;">🧪 <b>Prueba primero:</b> genera 1 sola imagen/video para ver si la IA da lo que necesitas. Si te gusta, lanza el lote. (El Bloque 5 solo usa hasta <b>12 versiones</b> por lámina.)</div>
+    <div class="progwrap"><div class="progfill" id="progFill"></div></div>
+    <div class="progtxt" id="progTxt">Listo.</div>
+    <div class="log" id="log"></div>
+    <div class="preview" id="preview"></div>
+
+    <!-- GALERÍA DE REVISIÓN -->
+    <div id="reviewWrap" style="display:none;">
+      <div class="reviewbar">
+        <b style="color:var(--gold2);">👁️ Revisión</b>
+        <span class="count" id="rvStats">0 generadas</span>
+        <button class="btn btn-ghost" onclick="rvAprobarTodas()">✅ Aprobar todas</button>
+        <button class="btn btn-ghost" onclick="rvLimpiar()">🗑 Vaciar galería</button>
+        <button class="btn btn-go" id="btnSubirAp" onclick="subirAprobadas()" style="margin-left:auto;">☁️ Subir aprobadas</button>
+      </div>
+      <div class="review" id="review"></div>
+    </div>
+  </div>
+
+  <div class="note">
+    ℹ️ <b>Cómo alimenta el sistema:</b> Fitness → Storage <code>fitness/…</code> + Firestore <code>fitness_imgs</code> / <code>fitness_videos</code> (Bloque 5). Peluquería → <code>academia/{slug}/{claseId}/</code> + <code>clases_imgs</code> (Academia). Marca <b>"Omitir las que ya están"</b> para reanudar sin gastar generaciones de más.
+  </div>
+</div>
+
+<!-- Motor de conocimiento fitness -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="motor_conocimiento_fitness.js"></script>
+<!-- Motores de conocimiento de peluquería (mismos que usa el admin) -->
+<script src="motor_p1_bioseg_balayage.js"></script>
+<script src="motor_p2_queratina_elevaciones.js"></script>
+<script src="motor_p3_morfologia_alertas.js"></script>
+<!-- Librería única de prompts -->
+<script src="motor_prompts.js"></script>
+<script src="puente_inteligente.js"></script>
+<script>
+/* ════════ CONFIG ════════ */
+const FB_CFG = {apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",authDomain:"aprendisajefatima.firebaseapp.com",projectId:"aprendisajefatima",storageBucket:"aprendisajefatima.firebasestorage.app",messagingSenderId:"744176967394",appId:"1:744176967394:web:743b7c2a455e1e6ba7c8bb"};
+const ADMIN_EMAIL = 'fatimahairstudio082@gmail.com';
+const PROXY = (window.REPLICATE_PROXY) || (location.origin + '/.netlify/functions/replicate');
+document.getElementById('proxyTxt').textContent = PROXY;
+
+const LBL = {
+  grupo:{gluteo:'🍑 Glúteo',pierna:'🦵 Pierna',superior:'💪 Tren Superior'},
+  motor:{masa:'Ganar masa',perder:'Perder grasa',mantener:'Mantener'},
+  equipo:{maquina:'Máquina',mancuerna:'Mancuerna',corporal:'Corporal'},
+  nej:{6:'6 ej · Principiante',8:'8 ej · Intermedio',12:'12 ej · Avanzado'}
+};
+const SEL = {grupo:new Set(),motor:new Set(),equipo:new Set(),nej:new Set()};
+let RUNNING=false, STOP=false;
+
+/* ════════ CHIPS ════════ */
+function buildChips(dim, contId){
+  const cont=document.getElementById(contId);
+  Object.keys(LBL[dim]).forEach(k=>{
+    // FIX: la "cantidad de ejercicios" debe guardarse como NÚMERO (6,8,12),
+    // igual que los combos. Antes se guardaba como texto ('6') y por eso al
+    // marcar el nivel el sistema decía "Selecciona al menos un grupo".
+    const val = isNaN(+k) ? k : +k;
+    const d=document.createElement('div');
+    d.className='chip'; d.textContent=LBL[dim][k];
+    d.onclick=()=>{ if(SEL[dim].has(val)){SEL[dim].delete(val);d.classList.remove('on');}else{SEL[dim].add(val);d.classList.add('on');} updateCount(); };
+    cont.appendChild(d);
+  });
+}
+buildChips('grupo','chGrupo'); buildChips('motor','chMotor'); buildChips('equipo','chEquipo'); buildChips('nej','chNej');
+
+function selTodo(){ ['grupo','motor','equipo','nej'].forEach(dim=>{Object.keys(LBL[dim]).forEach(k=>SEL[dim].add(isNaN(+k)?k:+k));}); document.querySelectorAll('.chip').forEach(c=>c.classList.add('on')); updateCount(); }
+function selNada(){ ['grupo','motor','equipo','nej'].forEach(dim=>SEL[dim].clear()); document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); updateCount(); }
+
+function combosSeleccionados(){
+  const todos = MOTOR_PROMPTS.fitnessCombos();
+  const g=SEL.grupo, m=SEL.motor, e=SEL.equipo, n=SEL.nej;
+  return todos.filter(c =>
+    (g.size?g.has(c.grupo):true) &&
+    (m.size?m.has(c.motor):true) &&
+    (e.size?e.has(c.equipo):true) &&
+    (n.size?(n.has(c.nej)||n.has(String(c.nej))):true)   // tolera número o texto
+  );
+}
+function updateCount(){
+  const k = combosSeleccionados().length;
+  document.getElementById('selCount').textContent = k+' lámina(s) seleccionada(s)';
+  document.getElementById('btnGo').disabled = (k===0||RUNNING);
+}
+updateCount();
+
+/* ════════ PELUQUERÍA ════════ */
+const NIV_LBL = {p:'🌱 Principiante', i:'⚡ Intermedio', a:'🔥 Avanzado'};
+const VAR_LBL = {cliente:'Cliente (resultado)', peluquero:'Técnica', protocolo:'Protocolo', alertas:'Alertas'};
+let MODO='fitness';
+let PELU_FLAT=[];                       // [{id, cat, slug, titulo, niv}]
+let PELU_CATS=[];                       // [cat,...]
+const SELP={cat:new Set(), niv:new Set(), var:new Set(['cliente'])};
+
+function catToSlug(cat){ return String(cat).replace(/[^\w\s]/g,'').trim().toLowerCase().replace(/\s+/g,'_'); }
+
+function cargarPelu(){
+  PELU_FLAT=[]; const catSet=new Set();
+  [window.CONOCIMIENTO_P1, window.CONOCIMIENTO_P2, window.CONOCIMIENTO_P3].forEach(blk=>{
+    if(!blk) return;
+    Object.entries(blk).forEach(([cat,arr])=>{
+      if(!Array.isArray(arr)) return;
+      catSet.add(cat);
+      arr.forEach(c=>{
+        PELU_FLAT.push({ id:c.id, cat, slug:catToSlug(cat), titulo:c.n||c.titulo||c.id, niv:c.niv||'p', txt:c.txt||'' });
+      });
+    });
+  });
+  PELU_CATS=[...catSet];
+}
+
+function buildPeluChips(){
+  cargarPelu();
+  const cc=document.getElementById('chPeluCat'); cc.innerHTML='';
+  if(!PELU_CATS.length){
+    cc.innerHTML='<span class="h" style="color:var(--gold2)">⚠️ No se cargaron los motores P1/P2/P3. Súbelos a este hosting (motor_p1_…js, etc.).</span>';
+  }
+  PELU_CATS.forEach(cat=>{
+    const n=PELU_FLAT.filter(c=>c.cat===cat).length;
+    const d=document.createElement('div'); d.className='chip'; d.textContent=cat+' ('+n+')';
+    d.onclick=()=>{ if(SELP.cat.has(cat)){SELP.cat.delete(cat);d.classList.remove('on');}else{SELP.cat.add(cat);d.classList.add('on');} updateCountP(); };
+    cc.appendChild(d);
+  });
+  const nc=document.getElementById('chPeluNiv'); nc.innerHTML='';
+  Object.keys(NIV_LBL).forEach(k=>{
+    const d=document.createElement('div'); d.className='chip'; d.textContent=NIV_LBL[k];
+    d.onclick=()=>{ if(SELP.niv.has(k)){SELP.niv.delete(k);d.classList.remove('on');}else{SELP.niv.add(k);d.classList.add('on');} updateCountP(); };
+    nc.appendChild(d);
+  });
+  const vc=document.getElementById('chPeluVar'); vc.innerHTML='';
+  Object.keys(VAR_LBL).forEach(k=>{
+    const d=document.createElement('div'); d.className='chip'+(k==='cliente'?' on':''); d.textContent=VAR_LBL[k];
+    d.onclick=()=>{ if(SELP.var.has(k)){SELP.var.delete(k);d.classList.remove('on');}else{SELP.var.add(k);d.classList.add('on');} updateCountP(); };
+    vc.appendChild(d);
+  });
+  updateCountP();
+}
+function clasesPeluSeleccionadas(){
+  return PELU_FLAT.filter(c =>
+    (SELP.cat.size?SELP.cat.has(c.cat):false) &&
+    (SELP.niv.size?SELP.niv.has(c.niv):true)
+  );
+}
+function updateCountP(){
+  const k=clasesPeluSeleccionadas().length;
+  const nv=SELP.var.size||1;
+  document.getElementById('selCountP').textContent = k+' clase(s) × '+nv+' variante(s) = '+(k*nv)+' imágenes';
+  if(MODO==='pelu') document.getElementById('btnGo').disabled = (k===0||RUNNING);
+}
+function selPeluTodo(){ PELU_CATS.forEach(c=>SELP.cat.add(c)); document.querySelectorAll('#chPeluCat .chip').forEach(c=>c.classList.add('on')); updateCountP(); }
+function selPeluNada(){ SELP.cat.clear(); document.querySelectorAll('#chPeluCat .chip').forEach(c=>c.classList.remove('on')); updateCountP(); }
+
+// Lista las clases que se generarán, con su claseId y si ya tienen imagen/video.
+async function verClasesPelu(){
+  const clases=clasesPeluSeleccionadas();
+  const cont=document.getElementById('peluClaseList');
+  if(!clases.length){ cont.innerHTML='<div class="note">Selecciona al menos una categoría para ver sus clases.</div>'; return; }
+  cont.innerHTML='<div class="note">⏳ Consultando estado en Firebase…</div>';
+  await fbInit();
+  // leer estado actual de cada clase
+  const rows=await Promise.all(clases.map(async c=>{
+    let img=false, vid=false;
+    try{ const s=await FB.getDoc(FB.doc(FB.db,'clases_imgs',c.id)); if(s.exists()){ const d=s.data(); img=!!(d.url_jpg||d.url); vid=!!d.url_video; } }catch(_){}
+    return {c, img, vid};
+  }));
+  cont.innerHTML =
+    '<div class="clist">'+
+    '<div class="crow chead"><span class="cid">claseId</span><span class="ctit">Título</span><span class="cniv">Nivel</span><span class="cst">Imagen</span><span class="cst">Video</span></div>'+
+    rows.map(({c,img,vid})=>`<div class="crow">
+        <span class="cid">${esc(c.id)}</span>
+        <span class="ctit" title="${esc(c.titulo)}">${esc(c.titulo)}</span>
+        <span class="cniv">${esc((NIV_LBL[c.niv]||c.niv))}</span>
+        <span class="cst ${img?'has':'no'}">${img?'✓ sí':'— no'}</span>
+        <span class="cst ${vid?'has':'no'}">${vid?'✓ sí':'— no'}</span>
+      </div>`).join('')+
+    '</div>'+
+    '<div class="note" style="margin-top:8px;">📁 Cada clase sube a <b>academia/'+esc(clases[0].slug)+'/{claseId}/</b> · doc Firestore <b>clases_imgs/{claseId}</b>. Ese <b>claseId</b> es el que lee la Academia en tiempo real.</div>';
+}
+
+function setModo(m){
+  MODO=m;
+  document.getElementById('cardFitness').style.display = m==='fitness'?'':'none';
+  document.getElementById('cardPelu').style.display    = m==='pelu'?'':'none';
+  document.getElementById('cardHub').style.display     = m==='hub'?'':'none';
+  document.getElementById('cardCorte').style.display   = m==='corte'?'':'none';
+  if(m==='pelu'){ if(!PELU_FLAT.length) buildPeluChips(); updateCountP(); }
+  else if(m==='hub'){ if(!document.getElementById('chHub').children.length) buildHubChips(); updateCountH(); }
+  else if(m==='corte'){ if(!document.getElementById('chCorte').children.length) buildCorteChips(); updateCountC(); }
+  else updateCount();
+  refreshModelSelectors();
+}
+
+// helper de cierre de lote
+function finLote(done,total,ok,omit,err,nombre){
+  setProg(done,total,`Terminado · ✅ ${ok} · ⏭️ ${omit} · ❌ ${err}`);
+  const cola = (GEN==='revisar') ? ' · revisa la galería y pulsa "Subir aprobadas".' : ' · sistema actualizado en tiempo real.';
+  logLine(`🏁 ${nombre} · ${ok} generada(s) · ${omit} omitida(s) · ${err} error(es)`+cola, 'ok');
+  RUNNING=false;
+  document.getElementById('btnGo').style.display='inline-block';
+  document.getElementById('btnStop').style.display='none';
+  if(MODO==='pelu') updateCountP(); else if(MODO==='hub') updateCountH(); else if(MODO==='corte') updateCountC(); else updateCount();
+}
+
+// ── existencia / subida peluquería ──
+async function yaExistePelu(claseId){
+  try{ const s=await FB.getDoc(FB.doc(FB.db,'clases_imgs',claseId)); return s.exists() && (s.data().url_jpg||s.data().url); }catch(_){ return false; }
+}
+async function subirPelu(clase, blob, variant){
+  // Variante 'cliente' → imagen.jpg principal (la que lee la Academia).
+  // Otras variantes → imagen_{variant}.jpg (no pisan la principal).
+  const fname = variant==='cliente' ? 'imagen.jpg' : ('imagen_'+variant+'.jpg');
+  const path  = 'academia/'+clase.slug+'/'+clase.id+'/'+fname;
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  const ts=new Date().toISOString();
+  const patch = { claseId:clase.id, cat:clase.cat, niv:clase.niv, imgActualizadoEn:ts };
+  if(variant==='cliente'){ patch.url_jpg=url; patch.url=url; patch.url_jpg_path=path; }
+  else { patch['url_'+variant]=url; patch['url_'+variant+'_path']=path; }
+  await FB.setDoc(FB.doc(FB.db,'clases_imgs',clase.id), patch, {merge:true});
+  return url;
+}
+
+// ── subida de VIDEO de academia → clases_imgs/{claseId}.url_video ──
+async function subirPeluVideo(clase, blob){
+  const path='academia/'+clase.slug+'/'+clase.id+'/video.mp4';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  await FB.setDoc(FB.doc(FB.db,'clases_imgs',clase.id),{ claseId:clase.id, cat:clase.cat, niv:clase.niv, url_video:url, path_video:path, videoActualizadoEn:new Date().toISOString() },{merge:true});
+  return url;
+}
+
+async function iniciarPelu(){
+  const clases=clasesPeluSeleccionadas();
+  const tipoP=(document.querySelector('input[name="tipoP"]:checked')||{}).value||'img';
+  const vars = tipoP==='vid' ? ['video'] : ([...SELP.var].length?[...SELP.var]:['cliente']);
+  if(!clases.length){ logLine('Selecciona al menos una categoría.','err'); return; }
+  if(!replicateKey()){ if(!confirm('No hay token de Replicate guardado. ¿El proxy ya tiene REPLICATE_API_TOKEN? Aceptar para continuar.')) return; }
+  if(GEN==='auto'){ const user=await ensureAuth(); if(!user){ logLine('Sin sesión admin no se puede subir.','err'); return; } }
+
+  RUNNING=true; STOP=false;
+  document.getElementById('btnGo').style.display='none';
+  document.getElementById('btnStop').style.display='inline-block';
+  document.getElementById('preview').innerHTML='';
+  const skip=document.getElementById('optSkipP').checked;
+  const regen=document.getElementById('optRegenP').checked;
+  const total=clases.length*vars.length;
+  logLine('▶️ Peluquería · '+clases.length+' clase(s) × '+vars.length+' '+(tipoP==='vid'?'video(s)':'variante(s)')+' = '+total,'info');
+
+  let done=0, ok=0, omit=0, err=0;
+  for(const clase of clases){
+    if(STOP) break;
+    for(const variant of vars){
+      if(STOP) break;
+      setProg(done,total,clase.id+' · '+variant+' ('+(done+1)+'/'+total+')');
+      try{
+        if(tipoP==='vid'){
+          // ── VIDEO PASO A PASO · carrusel de la Academia ──
+          // Un clip por cada paso (punto) de la cláse → academia/{slug}/{id}/paso_NN.mp4
+          const pasos=pasosDeClase(clase.txt);
+          if(!pasos.length){
+            // sin pasos detectados → 1 video de apoyo (comportamiento anterior)
+            logLine('🎬 '+clase.id+' · video de apoyo (sin pasos)…','info');
+            const genV=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.build({cat:clase.cat,catId:clase.cat,titulo:clase.titulo},'vid').prompt));
+            const blob=await genV();
+            await addJob({ label:clase.id+' · 🎬 video', blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_video.mp4', upload:(bl)=>subirPeluVideo(clase,bl), regen:genV });
+            ok++; done++; continue;
+          }
+          logLine('🎬 '+clase.id+' · '+pasos.length+' paso(s) de video (carrusel)…','info');
+          for(let pi=0; pi<pasos.length; pi++){
+            if(STOP) break;
+            const nn=String(pi+1).padStart(2,'0');
+            const prompt=MOTOR_PROMPTS.peluqueriaPaso(clase.cat, clase.titulo, clase.niv, pasos[pi]);
+            const genP=async()=>fetchToBlob(await genVideo(prompt));
+            try{
+              const blob=await genP();
+              await addJob({ label:clase.id+' · paso '+(pi+1)+'/'+pasos.length, blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_paso_'+nn+'.mp4', upload:((idx)=>(bl)=>subirPeluPaso(clase,idx,bl))(pi), regen:genP });
+              ok++;
+            }catch(e){ err++; logLine('❌ '+clase.id+' paso '+(pi+1)+': '+(e.message||e),'err'); }
+          }
+          done++; continue;
+        }
+        if(skip && !regen && variant==='cliente' && await yaExistePelu(clase.id)){ logLine('⏭️ '+clase.id+' ya tiene imagen · omitida','skip'); omit++; done++; continue; }
+        logLine('🎨 '+clase.id+' · '+variant+' · generando…','info');
+        const gen=async()=>fetchToBlob(await genImagen(MOTOR_PROMPTS.peluqueria(clase.cat, variant, clase)));
+        const blob=await gen();
+        await addJob({ label:clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen });
+        ok++; done++;
+      }catch(e){ err++; done++; logLine('❌ '+clase.id+' · '+variant+': '+(e.message||e),'err'); }
+    }
+  }
+  finLote(done,total,ok,omit,err,'Peluquería');
+}
+
+// Extrae los pasos numerados (puntos) del txt de la clase → ['texto paso 1', ...]
+function pasosDeClase(txt){
+  if(!txt) return [];
+  const out=[]; const re=/<span class="punto-num">\s*\d+\s*<\/span>\s*<span>([\s\S]*?)<\/span>/g; let m;
+  while((m=re.exec(txt))){ out.push(m[1].replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()); }
+  return out;
+}
+// Sube UN clip de paso → academia/{slug}/{id}/paso_NN.mp4 (lo lee el carrusel de la Academia)
+async function subirPeluPaso(clase, idx, blob){
+  const nn=String(idx+1).padStart(2,'0');
+  const path='academia/'+clase.slug+'/'+clase.id+'/paso_'+nn+'.mp4';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  await FB.setDoc(FB.doc(FB.db,'clases_imgs',clase.id),{ claseId:clase.id, cat:clase.cat, niv:clase.niv, videoActualizadoEn:new Date().toISOString() },{merge:true});
+  return url;
+}
+
+/* ════ HUB · TARJETAS ════ */
+const HUB_CARDS = [
+  {n:'1', ico:'✂️', nom:'Motor de Corte & Diagnóstico'},
+  {n:'2', ico:'🎨', nom:'Colorimetría · Calculadora Cromática'},
+  {n:'3', ico:'📚', nom:'Academia & Biblioteca'},
+  {n:'4', ico:'🥗', nom:'Nutrición & Alimentación Fitness'},
+  {n:'5', ico:'💪', nom:'Entrenamientos Fitness'},
+  {n:'6', ico:'🧰', nom:'Optimizador · Herramientas'}
+];
+const HUB_PORTADAS = [
+  {n:'hero', ico:'🌅', nom:'Portada / Hero'},
+  {n:'login', ico:'🔑', nom:'Fondo de Login'},
+  {n:'chatbox', ico:'💬', nom:'Imagen del Chat'}
+];
+const HUB_PROMPT = {
+  '1':'Professional hairstyling scissors and hair diagnosis, elegant salon, close-up of cutting technique, warm gold tones, photorealistic, no text',
+  '2':'Hair colorimetry palette and color swatches, professional hairdresser mixing color, vibrant tones on a clean studio table, photorealistic, no text',
+  '3':'Beauty academy classroom with hairstyling students learning, elegant studio, books and mannequin heads, warm professional lighting, photorealistic, no text',
+  '4':'Healthy fitness nutrition flat lay, fresh balanced meal, vegetables lean protein, clean bright kitchen, top view, photorealistic, no text',
+  '5':'Athletic person training in a modern gym, dynamic fitness workout, motivational professional lighting, photorealistic, no text',
+  '6':'Professional digital tools and optimization dashboard concept, sleek modern workspace, gold and dark elegant palette, photorealistic, no text',
+  'hero':'Elegant luxury hair and beauty studio hero banner, sophisticated dark and gold ambiance, professional photorealistic, cinematic wide shot, no text',
+  'login':'Soft elegant beauty salon background for a login screen, blurred bokeh, dark gold luxury tones, photorealistic, no text',
+  'chatbox':'Friendly professional beauty assistant concept, warm elegant studio, soft lighting, photorealistic, no text'
+};
+const SELH=new Set();
+function buildHubChips(){
+  const c=document.getElementById('chHub'); c.innerHTML='';
+  [...HUB_CARDS, ...HUB_PORTADAS].forEach(b=>{
+    const d=document.createElement('div'); d.className='chip'; d.textContent=b.ico+' '+b.nom;
+    d.onclick=()=>{ if(SELH.has(b.n)){SELH.delete(b.n);d.classList.remove('on');}else{SELH.add(b.n);d.classList.add('on');} updateCountH(); };
+    c.appendChild(d);
+  });
+  updateCountH();
+}
+function updateCountH(){
+  document.getElementById('selCountH').textContent = SELH.size+' tarjeta(s) seleccionada(s)';
+  if(MODO==='hub') document.getElementById('btnGo').disabled=(SELH.size===0||RUNNING);
+}
+function selHubTodo(){ [...HUB_CARDS,...HUB_PORTADAS].forEach(b=>SELH.add(b.n)); document.querySelectorAll('#chHub .chip').forEach(c=>c.classList.add('on')); updateCountH(); }
+function selHubNada(){ SELH.clear(); document.querySelectorAll('#chHub .chip').forEach(c=>c.classList.remove('on')); updateCountH(); }
+
+async function yaExisteHub(n){
+  try{ const s=await FB.getDoc(FB.doc(FB.db,'hub_tarjetas',n)); return s.exists() && s.data().imgUrl; }catch(_){ return false; }
+}
+async function subirHub(n, blob){
+  const meta=[...HUB_CARDS,...HUB_PORTADAS].find(b=>b.n===n)||{};
+  const path='hub/'+n+'.jpg';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  const patch={ imgUrl:url, imgActualizadoEn:new Date().toISOString() };
+  if(meta.nom && (n!=='hero'&&n!=='login'&&n!=='chatbox')) patch.nom=meta.nom;
+  await FB.setDoc(FB.doc(FB.db,'hub_tarjetas',n), patch, {merge:true});
+  return url;
+}
+
+async function iniciarHub(){
+  const sel=[...HUB_CARDS,...HUB_PORTADAS].filter(b=>SELH.has(b.n));
+  if(!sel.length){ logLine('Selecciona al menos una tarjeta.','err'); return; }
+  if(!replicateKey()){ if(!confirm('No hay token de Replicate guardado. ¿El proxy ya tiene REPLICATE_API_TOKEN? Aceptar para continuar.')) return; }
+  if(GEN==='auto'){ const u=await ensureAuth(); if(!u){ logLine('Sin sesión admin no se puede subir.','err'); return; } }
+
+  RUNNING=true; STOP=false;
+  document.getElementById('btnGo').style.display='none';
+  document.getElementById('btnStop').style.display='inline-block';
+  document.getElementById('preview').innerHTML='';
+  const skip=document.getElementById('optSkipH').checked;
+  logLine('▶️ Hub · '+sel.length+' tarjeta(s)','info');
+
+  let done=0, ok=0, omit=0, err=0;
+  for(const b of sel){
+    if(STOP) break;
+    setProg(done,sel.length,'Tarjeta '+b.nom+' ('+(done+1)+'/'+sel.length+')');
+    try{
+      if(skip && await yaExisteHub(b.n)){ logLine('⏭️ '+b.nom+' ya tiene imagen','skip'); omit++; done++; continue; }
+      logLine('🎨 '+b.nom+' · generando…','info');
+      const gen=async()=>fetchToBlob(await genImagen(HUB_PROMPT[b.n]||('Professional elegant image about '+b.nom+', photorealistic, no text')));
+      const blob=await gen();
+      await addJob({ label:'Hub · '+b.nom, blob, driveName:'hub_'+b.n+'.jpg', upload:(bl)=>subirHub(b.n,bl), regen:gen });
+      ok++; done++;
+    }catch(e){ err++; done++; logLine('❌ '+b.nom+': '+(e.message||e),'err'); }
+  }
+  finLote(done,sel.length,ok,omit,err,'Hub');
+}
+
+/* ════════ MOTOR DE CORTE · M1-M7 ════════ */
+const CORTE_LBL={M1:'Protocolo de Limpieza',M2:'Herramientas Profesionales',M3:'Técnica Lógica de Corte',M4:'Avatar Fátima Caldea',M5:'Secciones y Divisiones',M6:'Elevaciones y Proyecciones',M7:'Geometría del Corte'};
+const CORTE_PROMPT={
+  M1:'Professional hair salon hygiene and sanitation protocol, clean sterilized tools, elegant studio, photorealistic, no text',
+  M2:'Professional hairdressing tools arranged elegantly, scissors razors combs clippers, studio close-up, photorealistic, no text',
+  M3:'Hairdresser demonstrating logical haircut technique on a client, professional salon, photorealistic, no text',
+  M4:'Elegant professional female hairstylist avatar portrait, confident, luxury salon, photorealistic, no text',
+  M5:'Hair sectioning and parting technique, clips dividing hair into sections, professional close-up, photorealistic, no text',
+  M6:'Hair elevation and projection angles demonstration, geometric cutting technique, professional salon, photorealistic, no text',
+  M7:'Geometry of haircut, angles and lines on hair, professional precision cutting, studio, photorealistic, no text'
+};
+const SELC=new Set();
+function buildCorteChips(){
+  const c=document.getElementById('chCorte'); c.innerHTML='';
+  Object.keys(CORTE_LBL).forEach(id=>{
+    const d=document.createElement('div'); d.className='chip'; d.textContent=id+' · '+CORTE_LBL[id];
+    d.onclick=()=>{ if(SELC.has(id)){SELC.delete(id);d.classList.remove('on');}else{SELC.add(id);d.classList.add('on');} updateCountC(); };
+    c.appendChild(d);
+  });
+  updateCountC();
+}
+function updateCountC(){ document.getElementById('selCountC').textContent=SELC.size+' módulo(s) seleccionado(s)'; if(MODO==='corte') document.getElementById('btnGo').disabled=(SELC.size===0||RUNNING); }
+function selCorteTodo(){ Object.keys(CORTE_LBL).forEach(id=>SELC.add(id)); document.querySelectorAll('#chCorte .chip').forEach(c=>c.classList.add('on')); updateCountC(); }
+function selCorteNada(){ SELC.clear(); document.querySelectorAll('#chCorte .chip').forEach(c=>c.classList.remove('on')); updateCountC(); }
+async function yaExisteCorte(id){ try{ const s=await FB.getDoc(FB.doc(FB.db,'corte_modulos',id)); return s.exists() && s.data().imgUrl; }catch(_){ return false; } }
+async function subirCorte(id, blob){
+  const path='corte/'+id+'.jpg';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  await FB.setDoc(FB.doc(FB.db,'corte_modulos',id),{ imgUrl:url, titulo:CORTE_LBL[id], imgActualizadoEn:new Date().toISOString() },{merge:true});
+  return url;
+}
+// Guarda una URL de Drive directamente (sin re-subir), igual que la biblioteca
+async function subirCorteRef(id, urlNorm, kind){
+  const patch = kind==='vid' ? { videoUrl:urlNorm } : { imgUrl:urlNorm };
+  patch.titulo=CORTE_LBL[id]; patch.actualizado=new Date().toISOString();
+  await FB.setDoc(FB.doc(FB.db,'corte_modulos',id), patch, {merge:true});
+}
+async function iniciarCorte(){
+  const sel=Object.keys(CORTE_LBL).filter(id=>SELC.has(id));
+  if(!sel.length){ logLine('Selecciona al menos un módulo.','err'); return; }
+  if(!replicateKey()){ if(!confirm('No hay token de Replicate guardado. ¿El proxy ya tiene REPLICATE_API_TOKEN? Aceptar para continuar.')) return; }
+  if(GEN==='auto'){ const u=await ensureAuth(); if(!u){ logLine('Sin sesión admin no se puede subir.','err'); return; } }
+  RUNNING=true; STOP=false;
+  document.getElementById('btnGo').style.display='none';
+  document.getElementById('btnStop').style.display='inline-block';
+  document.getElementById('preview').innerHTML='';
+  const skip=document.getElementById('optSkipC').checked;
+  logLine('▶️ Motor de Corte · '+sel.length+' módulo(s)','info');
+  let done=0, ok=0, omit=0, err=0;
+  for(const id of sel){
+    if(STOP) break;
+    setProg(done,sel.length,id+' · '+CORTE_LBL[id]+' ('+(done+1)+'/'+sel.length+')');
+    try{
+      if(skip && await yaExisteCorte(id)){ logLine('⏭️ '+id+' ya tiene imagen','skip'); omit++; done++; continue; }
+      logLine('🎨 '+id+' · generando…','info');
+      const gen=async()=>fetchToBlob(await genImagen(CORTE_PROMPT[id]));
+      const blob=await gen();
+      await addJob({ label:id+' · '+CORTE_LBL[id], blob, driveName:'corte_'+id+'.jpg', upload:(bl)=>subirCorte(id,bl), regen:gen });
+      ok++; done++;
+    }catch(e){ err++; done++; logLine('❌ '+id+': '+(e.message||e),'err'); }
+  }
+  finLote(done,sel.length,ok,omit,err,'Motor de Corte');
+}
+
+/* ════════ SUBIDA INTELIGENTE · DRIVE / ARCHIVO ════════ */
+let MAN_SRC='drive';
+let MAN_DEST='fb';
+function manSetDest(d){
+  MAN_DEST=d;
+  document.querySelectorAll('#segDest button').forEach(b=>b.classList.toggle('on',b.dataset.dest===d));
+  document.getElementById('destHint').innerHTML = d==='drive'
+    ? '🔗 <b>Drive · solo link</b>: el archivo se sube a tu Google Drive (carpeta «Fátima Caldea · Generados»), se hace público y en Firebase se guarda <b>solo el enlace</b>. No ocupa memoria de Firebase. Requiere Drive conectado arriba.'
+    : '🔥 <b>Firebase</b>: el archivo se guarda en tu Storage (lo de siempre).';
+}
+function manSetSrc(s){ MAN_SRC=s; document.querySelectorAll('#segSrc button').forEach(b=>b.classList.toggle('on',b.dataset.src===s)); document.getElementById('manDriveBox').style.display=s==='drive'?'flex':'none'; document.getElementById('manFileBox').style.display=s==='file'?'flex':'none'; }
+function manSysChange(){
+  const sys=document.getElementById('manSys').value;
+  const lbl=document.getElementById('manTargetLbl');
+  const dl=document.getElementById('manTargetList');
+  const inp=document.getElementById('manTarget');
+  let opts=[];
+  if(sys==='pelu'){ lbl.textContent='Clase destino (claseId)'; if(!PELU_FLAT.length) cargarPelu(); opts=PELU_FLAT.map(c=>({v:c.id, t:c.titulo})); }
+  else if(sys==='fitness'){ lbl.textContent='Clave de fitness'; opts=fitnessClavesManual(); }
+  else if(sys==='hub'){ lbl.textContent='Tarjeta'; opts=[...HUB_CARDS,...HUB_PORTADAS].map(b=>({v:b.n,t:b.nom})); }
+  else if(sys==='corte'){ lbl.textContent='Módulo'; opts=Object.keys(CORTE_LBL).map(id=>({v:id,t:CORTE_LBL[id]})); }
+  dl.innerHTML=opts.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+  inp.value='';
+}
+function fitnessClavesManual(){
+  try{ return (MOTOR_PROMPTS.fitnessCombos()||[]).map(c=>({v:c.claveImgBase, t:c.claveImgBase})); }catch(_){ return []; }
+}
+async function manAdd(){
+  const sys=document.getElementById('manSys').value;
+  const target=document.getElementById('manTarget').value.trim();
+  const kind=document.getElementById('manKind').value;
+  if(!target){ logLine('Escribe la clase/tarjeta destino.','err'); return; }
+  let blob, label, driveName, upload;
+  try{
+    if(MAN_SRC==='drive'){
+      const link=document.getElementById('manDriveLink').value.trim();
+      if(!link){ logLine('Pega el enlace de Drive.','err'); return; }
+      logLine('☁️ Trayendo de Drive…','info');
+      blob=await driveToBlob(link, kind==='vid');
+    } else {
+      const f=document.getElementById('manFile').files[0];
+      if(!f){ logLine('Elige un archivo.','err'); return; }
+      blob=f;
+    }
+  }catch(e){ logLine('❌ '+(e.message||e),'err'); return; }
+
+  const isVideo = kind==='vid';
+  let regLink;
+  // resolver destino + función de subida (mismos contratos de producción)
+  if(sys==='pelu'){
+    if(!PELU_FLAT.length) cargarPelu();
+    const clase=PELU_FLAT.find(c=>c.id===target) || {id:target, slug:'academia', cat:'', niv:'p'};
+    label='Academia · '+clase.id+' · '+(isVideo?'🎬':'🖼️');
+    driveName=clase.slug+'_'+clase.id+'_'+kind+(isVideo?'.mp4':'.jpg');
+    upload=(bl)=> isVideo ? subirPeluVideo(clase,bl) : subirPelu(clase,bl,'cliente');
+    regLink=(url)=> isVideo ? regPeluVideo(clase,url) : regPeluImg(clase,url);
+  } else if(sys==='fitness'){
+    label='Fitness · '+target+' · '+(isVideo?'🎬':'🖼️');
+    driveName='fitness_'+target+(isVideo?'.mp4':'.jpg');
+    upload=(bl)=> isVideo ? subirVideo(target,bl,target) : subir(target,bl);
+    regLink=(url)=> isVideo ? regFitVideo(target,url) : regFitImg(target,url);
+  } else if(sys==='hub'){
+    label='Hub · '+target; driveName='hub_'+target+'.jpg';
+    upload=(bl)=>subirHub(target,bl); regLink=(url)=>regHub(target,url);
+  } else {
+    label='Corte · '+target; driveName='corte_'+target+(isVideo?'.mp4':'.jpg');
+    upload=(bl)=>subirCorte(target,bl); regLink=(url)=>regCorte(target,url,kind);
+  }
+  // destino DRIVE → subir a Drive + registrar solo el link (no toca Storage)
+  let finalUpload=upload, noBackup=false;
+  if(MAN_DEST==='drive'){
+    if(!DRIVE.token){ logLine('❌ Conecta Google Drive arriba para usar «solo el link».','err'); return; }
+    noBackup=true;
+    const dname=driveName;
+    finalUpload=async(bl)=>{
+      const link=await driveUploadPublic(bl, dname, isVideo);
+      await regLink(link);
+      logLine('🔗 Guardado en Drive · solo link en Firebase: '+link,'ok');
+    };
+  }
+  await addJob({ label:label+(MAN_DEST==='drive'?' · 🔗 Drive':''), blob, isVideo, driveName, upload:finalUpload, regen:async()=>blob, noBackup });
+  logLine('➕ Añadido a revisión: '+label,'ok');
+  document.getElementById('manDriveLink').value=''; 
+  if(document.getElementById('manFile')) document.getElementById('manFile').value='';
+}
+
+/* ════════ LOG / PROGRESO ════════ */
+function logLine(msg,type){ const l=document.getElementById('log'); const d=document.createElement('div'); if(type)d.className=type; d.textContent=msg; l.appendChild(d); l.scrollTop=l.scrollHeight; }
+function setProg(done,total,txt){ document.getElementById('progFill').style.width=(total?Math.round(done/total*100):0)+'%'; document.getElementById('progTxt').textContent=txt||`${done}/${total}`; }
+
+/* ════════ FUENTE: GOOGLE DRIVE / ARCHIVO LOCAL ════════ */
+// Normaliza una imagen: acepta URL directa o ID/enlace de Drive (idéntico a producción)
+function normImg(v){
+  if(!v) return '';
+  const s=String(v).trim();
+  if(/^https?:\/\//i.test(s)){
+    if(s.indexOf('drive.google')>=0){ const m=s.match(/[-\w]{25,}/); if(m) return `https://drive.google.com/thumbnail?id=${m[0]}&sz=w1400`; }
+    return s;
+  }
+  if(/^[-\w]{20,}$/.test(s)) return `https://drive.google.com/thumbnail?id=${s}&sz=w1400`;
+  return s;
+}
+// Extrae el ID de un enlace de Drive (para descargar el archivo real)
+function driveId(v){ const m=String(v||'').match(/[-\w]{25,}/); return m?m[0]:''; }
+// Convierte un enlace de Drive a URL de descarga directa
+function driveDownloadURL(v){ const id=driveId(v); return id?`https://drive.google.com/uc?export=download&id=${id}`:String(v||''); }
+// Intenta traer el archivo de Drive como blob (requiere que sea público / o sesión Drive)
+async function driveToBlob(link, isVideo){
+  const id=driveId(link);
+  // 1) si conectaste Drive con OAuth, baja el binario autenticado
+  if(id && DRIVE.token){
+    try{
+      const r=await fetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media',{headers:{Authorization:'Bearer '+DRIVE.token}});
+      if(r.ok) return await r.blob();
+    }catch(_){}
+  }
+  // 2) público: imagen via thumbnail, video/archivo via uc?export=download
+  const url = isVideo ? driveDownloadURL(link) : (normImg(link)||driveDownloadURL(link));
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok) throw new Error('No se pudo leer de Drive (¿es público o tienes Drive conectado?) · HTTP '+r.status);
+  return await r.blob();
+}
+
+/* ════════ MODO DE TRABAJO (auto / revisar) ════════ */
+let GEN='revisar';                  // 'revisar' | 'auto'
+const JPG_Q=0.95;                   // calidad de optimización
+function setGen(m){
+  GEN=m;
+  document.querySelectorAll('#segGen button').forEach(b=>b.classList.toggle('on', b.dataset.gen===m));
+  document.getElementById('genHint').innerHTML = m==='auto'
+    ? 'En <b>automático</b>: cada item se sube apenas se genera (sin revisión). Úsalo cuando ya confíes en el resultado.'
+    : 'En <b>revisar</b>: genera todo a una galería; tú apruebas y luego subes solo lo aprobado.';
+}
+
+/* ════════ OPTIMIZACIÓN DE IMAGEN (canvas, sin perder calidad) ════════ */
+async function optimizarImg(blob, q){
+  q = q||JPG_Q;
+  try{
+    const bmp = await createImageBitmap(blob);
+    const MAX = 1600;                       // tope de lado largo (nítido y liviano)
+    let {width:w, height:h} = bmp;
+    if(Math.max(w,h) > MAX){ const s=MAX/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    cv.getContext('2d').drawImage(bmp,0,0,w,h);
+    const out = await new Promise(res=>cv.toBlob(res,'image/jpeg',q));
+    bmp.close && bmp.close();
+    return (out && out.size < blob.size) ? out : blob;   // nunca empeora
+  }catch(_){ return blob; }                                // si falla, sube el original
+}
+
+/* ════════ GOOGLE DRIVE (OAuth GIS · respaldo) ════════ */
+const DRIVE = { token:null, tokenClient:null, folderId:null };
+function driveClientId(){ return localStorage.getItem('fc_drive_client_id')||''; }
+function guardarDriveId(){ const v=document.getElementById('driveClientId').value.trim(); if(v){localStorage.setItem('fc_drive_client_id',v); logLine('✓ Client ID de Drive guardado','ok');} }
+(function loadDriveId(){ const v=driveClientId(); if(v) document.getElementById('driveClientId').value=v; })();
+function renderDrive(){ const p=document.getElementById('pillDrive'); if(DRIVE.token){p.textContent='✅ Drive conectado';p.className='pill ok';}else{p.textContent='🔌 sin conectar';p.className='pill no';} }
+function conectarDrive(){
+  const cid=driveClientId();
+  if(!cid){ logLine('Pega tu Client ID de Google OAuth primero.','err'); return; }
+  if(!window.google||!google.accounts||!google.accounts.oauth2){ logLine('Google Identity aún no carga; reintenta en un momento.','err'); return; }
+  DRIVE.tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: cid,
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: (resp)=>{ if(resp&&resp.access_token){ DRIVE.token=resp.access_token; renderDrive(); logLine('✅ Google Drive conectado','ok'); } else { logLine('❌ No se obtuvo permiso de Drive','err'); } }
+  });
+  DRIVE.tokenClient.requestAccessToken({prompt:''});
+}
+async function driveFolder(){
+  if(DRIVE.folderId) return DRIVE.folderId;
+  // buscar carpeta existente
+  const q=encodeURIComponent("name='Fátima Caldea · Generados' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+  const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)',{headers:{Authorization:'Bearer '+DRIVE.token}});
+  const d=await r.json();
+  if(d.files&&d.files.length){ DRIVE.folderId=d.files[0].id; return DRIVE.folderId; }
+  const cr=await fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token,'Content-Type':'application/json'},body:JSON.stringify({name:'Fátima Caldea · Generados',mimeType:'application/vnd.google-apps.folder'})});
+  const cd=await cr.json(); DRIVE.folderId=cd.id; return DRIVE.folderId;
+}
+async function driveBackup(blob, nombre){
+  if(!DRIVE.token) return;
+  try{
+    const folder=await driveFolder();
+    const meta={name:nombre, parents:[folder]};
+    const fd=new FormData();
+    fd.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
+    fd.append('file', blob);
+    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token},body:fd});
+    logLine('   ↳ ☁️ respaldo en Drive: '+nombre,'skip');
+  }catch(e){ logLine('   ↳ ⚠️ Drive falló: '+(e.message||e),'err'); }
+}
+
+/* ════ DRIVE · SUBIR Y GUARDAR SOLO EL LINK (memoria ligera) ════ */
+// Sube el blob a Drive, lo hace público (lectura por enlace) y devuelve el link
+// YA CONVERTIDO al formato que el sistema público lee directamente.
+async function driveUploadPublic(blob, nombre, isVideo){
+  if(!DRIVE.token) throw new Error('Conecta Google Drive primero.');
+  const folder=await driveFolder();
+  const meta={name:nombre, parents:[folder]};
+  const fd=new FormData();
+  fd.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
+  fd.append('file', blob);
+  const up=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token},body:fd});
+  if(!up.ok) throw new Error('Drive subida HTTP '+up.status);
+  const j=await up.json(); const id=j.id;
+  if(!id) throw new Error('Drive no devolvió ID');
+  // permiso: cualquiera con el enlace puede LEER (para que el sistema lo muestre)
+  try{
+    await fetch('https://www.googleapis.com/drive/v3/files/'+id+'/permissions',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token,'Content-Type':'application/json'},body:JSON.stringify({role:'reader',type:'anyone'})});
+  }catch(_){}
+  // link convertido (directo) — igual al que ya normaliza tu sistema
+  return isVideo
+    ? 'https://drive.google.com/uc?export=download&id='+id
+    : 'https://drive.google.com/thumbnail?id='+id+'&sz=w1400';
+}
+
+/* ════ REGISTRO DE SOLO-LINK · mismos docs/campos que la subida normal ════ */
+async function regPeluImg(clase, url){ await FB.setDoc(FB.doc(FB.db,'clases_imgs',clase.id),{ claseId:clase.id, cat:clase.cat, niv:clase.niv, url_jpg:url, url:url, imgActualizadoEn:new Date().toISOString() },{merge:true}); }
+async function regPeluVideo(clase, url){ await FB.setDoc(FB.doc(FB.db,'clases_imgs',clase.id),{ claseId:clase.id, cat:clase.cat, niv:clase.niv, url_video:url, videoActualizadoEn:new Date().toISOString() },{merge:true}); }
+async function regFitImg(base, url){ const ts=new Date().toISOString(); const w=[]; for(let v=1; v<=12; v++) w.push(FB.setDoc(FB.doc(FB.db,'fitness_imgs',base+'_v'+v),{ url, claseId:base+'_v'+v, cat:'fitness', imgActualizadoEn:ts },{merge:true})); await Promise.all(w); }
+async function regFitVideo(clave, url){ await FB.setDoc(FB.doc(FB.db,'fitness_videos',clave),{ url_video:url, titulo:clave, cat:'fitness', videoActualizadoEn:new Date().toISOString() },{merge:true}); }
+async function regHub(n, url){ const meta=[...HUB_CARDS,...HUB_PORTADAS].find(b=>b.n===n)||{}; const patch={ imgUrl:url, imgActualizadoEn:new Date().toISOString() }; if(meta.nom && (n!=='hero'&&n!=='login'&&n!=='chatbox')) patch.nom=meta.nom; await FB.setDoc(FB.doc(FB.db,'hub_tarjetas',n),patch,{merge:true}); }
+async function regCorte(id, url, kind){ const patch = kind==='vid' ? { videoUrl:url } : { imgUrl:url }; patch.titulo=CORTE_LBL[id]; patch.actualizado=new Date().toISOString(); await FB.setDoc(FB.doc(FB.db,'corte_modulos',id),patch,{merge:true}); }
+
+/* ════════ SISTEMA DE JOBS / REVISIÓN ════════ */
+// Cada generación produce un job. En 'auto' sube al instante; en 'revisar'
+// va a la galería y solo sube lo aprobado.
+let JOBS=[];                                  // {id,label,blob,objUrl,isVideo,driveName,estado,upload,regen}
+let JOBSEQ=0;
+function resetReview(){ JOBS.forEach(j=>{try{URL.revokeObjectURL(j.objUrl);}catch(_){}}); JOBS=[]; document.getElementById('review').innerHTML=''; document.getElementById('reviewWrap').style.display='none'; }
+
+// addJob(meta): meta = { label, blob, isVideo, driveName, upload:async()=>{}, regen:async()=>blob }
+async function addJob(meta){
+  if(GEN==='auto'){
+    // subir inmediato (optimiza si es imagen)
+    let blob=meta.blob;
+    if(!meta.isVideo) blob=await optimizarImg(blob, JPG_Q);
+    await meta.upload(blob);
+    if(!meta.noBackup && window.GEN_DEST!=='drive') await driveBackup(blob, meta.driveName);
+    return {subido:true};
+  }
+  // modo revisar → encolar
+  const id='j'+(++JOBSEQ);
+  const job={ id, label:meta.label, blob:meta.blob, isVideo:!!meta.isVideo, driveName:meta.driveName, noBackup:!!meta.noBackup, estado:'pendiente', upload:meta.upload, regen:meta.regen };
+  job.objUrl=URL.createObjectURL(job.blob);
+  JOBS.push(job);
+  renderReview();
+  return {encolado:true};
+}
+function renderReview(){
+  const wrap=document.getElementById('reviewWrap'); const grid=document.getElementById('review');
+  if(!JOBS.length){ wrap.style.display='none'; grid.innerHTML=''; return; }
+  wrap.style.display='block';
+  grid.innerHTML=JOBS.map(j=>{
+    const media = j.isVideo
+      ? `<video src="${j.objUrl}" muted loop playsinline onmouseover="this.play()" onmouseout="this.pause()"></video>`
+      : `<img src="${j.objUrl}"/>`;
+    const bcl = j.estado==='aprobado'?'ap':j.estado==='descartado'?'ds':'pend';
+    const btxt= j.estado==='aprobado'?'aprobada':j.estado==='descartado'?'descartada':'pendiente';
+    return `<div class="rv ${j.estado}" id="rv-${j.id}">
+      <span class="badge ${bcl}">${btxt}</span>
+      <div class="media">${media}</div>
+      <div class="lbl" title="${esc(j.label)}">${esc(j.label)}</div>
+      <div class="acts">
+        <button class="ap ${j.estado==='aprobado'?'on':''}" title="Aprobar" onclick="rvSet('${j.id}','aprobado')">✅</button>
+        <button title="Regenerar" onclick="rvRegen('${j.id}')">🔄</button>
+        <button class="ds ${j.estado==='descartado'?'on':''}" title="Descartar" onclick="rvSet('${j.id}','descartado')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+  const ap=JOBS.filter(j=>j.estado==='aprobado').length;
+  document.getElementById('rvStats').textContent = JOBS.length+' generadas · '+ap+' aprobadas';
+}
+function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function rvSet(id,estado){ const j=JOBS.find(x=>x.id===id); if(!j)return; j.estado = (j.estado===estado)?'pendiente':estado; renderReview(); }
+function rvAprobarTodas(){ JOBS.forEach(j=>{ if(j.estado!=='descartado') j.estado='aprobado'; }); renderReview(); }
+function rvLimpiar(){ if(JOBS.length && !confirm('¿Vaciar la galería? Lo no subido se pierde.')) return; resetReview(); }
+async function rvRegen(id){
+  const j=JOBS.find(x=>x.id===id); if(!j||!j.regen) return;
+  const el=document.getElementById('rv-'+id); if(el) el.style.opacity='.5';
+  try{
+    const nb=await j.regen();
+    try{URL.revokeObjectURL(j.objUrl);}catch(_){}
+    j.blob=nb; j.objUrl=URL.createObjectURL(nb); j.estado='pendiente';
+    logLine('🔄 regenerada · '+j.label,'info');
+  }catch(e){ logLine('❌ regenerar '+j.label+': '+(e.message||e),'err'); }
+  renderReview();
+}
+async function subirAprobadas(){
+  const ap=JOBS.filter(j=>j.estado==='aprobado');
+  if(!ap.length){ logLine('No hay imágenes aprobadas.','err'); return; }
+  // AVISO CLARO: elegiste Drive pero no está conectado → no subimos a Firebase callado.
+  if(window.GEN_DEST==='drive' && (typeof DRIVE==='undefined' || !DRIVE.token)){
+    logLine('❌ Elegiste "🔗 Drive · solo el link" pero Google Drive NO está conectado. Pulsa "Conectar Drive" arriba y vuelve a "Subir aprobadas". (No se guardó nada en Firebase.)','err');
+    alert('Para guardar SOLO el link en Drive primero debes conectar Google Drive.\n\nLa conexión a Drive se pierde cada vez que recargas la página, así que hay que pulsar "Conectar Drive" antes de subir.\n\nNada se guardó en Firebase.');
+    return;
+  }
+  const user=await ensureAuth(); if(!user){ logLine('Sin sesión admin no se puede subir.','err'); return; }
+  logLine('☁️ Subiendo '+ap.length+' aprobada(s)…','info');
+  let ok=0,err=0;
+  for(let i=0;i<ap.length;i++){
+    const j=ap[i];
+    setProg(i,ap.length,'Subiendo '+j.label+' ('+(i+1)+'/'+ap.length+')');
+    try{
+      let blob=j.blob;
+      if(!j.isVideo) blob=await optimizarImg(blob, JPG_Q);
+      await j.upload(blob);
+      if(!j.noBackup && window.GEN_DEST!=='drive') await driveBackup(blob, j.driveName);
+      ok++; j.estado='subido';
+      logLine('✅ subida · '+j.label,'ok');
+    }catch(e){ err++; logLine('❌ '+j.label+': '+(e.message||e),'err'); }
+  }
+  setProg(ap.length,ap.length,`Subidas ${ok} · errores ${err}`);
+  logLine(`🏁 ${ok} subida(s) · ${err} error(es) · sistema público actualizado en tiempo real.`,'ok');
+  // quitar las subidas de la galería
+  JOBS=JOBS.filter(j=>j.estado!=='subido'); renderReview();
+}
+
+/* ════════ REPLICATE ════════ */
+function replicateKey(){ return localStorage.getItem('fc_key_replicate')||''; }
+function guardarKey(){ const v=document.getElementById('keyReplicate').value.trim(); if(v){localStorage.setItem('fc_key_replicate',v); logLine('✓ Token Replicate guardado','ok'); document.getElementById('keyReplicate').value='';} }
+(function loadKey(){ const k=replicateKey(); if(k) document.getElementById('keyReplicate').placeholder='Replicate token guardado ✓'; })();
+
+async function replicatePredict(modelPath, input){
+  const uiKey=replicateKey();
+  const headers={'Content-Type':'application/json','Prefer':'wait'};
+  if(uiKey) headers['Authorization']='Bearer '+uiKey;
+  let r=await fetch(PROXY+'/v1/models/'+modelPath+'/predictions',{method:'POST',headers,body:JSON.stringify({input})});
+  let d; try{ d=await r.json(); }catch(_){ throw new Error('Replicate: respuesta no-JSON (HTTP '+r.status+')'); }
+  if(d.error) throw new Error('Replicate: '+(typeof d.error==='string'?d.error:JSON.stringify(d.error)));
+  const pollHeaders=uiKey?{'Authorization':'Bearer '+uiKey}:{};
+  let intentos=0;
+  while(d.status && d.status!=='succeeded' && d.status!=='failed' && d.status!=='canceled' && intentos<60){
+    await new Promise(res=>setTimeout(res,1500));
+    const pr=await fetch(PROXY+'/v1/predictions/'+d.id,{headers:pollHeaders});
+    d=await pr.json(); intentos++;
+  }
+  if(d.status==='failed') throw new Error('Replicate: generación fallida · '+(d.error||'sin detalle'));
+  if(d.status==='canceled') throw new Error('Replicate: cancelada');
+  const out=Array.isArray(d.output)?d.output[d.output.length-1]:d.output;
+  if(!out) throw new Error('Replicate: sin imagen (¿crédito agotado?)');
+  return out; // URL
+}
+
+// Construye el prompt FINAL respetando tu campo de instrucciones y la referencia.
+function promptEfectivo(basePrompt, opts){
+  opts = opts || {};
+  const notas = (typeof window.REF_NOTAS==='string') ? window.REF_NOTAS.trim() : '';
+  if(window.REF_IMG && !opts.noRef){
+    return notas
+      ? (notas + '. Use the uploaded reference image as the visual base. Follow these written instructions exactly and do NOT invent anything that is not in the reference or in these instructions.')
+      : 'Recreate this reference image faithfully: same subject, same composition, same framing, same style and colors. High quality, photorealistic, sharp focus. Do NOT add or invent new elements, people, objects or text that are not already in the reference.';
+  }
+  if(notas) return basePrompt + '. IMPORTANT — extra instructions written by the user (follow them exactly, do not invent beyond this): ' + notas;
+  return basePrompt;
+}
+
+async function genImagen(prompt, opts){
+  opts = opts || {};
+  const finalPrompt = promptEfectivo(prompt, opts);
+  // MULTI-API: si elegiste otro proveedor de imagen, va por ahí (con TU clave).
+  const prov = window.IMG_PROVIDER || 'replicate';
+  if(prov!=='replicate') return await genImgOtro(prov, finalPrompt);
+
+  // ── Replicate (igual que siempre · por defecto) ──
+  const model = (window.IMG_MODEL) || 'black-forest-labs/flux-dev';
+  const input = {prompt: finalPrompt, aspect_ratio:'3:4', output_format:'jpg', num_outputs:1};
+  // ajustes por familia de modelo
+  if(/flux/.test(model)){ input.guidance=3.5; input.num_inference_steps=30; }
+  // lámina de referencia (image-to-image) — solo en Replicate/flux.
+  // Las láminas de fitness NO usan referencia (opts.noRef): cada panel es SU ejercicio.
+  if(window.REF_IMG && !opts.noRef){
+    input.image = window.REF_IMG;
+    input.image_prompt = window.REF_IMG;
+    const f = (typeof window.REF_STRENGTH==='number')?window.REF_STRENGTH:0.65;
+    input.prompt_strength = Math.min(0.95, Math.max(0.1, 1 - f));
+  }
+  const out = await replicatePredict(model, input);
+  return out;
+}
+
+// VIDEO · mismo modelo que M2 (Replicate wan-2.2-t2v-fast). Poll largo (videos lentos).
+async function genVideo(prompt){
+  // MULTI-API: si elegiste otro proveedor de video, va por ahí (con TU clave).
+  const prov = window.VID_PROVIDER || 'replicate';
+  if(prov!=='replicate') return await genVidOtro(prov, prompt);
+
+  const uiKey=replicateKey();
+  const headers={'Content-Type':'application/json'};
+  if(uiKey) headers['Authorization']='Bearer '+uiKey;
+  const model = (window.VID_MODEL) || MOTOR_PROMPTS.MODELOS.video; // seleccionable desde el panel
+  const startR=await fetch(PROXY+'/v1/models/'+model+'/predictions',{method:'POST',headers,body:JSON.stringify({input:{prompt}})});
+  const pred=await startR.json();
+  if(pred.error) throw new Error('Replicate: '+(typeof pred.error==='string'?pred.error:JSON.stringify(pred.error)));
+  if(!pred.id && pred.output===undefined) throw new Error('Replicate: respuesta inesperada (¿token/proxy?)');
+  let d=pred;
+  const pollHeaders=uiKey?{'Authorization':'Bearer '+uiKey}:{};
+  let i=0;
+  while(d.status && d.status!=='succeeded' && d.status!=='failed' && d.status!=='canceled' && i<160){
+    await new Promise(r=>setTimeout(r,3000));
+    const r=await fetch(PROXY+'/v1/predictions/'+d.id,{headers:pollHeaders});
+    d=await r.json(); i++;
+  }
+  if(d.status==='failed'||d.status==='canceled') throw new Error('Replicate video: '+(d.error||'fallida'));
+  const out=Array.isArray(d.output)?d.output[d.output.length-1]:d.output;
+  if(!out) throw new Error('Replicate: sin video en la respuesta');
+  return out; // URL mp4 (temporal)
+}
+
+/* ════════ MULTI-API · OTROS PROVEEDORES (con TU clave) ════════
+   Replicate sigue siendo el predeterminado. Estos adaptadores solo
+   se usan si eliges otro proveedor en el panel. Todo pasa por TU
+   Netlify (puente aiproxy) para no exponer tus claves ni chocar con CORS. */
+const AIPROXY = (location.origin) + '/.netlify/functions/aiproxy';
+const PROV_META = {
+  openai:    { label:'OpenAI',      ph:'sk-...',     help:'platform.openai.com → API keys' },
+  stability: { label:'Stability AI',ph:'sk-...',     help:'platform.stability.ai → API keys' },
+  fal:       { label:'fal.ai',      ph:'id:secret',  help:'fal.ai/dashboard/keys' },
+  luma:      { label:'Luma',        ph:'luma-...',   help:'lumalabs.ai/dream-machine/api/keys' }
+};
+function provKey(p){ return localStorage.getItem('fc_key_'+p)||''; }
+async function aiProxy(url, o){
+  o = o || {};
+  const headers={'Content-Type':'application/json','x-ai-url':url};
+  if(o.auth) headers['Authorization']=o.auth;
+  if(o.accept) headers['Accept']=o.accept;
+  const r=await fetch(AIPROXY,{method:o.method||'POST', headers, body:o.body?(typeof o.body==='string'?o.body:JSON.stringify(o.body)):undefined});
+  const txt=await r.text(); let j=null; try{ j=JSON.parse(txt); }catch(_){}
+  if(r.status>=400){ const m=(j&&((j.error&&(j.error.message||j.error))||j.detail||j.message))||txt.slice(0,180); throw new Error('('+r.status+') '+m); }
+  return j!==null?j:txt;
+}
+
+// ── IMAGEN · otros proveedores → devuelve URL o data URL (se descarga con fetchToBlob) ──
+async function genImgOtro(prov, prompt){
+  if(prov==='openai'){
+    const key=provKey('openai'); if(!key) throw new Error('Pega tu clave de OpenAI (sk-...) en "Otros proveedores".');
+    const j=await aiProxy('https://api.openai.com/v1/images/generations',{auth:'Bearer '+key, body:{model:'gpt-image-1',prompt,size:'1024x1536',n:1}});
+    const d=j.data&&j.data[0]; if(!d) throw new Error('OpenAI: sin imagen');
+    return d.b64_json ? ('data:image/png;base64,'+d.b64_json) : d.url;
+  }
+  if(prov==='stability'){
+    const key=provKey('stability'); if(!key) throw new Error('Pega tu clave de Stability (sk-...).');
+    const j=await aiProxy('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image',{auth:'Bearer '+key, accept:'application/json', body:{text_prompts:[{text:prompt}],width:832,height:1216,samples:1,steps:30}});
+    const a=j.artifacts&&j.artifacts[0]; if(!a||!a.base64) throw new Error('Stability: sin imagen');
+    return 'data:image/png;base64,'+a.base64;
+  }
+  if(prov==='fal'){
+    const key=provKey('fal'); if(!key) throw new Error('Pega tu clave de fal.ai (id:secret).');
+    const j=await aiProxy('https://fal.run/fal-ai/flux/dev',{auth:'Key '+key, body:{prompt,image_size:'portrait_4_3',num_images:1}});
+    const im=j.images&&j.images[0]; if(!im||!im.url) throw new Error('fal: sin imagen');
+    return im.url;
+  }
+  throw new Error('Proveedor de imagen desconocido: '+prov);
+}
+
+// ── VIDEO · otros proveedores (clip ~5s) → devuelve URL mp4 ──
+async function genVidOtro(prov, prompt){
+  if(prov==='fal'){
+    const key=provKey('fal'); if(!key) throw new Error('Pega tu clave de fal.ai (id:secret).');
+    const model=(window.VID_MODEL_FAL)||'fal-ai/kling-video/v1.6/standard/text-to-video';
+    const sub=await aiProxy('https://queue.fal.run/'+model,{auth:'Key '+key, body:{prompt, duration:'5'}});
+    const statusUrl=sub.status_url, respUrl=sub.response_url;
+    if(!statusUrl||!respUrl) throw new Error('fal: no se pudo encolar el video');
+    let st=sub, i=0;
+    while(st.status!=='COMPLETED' && st.status!=='FAILED' && st.status!=='ERROR' && i<200){
+      await new Promise(r=>setTimeout(r,3000));
+      st=await aiProxy(statusUrl,{method:'GET',auth:'Key '+key}); i++;
+    }
+    if(st.status!=='COMPLETED') throw new Error('fal video: '+(st.status||'falló'));
+    const out=await aiProxy(respUrl,{method:'GET',auth:'Key '+key});
+    const url=(out.video&&(out.video.url||out.video)) || (out.output&&(out.output.video||out.output.url)) || (Array.isArray(out.videos)&&out.videos[0]&&out.videos[0].url);
+    if(!url) throw new Error('fal: sin video en la respuesta');
+    return url;
+  }
+  if(prov==='luma'){
+    const key=provKey('luma'); if(!key) throw new Error('Pega tu clave de Luma (luma-...).');
+    const start=await aiProxy('https://api.lumalabs.ai/dream-machine/v1/generations',{auth:'Bearer '+key, body:{prompt, model:'ray-flash-2', resolution:'720p', duration:'5s'}});
+    const id=start.id; if(!id) throw new Error('Luma: no inició la generación');
+    let st=start, i=0;
+    while(st.state!=='completed' && st.state!=='failed' && i<200){
+      await new Promise(r=>setTimeout(r,3000));
+      st=await aiProxy('https://api.lumalabs.ai/dream-machine/v1/generations/'+id,{method:'GET',auth:'Bearer '+key}); i++;
+    }
+    if(st.state!=='completed') throw new Error('Luma video: '+(st.failure_reason||st.state||'falló'));
+    const url=st.assets&&st.assets.video; if(!url) throw new Error('Luma: sin video');
+    return url;
+  }
+  throw new Error('Proveedor de video desconocido: '+prov);
+}
+
+/* ── estado + UI de proveedores ── */
+window.IMG_PROVIDER = localStorage.getItem('fc_img_provider') || 'replicate';
+window.VID_PROVIDER = localStorage.getItem('fc_vid_provider') || 'replicate';
+function setImgProvider(){ window.IMG_PROVIDER=document.getElementById('imgProvider').value; localStorage.setItem('fc_img_provider',window.IMG_PROVIDER); logLine('🎨 Proveedor de imagen: '+window.IMG_PROVIDER,'info'); renderProvKeys(); if(typeof refreshModelSelectors==='function') refreshModelSelectors(); }
+function setVidProvider(){ window.VID_PROVIDER=document.getElementById('vidProvider').value; localStorage.setItem('fc_vid_provider',window.VID_PROVIDER); logLine('🎬 Proveedor de video: '+window.VID_PROVIDER,'info'); renderProvKeys(); }
+function saveProvKey(p){ const el=document.getElementById('provkey_'+p); if(el){ localStorage.setItem('fc_key_'+p, (el.value||'').trim()); logLine('✓ Clave '+((PROV_META[p]||{}).label||p)+' guardada','ok'); renderProvKeys(); } }
+function renderProvKeys(){
+  const box=document.getElementById('provKeysBox'); if(!box) return;
+  const provs=[];
+  if(window.IMG_PROVIDER && window.IMG_PROVIDER!=='replicate') provs.push(window.IMG_PROVIDER);
+  if(window.VID_PROVIDER && window.VID_PROVIDER!=='replicate' && provs.indexOf(window.VID_PROVIDER)<0) provs.push(window.VID_PROVIDER);
+  if(!provs.length){ box.innerHTML='<div class="note">Usando <b>Replicate</b> (por defecto). No necesitas pegar otra clave.</div>'; return; }
+  box.innerHTML = provs.map(function(p){
+    const m=PROV_META[p]||{label:p,ph:'clave',help:''};
+    const has=provKey(p)?' · ✓ guardada':'';
+    return '<div class="keybox" style="margin-top:8px;"><span style="min-width:130px;color:var(--gold2);font-size:12px;">'+esc(m.label)+has+'</span>'+
+      '<input id="provkey_'+p+'" type="password" placeholder="'+esc(m.ph)+'" autocomplete="off" value="'+esc(provKey(p))+'">'+
+      '<button class="btn btn-ghost" onclick="saveProvKey(\''+p+'\')">Guardar</button></div>'+
+      (m.help?'<div class="note" style="margin:3px 0 0 138px;">Consíguela en <b>'+esc(m.help)+'</b></div>':'');
+  }).join('');
+}
+function initProviders(){
+  const is=document.getElementById('imgProvider'); if(is) is.value=window.IMG_PROVIDER;
+  const vs=document.getElementById('vidProvider'); if(vs) vs.value=window.VID_PROVIDER;
+  renderProvKeys();
+}
+
+async function fetchToBlob(url){ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error('descarga HTTP '+r.status); return await r.blob(); }
+
+/* ════════ COMPOSICIÓN DE LÁMINA (igual estilo Bloque 5) ════════ */
+function loadImgSafe(src){
+  return new Promise(async(resolve)=>{
+    let url=src;
+    try{ if(/^https?:/.test(src)){ const r=await fetch(src,{cache:'no-store'}); if(r.ok){ const b=await r.blob(); if(b&&b.size>1024) url=URL.createObjectURL(b);} } }catch(_){}
+    const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>resolve(im); im.onerror=()=>resolve(null); im.src=url;
+  });
+}
+function drawCover(x,img,dx,dy,dw,dh){const ir=img.width/img.height,rr=dw/dh;let sw,sh,sx,sy;if(ir>rr){sh=img.height;sw=sh*rr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/rr;sx=0;sy=(img.height-sh)/2;}x.drawImage(img,sx,sy,sw,sh,dx,dy,dw,dh);}
+function wrapTop(x,text,px,py,maxW,lh,maxLines){const words=String(text).split(' ');let line='';const out=[];for(const w of words){const t=line?line+' '+w:w;if(x.measureText(t).width>maxW&&line){out.push(line);line=w;if(out.length>=maxLines-1)break;}else line=t;}if(line&&out.length<maxLines)out.push(line);out.forEach((ln,i)=>x.fillText(ln,px,py+i*lh));}
+function componerLamina(imgs, lista, grupo, equipo){
+  const N=lista.length, cols=N===6?3:N===8?4:4, rows=N===6?2:N===8?2:3;
+  const cw=440,ch=440,head=92,bd=4, W=cols*cw, H=head+rows*ch;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const x=cv.getContext('2d');
+  x.fillStyle='#0e1526'; x.fillRect(0,0,W,H);
+  x.fillStyle='#16213e'; x.fillRect(0,0,W,head);
+  const gT=grupo==='gluteo'?'GLÚTEOS':grupo==='pierna'?'PIERNAS':'TREN SUPERIOR';
+  const eT=equipo==='mancuerna'?'MANCUERNA':equipo==='maquina'?'MÁQUINA':'PESO CORPORAL';
+  x.fillStyle='#f3e3c0'; x.textAlign='center'; x.textBaseline='middle'; x.font='bold 30px Arial,sans-serif';
+  x.fillText(`GUÍA DE ${N} EJERCICIOS · ${gT} · ${eT}`, W/2, head/2);
+  lista.forEach((nombre,i)=>{
+    const c=i%cols,r=Math.floor(i/cols),px=c*cw,py=head+r*ch,im=imgs[i];
+    x.save(); x.beginPath(); x.rect(px,py,cw,ch); x.clip();
+    if(im) drawCover(x,im,px,py,cw,ch); else { x.fillStyle='#1b2740'; x.fillRect(px,py,cw,ch); }
+    let gt=x.createLinearGradient(0,py,0,py+135); gt.addColorStop(0,'rgba(8,12,22,.88)'); gt.addColorStop(1,'rgba(8,12,22,0)'); x.fillStyle=gt; x.fillRect(px,py,cw,135);
+    let gb=x.createLinearGradient(0,py+ch-70,0,py+ch); gb.addColorStop(0,'rgba(8,12,22,0)'); gb.addColorStop(1,'rgba(8,12,22,.9)'); x.fillStyle=gb; x.fillRect(px,py+ch-70,cw,70);
+    x.fillStyle='#f3e3c0'; x.textAlign='left'; x.textBaseline='top'; x.font='bold 23px Arial,sans-serif';
+    wrapTop(x, `${i+1}. ${String(nombre).toUpperCase()}`, px+16, py+14, cw-32, 27, 3);
+    x.restore();
+    x.strokeStyle='#c8662a'; x.lineWidth=bd; x.strokeRect(px+bd/2,py+bd/2,cw-bd,ch-bd);
+  });
+  return new Promise(res=>cv.toBlob(b=>res(b),'image/jpeg',.9));
+}
+
+/* ════════ FIREBASE ════════ */
+let FB=null;
+async function fbInit(){
+  if(FB) return FB;
+  const [appMod,fs,fst,authMod]=await Promise.all([
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js')
+  ]);
+  const app=appMod.getApps().length?appMod.getApp():appMod.initializeApp(FB_CFG);
+  FB={ app, storage:fs.getStorage(app), sRef:fs.ref, uploadBytes:fs.uploadBytes, getDownloadURL:fs.getDownloadURL,
+       db:fst.getFirestore(app), doc:fst.doc, setDoc:fst.setDoc, getDoc:fst.getDoc,
+       auth:authMod.getAuth(app), onAuth:authMod.onAuthStateChanged, signIn:authMod.signInWithEmailAndPassword };
+  FB.onAuth(FB.auth, ()=>renderAuth());
+  return FB;
+}
+function renderAuth(){
+  const p=document.getElementById('pillAuth'); const u=FB&&FB.auth&&FB.auth.currentUser;
+  if(u){ p.textContent='✅ '+(u.email||u.uid); p.className='pill ok'; }
+  else { p.textContent='🔒 sin sesión'; p.className='pill no'; }
+}
+async function ensureAuth(){
+  await fbInit();
+  let user=FB.auth.currentUser;
+  if(!user) user=await new Promise(res=>{const off=FB.onAuth(FB.auth,u=>{off();res(u);});});
+  if(!user){
+    const email=prompt('Inicia sesión como administrador para subir.\nCorreo:',ADMIN_EMAIL);
+    if(email){ const pass=prompt('Contraseña:'); try{ const c=await FB.signIn(FB.auth,String(email).trim(),pass||''); user=c.user; }catch(e){ logLine('❌ Login: '+(e.code||e.message),'err'); return null; } }
+  }
+  renderAuth();
+  if(user && user.email && user.email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()) logLine('⚠️ '+user.email+' no es el admin; las reglas pueden rechazar la escritura.','err');
+  return user||null;
+}
+document.getElementById('pillAuth').onclick=()=>ensureAuth();
+
+/* ════════ MODELO + REFERENCIA ════════ */
+window.IMG_MODEL='black-forest-labs/flux-dev';
+window.VID_MODEL='wan-video/wan-2.2-t2v-fast';
+window.REF_IMG=null;
+window.REF_STRENGTH=0.65;
+window.REF_NOTAS='';
+function setRefNotas(){ window.REF_NOTAS=(document.getElementById('refNotas')||{}).value||''; }
+function setImgModel(){
+  window.IMG_MODEL=document.getElementById('imgModel').value;
+  const pill=document.getElementById('pillEngine');
+  if(pill) pill.textContent='⚙️ Replicate · '+window.IMG_MODEL.split('/').pop();
+  logLine('🎨 Modelo: '+window.IMG_MODEL,'info');
+}
+function setVidModel(){
+  window.VID_MODEL=document.getElementById('vidModel').value;
+  logLine('🎬 Modelo de video: '+window.VID_MODEL+' · prueba 1 clip antes del lote','info');
+}
+function setRefImg(){
+  const f=document.getElementById('refImg').files[0];
+  if(!f){ clearRef(); return; }
+  const rd=new FileReader();
+  rd.onload=()=>{
+    window.REF_IMG=rd.result; // data URL
+    document.getElementById('refPreview').src=rd.result;
+    document.getElementById('refPreviewBox').style.display='flex';
+    document.getElementById('refStrengthBox').style.display='block';
+    logLine('🖼️ Lámina de referencia cargada · la IA la imitará','ok');
+  };
+  rd.readAsDataURL(f);
+}
+function setRefStrength(){ window.REF_STRENGTH=parseFloat(document.getElementById('refStrength').value); document.getElementById('refStrengthVal').textContent=window.REF_STRENGTH.toFixed(2); }
+function clearRef(){
+  window.REF_IMG=null;
+  document.getElementById('refImg').value='';
+  document.getElementById('refPreviewBox').style.display='none';
+  document.getElementById('refStrengthBox').style.display='none';
+}
+
+/* ════════ CANDADO DE SEGURIDAD ════════ */
+// La página queda bloqueada hasta que entre el admin (correo exacto).
+// Así nadie puede usar tu generación ni ver el panel sin sesión.
+async function gateCheck(){
+  await fbInit();
+  FB.onAuth(FB.auth, u=>{
+    const gate=document.getElementById('authGate');
+    const esAdmin = u && u.email && u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase();
+    if(esAdmin){ gate.style.display='none'; }
+    else { gate.style.display='flex'; }
+    renderAuth();
+  });
+  // estado inicial
+  const u=FB.auth.currentUser;
+  if(!(u && u.email && u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase())){
+    document.getElementById('authGate').style.display='flex';
+  }
+}
+async function gateLogin(){
+  const email=(document.getElementById('gateEmail').value||'').trim();
+  const pass=document.getElementById('gatePass').value||'';
+  const msg=document.getElementById('gateMsg');
+  msg.style.color='#E74C3C';
+  if(!email||!pass){ msg.textContent='Escribe correo y contraseña.'; return; }
+  if(email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){ msg.textContent='Solo el correo de administración puede entrar.'; return; }
+  msg.style.color='#8b93a5'; msg.textContent='Verificando…';
+  try{
+    await fbInit();
+    await FB.signIn(FB.auth, email, pass);
+    msg.textContent='';
+    document.getElementById('gatePass').value='';
+  }catch(e){ msg.style.color='#E74C3C'; msg.textContent='❌ '+(e.code||e.message); }
+}
+gateCheck();
+
+async function yaExiste(claseId){
+  try{ const s=await FB.getDoc(FB.doc(FB.db,'fitness_imgs',claseId)); return s.exists() && (s.data().url||s.data().url_jpg); }catch(_){ return false; }
+}
+/* ════ DESTINO DE LO GENERADO (fitness) · 🔥 Firebase | 🔗 Drive solo-link ════
+   AÑADIDO: el lote automático puede guardar el archivo en Google Drive y dejar
+   en Firebase SOLO el enlace (Firebase no se llena). No quita el modo Firebase. */
+window.GEN_DEST = window.GEN_DEST || 'fb';
+function setGenDest(d){
+  window.GEN_DEST = d;
+  document.querySelectorAll('#segGenDest button').forEach(b=>b.classList.toggle('on', b.dataset.gd===d));
+  const h=document.getElementById('genDestHint');
+  if(h) h.innerHTML = d==='drive'
+    ? '🔗 <b>Drive · solo el link</b>: cada imagen/video se sube a tu Google Drive y en Firebase queda <b>solo el enlace</b>. Firebase no se llena. (Conecta Google Drive arriba; si no está conectado, usa Firebase.)'
+    : '🔥 <b>Firebase</b>: cada archivo se guarda en Firebase (lo de siempre) + copia de respaldo en Drive.';
+}
+async function subir(base, blob){
+  // 1 sola imagen en Storage; 12 docs en Firestore (v1..v12) apuntando a ella,
+  // igual que "aplicar a las 12 versiones" de la biblioteca → el picker
+  // aleatorio del Bloque 5 (getDriveURL) SIEMPRE acierta.
+  // 🔗 Modo "Drive · solo el link": sube a Google Drive y guarda SOLO el enlace en
+  // Firebase (no llena Storage). Mismos 12 docs v1..v12, con el link de Drive.
+  // GUARD: si elegiste "Drive · solo el link" pero Drive NO está conectado,
+  // NO guardamos callado en Firebase: avisamos para que conectes Drive.
+  if(window.GEN_DEST==='drive' && (typeof DRIVE==='undefined' || !DRIVE.token)){
+    throw new Error('Elegiste "Drive · solo el link" pero Google Drive NO está conectado (la conexión se pierde al recargar la página). Pulsa "Conectar Drive" arriba y reintenta. NADA se guardó en Firebase.');
+  }
+  if(window.GEN_DEST==='drive' && typeof DRIVE!=='undefined' && DRIVE.token){
+    const url=await driveUploadPublic(blob, base+'_imagen.jpg', false);
+    await regFitImg(base, url);
+    return url;
+  }
+  const path='fitness/'+base+'/imagen.jpg';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  const ts=new Date().toISOString();
+  const writes=[];
+  for(let v=1; v<=12; v++){
+    writes.push(FB.setDoc(FB.doc(FB.db,'fitness_imgs',base+'_v'+v),{url,url_path:path,claseId:base+'_v'+v,cat:'fitness',imgActualizadoEn:ts},{merge:true}));
+  }
+  await Promise.all(writes);
+  return url;
+}
+// Sube UNA versión distinta a su propio doc vK (imagen propia → variedad real en el Bloque 5)
+async function subirLaminaVersion(base, v, blob){
+  const clave=base+'_v'+v;
+  // 🔗 Drive · solo el link
+  if(window.GEN_DEST==='drive' && (typeof DRIVE==='undefined' || !DRIVE.token)){
+    throw new Error('Elegiste "Drive · solo el link" pero Google Drive NO está conectado (la conexión se pierde al recargar la página). Pulsa "Conectar Drive" arriba y reintenta. NADA se guardó en Firebase.');
+  }
+  if(window.GEN_DEST==='drive' && typeof DRIVE!=='undefined' && DRIVE.token){
+    const url=await driveUploadPublic(blob, clave+'.jpg', false);
+    await FB.setDoc(FB.doc(FB.db,'fitness_imgs',clave),{url,claseId:clave,cat:'fitness',imgActualizadoEn:new Date().toISOString()},{merge:true});
+    return url;
+  }
+  const path='fitness/'+base+'/'+clave+'.jpg';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  await FB.setDoc(FB.doc(FB.db,'fitness_imgs',clave),{url,url_path:path,claseId:clave,cat:'fitness',imgActualizadoEn:new Date().toISOString()},{merge:true});
+  return url;
+}
+
+// ── VIDEO · clave EXACTA que lee el Bloque 5: getVideoKey(dia,obj,grupo)=`dia{N}_{obj}_{grupo}` ──
+// (1 video por día+objetivo+grupo; campos url_video, titulo, guion). NO por ejercicio ni equipo.
+function claveVideoDia(dia, combo){ return 'dia'+dia+'_'+combo.motor+'_'+combo.grupo; }
+// Slug del ejercicio (sin acentos ni símbolos) para el ID del clip
+function slugEj(nombre){
+  return String(nombre||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+}
+// Clave EXACTA que lee el carrusel del Bloque 5: {grupo_obj_equipo_nej}_{NN}_{slug}
+// idx 0 → _01_ , idx 1 → _02_ … (dos dígitos: así el carrusel los ordena bien)
+function claveClip(base, idx, nombre){ return base+'_'+String(idx+1).padStart(2,'0')+'_'+slugEj(nombre); }
+async function yaExisteVideo(clave){
+  try{ const s=await FB.getDoc(FB.doc(FB.db,'fitness_videos',clave)); return s.exists() && s.data().url_video; }catch(_){ return false; }
+}
+async function subirVideo(clave, blob, titulo, guion){
+  // 🔗 Drive · solo el link: el video se sube a Drive y en Firebase queda solo el enlace.
+  if(window.GEN_DEST==='drive' && (typeof DRIVE==='undefined' || !DRIVE.token)){
+    throw new Error('Elegiste "Drive · solo el link" pero Google Drive NO está conectado (la conexión se pierde al recargar la página). Pulsa "Conectar Drive" arriba y reintenta. NADA se guardó en Firebase.');
+  }
+  if(window.GEN_DEST==='drive' && typeof DRIVE!=='undefined' && DRIVE.token){
+    const url=await driveUploadPublic(blob, clave+'.mp4', true);
+    const patch={url_video:url,titulo:titulo||clave,cat:'fitness',videoActualizadoEn:new Date().toISOString()};
+    if(guion) patch.guion=guion;
+    await FB.setDoc(FB.doc(FB.db,'fitness_videos',clave),patch,{merge:true});
+    return url;
+  }
+  const path='fitness/videos/'+clave+'.mp4';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  const patch={url_video:url,path_video:path,titulo:titulo||clave,cat:'fitness',videoActualizadoEn:new Date().toISOString()};
+  if(guion) patch.guion=guion;
+  await FB.setDoc(FB.doc(FB.db,'fitness_videos',clave),patch,{merge:true});
+  return url;
+}
+function toggleDia(){ const v=(document.querySelector('input[name="tipo"]:checked')||{}).value; const b=document.getElementById('diaBox'); if(b) b.style.display='none'; const vb=document.getElementById('verBox'); if(vb) vb.style.display = v==='vid'?'none':'flex'; refreshModelSelectors(); }
+// Muestra SOLO el selector que corresponde: imagen → modelo de imagen; video → modelo de video.
+function currentIsVideo(){
+  if(MODO==='fitness') return ((document.querySelector('input[name="tipo"]:checked')||{}).value)==='vid';
+  if(MODO==='pelu')    return ((document.querySelector('input[name="tipoP"]:checked')||{}).value)==='vid';
+  return false; // hub y corte = solo imagen
+}
+function refreshModelSelectors(){
+  const vid=currentIsVideo();
+  const gi=document.getElementById('grpImgModel'); if(gi) gi.style.display = vid?'none':'';
+  const gv=document.getElementById('grpVidModel'); if(gv) gv.style.display = vid?'':'none';
+  const gr=document.getElementById('grpRef');      if(gr) gr.style.display = vid?'none':''; // la referencia es solo para imágenes
+}
+function detener(){ STOP=true; logLine('⏹ Deteniendo tras la lámina actual…','info'); }
+
+/* ════════ PRUEBA · genera 1 solo item del modo actual (sin masa) ════════ */
+async function pruebaUna(){
+  if(RUNNING){ return; }
+  if(!replicateKey()){ if(!confirm('No hay token de Replicate guardado. ¿El proxy ya tiene REPLICATE_API_TOKEN? Aceptar para continuar.')) return; }
+  document.getElementById('preview').innerHTML='';
+  try{
+    if(MODO==='fitness'){
+      const combos=combosSeleccionados();
+      if(!combos.length){ logLine('Selecciona al menos un grupo/equipo/nivel.','err'); return; }
+      const combo=combos[0];
+      const base=combo.claveImgBase;
+      const lista=combo.ejercicios&&combo.ejercicios.length?combo.ejercicios:MOTOR_PROMPTS.ejerciciosDe(combo.grupo,combo.equipo,combo.nej,combo.motor);
+      const tipo=(document.querySelector('input[name="tipo"]:checked')||{}).value||'img';
+      if(tipo==='vid'){
+        const nombreEj=lista[0]||combo.grupo;
+        const clave=claveClip(base,0,nombreEj);
+        const titulo='1. '+nombreEj;
+        logLine('🧪 PRUEBA · '+clave+' · generando clip del 1er ejercicio…','info');
+        const gen=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.fitnessVideo(combo.grupo,combo.equipo,combo.motor,nombreEj)));
+        const blob=await gen();
+        await addJob({ label:'🧪 '+clave, blob, isVideo:true, driveName:clave+'.mp4', upload:(bl)=>subirVideo(clave,bl,titulo), regen:gen });
+      } else {
+        logLine('🧪 PRUEBA · '+base+'_v1 · generando '+lista.length+' imágenes…','info');
+        const armar=async()=>{
+          const srcs=[];
+          for(let i=0;i<lista.length;i++){ if(STOP)break; srcs.push(await genImagen(MOTOR_PROMPTS.fitnessSingle(combo.grupo,combo.equipo,combo.motor,lista[i]),{noRef:true})); }
+          const imgs=await Promise.all(srcs.map(loadImgSafe));
+          return componerLamina(imgs,lista,combo.grupo,combo.equipo);
+        };
+        const blob=await armar();
+        await addJob({ label:'🧪 '+base+'_v1 · lámina', blob, driveName:base+'_v1.jpg', upload:(bl)=>subirLaminaVersion(base,1,bl), regen:armar });
+      }
+    } else if(MODO==='pelu'){
+      const clases=clasesPeluSeleccionadas();
+      if(!clases.length){ logLine('Selecciona una categoría.','err'); return; }
+      const clase=clases[0]; const variant=([...SELP.var][0]||'cliente');
+      logLine('🧪 PRUEBA · '+clase.id+' · '+variant+'…','info');
+      const gen=async()=>fetchToBlob(await genImagen(MOTOR_PROMPTS.peluqueria(clase.cat,variant)));
+      const blob=await gen();
+      await addJob({ label:'🧪 '+clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen });
+    } else if(MODO==='hub'){
+      const b=[...HUB_CARDS,...HUB_PORTADAS].find(x=>SELH.has(x.n));
+      if(!b){ logLine('Selecciona una tarjeta.','err'); return; }
+      logLine('🧪 PRUEBA · '+b.nom+'…','info');
+      const gen=async()=>fetchToBlob(await genImagen(HUB_PROMPT[b.n]||('Professional elegant image about '+b.nom)));
+      const blob=await gen();
+      await addJob({ label:'🧪 Hub · '+b.nom, blob, driveName:'hub_'+b.n+'.jpg', upload:(bl)=>subirHub(b.n,bl), regen:gen });
+    } else if(MODO==='corte'){
+      const id=Object.keys(CORTE_LBL).find(x=>SELC.has(x));
+      if(!id){ logLine('Selecciona un módulo.','err'); return; }
+      logLine('🧪 PRUEBA · '+id+'…','info');
+      const gen=async()=>fetchToBlob(await genImagen(CORTE_PROMPT[id]));
+      const blob=await gen();
+      await addJob({ label:'🧪 '+id+' · '+CORTE_LBL[id], blob, driveName:'corte_'+id+'.jpg', upload:(bl)=>subirCorte(id,bl), regen:gen });
+    }
+    logLine('✅ Prueba lista · revísala abajo. Si te gusta, pulsa "Iniciar lote" para generar todo.','ok');
+  }catch(e){ logLine('❌ Prueba falló: '+(e.message||e),'err'); }
+}
+
+async function iniciar(){
+  if(MODO==='pelu') return iniciarPelu();
+  if(MODO==='hub')  return iniciarHub();
+  if(MODO==='corte') return iniciarCorte();
+  const combos=combosSeleccionados();
+  if(!combos.length){ logLine('Selecciona al menos un lote.','err'); return; }
+  if(!replicateKey()){ if(!confirm('No hay token de Replicate guardado. ¿El proxy de Netlify ya tiene REPLICATE_API_TOKEN? Pulsa Aceptar para continuar igualmente.')) return; }
+  if(GEN==='auto'){ const user=await ensureAuth(); if(!user){ logLine('Sin sesión admin no se puede subir.','err'); return; } }
+
+  RUNNING=true; STOP=false;
+  document.getElementById('btnGo').style.display='none';
+  document.getElementById('btnStop').style.display='inline-block';
+  document.getElementById('preview').innerHTML='';
+  const tipo = (document.querySelector('input[name="tipo"]:checked')||{}).value || 'img';
+  logLine('▶️ Lote iniciado · '+combos.length+' lote(s) · tipo: '+(tipo==='vid'?'VIDEOS':'LÁMINAS'),'info');
+
+  const skip=document.getElementById('optSkip').checked;
+  const regen=document.getElementById('optRegen').checked;
+  let done=0, ok=0, omit=0, err=0;
+
+  for(const combo of combos){
+    if(STOP) break;
+    const base = combo.claveImgBase;          // grupo_obj_equipo_nej
+    const lista = combo.ejercicios && combo.ejercicios.length ? combo.ejercicios : MOTOR_PROMPTS.ejerciciosDe(combo.grupo,combo.equipo,combo.nej,combo.motor);
+
+    if(tipo==='vid'){
+      // ── CLIPS POR EJERCICIO · CARRUSEL del Bloque 5 ──
+      // Cada ejercicio = 1 clip de video → fitness_videos/{base}_{NN}_{slug}
+      // NO depende del día: el carrusel del Bloque 5 lo muestra los 30 días.
+      if(!lista.length){ logLine('⚠️ '+base+' sin ejercicios','err'); err++; done++; continue; }
+      logLine('🎬 '+base+' · generando '+lista.length+' clip(s) de ejercicio (carrusel)…','info');
+      for(let i=0;i<lista.length;i++){
+        if(STOP) break;
+        const nombreEj=lista[i];
+        const clave=claveClip(base,i,nombreEj);
+        const titulo=(i+1)+'. '+nombreEj;
+        setProg(done,combos.length,base+' · clip '+(i+1)+'/'+lista.length);
+        try{
+          if(skip && !regen && await yaExisteVideo(clave)){ logLine('⏭️ '+clave+' ya existe · omitido','skip'); omit++; continue; }
+          logLine('🎬 '+clave+' · generando…','info');
+          const gen=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.fitnessVideo(combo.grupo,combo.equipo,combo.motor,nombreEj)));
+          const blob=await gen();
+          await addJob({ label:'🎬 '+base+' · '+titulo, blob, isVideo:true, driveName:clave+'.mp4', upload:(bl)=>subirVideo(clave,bl,titulo), regen:gen });
+          ok++;
+        }catch(e){ err++; logLine('❌ '+clave+': '+(e.message||e),'err'); }
+      }
+      done++;
+      continue;
+    }
+
+    // ── LÁMINA DE IMÁGENES · N versiones DISTINTAS (v1, v2, …) para variedad ──
+    setProg(done,combos.length,`Procesando ${base} (${done+1}/${combos.length})`);
+    try{
+      if(!lista.length){ logLine('⚠️ '+base+' sin ejercicios','err'); err++; done++; continue; }
+      const nVer=Math.min(12,Math.max(1,parseInt(document.getElementById('nVer').value)||3));
+      const armarLamina=async()=>{
+        const srcs=[];
+        for(let i=0;i<lista.length;i++){
+          if(STOP) break;
+          const p=MOTOR_PROMPTS.fitnessSingle(combo.grupo,combo.equipo,combo.motor,lista[i]);
+          srcs.push(await genImagen(p,{noRef:true}));
+        }
+        const imgs=await Promise.all(srcs.map(loadImgSafe));
+        return componerLamina(imgs,lista,combo.grupo,combo.equipo);
+      };
+      let hechas=0;
+      for(let v=1; v<=nVer; v++){
+        if(STOP) break;
+        const claveV=base+'_v'+v;
+        if(skip && !regen && await yaExiste(claveV)){ logLine('⏭️ '+claveV+' ya existe · omitida','skip'); omit++; continue; }
+        logLine('🎨 '+claveV+' · generando '+lista.length+' imágenes…','info');
+        setProg(done,combos.length,`${base} · versión ${v}/${nVer}`);
+        const blob=await armarLamina();
+        if(STOP) break;
+        await addJob({ label:claveV+' · lámina', blob, driveName:claveV+'.jpg', upload:(bl)=>subirLaminaVersion(base,v,bl), regen:armarLamina });
+        hechas++; ok++;
+        logLine('✅ '+claveV+' lista ('+Math.round(blob.size/1024)+' KB)','ok');
+      }
+      done++;
+    }catch(e){
+      err++; done++;
+      logLine('❌ '+base+': '+(e.message||e),'err');
+    }
+  }
+  finLote(done,combos.length,ok,omit,err,'Fitness');
+}
+
+fbInit().then(()=>{ FB.onAuth(FB.auth,()=>renderAuth()); renderAuth(); });
+renderDrive(); setGen('revisar'); manSysChange(); toggleDia();
+initProviders();
+document.getElementById('pillDrive').onclick=conectarDrive;
+</script>
+<script src="drive_fix.js"></script>
+</body>
+</html>
