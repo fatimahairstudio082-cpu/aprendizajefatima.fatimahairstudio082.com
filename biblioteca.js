@@ -85,6 +85,18 @@ function normImg(v){
   if(/^[-\w]{20,}$/.test(s)) return `https://drive.google.com/thumbnail?id=${s}&sz=w1400`;
   return s;
 }
+
+/* Normaliza un VIDEO: deja igual YouTube/Vimeo/MP4, pero convierte cualquier
+   enlace o ID de Google Drive al formato REPRODUCIBLE (/preview). Así aunque
+   se pegue el link crudo de "compartir", el Bloque 5 lo reproduce siempre. */
+function normVid(v){
+  if(!v) return '';
+  const s=String(v).trim();
+  if(/youtube|youtu\.be|vimeo|\.(mp4|webm|ogg|mov|m4v)(\?|#|$)|firebasestorage/i.test(s)) return s;
+  if(/drive\.google|googleusercontent/i.test(s)){ const m=s.match(/[-\w]{25,}/); if(m) return `https://drive.google.com/file/d/${m[0]}/preview`; }
+  if(/^[-\w]{20,}$/.test(s)) return `https://drive.google.com/file/d/${s}/preview`;
+  return s;
+}
 const CORTE_LBL={M1:'Protocolo de Limpieza',M2:'Herramientas Profesionales',M3:'Técnica Lógica de Corte',M4:'Avatar Fátima Caldea',M5:'Secciones y Divisiones',M6:'Elevaciones y Proyecciones',M7:'Geometría del Corte'};
 
 /* ── AUTH ── */
@@ -161,16 +173,28 @@ function vKey(){
 }
 function vPreview(){
   const url=$('v_url').value.trim();
-  $('v_prev').innerHTML = url
-    ? `<video src="${esc(url)}" controls playsinline preload="metadata"></video>`
-    : `<div class="empty">Pega una URL para previsualizar el video</div>`;
+  if(!url){ $('v_prev').innerHTML=`<div class="empty">Pega una URL para previsualizar el video</div>`; return; }
+  const s=url;
+  let inner;
+  if(/drive\.google|googleusercontent/i.test(s)){
+    const m=s.match(/[-\w]{25,}/);
+    inner = m ? `<iframe src="https://drive.google.com/file/d/${m[0]}/preview" allow="autoplay; encrypted-media; fullscreen" allowfullscreen frameborder="0" style="width:100%;height:220px;border:0;background:#000;"></iframe>`
+              : `<video src="${esc(s)}" controls playsinline preload="metadata"></video>`;
+  } else if(/youtube|youtu\.be/i.test(s)){
+    const y=s.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
+    inner = y ? `<iframe src="https://www.youtube-nocookie.com/embed/${y[1]}" allowfullscreen frameborder="0" style="width:100%;height:220px;border:0;background:#000;"></iframe>`
+              : `<video src="${esc(s)}" controls playsinline preload="metadata"></video>`;
+  } else {
+    inner = `<video src="${esc(s)}" controls playsinline preload="metadata"></video>`;
+  }
+  $('v_prev').innerHTML = inner;
 }
 function guardarVideo(){
   const k = `dia${parseInt($('v_dia').value)||1}_${$('v_obj').value}_${$('v_grupo').value}`;
   const url=$('v_url').value.trim();
   if(!url) return toast('Falta la URL del video.');
   db.collection('fitness_videos').doc(k).set({
-    url_video:url, titulo:$('v_titulo').value.trim(), guion:$('v_guion').value.trim(),
+    url_video:normVid(url), titulo:$('v_titulo').value.trim(), guion:$('v_guion').value.trim(),
     actualizado: firebase.firestore.FieldValue.serverTimestamp()
   },{merge:true}).then(()=>toast('✓ Video guardado · '+k)).catch(e=>toast('Error: '+e.message));
 }

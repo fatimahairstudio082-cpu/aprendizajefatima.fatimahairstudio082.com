@@ -1,0 +1,59 @@
+═══════════════════════════════════════════════
+   ARREGLO DEFINITIVO — Videos del Bloque 5 no se reproducían
+═══════════════════════════════════════════════
+
+TU DIAGNÓSTICO ERA CORRECTO, FÁTIMA:
+Los videos estaban públicos, pero el LINK no estaba convertido
+como sí lo hace el conversor con las imágenes. Un video de Google
+Drive NO se reproduce con el link crudo de "compartir" ni con el
+formato de imagen (thumbnail). Necesita el formato especial:
+
+   https://drive.google.com/file/d/EL_ID/preview
+
+Tu conversor solo tenía formatos de IMAGEN. Por eso, al pegar el
+link del video, salía en negro.
+
+───────────────────────────────────────────────
+LO QUE ARREGLÉ (3 capas · nada borrado, todo aditivo)
+───────────────────────────────────────────────
+
+1) conversor_drive.html
+   ➕ Nuevo formato en el menú: "🎬 Video reproducible (/preview)".
+   Ahora, para un VIDEO: pega el link → elige ese formato →
+   Convertir → Copiar → pégalo en la Biblioteca. Igual que haces
+   con las imágenes, pero eligiendo el formato de video.
+
+2) biblioteca.js
+   ➕ Al GUARDAR un video, ahora convierte solo el link de Drive
+   al formato /preview automáticamente (aunque pegues el crudo).
+   ➕ La previsualización del video en la biblioteca ahora muestra
+   bien los links de Drive y YouTube (antes salía vacía).
+
+3) bloque5_fitness.html  (ya incluido, del arreglo anterior)
+   ➕ Reproduce los videos de Drive con /preview.
+   ➕ Red tolerante: si no encuentra el video exacto, busca uno
+   del mismo grupo+objetivo (como ya hacían las imágenes).
+
+───────────────────────────────────────────────
+CÓMO SUBIR EL ARREGLO
+───────────────────────────────────────────────
+Sube estos 3 archivos a tu repositorio aprendizajefatima...
+(Add file → Upload files → Commit). Reemplazan los viejos:
+   • conversor_drive.html
+   • biblioteca.js
+   • bloque5_fitness.html
+
+───────────────────────────────────────────────
+CÓMO CARGAR UN VIDEO DE AHORA EN ADELANTE
+───────────────────────────────────────────────
+1. En Drive: clic derecho al video → Compartir →
+   "Cualquier persona con el enlace" → Copiar enlace.
+2. (Opcional) Pásalo por el conversor con formato "🎬 Video".
+   — Aunque NO lo conviertas, la biblioteca ya lo convierte sola.
+3. Biblioteca → pestaña Videos → pega el link → Guardar.
+4. En el Bloque 5, el video ya se reproduce. ✅
+
+RECUERDA: el video DEBE estar "Cualquiera con el enlace" en Drive.
+Si está privado, no se ve para las alumnas (eso es de Drive, no
+del código).
+═══════════════════════════════════════════════

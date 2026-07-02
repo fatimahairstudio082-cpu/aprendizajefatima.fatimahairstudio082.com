@@ -91,6 +91,7 @@ textarea:focus{border-color:var(--oro);}
           <option value="thumb">Thumbnail (recomendado · imágenes)</option>
           <option value="uc">Vista directa (uc?export=view)</option>
           <option value="download">Descarga directa (uc?export=download)</option>
+          <option value="video">🎬 Video reproducible (/preview · para VIDEOS)</option>
         </select>
       </div>
       <div class="ctl">
@@ -147,6 +148,7 @@ const CV=(function(){
     const fmt=$('formato').value, tam=$('tam').value;
     if(fmt==='uc') return `https://drive.google.com/uc?export=view&id=${id}`;
     if(fmt==='download') return `https://drive.google.com/uc?export=download&id=${id}`;
+    if(fmt==='video') return `https://drive.google.com/file/d/${id}/preview`;
     return `https://drive.google.com/thumbnail?id=${id}&sz=${tam}`;
   }
 

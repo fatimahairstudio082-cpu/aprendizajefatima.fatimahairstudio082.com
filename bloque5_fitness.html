@@ -34,13 +34,13 @@
       // Archivo directo (MP4/WEBM/Firebase Storage) → <video> normal
       if(!yt&&!vm&&!dr&&isFile(url)){ var a=opts.autoplay?' autoplay muted':'';
         return '<video src="'+url+'" controls playsinline preload="metadata"'+a+' style="width:100%;height:100%;display:block;background:#000;"></video>'; }
-      // GOOGLE DRIVE → primero intenta REPRODUCIR DIRECTO (sin cookies, como video normal).
-      // Si el navegador no lo logra, cae solo al modo vista previa (iframe). Doble red.
+      // GOOGLE DRIVE → usar la VISTA PREVIA oficial (iframe /preview), que es la
+      // que Google sí sirve de forma pública para videos compartidos "cualquiera
+      // con el enlace". El enlace de descarga directa falla con archivos grandes
+      // (Drive muestra una página de aviso en vez del video → salía en negro).
       if(dr){
-        var stream='https://drive.usercontent.google.com/download?id='+dr+'&export=download';
         var prev='https://drive.google.com/file/d/'+dr+'/preview';
-        var fb="this.onerror=null;var f=document.createElement('iframe');f.src='"+prev+"';f.setAttribute('allow','autoplay; encrypted-media; fullscreen');f.setAttribute('allowfullscreen','');f.style.cssText='width:100%;height:100%;border:0;display:block;background:#000';this.replaceWith(f);";
-        return '<video src="'+stream+'" controls playsinline preload="metadata" style="width:100%;height:100%;display:block;background:#000;" onerror="'+fb+'"></video>';
+        return '<iframe src="'+prev+'" allow="autoplay; encrypted-media; fullscreen" allowfullscreen frameborder="0" style="width:100%;height:100%;border:0;display:block;background:#000;"></iframe>';
       }
       // YouTube / Vimeo → iframe
       var src=embedUrl(url,opts);
@@ -261,6 +261,23 @@ function getClaseVideoClips(dia,obj,grupo,equipo,nEjer){
   let clips = recolectar(diaBase);
   if(!clips.length) clips = recolectar(claseBase);
   if(!clips.length && V[legacyKey]) clips = [ Object.assign({ id:legacyKey }, V[legacyKey]) ];
+
+  /* ── RED TOLERANTE (aditiva · NO borra nada) ──────────────────────
+     Igual que las imágenes tienen fallback (getDriveURL ignora la versión
+     y el día), aquí damos a los VIDEOS la misma flexibilidad para que no
+     queden en "próximamente" solo por no coincidir día/equipo/nº exacto:
+       1) Cualquier clip de esta clase en OTRO día (mismo grupo_obj_equipo_nEj).
+       2) Cualquier clip del mismo grupo+objetivo (aunque cambie equipo/nº).
+     Solo se activa cuando NO se encontró nada con las claves exactas, así
+     que jamás pisa el contenido correcto cuando sí existe. */
+  if(!clips.length){
+    const flojo1 = new RegExp('(^|_)'+grupo+'_'+obj+'_'+equipo+'_'+nEjer+'(_|$)');
+    clips = Object.keys(V).filter(k=>flojo1.test(k)).map(k=>Object.assign({id:k},V[k]));
+  }
+  if(!clips.length){
+    const flojo2 = new RegExp('(^|_)'+grupo+'_'+obj+'(_|$)');
+    clips = Object.keys(V).filter(k=>flojo2.test(k)).map(k=>Object.assign({id:k},V[k]));
+  }
 
   const idxOf = (id) => {
     const m = id.match(/_(\d{2})_/) || id.match(/_v?(\d{1,2})$/);
