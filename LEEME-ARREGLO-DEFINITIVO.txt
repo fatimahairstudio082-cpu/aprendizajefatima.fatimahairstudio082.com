@@ -1,0 +1,73 @@
+═══════════════════════════════════════════════
+   ARREGLO DEFINITIVO · Videos del Bloque 5
+   Academia Fátima Caldea · 3 jul 2026
+═══════════════════════════════════════════════
+
+TU MOTOR AUTO Y GOOGLE DRIVE NO SE TOCARON.
+Todo esto es del lado de LECTURA y de ENTRADA de datos.
+
+───────────────────────────────────────────────
+QUÉ SUBIR AL REPOSITORIO (reemplazan a los viejos)
+───────────────────────────────────────────────
+1) bloque5_fitness.html
+   ➕ Ahora lee Firebase SIEMPRE (con o sin sesión).
+   ➕ La barra de estado avisa en ROJO el motivo exacto si
+      Firebase bloquea la lectura (antes fallaba en silencio).
+
+2) biblioteca.js
+   ➕ BLINDAJE DE ENTRADA en guardarVideo(): si lo pegado no es
+      un enlace real (https://...), NO se guarda y avisa.
+      Ningún dato corrupto vuelve a entrar a Firebase.
+      (Así nació el registro dañado "dia1_masa_gluteo".)
+
+Cómo subir: GitHub → tu repo → Add file → Upload files →
+arrastra los 2 archivos → Commit changes. Listo en ~1 min.
+
+───────────────────────────────────────────────
+HERRAMIENTAS DE TALLER (se usan UNA vez · no van al día a día)
+Puedes subirlas al repo o abrirlas localmente.
+───────────────────────────────────────────────
+3) reparar_registros_video.html  🩹
+   Encuentra los registros con link corrupto en fitness_videos.
+   Pega el link correcto de Drive → Guardar (se convierte solo
+   a /preview) — o Borrar si es basura vieja.
+
+4) migrar_links_video.html  🔗
+   Convierte de un golpe los links guardados en formato de
+   DESCARGA (uc?export=download) al formato REPRODUCIBLE
+   (/preview). Previsualiza primero, aplica después.
+
+5) escaner_clips_faltantes.html  📡
+   Tu tablero de control: elige día·motor·grupo·equipo·nivel y
+   te dice qué clips YA existen y cuáles FALTAN por generar,
+   con la clave exacta que espera el Bloque 5. Solo lee.
+
+───────────────────────────────────────────────
+Y EN LA CONSOLA DE FIREBASE (2 minutos · una sola vez)
+───────────────────────────────────────────────
+console.firebase.google.com → aprendisajefatima →
+Firestore Database → Reglas → agrega:
+
+  match /fitness_videos/{doc} {
+    allow read: if true;
+    allow write: if request.auth != null;
+  }
+  match /fitness_imgs/{doc} {
+    allow read: if true;
+    allow write: if request.auth != null;
+  }
+
+→ Publicar. (Confirmado con prueba real: hoy la lectura sin
+sesión da "permission-denied" — por eso salía "próximamente".)
+
+───────────────────────────────────────────────
+ORDEN RECOMENDADO
+───────────────────────────────────────────────
+1. Reglas de Firebase (arriba).
+2. Sube bloque5_fitness.html y biblioteca.js al repo.
+3. Abre reparar_registros_video.html → repara/borra los corruptos.
+4. Abre migrar_links_video.html → previsualiza → aplica.
+5. Usa escaner_clips_faltantes.html para ver qué clips generar.
+6. De ahí en adelante: solo generas por clic. El sistema se
+   alimenta y se protege solo. ✅
+═══════════════════════════════════════════════

@@ -46,8 +46,17 @@
       // con el enlace". El enlace de descarga directa falla con archivos grandes
       // (Drive muestra una página de aviso en vez del video → salía en negro).
       if(dr){
+        // PARCHE QUIRÚRGICO (solo Bloque 5 · no toca el motor auto ni Drive):
+        // 1º intento — reproducir el video de Drive con un <video> nativo usando
+        //   el enlace directo de streaming. Para archivos públicos pequeños (como
+        //   los clips del motor) esto reproduce inline, sin iframe.
+        // 2º intento (fallback automático) — si el <video> da error (archivo
+        //   grande, interstitial de Drive, etc.), se reemplaza solo por el iframe
+        //   /preview de siempre. Así nunca se pierde lo que ya funcionaba.
+        var stream='https://drive.google.com/uc?export=download&id='+dr;
         var prev='https://drive.google.com/file/d/'+dr+'/preview';
-        return '<iframe src="'+prev+'" allow="autoplay; encrypted-media; fullscreen" allowfullscreen frameborder="0" style="width:100%;height:100%;border:0;display:block;background:#000;"></iframe>';
+        var a=opts.autoplay?' autoplay muted':'';
+        return '<video src="'+stream+'" data-prev="'+prev+'" controls playsinline preload="metadata"'+a+' onerror="window.FatimaVideo&&FatimaVideo._fb(this)" style="width:100%;height:100%;display:block;background:#000;"></video>';
       }
       // YouTube / Vimeo → iframe
       var src=embedUrl(url,opts);
@@ -67,7 +76,23 @@
       }
       return '<iframe src="'+src+'" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" style="width:100%;height:100%;display:block;border:0;background:#000;"></iframe>';
     }
-    global.FatimaVideo={ embedUrl:embedUrl, html:html, youtubeId:youtubeId, isFile:isFile };
+    // Fallback quirúrgico: si el <video> nativo de Drive falla, lo reemplaza
+    // por el iframe /preview de siempre (una sola vez, sin bucles).
+    function _fb(v){
+      try{
+        if(!v || v.getAttribute('data-fb')) return;
+        v.setAttribute('data-fb','1');
+        var prev=v.getAttribute('data-prev'); if(!prev) return;
+        var f=document.createElement('iframe');
+        f.src=prev;
+        f.setAttribute('allow','autoplay; encrypted-media; fullscreen');
+        f.setAttribute('allowfullscreen','');
+        f.setAttribute('frameborder','0');
+        f.style.cssText='width:100%;height:100%;border:0;display:block;background:#000;';
+        v.replaceWith(f);
+      }catch(_){}
+    }
+    global.FatimaVideo={ embedUrl:embedUrl, html:html, youtubeId:youtubeId, isFile:isFile, _fb:_fb };
   })(window);
   </script>
   <script type="module">
@@ -101,23 +126,43 @@
     window._FIT_VIDEOS = {};
     window._FIT_LISTO  = false;
 
+    /* ── ARREGLO (aditivo · NO borra nada) ──────────────────────────────
+       generar() lee _FIT_VIDEOS/_FIT_IMGS de forma SÍNCRONA en el clic,
+       pero onSnapshot entrega los datos de forma ASÍNCRONA. Si la alumna
+       generaba su rutina antes de que Firestore respondiera, el video
+       quedaba armado con la lista vacía PARA SIEMPRE (nada lo reconstruía
+       después). Aquí, cada vez que llega una actualización de Firebase,
+       si ya se generó una rutina, se reconstruyen SOLO la imagen y el
+       video con los datos frescos — sin tocar el resto del plan. */
+    function _fitRefrescarTrasSnapshot(){
+      if(typeof window._fitRefrescarMedia==='function') window._fitRefrescarMedia();
+    }
+
     let _fitSuscrito = false;
     function _fitSuscribir(){
       if(_fitSuscrito) return; _fitSuscrito = true;
       // Imágenes EN VIVO
       onSnapshot(collection(db,'fitness_imgs'),
-        snap=>{ snap.forEach(d=>{ const u=d.data().url||d.data().url_jpg; if(u) window._FIT_IMGS[d.id]=u; }); window._FIT_LISTO=true; },
-        _=>{ window._FIT_LISTO=true; });
+        snap=>{ snap.forEach(d=>{ const u=d.data().url||d.data().url_jpg; if(u) window._FIT_IMGS[d.id]=u; }); window._FIT_LISTO=true; _fitRefrescarTrasSnapshot(); },
+        e=>{ window._FIT_LISTO=true; window._FIT_ERROR=(e&&(e.code||e.message))||'error de lectura'; _fitSuscrito=false; });
       // Videos EN VIVO
       onSnapshot(collection(db,'fitness_videos'),
-        snap=>{ snap.forEach(d=>{ window._FIT_VIDEOS[d.id]=d.data(); }); window._FIT_LISTO=true; },
-        _=>{ window._FIT_LISTO=true; });
+        snap=>{ snap.forEach(d=>{ window._FIT_VIDEOS[d.id]=d.data(); }); window._FIT_LISTO=true; _fitRefrescarTrasSnapshot(); },
+        e=>{ window._FIT_LISTO=true; window._FIT_ERROR=(e&&(e.code||e.message))||'error de lectura'; _fitSuscrito=false; });
     }
 
-    // Esperar a que la sesión de la alumna esté lista ANTES de leer
+    /* ── PARCHE QUIRÚRGICO DE LECTURA (solo Bloque 5 · aditivo) ─────────
+       ANTES: solo se suscribía a Firebase si había sesión iniciada.
+       Sin sesión → 0 videos → "Vídeos próximamente" aunque Firebase
+       estuviera lleno y los links de Drive fueran públicos y correctos.
+       AHORA: lee SIEMPRE, con o sin sesión. Si las reglas bloquean la
+       lectura anónima, el error queda registrado en _FIT_ERROR (visible
+       en la barra de estado) y al detectar sesión se reintenta solo.
+       No toca el motor auto, ni drive_fix.js, ni la escritura. ── */
+    _fitSuscribir();
     onAuthStateChanged(auth, user=>{
-      if(user) _fitSuscribir();
-      else window._FIT_LISTO = true; // sin sesión: no bloquea la UI (igual que antes)
+      if(user && !_fitSuscrito) _fitSuscribir();   // llegó la sesión → reintentar
+      if(!user && !_fitSuscrito) window._FIT_LISTO = true;
     });
   </script>
   <style>
@@ -180,11 +225,18 @@
 <div id="fitFirebaseStatus" style="text-align:center;font-size:11px;margin-bottom:20px;color:#334155;letter-spacing:.08em;">⏳ Conectando...</div>
 <script>
 (function chk(){
-  if(window._FIT_LISTO){
-    const ni=Object.keys(window._FIT_IMGS||{}).length, nv=Object.keys(window._FIT_VIDEOS||{}).length;
-    document.getElementById('fitFirebaseStatus').innerHTML=
-      `<span style="color:#22c55e;">● ${ni} imágenes · ${nv} videos Firebase</span>`;
-  } else setTimeout(chk,300);
+  const el=document.getElementById('fitFirebaseStatus');
+  const ni=Object.keys(window._FIT_IMGS||{}).length, nv=Object.keys(window._FIT_VIDEOS||{}).length;
+  if(ni||nv){
+    el.innerHTML=`<span style="color:#22c55e;">● ${ni} imágenes · ${nv} videos Firebase</span>`;
+    setTimeout(chk,3000); return; // sigue vigilando por si llegan más en vivo
+  }
+  if(window._FIT_ERROR){
+    el.innerHTML=`<span style="color:#f87171;">🔒 Firebase bloqueó la lectura (${window._FIT_ERROR}). Inicia sesión desde el hub y recarga — o permite lectura pública de fitness_videos/fitness_imgs en las reglas.</span>`;
+  } else if(window._FIT_LISTO){
+    el.innerHTML=`<span style="color:#facc15;">● Conectado · aún 0 videos leídos…</span>`;
+  }
+  setTimeout(chk,600);
 })();
 </script>
 
@@ -471,6 +523,12 @@ function crearBloqueMultimedia(dia,obj,grupo,equipo,series,nEjer){
         <button id="fnext-${uid}" aria-label="Siguiente" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:5;background:rgba(2,6,23,.78);color:#fff;border:1px solid #1e3a5f;border-radius:50%;width:46px;height:46px;font-size:18px;cursor:pointer;">▶</button>
       `:''}
     </div>
+    <div style="padding:8px 12px 0;">
+      <a id="fopen-${uid}" href="${fvOpenUrl(clips[0].url)}" target="_blank" rel="noopener"
+         style="font-size:10px;color:#64748b;text-decoration:underline;letter-spacing:.04em;">
+        🔗 ¿No carga el video? Ábrelo directo en Google Drive
+      </a>
+    </div>
 
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px 2px;flex-wrap:wrap;">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;text-transform:uppercase;letter-spacing:.5px;">
@@ -508,6 +566,7 @@ function crearBloqueMultimedia(dia,obj,grupo,equipo,series,nEjer){
     const rate  = document.getElementById(`frate-${uid}`);
     const rl    = document.getElementById(`frl-${uid}`);
     const ctr   = document.getElementById(`fctr-${uid}`);
+    const openL = document.getElementById(`fopen-${uid}`);
     if(!player) return;
 
     function show(i){
@@ -516,6 +575,7 @@ function crearBloqueMultimedia(dia,obj,grupo,equipo,series,nEjer){
       try{speechSynthesis.cancel();}catch(e){}
       ctr && ctr.classList.remove('playing');
       player.innerHTML = fvPlayer(c.url);   // reproductor correcto según el enlace
+      if(openL) openL.href = fvOpenUrl(c.url);
       count.textContent  = `Ejercicio ${cur+1} / ${total}`;
       name.textContent   = ' · ' + labelClip(c,cur);
       guionP.textContent = c.guion || guionGeneral;
@@ -662,7 +722,30 @@ function _generar(){
   document.getElementById('fit-media-slot').appendChild(
     crearBloqueMultimedia(dia,obj,grupo,equipo,series,nEjer)
   );
+
+  // ── ARREGLO: recordar con qué parámetros se generó esta rutina, para
+  // poder refrescar SOLO la imagen y el video si Firebase entrega datos
+  // nuevos después de este clic (ver _fitRefrescarMedia más abajo). ──
+  window._fitUltimaGen = { dia, obj, grupo, equipo, series, nEjer, nombreArchivo, placeholderURL };
 }
+
+/* Reconstruye SOLO la imagen y el bloque de video/audio de la última
+   rutina generada, usando los datos más recientes de _FIT_IMGS/_FIT_VIDEOS.
+   No reinicia el resto del plan (series, textos, etc.). Se llama cuando
+   Firebase entrega datos DESPUÉS de que la alumna ya generó su rutina
+   (antes esto se quedába en negro para siempre). */
+function _fitRefrescarMedia(){
+  const g = window._fitUltimaGen; if(!g) return;
+  const imgSlot = document.getElementById('fit-img-slot');
+  const medSlot = document.getElementById('fit-media-slot');
+  if(!imgSlot || !medSlot) return;
+  const driveURL = getDriveURL(g.nombreArchivo);
+  imgSlot.innerHTML = '';
+  imgSlot.appendChild(crearBloqueImagen(driveURL||'', g.nombreArchivo, g.placeholderURL));
+  medSlot.innerHTML = '';
+  medSlot.appendChild(crearBloqueMultimedia(g.dia, g.obj, g.grupo, g.equipo, g.series, g.nEjer));
+}
+window._fitRefrescarMedia = _fitRefrescarMedia;
 
 function descargarPDF(){
   if(!_fitDescontarCreditos(10,'Plan PDF')) return;

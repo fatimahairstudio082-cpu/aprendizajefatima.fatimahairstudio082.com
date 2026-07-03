@@ -193,8 +193,18 @@ function guardarVideo(){
   const k = `dia${parseInt($('v_dia').value)||1}_${$('v_obj').value}_${$('v_grupo').value}`;
   const url=$('v_url').value.trim();
   if(!url) return toast('Falta la URL del video.');
+  /* ── BLINDAJE DE ENTRADA (aditivo · cierra la causa raíz) ─────────────
+     Antes: si el texto pegado no era un link de Drive ni un ID, normVid()
+     lo devolvía TAL CUAL y se guardaba texto corrupto en url_video (así
+     nació "dia1_masa_gluteo" guardado como si fuera un link). Ahora: si
+     después de convertir NO es un enlace http real, se BLOQUEA el guardado
+     y se avisa. Ningún dato corrupto vuelve a entrar a Firebase. ── */
+  const urlFinal = normVid(url);
+  if(!/^https?:\/\//i.test(urlFinal)){
+    return toast('❌ NO GUARDADO — eso no es un enlace de video. Pega el link COMPLETO de Google Drive o YouTube (debe empezar por https://).');
+  }
   db.collection('fitness_videos').doc(k).set({
-    url_video:normVid(url), titulo:$('v_titulo').value.trim(), guion:$('v_guion').value.trim(),
+    url_video:urlFinal, titulo:$('v_titulo').value.trim(), guion:$('v_guion').value.trim(),
     actualizado: firebase.firestore.FieldValue.serverTimestamp()
   },{merge:true}).then(()=>toast('✓ Video guardado · '+k)).catch(e=>toast('Error: '+e.message));
 }

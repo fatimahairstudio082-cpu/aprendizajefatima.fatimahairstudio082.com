@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Migrar Links de Video · Descarga → Reproducción</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Inter:wght@400;600&display=swap');
+  *{box-sizing:border-box;}
+  body{background:#020617;color:#fff;font-family:'Inter',sans-serif;margin:0 auto;padding:24px;max-width:920px;}
+  h1{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px;}
+  .sub{color:#94a3b8;font-size:13px;margin-bottom:20px;line-height:1.6;}
+  .box{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:18px;margin-bottom:16px;}
+  label{display:block;font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+  input{width:100%;padding:10px 12px;background:#020617;border:1px solid #1e293b;border-radius:8px;color:#fff;font-size:13px;margin-bottom:10px;}
+  button{padding:12px 20px;background:#1d4ed8;color:#fff;border:0;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  button.sec{background:#334155;}
+  .estado{font-size:12px;margin-top:10px;min-height:16px;}
+  #log{margin-top:16px;}
+  .row{padding:10px 12px;background:#0b1120;border:1px solid #1e293b;border-radius:8px;margin-bottom:6px;font-size:11px;}
+  .row .doc{font-family:monospace;color:#93c5fd;font-weight:700;margin-bottom:4px;}
+  .row .old{color:#f87171;font-family:monospace;word-break:break-all;}
+  .row .new{color:#6ee7b7;font-family:monospace;word-break:break-all;}
+  .row .skip{color:#64748b;}
+  #resumen{font-size:14px;color:#facc15;margin:14px 0 6px;font-weight:700;}
+  .warn{background:#1a1206;border:1px solid #78350f;color:#fcd34d;border-radius:8px;padding:12px;font-size:12px;line-height:1.6;margin-bottom:16px;}
+</style>
+</head>
+<body>
+
+<h1>🔗 Migrar Links de Video · Descarga → Reproducción</h1>
+<div class="sub">
+  Recorre <code>fitness_videos</code> y convierte cada <code>url_video</code> que esté en formato de
+  <b>descarga</b> (<code>uc?export=download</code>) al formato de <b>reproducción</b>
+  (<code>/preview</code>) — el mismo ID de Drive, solo cambia el formato del enlace.
+  <b>No re-sube ningún video ni toca Google Drive ni Firebase Storage.</b> Solo reescribe el texto del link.
+</div>
+
+<div class="warn">
+  ⚠️ Esto escribe en Firebase. Inicia sesión con tu correo de administradora
+  (el mismo del panel). Primero pulsa <b>“Previsualizar cambios”</b> para ver qué se va a cambiar
+  SIN escribir nada; solo cuando estés conforme pulsa <b>“Aplicar cambios”</b>.
+</div>
+
+<div class="box" id="paso1">
+  <label>Correo administradora</label>
+  <input type="email" id="email" placeholder="fatimahairstudio082@gmail.com">
+  <label>Contraseña</label>
+  <input type="password" id="pass" placeholder="••••••••">
+  <button id="btnLogin">🔑 Iniciar sesión</button>
+  <div class="estado" id="loginEstado"></div>
+</div>
+
+<div class="box" id="paso2" style="display:none;">
+  <button class="sec" id="btnPreview">👁️ Previsualizar cambios (no escribe)</button>
+  <button id="btnAplicar" disabled>✅ Aplicar cambios</button>
+  <div id="resumen"></div>
+  <div id="log"></div>
+</div>
+
+<script type="module">
+  import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { getFirestore, collection, getDocs, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const CFG = {
+    apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",
+    authDomain:"aprendisajefatima.firebaseapp.com",
+    projectId:"aprendisajefatima",
+    storageBucket:"aprendisajefatima.firebasestorage.app",
+    messagingSenderId:"744176967394",
+    appId:"1:744176967394:web:1db2edfd2498ddbaa7c8bb"
+  };
+  const app = getApps().length ? getApp() : initializeApp(CFG);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const $ = id => document.getElementById(id);
+
+  // Extrae el ID de Drive de cualquier formato de link
+  function driveId(u){
+    if(!u) return null;
+    if(!/drive\.google|googleusercontent|docs\.google/i.test(u)) return null;
+    const m = String(u).match(/[-\w]{25,}/);
+    return m ? m[0] : null;
+  }
+  // Formato reproducible destino
+  function preview(id){ return 'https://drive.google.com/file/d/'+id+'/preview'; }
+
+  // Decide si un link necesita migración. Solo toca links de Drive que NO
+  // estén ya en /preview. YouTube, Vimeo, Firebase Storage, mp4 → se dejan igual.
+  function planFor(url){
+    if(!url) return { accion:'skip', motivo:'sin url' };
+    if(/youtube|youtu\.be|vimeo|firebasestorage|\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(url))
+      return { accion:'skip', motivo:'no es Drive (se deja igual)' };
+    const id = driveId(url);
+    if(!id) return { accion:'skip', motivo:'no se pudo extraer ID de Drive' };
+    if(/\/preview\s*$/.test(url.trim())) return { accion:'skip', motivo:'ya está en /preview' };
+    return { accion:'migrar', nuevo: preview(id), id };
+  }
+
+  let LOGGED = false;
+
+  $('btnLogin').onclick = async function(){
+    const em = $('email').value.trim(), pw = $('pass').value;
+    if(!em || !pw){ $('loginEstado').textContent='Completa correo y contraseña.'; $('loginEstado').style.color='#fca5a5'; return; }
+    $('btnLogin').disabled = true; $('loginEstado').textContent='⏳ Entrando…'; $('loginEstado').style.color='#fcd34d';
+    try{
+      await signInWithEmailAndPassword(auth, em, pw);
+      LOGGED = true;
+      $('loginEstado').textContent='✅ Sesión iniciada.'; $('loginEstado').style.color='#22c55e';
+      $('paso2').style.display='block';
+    }catch(e){
+      $('loginEstado').textContent='❌ '+(e.code||e.message); $('loginEstado').style.color='#fca5a5';
+      $('btnLogin').disabled = false;
+    }
+  };
+
+  let PLAN = [];
+
+  async function construirPlan(){
+    const snap = await getDocs(collection(db,'fitness_videos'));
+    const plan = [];
+    snap.forEach(d=>{
+      const data = d.data()||{};
+      const url = data.url_video || '';
+      const p = planFor(url);
+      plan.push({ doc:d.id, url, ...p });
+    });
+    return plan;
+  }
+
+  function pintar(plan, aplicado){
+    const migrar = plan.filter(p=>p.accion==='migrar');
+    const skip = plan.filter(p=>p.accion==='skip');
+    $('resumen').textContent = aplicado
+      ? `✅ ${migrar.length} links migrados a /preview · ${skip.length} sin cambios`
+      : `👁️ ${migrar.length} links por migrar · ${skip.length} sin cambios (revisa abajo y pulsa "Aplicar")`;
+    $('log').innerHTML = plan.map(p=>{
+      if(p.accion==='migrar'){
+        return `<div class="row"><div class="doc">${p.doc}</div>`
+          + `<div class="old">− ${p.url}</div>`
+          + `<div class="new">+ ${p.nuevo}${aplicado?' ✓ guardado':''}</div></div>`;
+      }
+      return `<div class="row"><div class="doc">${p.doc}</div><div class="skip">↷ ${p.motivo} · ${p.url||'(vacío)'}</div></div>`;
+    }).join('');
+  }
+
+  $('btnPreview').onclick = async function(){
+    $('btnPreview').disabled = true; $('resumen').textContent='⏳ Analizando…';
+    try{
+      PLAN = await construirPlan();
+      pintar(PLAN, false);
+      $('btnAplicar').disabled = PLAN.filter(p=>p.accion==='migrar').length===0;
+    }catch(e){ $('resumen').textContent='❌ '+e.message; }
+    $('btnPreview').disabled = false;
+  };
+
+  $('btnAplicar').onclick = async function(){
+    if(!confirm('Se van a reescribir los links de video en formato /preview. ¿Continuar?')) return;
+    $('btnAplicar').disabled = true; $('btnPreview').disabled = true;
+    const migrar = PLAN.filter(p=>p.accion==='migrar');
+    let ok=0, err=0;
+    for(const p of migrar){
+      try{
+        await updateDoc(doc(db,'fitness_videos',p.doc), {
+          url_video: p.nuevo,
+          videoActualizadoEn: new Date().toISOString()
+        });
+        ok++;
+      }catch(e){ p.motivo='ERROR: '+(e.code||e.message); p.accion='skip'; err++; }
+      $('resumen').textContent = `Aplicando… ${ok} guardados · ${err} con error`;
+    }
+    pintar(PLAN, true);
+    $('resumen').textContent = `✅ Listo · ${ok} links migrados a /preview · ${err} con error. Recarga el Bloque 5 y prueba.`;
+    $('btnPreview').disabled = false;
+  };
+</script>
+
+</body>
+</html>

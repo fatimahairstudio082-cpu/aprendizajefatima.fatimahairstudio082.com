@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reparar Registros de Video · Firebase</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Inter:wght@400;600&display=swap');
+  *{box-sizing:border-box;}
+  body{background:#020617;color:#fff;font-family:'Inter',sans-serif;margin:0 auto;padding:24px;max-width:960px;}
+  h1{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px;}
+  .sub{color:#94a3b8;font-size:13px;margin-bottom:20px;line-height:1.6;}
+  .box{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:18px;margin-bottom:16px;}
+  label{display:block;font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+  input{width:100%;padding:10px 12px;background:#020617;border:1px solid #1e293b;border-radius:8px;color:#fff;font-size:13px;margin-bottom:10px;}
+  button{padding:12px 20px;background:#1d4ed8;color:#fff;border:0;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  button.sec{background:#334155;}
+  button.mini{padding:8px 14px;font-size:11px;}
+  button.ok{background:#065f46;}
+  button.del{background:#7f1d1d;}
+  .estado{font-size:12px;margin-top:10px;min-height:16px;}
+  #log{margin-top:16px;}
+  .row{padding:12px 14px;background:#0b1120;border:1px solid #1e293b;border-radius:10px;margin-bottom:8px;font-size:12px;}
+  .row.bad{border-color:#7f1d1d;}
+  .row.good{border-color:#14532d;}
+  .row .doc{font-family:monospace;color:#93c5fd;font-weight:700;margin-bottom:4px;word-break:break-all;}
+  .row .tit{color:#e8edf5;margin-bottom:4px;}
+  .row .url{font-family:monospace;word-break:break-all;margin-bottom:8px;}
+  .row.bad .url{color:#f87171;}
+  .row.good .url{color:#6ee7b7;}
+  .row .fixline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .row .fixline input{flex:1;min-width:220px;margin:0;}
+  .badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-bottom:6px;letter-spacing:.5px;}
+  .b-bad{background:#7f1d1d;color:#fca5a5;}
+  .b-good{background:#065f46;color:#6ee7b7;}
+  #resumen{font-size:14px;color:#facc15;margin:14px 0 6px;font-weight:700;}
+  .warn{background:#1a1206;border:1px solid #78350f;color:#fcd34d;border-radius:8px;padding:12px;font-size:12px;line-height:1.6;margin-bottom:16px;}
+</style>
+</head>
+<body>
+
+<h1>🩹 Reparar Registros de Video · fitness_videos</h1>
+<div class="sub">
+  Encuentra los documentos de <code>fitness_videos</code> cuyo <code>url_video</code> está <b>corrupto</b>
+  (no es un link — por ejemplo el que guarda el texto de la clave, como <code>dia1_masa_gluteo</code>).
+  Para cada uno: pega el enlace correcto de Google Drive y pulsa <b>Guardar</b> (se convierte solo a
+  formato <code>/preview</code> reproducible), o <b>bórralo</b> si es basura.
+  <b>No toca Drive, ni el motor auto, ni ningún archivo del repositorio.</b>
+</div>
+
+<div class="warn">⚠️ Escribe en Firebase solo el documento que tú repares, uno por uno. Nada automático.</div>
+
+<div class="box" id="paso1">
+  <label>Correo administradora</label>
+  <input type="email" id="email" placeholder="fatimahairstudio082@gmail.com">
+  <label>Contraseña</label>
+  <input type="password" id="pass" placeholder="••••••••">
+  <button id="btnLogin">🔑 Iniciar sesión</button>
+  <div class="estado" id="loginEstado"></div>
+</div>
+
+<div class="box" id="paso2" style="display:none;">
+  <button id="btnEscanear">📡 Escanear registros</button>
+  <div id="resumen"></div>
+  <div id="log"></div>
+</div>
+
+<script type="module">
+  import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const CFG = {
+    apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",
+    authDomain:"aprendisajefatima.firebaseapp.com",
+    projectId:"aprendisajefatima",
+    storageBucket:"aprendisajefatima.firebasestorage.app",
+    messagingSenderId:"744176967394",
+    appId:"1:744176967394:web:1db2edfd2498ddbaa7c8bb"
+  };
+  const app = getApps().length ? getApp() : initializeApp(CFG);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  // ¿Es un link reproducible válido? (mismos criterios que el Bloque 5)
+  function esValido(u){
+    if(!u) return false;
+    return /^https?:\/\//i.test(String(u).trim());
+  }
+  // Convierte cualquier link/ID de Drive a /preview (igual que normVid de biblioteca.js)
+  function normVid(v){
+    const s = String(v||'').trim();
+    if(!s) return '';
+    if(/youtube|youtu\.be|vimeo|\.(mp4|webm|ogg|mov|m4v)(\?|#|$)|firebasestorage/i.test(s)) return s;
+    if(/drive\.google|googleusercontent/i.test(s)){ const m=s.match(/[-\w]{25,}/); if(m) return 'https://drive.google.com/file/d/'+m[0]+'/preview'; }
+    if(/^[-\w]{20,}$/.test(s)) return 'https://drive.google.com/file/d/'+s+'/preview';
+    return s;
+  }
+
+  $('btnLogin').onclick = async function(){
+    const em = $('email').value.trim(), pw = $('pass').value;
+    if(!em || !pw){ $('loginEstado').textContent='Completa correo y contraseña.'; $('loginEstado').style.color='#fca5a5'; return; }
+    $('btnLogin').disabled = true; $('loginEstado').textContent='⏳ Entrando…'; $('loginEstado').style.color='#fcd34d';
+    try{
+      await signInWithEmailAndPassword(auth, em, pw);
+      $('loginEstado').textContent='✅ Sesión iniciada.'; $('loginEstado').style.color='#22c55e';
+      $('paso2').style.display='block';
+    }catch(e){
+      $('loginEstado').textContent='❌ '+(e.code||e.message); $('loginEstado').style.color='#fca5a5';
+      $('btnLogin').disabled = false;
+    }
+  };
+
+  let DOCS = [];
+
+  $('btnEscanear').onclick = escanear;
+  async function escanear(){
+    $('btnEscanear').disabled = true; $('resumen').textContent='⏳ Leyendo fitness_videos…';
+    try{
+      const snap = await getDocs(collection(db,'fitness_videos'));
+      DOCS = [];
+      snap.forEach(d=>{ const v=d.data()||{}; DOCS.push({ id:d.id, url:v.url_video||'', titulo:v.titulo||'' }); });
+      DOCS.sort((a,b)=> (esValido(a.url)?1:0)-(esValido(b.url)?1:0) || a.id.localeCompare(b.id));
+      pintar();
+    }catch(e){ $('resumen').textContent='❌ '+(e.code||e.message); }
+    $('btnEscanear').disabled = false;
+  }
+
+  function pintar(){
+    const malos = DOCS.filter(d=>!esValido(d.url)).length;
+    $('resumen').textContent = `${DOCS.length} registros · ${malos} corrupto(s) por reparar · ${DOCS.length-malos} válidos`;
+    $('log').innerHTML = DOCS.map((d,i)=>{
+      const ok = esValido(d.url);
+      return `<div class="row ${ok?'good':'bad'}" id="row-${i}">
+        <span class="badge ${ok?'b-good':'b-bad'}">${ok?'✅ LINK VÁLIDO':'❌ CORRUPTO — no es un link'}</span>
+        <div class="doc">${esc(d.id)}</div>
+        ${d.titulo?`<div class="tit">🎬 ${esc(d.titulo)}</div>`:''}
+        <div class="url">url_video: ${esc(d.url)||'(vacío)'}</div>
+        <div class="fixline">
+          <input type="text" id="fix-${i}" placeholder="Pega aquí el enlace de Google Drive correcto (https://drive.google.com/...)">
+          <button class="mini ok" data-i="${i}" data-act="save">💾 Guardar</button>
+          <button class="mini del" data-i="${i}" data-act="del">🗑 Borrar registro</button>
+        </div>
+        <div class="estado" id="st-${i}"></div>
+      </div>`;
+    }).join('');
+    $('log').querySelectorAll('button[data-act]').forEach(b=>{
+      b.onclick = ()=> b.dataset.act==='save' ? guardar(+b.dataset.i) : borrar(+b.dataset.i);
+    });
+  }
+
+  async function guardar(i){
+    const d = DOCS[i], st = $('st-'+i);
+    const crudo = $('fix-'+i).value.trim();
+    if(!crudo){ st.textContent='Pega primero el enlace de Drive.'; st.style.color='#fca5a5'; return; }
+    const nuevo = normVid(crudo);
+    if(!esValido(nuevo)){ st.textContent='Ese texto tampoco es un link válido — copia el enlace completo desde Drive (Compartir → Copiar enlace).'; st.style.color='#fca5a5'; return; }
+    st.textContent='⏳ Guardando…'; st.style.color='#fcd34d';
+    try{
+      await updateDoc(doc(db,'fitness_videos',d.id), { url_video:nuevo, videoActualizadoEn:new Date().toISOString() });
+      d.url = nuevo;
+      st.textContent='✅ Guardado como '+nuevo; st.style.color='#22c55e';
+      const row=$('row-'+i); row.classList.remove('bad'); row.classList.add('good');
+      row.querySelector('.badge').className='badge b-good'; row.querySelector('.badge').textContent='✅ LINK VÁLIDO';
+      row.querySelector('.url').textContent='url_video: '+nuevo; row.querySelector('.url').style.color='#6ee7b7';
+    }catch(e){ st.textContent='❌ '+(e.code||e.message); st.style.color='#fca5a5'; }
+  }
+
+  async function borrar(i){
+    const d = DOCS[i], st = $('st-'+i);
+    if(!confirm('¿Borrar el registro '+d.id+' de Firebase? (No borra nada de Drive)')) return;
+    st.textContent='⏳ Borrando…'; st.style.color='#fcd34d';
+    try{
+      await deleteDoc(doc(db,'fitness_videos',d.id));
+      $('row-'+i).style.opacity='.35';
+      st.textContent='🗑 Registro borrado.'; st.style.color='#94a3b8';
+    }catch(e){ st.textContent='❌ '+(e.code||e.message); st.style.color='#fca5a5'; }
+  }
+</script>
+
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#0f172a"/><text x="50" y="62" font-size="40" text-anchor="middle">🩹</text></svg>
+</template>
+</body>
+</html>

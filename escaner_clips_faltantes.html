@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escáner de Clips · ¿Qué falta en Firebase?</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Inter:wght@400;600&display=swap');
+  *{box-sizing:border-box;}
+  body{background:#020617;color:#fff;font-family:'Inter',sans-serif;margin:0 auto;padding:24px;max-width:960px;}
+  h1{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px;}
+  .sub{color:#94a3b8;font-size:13px;margin-bottom:20px;line-height:1.6;}
+  .box{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:18px;margin-bottom:16px;}
+  label{display:block;font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+  input,select{width:100%;padding:10px 12px;background:#020617;border:1px solid #1e293b;border-radius:8px;color:#fff;font-size:13px;margin-bottom:10px;font-family:inherit;}
+  button{padding:12px 20px;background:#1d4ed8;color:#fff;border:0;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  .estado{font-size:12px;margin-top:10px;min-height:16px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+  .row{display:flex;gap:10px;align-items:center;padding:10px 12px;background:#0b1120;border:1px solid #1e293b;border-radius:8px;margin-bottom:6px;font-size:12px;flex-wrap:wrap;}
+  .row.miss{border-color:#7f1d1d;}
+  .row.have{border-color:#14532d;}
+  .row .nn{font-family:monospace;font-weight:700;color:#60a5fa;flex:none;width:26px;}
+  .row .nom{flex:1;min-width:160px;}
+  .row .key{font-family:monospace;font-size:10px;color:#64748b;word-break:break-all;width:100%;}
+  .badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.5px;flex:none;}
+  .b-have{background:#065f46;color:#6ee7b7;}
+  .b-miss{background:#7f1d1d;color:#fca5a5;}
+  .b-warn{background:#78350f;color:#fcd34d;}
+  #resumen{font-size:14px;color:#facc15;margin:14px 0 10px;font-weight:700;}
+  h3{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:#60a5fa;margin:22px 0 10px;}
+  .combo{font-family:monospace;font-size:11px;color:#93c5fd;}
+</style>
+</head>
+<body>
+
+<h1>📡 Escáner de Clips · ¿Qué falta en Firebase?</h1>
+<div class="sub">
+  Elige la clase (día · motor · grupo · equipo · nº de ejercicios) y el escáner te dice
+  <b>qué clips espera el Bloque 5 y cuáles ya existen</b> en <code>fitness_videos</code> —
+  ejercicio por ejercicio, con la clave exacta. Solo LEE, no escribe nada.
+</div>
+
+<div class="box" id="paso1">
+  <label>Correo administradora</label>
+  <input type="email" id="email" placeholder="fatimahairstudio082@gmail.com">
+  <label>Contraseña</label>
+  <input type="password" id="pass" placeholder="••••••••">
+  <button id="btnLogin">🔑 Iniciar sesión y cargar Firebase</button>
+  <div class="estado" id="loginEstado"></div>
+</div>
+
+<div class="box" id="paso2" style="display:none;">
+  <div class="grid">
+    <div><label>Día</label><input type="number" id="f_dia" value="1" min="1"></div>
+    <div><label>Motor</label><select id="f_obj"><option value="masa">GANAR MASA</option><option value="perder">PERDER GRASA</option><option value="mantener">MANTENER</option></select></div>
+    <div><label>Grupo</label><select id="f_grupo"><option value="gluteo">Glúteo</option><option value="pierna">Pierna</option><option value="superior">Tren Superior</option></select></div>
+    <div><label>Equipo</label><select id="f_equipo"><option value="maquina">Máquinas</option><option value="mancuerna">Mancuernas</option><option value="corporal">Peso corporal</option></select></div>
+    <div><label>Nº ejercicios</label><select id="f_nej"><option>6</option><option>8</option><option>12</option></select></div>
+  </div>
+  <button id="btnEscanear">📡 Escanear esta clase</button>
+  <div id="resumen"></div>
+  <div id="detalle"></div>
+  <h3 id="tituloTodo" style="display:none;">📦 Todo lo que hay en fitness_videos, agrupado</h3>
+  <div id="todo"></div>
+</div>
+
+<script type="module">
+  import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const CFG = {
+    apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",
+    authDomain:"aprendisajefatima.firebaseapp.com",
+    projectId:"aprendisajefatima",
+    storageBucket:"aprendisajefatima.firebasestorage.app",
+    messagingSenderId:"744176967394",
+    appId:"1:744176967394:web:1db2edfd2498ddbaa7c8bb"
+  };
+  const app = getApps().length ? getApp() : initializeApp(CFG);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let VIDEOS = {};        // fitness_videos completo
+  let EJDB = null;        // EJERCICIOS_DB leído de tu bloque5 EN PRODUCCIÓN
+
+  // Lee la lista de ejercicios directo de tu bloque5_fitness.html publicado,
+  // para que los nombres estén SIEMPRE sincronizados con producción.
+  async function cargarEjerciciosDB(){
+    try{
+      const r = await fetch('https://fatimahairstudio082-cpu.github.io/aprendizajefatima.fatimahairstudio082.com/bloque5_fitness.html');
+      const txt = await r.text();
+      const m = txt.match(/const EJERCICIOS_DB = (\{[\s\S]*?\n\};)/);
+      if(m){ EJDB = new Function('return '+m[1].replace(/;\s*$/,''))(); }
+    }catch(e){ console.warn('No se pudo leer EJERCICIOS_DB de producción:', e); }
+  }
+
+  $('btnLogin').onclick = async function(){
+    const em = $('email').value.trim(), pw = $('pass').value;
+    if(!em || !pw){ $('loginEstado').textContent='Completa correo y contraseña.'; $('loginEstado').style.color='#fca5a5'; return; }
+    $('btnLogin').disabled = true; $('loginEstado').textContent='⏳ Entrando…'; $('loginEstado').style.color='#fcd34d';
+    try{
+      await signInWithEmailAndPassword(auth, em, pw);
+      $('loginEstado').textContent='⏳ Leyendo fitness_videos…';
+      const snap = await getDocs(collection(db,'fitness_videos'));
+      VIDEOS = {}; snap.forEach(d=>VIDEOS[d.id]=d.data()||{});
+      await cargarEjerciciosDB();
+      $('loginEstado').textContent='✅ Sesión iniciada · '+Object.keys(VIDEOS).length+' videos leídos'+(EJDB?' · nombres de ejercicios sincronizados con producción':'');
+      $('loginEstado').style.color='#22c55e';
+      $('paso2').style.display='block';
+      pintarTodo();
+    }catch(e){
+      $('loginEstado').textContent='❌ '+(e.code||e.message); $('loginEstado').style.color='#fca5a5';
+      $('btnLogin').disabled = false;
+    }
+  };
+
+  const linkOk = u => /^https?:\/\//i.test(String(u||'').trim());
+
+  $('btnEscanear').onclick = function(){
+    const dia=parseInt($('f_dia').value)||1, obj=$('f_obj').value, grupo=$('f_grupo').value, equipo=$('f_equipo').value, nej=$('f_nej').value;
+    const claseBase = grupo+'_'+obj+'_'+equipo+'_'+nej;
+    const diaBase = 'dia'+dia+'_'+claseBase;
+    const legacyKey = 'dia'+dia+'_'+obj+'_'+grupo;
+
+    // nombres esperados (de tu producción)
+    let nombres = [];
+    try{ nombres = (EJDB && EJDB[grupo][obj][equipo][nej]) || []; }catch(e){}
+
+    // clips existentes con las claves que lee getClaseVideoClips
+    const conDia = {}, sinDia = {};
+    Object.keys(VIDEOS).forEach(k=>{
+      let m = k.match(new RegExp('^'+diaBase+'_(\\d{2})_'));
+      if(m){ conDia[parseInt(m[1])] = k; return; }
+      m = k.match(new RegExp('^'+claseBase+'_(\\d{2})_'));
+      if(m){ sinDia[parseInt(m[1])] = k; }
+    });
+
+    const total = parseInt(nej);
+    let ok=0, filas='';
+    for(let i=1;i<=total;i++){
+      const k = conDia[i] || sinDia[i];
+      const nom = nombres[i-1] || ('Ejercicio '+i);
+      if(k){
+        const valido = linkOk((VIDEOS[k]||{}).url_video);
+        if(valido) ok++;
+        filas += '<div class="row have"><span class="nn">'+String(i).padStart(2,'0')+'</span><span class="nom">'+esc(nom)+'</span>'
+          + '<span class="badge '+(valido?'b-have':'b-warn')+'">'+(valido?(conDia[i]?'✅ EXISTE (con día)':'✅ EXISTE (clase)'):'⚠️ EXISTE pero link corrupto')+'</span>'
+          + '<span class="key">'+esc(k)+'</span></div>';
+      }else{
+        filas += '<div class="row miss"><span class="nn">'+String(i).padStart(2,'0')+'</span><span class="nom">'+esc(nom)+'</span>'
+          + '<span class="badge b-miss">❌ FALTA GENERAR</span>'
+          + '<span class="key">clave esperada: '+esc(claseBase)+'_'+String(i).padStart(2,'0')+'_… (o con dia'+dia+'_ delante)</span></div>';
+      }
+    }
+
+    // registro legado
+    let legacy='';
+    if(VIDEOS[legacyKey]){
+      const valido = linkOk(VIDEOS[legacyKey].url_video);
+      legacy = '<div class="row '+(valido?'have':'miss')+'"><span class="nom">Video único antiguo (legado)</span>'
+        + '<span class="badge '+(valido?'b-have':'b-warn')+'">'+(valido?'✅ válido':'⚠️ LINK CORRUPTO — repáralo o bórralo')+'</span>'
+        + '<span class="key">'+esc(legacyKey)+' → '+esc(VIDEOS[legacyKey].url_video||'(vacío)')+'</span></div>';
+    }
+
+    $('resumen').textContent = 'Clase '+claseBase+' · Día '+dia+' → '+ok+' de '+total+' clips listos · '+(total-ok)+' por generar/reparar';
+    $('detalle').innerHTML = filas + legacy;
+  };
+
+  function pintarTodo(){
+    const grupos = {};
+    Object.keys(VIDEOS).sort().forEach(k=>{
+      const base = k.replace(/_(\d{2})_.*$/,'').replace(/^dia\d+_/,'');
+      (grupos[base]=grupos[base]||[]).push(k);
+    });
+    $('tituloTodo').style.display='block';
+    $('todo').innerHTML = Object.keys(grupos).sort().map(g=>{
+      const items = grupos[g].map(k=>{
+        const v=VIDEOS[k]||{}; const valido=linkOk(v.url_video);
+        return '<div class="key">'+(valido?'✅':'⚠️')+' '+esc(k)+(valido?'':' — LINK CORRUPTO: '+esc(v.url_video||'(vacío)'))+'</div>';
+      }).join('');
+      return '<div class="row" style="flex-direction:column;align-items:flex-start;"><span class="combo">'+esc(g)+' · '+grupos[g].length+' registro(s)</span>'+items+'</div>';
+    }).join('') || '<div class="row">No hay videos registrados.</div>';
+  }
+</script>
+
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#0f172a"/><text x="50" y="62" font-size="40" text-anchor="middle">📡</text></svg>
+</template>
+</body>
+</html>
