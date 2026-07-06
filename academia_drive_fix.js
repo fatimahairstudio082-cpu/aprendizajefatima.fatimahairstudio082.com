@@ -1,0 +1,106 @@
+/* ════════════════════════════════════════════════════════════════
+   ACADEMIA_DRIVE_FIX · La Academia lee los links de Drive
+   Fátima Caldea Studio · parche aditivo · NO modifica app.js ni motores
+   ----------------------------------------------------------------
+   Se carga con UNA etiqueta en bloque3_academia_pagos.html,
+   justo DESPUÉS de academia_carrusel_pasos.js:
+       <script src="academia_drive_fix.js"></script>
+
+   Qué hace:
+     La Academia hoy solo ve imágenes/videos guardados en Firebase
+     Storage (época Firebase). Este puente lee UNA vez la colección
+     clases_imgs de Firestore (la misma que ya usa tu biblioteca
+     admin_motores) y le entrega al visor los links de Drive:
+       · imagen  → campo url_jpg / url   (thumbnail de Drive)
+       · video   → campo url_video       (convertido a /preview,
+                    que el reproductor iframe YA existente sabe abrir)
+     Si una clase NO tiene link en Firestore, todo se comporta
+     EXACTAMENTE igual que hoy (Storage → respaldo). Cubre las dos
+     épocas a la vez, sin tocar reproductores ni carrusel.
+
+   Qué NO toca:
+     app.js, motores P1/P2/P3, carrusel de pasos, créditos, login,
+     localStorage, IDs, reglas. Solo envuelve 2 funciones del
+     FirebaseMediaLoader guardando las originales como respaldo.
+   ════════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  if (window.__academiaDriveFix) return;
+
+  var CFG = {apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",authDomain:"aprendisajefatima.firebaseapp.com",projectId:"aprendisajefatima",storageBucket:"aprendisajefatima.firebasestorage.app",messagingSenderId:"744176967394",appId:"1:744176967394:web:743b7c2a455e1e6ba7c8bb"};
+  var MAP = null;        // claseId → {img, vid} · null = aún cargando
+  var PENDING = [];      // imágenes pedidas antes de que llegue el mapa
+
+  // Drive video → formato /preview (el iframe de tu reproductor lo abre solo)
+  function toPreview(u){
+    u = String(u||'');
+    if (u.indexOf('drive.google') < 0) return u;          // Storage u otros: tal cual
+    var m = u.match(/[-\w]{25,}/);
+    return m ? ('https://drive.google.com/file/d/' + m[0] + '/preview') : u;
+  }
+
+  function aplicar(){
+    var L = window.FirebaseMediaLoader;
+    if (!L || typeof L.cargarImagen !== 'function') return false;
+
+    var _img = L.cargarImagen.bind(L);
+    var _vid = L.resolverVideo.bind(L);
+
+    L.cargarImagen = function(catSlug, claseId, fallbackImg, imgEl){
+      if (!imgEl) return;
+      var d = MAP && MAP[claseId];
+      if (d && d.img){
+        imgEl.onerror = function(){ imgEl.onerror = null; _img(catSlug, claseId, fallbackImg, imgEl); };
+        imgEl.src = d.img;
+        return;
+      }
+      if (MAP === null) PENDING.push({catSlug:catSlug, claseId:claseId, fallbackImg:fallbackImg, imgEl:imgEl});
+      _img(catSlug, claseId, fallbackImg, imgEl);          // mientras tanto, lo de siempre
+    };
+
+    L.resolverVideo = async function(catSlug, claseId, videoUrlManual){
+      if (videoUrlManual && String(videoUrlManual).trim()) return _vid(catSlug, claseId, videoUrlManual); // manual manda, como hoy
+      var d = MAP && MAP[claseId];
+      if (d && d.vid) return toPreview(d.vid);             // link de Drive → visor iframe
+      return _vid(catSlug, claseId, videoUrlManual);       // época Firebase → igual que hoy
+    };
+
+    window.__academiaDriveFix = true;
+    return true;
+  }
+
+  async function cargarMapa(){
+    try{
+      var appM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+      var fsM  = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      var app  = appM.getApps().length ? appM.getApp() : appM.initializeApp(CFG);
+      var db   = fsM.getFirestore(app);
+      var snap = await fsM.getDocs(fsM.collection(db,'clases_imgs'));
+      var m = {};
+      snap.forEach(function(doc){
+        var d = doc.data() || {};
+        m[doc.id] = { img: d.url_jpg || d.url || '', vid: d.url_video || '' };
+      });
+      MAP = m;
+      // re-aplicar a las imágenes que se pidieron antes de tener el mapa
+      PENDING.forEach(function(p){
+        var d = MAP[p.claseId];
+        if (d && d.img && p.imgEl){
+          p.imgEl.onerror = null;
+          p.imgEl.src = d.img;
+        }
+      });
+      PENDING = [];
+      console.log('[academia_drive_fix] ✅ puente activo · ' + Object.keys(m).length + ' clase(s) con registro en clases_imgs');
+    }catch(e){
+      MAP = {};  // sin mapa → todo sigue como hoy, sin romper nada
+      console.warn('[academia_drive_fix] ⚠️ no se pudo leer clases_imgs (la Academia sigue normal):', e && (e.message||e));
+    }
+  }
+
+  // El loader vive en motor_p1 (cargado antes); reintenta por si acaso.
+  if (!aplicar()){
+    var n = 0, t = setInterval(function(){ if (aplicar() || ++n > 40) clearInterval(t); }, 250);
+  }
+  cargarMapa();
+})();
