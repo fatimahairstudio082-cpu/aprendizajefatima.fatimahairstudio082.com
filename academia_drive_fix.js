@@ -91,6 +91,17 @@
         }
       });
       PENDING = [];
+      // ── ALCANCE AMPLIADO · imagen real también en ficha, impresión y galería ──
+      // Pone la imagen registrada en el catálogo (c.img). Es idempotente y
+      // se re-aplica una vez por si el catálogo se reconstruye tarde.
+      function pintarCatalogo(){
+        (window.FLAT || []).forEach(function(c){
+          var d = MAP[c.id];
+          if (d && d.img && c.img !== d.img) c.img = d.img;
+        });
+      }
+      pintarCatalogo();
+      setTimeout(pintarCatalogo, 2000);
       console.log('[academia_drive_fix] ✅ puente activo · ' + Object.keys(m).length + ' clase(s) con registro en clases_imgs');
     }catch(e){
       MAP = {};  // sin mapa → todo sigue como hoy, sin romper nada
