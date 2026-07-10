@@ -681,7 +681,7 @@ async function iniciarPelu(){
             logLine('🎬 '+clase.id+' · video de apoyo (sin pasos)…','info');
             const genV=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.build({cat:clase.cat,catId:clase.cat,titulo:clase.titulo},'vid').prompt));
             const blob=await genV();
-            await addJob({ label:clase.id+' · 🎬 video', blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_video.mp4', upload:(bl)=>subirPeluVideo(clase,bl), regen:genV });
+            await addJob({ label:clase.id+' · 🎬 video', blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_video.mp4', upload:(bl)=>subirPeluVideo(clase,bl), regen:genV, restore:{kind:'pelu-vid-apoyo', claseId:clase.id} });
             ok++; done++; continue;
           }
           logLine('🎬 '+clase.id+' · '+pasos.length+' paso(s) de video (carrusel)…','info');
@@ -692,7 +692,7 @@ async function iniciarPelu(){
             const genP=async()=>fetchToBlob(await genVideo(prompt));
             try{
               const blob=await genP();
-              await addJob({ label:clase.id+' · paso '+(pi+1)+'/'+pasos.length, blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_paso_'+nn+'.mp4', upload:((idx)=>(bl)=>subirPeluPaso(clase,idx,bl))(pi), regen:genP });
+              await addJob({ label:clase.id+' · paso '+(pi+1)+'/'+pasos.length, blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_paso_'+nn+'.mp4', upload:((idx)=>(bl)=>subirPeluPaso(clase,idx,bl))(pi), regen:genP, restore:{kind:'pelu-vid-paso', claseId:clase.id, idx:pi} });
               ok++;
             }catch(e){ err++; logLine('❌ '+clase.id+' paso '+(pi+1)+': '+(e.message||e),'err'); }
           }
@@ -702,7 +702,7 @@ async function iniciarPelu(){
         logLine('🎨 '+clase.id+' · '+variant+' · generando…','info');
         const gen=async()=>fetchToBlob(await genImagen(MOTOR_PROMPTS.peluqueria(clase.cat, variant, clase)));
         const blob=await gen();
-        await addJob({ label:clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen });
+        await addJob({ label:clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen, restore:{kind:'pelu-img', claseId:clase.id, variant} });
         ok++; done++;
       }catch(e){ err++; done++; logLine('❌ '+clase.id+' · '+variant+': '+(e.message||e),'err'); }
     }
@@ -807,7 +807,7 @@ async function iniciarHub(){
       logLine('🎨 '+b.nom+' · generando…','info');
       const gen=async()=>fetchToBlob(await genImagen(HUB_PROMPT[b.n]||('Professional elegant image about '+b.nom+', photorealistic, no text')));
       const blob=await gen();
-      await addJob({ label:'Hub · '+b.nom, blob, driveName:'hub_'+b.n+'.jpg', upload:(bl)=>subirHub(b.n,bl), regen:gen });
+      await addJob({ label:'Hub · '+b.nom, blob, driveName:'hub_'+b.n+'.jpg', upload:(bl)=>subirHub(b.n,bl), regen:gen, restore:{kind:'hub-img', n:b.n} });
       ok++; done++;
     }catch(e){ err++; done++; logLine('❌ '+b.nom+': '+(e.message||e),'err'); }
   }
@@ -873,7 +873,7 @@ async function iniciarCorte(){
       logLine('🎨 '+id+' · generando…','info');
       const gen=async()=>fetchToBlob(await genImagen(CORTE_PROMPT[id]));
       const blob=await gen();
-      await addJob({ label:id+' · '+CORTE_LBL[id], blob, driveName:'corte_'+id+'.jpg', upload:(bl)=>subirCorte(id,bl), regen:gen });
+      await addJob({ label:id+' · '+CORTE_LBL[id], blob, driveName:'corte_'+id+'.jpg', upload:(bl)=>subirCorte(id,bl), regen:gen, restore:{kind:'corte-img', id} });
       ok++; done++;
     }catch(e){ err++; done++; logLine('❌ '+id+': '+(e.message||e),'err'); }
   }
@@ -1057,10 +1057,32 @@ async function driveFolder(){
   const cr=await fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token,'Content-Type':'application/json'},body:JSON.stringify({name:'Fátima Caldea · Generados',mimeType:'application/vnd.google-apps.folder'})});
   const cd=await cr.json(); DRIVE.folderId=cd.id; return DRIVE.folderId;
 }
+// Busca archivos con ese NOMBRE EXACTO dentro de la carpeta de respaldo.
+// Evita duplicados: Drive (a diferencia de una carpeta normal) deja tener
+// 20 archivos con el mismo nombre sin quejarse — por eso cada regeneración
+// sin este chequeo sumaba una copia más, para siempre.
+async function driveBuscarPorNombre(folder, nombre){
+  const safe=nombre.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const q=encodeURIComponent(`name='${safe}' and '${folder}' in parents and trashed=false`);
+  try{
+    const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id,createdTime)&orderBy=createdTime',{headers:{Authorization:'Bearer '+DRIVE.token}});
+    if(!r.ok) return [];
+    const d=await r.json();
+    return d.files||[];
+  }catch(_){ return []; }
+}
 async function driveBackup(blob, nombre){
   if(!DRIVE.token) return;
   try{
     const folder=await driveFolder();
+    const existentes=await driveBuscarPorNombre(folder, nombre);
+    if(existentes.length){
+      // Ya existe con ese nombre → ACTUALIZA el más antiguo (no crea uno nuevo).
+      await fetch('https://www.googleapis.com/upload/drive/v3/files/'+existentes[0].id+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+DRIVE.token},body:blob});
+      if(existentes.length>1) logLine('   ↳ ⚠️ '+nombre+' ya tenía '+existentes.length+' copias en Drive de antes · se actualizó la más antigua, las demás hay que borrarlas a mano una vez.','skip');
+      else logLine('   ↳ ☁️ respaldo actualizado en Drive: '+nombre,'skip');
+      return;
+    }
     const meta={name:nombre, parents:[folder]};
     const fd=new FormData();
     fd.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
@@ -1076,14 +1098,23 @@ async function driveBackup(blob, nombre){
 async function driveUploadPublic(blob, nombre, isVideo){
   if(!DRIVE.token) throw new Error('Conecta Google Drive primero.');
   const folder=await driveFolder();
-  const meta={name:nombre, parents:[folder]};
-  const fd=new FormData();
-  fd.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
-  fd.append('file', blob);
-  const up=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token},body:fd});
-  if(!up.ok) throw new Error('Drive subida HTTP '+up.status);
-  const j=await up.json(); const id=j.id;
-  if(!id) throw new Error('Drive no devolvió ID');
+  const existentes=await driveBuscarPorNombre(folder, nombre);
+  let id;
+  if(existentes.length){
+    // Ya existe con ese nombre → ACTUALIZA el más antiguo (no crea uno nuevo).
+    id=existentes[0].id;
+    const up=await fetch('https://www.googleapis.com/upload/drive/v3/files/'+id+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+DRIVE.token},body:blob});
+    if(!up.ok) throw new Error('Drive actualización HTTP '+up.status);
+  } else {
+    const meta={name:nombre, parents:[folder]};
+    const fd=new FormData();
+    fd.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
+    fd.append('file', blob);
+    const up=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token},body:fd});
+    if(!up.ok) throw new Error('Drive subida HTTP '+up.status);
+    const j=await up.json(); id=j.id;
+    if(!id) throw new Error('Drive no devolvió ID');
+  }
   // permiso: cualquiera con el enlace puede LEER (para que el sistema lo muestre)
   try{
     await fetch('https://www.googleapis.com/drive/v3/files/'+id+'/permissions',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token,'Content-Type':'application/json'},body:JSON.stringify({role:'reader',type:'anyone'})});
@@ -1107,7 +1138,86 @@ async function regCorte(id, url, kind){ const patch = kind==='vid' ? { videoUrl:
 // va a la galería y solo sube lo aprobado.
 let JOBS=[];                                  // {id,label,blob,objUrl,isVideo,driveName,estado,upload,regen}
 let JOBSEQ=0;
-function resetReview(){ JOBS.forEach(j=>{try{URL.revokeObjectURL(j.objUrl);}catch(_){}}); JOBS=[]; document.getElementById('review').innerHTML=''; document.getElementById('reviewWrap').style.display='none'; }
+function resetReview(){ JOBS.forEach(j=>{try{URL.revokeObjectURL(j.objUrl);}catch(_){}}); JOBS=[]; document.getElementById('review').innerHTML=''; document.getElementById('reviewWrap').style.display='none'; idbClear(); }
+
+/* ════════ PERSISTENCIA DE LA GALERÍA (IndexedDB) ═══════════════════
+   Antes: JOBS solo vivía en memoria del navegador. Si salías de la
+   página o recargabas antes de "Subir aprobadas", se perdía TODO lo
+   generado (y el crédito de Replicate ya gastado en generarlo).
+   Ahora cada job con "restore" (los que sabemos reconstruir: fitness,
+   peluquería, hub, corte) se guarda en IndexedDB apenas se crea, y se
+   restaura solo al abrir la página. Los ítems restaurados no traen
+   botón "🔄 Regenerar" (no se reconstruye el prompt de una sesión
+   pasada), pero sí se pueden aprobar, descartar o subir tal cual.
+   Los de "Subida inteligente" (manual, Drive/PC) no se persisten:
+   ya son instantáneos y de bajo riesgo. ══════════════════════════ */
+const IDB_NAME='fc_motor_auto_jobs', IDB_STORE='jobs';
+function idbOpen(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(IDB_NAME,1);
+    req.onupgradeneeded=()=>{ req.result.createObjectStore(IDB_STORE,{keyPath:'id'}); };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function idbPut(job){
+  if(!job.restore) return; // solo persistimos lo que sabemos reconstruir
+  try{
+    const db=await idbOpen();
+    const rec={ id:job.id, label:job.label, blob:job.blob, isVideo:!!job.isVideo, driveName:job.driveName, noBackup:!!job.noBackup, estado:job.estado, restore:job.restore };
+    await new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).put(rec); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+  }catch(e){ console.warn('[idbPut] no se pudo guardar la galería:',e); }
+}
+async function idbDelete(id){
+  try{
+    const db=await idbOpen();
+    await new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).delete(id); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+  }catch(e){ console.warn('[idbDelete]',e); }
+}
+async function idbClear(){
+  try{
+    const db=await idbOpen();
+    await new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).clear(); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+  }catch(e){ console.warn('[idbClear]',e); }
+}
+async function idbGetAll(){
+  try{
+    const db=await idbOpen();
+    return await new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE,'readonly'); const req=tx.objectStore(IDB_STORE).getAll(); req.onsuccess=()=>res(req.result||[]); req.onerror=()=>rej(req.error); });
+  }catch(e){ console.warn('[idbGetAll]',e); return []; }
+}
+// Reconstruye la función upload(blob) a partir de lo guardado (job.restore),
+// usando los datos del catálogo que ya vive en esta página (no hace falta Firebase).
+function rebuildUpload(restore){
+  if(!restore) return null;
+  const clase=()=>PELU_FLAT.find(c=>c.id===restore.claseId);
+  switch(restore.kind){
+    case 'pelu-vid-apoyo': return (bl)=>{ const c=clase(); return c?subirPeluVideo(c,bl):Promise.reject(new Error('Clase no encontrada: '+restore.claseId)); };
+    case 'pelu-vid-paso':  return (bl)=>{ const c=clase(); return c?subirPeluPaso(c,restore.idx,bl):Promise.reject(new Error('Clase no encontrada: '+restore.claseId)); };
+    case 'pelu-img':       return (bl)=>{ const c=clase(); return c?subirPelu(c,bl,restore.variant):Promise.reject(new Error('Clase no encontrada: '+restore.claseId)); };
+    case 'hub-img':        return (bl)=>subirHub(restore.n,bl);
+    case 'corte-img':      return (bl)=>subirCorte(restore.id,bl);
+    case 'fitness-vid':    return (bl)=>subirVideo(restore.clave,bl,restore.titulo);
+    case 'fitness-img':    return (bl)=>subirLaminaVersion(restore.base,restore.v,bl);
+    default: return null;
+  }
+}
+async function restaurarGaleria(){
+  const recs=await idbGetAll();
+  if(!recs.length) return;
+  if(!PELU_FLAT.length){ try{ cargarPelu(); }catch(_){} }
+  let n=0, maxSeq=0;
+  recs.forEach(rec=>{
+    const m=String(rec.id).match(/^j(\d+)$/); if(m) maxSeq=Math.max(maxSeq,parseInt(m[1]));
+    const upload=rebuildUpload(rec.restore);
+    if(!upload) return;
+    const job={ id:rec.id, label:rec.label, blob:rec.blob, isVideo:rec.isVideo, driveName:rec.driveName, noBackup:rec.noBackup, estado:rec.estado||'pendiente', upload, regen:null, restore:rec.restore };
+    job.objUrl=URL.createObjectURL(job.blob);
+    JOBS.push(job); n++;
+  });
+  JOBSEQ=Math.max(JOBSEQ,maxSeq);
+  if(n){ renderReview(); logLine('🗂️ Recuperados '+n+' elemento(s) sin subir de tu última sesión (no se habían perdido).','ok'); }
+}
 
 // addJob(meta): meta = { label, blob, isVideo, driveName, upload:async()=>{}, regen:async()=>blob }
 async function addJob(meta){
@@ -1121,10 +1231,11 @@ async function addJob(meta){
   }
   // modo revisar → encolar
   const id='j'+(++JOBSEQ);
-  const job={ id, label:meta.label, blob:meta.blob, isVideo:!!meta.isVideo, driveName:meta.driveName, noBackup:!!meta.noBackup, estado:'pendiente', upload:meta.upload, regen:meta.regen };
+  const job={ id, label:meta.label, blob:meta.blob, isVideo:!!meta.isVideo, driveName:meta.driveName, noBackup:!!meta.noBackup, estado:'pendiente', upload:meta.upload, regen:meta.regen, restore:meta.restore||null };
   job.objUrl=URL.createObjectURL(job.blob);
   JOBS.push(job);
   renderReview();
+  idbPut(job); // persistir de una vez: si sales o recargas, esto no se pierde
   return {encolado:true};
 }
 function renderReview(){
@@ -1143,7 +1254,7 @@ function renderReview(){
       <div class="lbl" title="${esc(j.label)}">${esc(j.label)}</div>
       <div class="acts">
         <button class="ap ${j.estado==='aprobado'?'on':''}" title="Aprobar" onclick="rvSet('${j.id}','aprobado')">✅</button>
-        <button title="Regenerar" onclick="rvRegen('${j.id}')">🔄</button>
+        ${j.regen ? `<button title="Regenerar" onclick="rvRegen('${j.id}')">🔄</button>` : `<span title="Recuperada de una sesión anterior · no se puede regenerar, pero sí aprobar/descartar/subir" style="opacity:.35;">🔄</span>`}
         <button class="ds ${j.estado==='descartado'?'on':''}" title="Descartar" onclick="rvSet('${j.id}','descartado')">🗑</button>
       </div>
     </div>`;
@@ -1152,8 +1263,8 @@ function renderReview(){
   document.getElementById('rvStats').textContent = JOBS.length+' generadas · '+ap+' aprobadas';
 }
 function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function rvSet(id,estado){ const j=JOBS.find(x=>x.id===id); if(!j)return; j.estado = (j.estado===estado)?'pendiente':estado; renderReview(); }
-function rvAprobarTodas(){ JOBS.forEach(j=>{ if(j.estado!=='descartado') j.estado='aprobado'; }); renderReview(); }
+function rvSet(id,estado){ const j=JOBS.find(x=>x.id===id); if(!j)return; j.estado = (j.estado===estado)?'pendiente':estado; renderReview(); idbPut(j); }
+function rvAprobarTodas(){ JOBS.forEach(j=>{ if(j.estado!=='descartado'){ j.estado='aprobado'; idbPut(j); } }); renderReview(); }
 function rvLimpiar(){ if(JOBS.length && !confirm('¿Vaciar la galería? Lo no subido se pierde.')) return; resetReview(); }
 async function rvRegen(id){
   const j=JOBS.find(x=>x.id===id); if(!j||!j.regen) return;
@@ -1187,6 +1298,7 @@ async function subirAprobadas(){
       await j.upload(blob);
       if(!j.noBackup && window.GEN_DEST!=='drive') await driveBackup(blob, j.driveName);
       ok++; j.estado='subido';
+      idbDelete(j.id); // ya está a salvo en Firebase, no hace falta seguir guardándolo aquí
       logLine('✅ subida · '+j.label,'ok');
     }catch(e){ err++; logLine('❌ '+j.label+': '+(e.message||e),'err'); }
   }
@@ -1673,7 +1785,7 @@ async function pruebaUna(){
         logLine('🧪 PRUEBA · '+clave+' · generando clip del 1er ejercicio…','info');
         const gen=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.fitnessVideo(combo.grupo,combo.equipo,combo.motor,nombreEj)));
         const blob=await gen();
-        await addJob({ label:'🧪 '+clave, blob, isVideo:true, driveName:clave+'.mp4', upload:(bl)=>subirVideo(clave,bl,titulo), regen:gen });
+        await addJob({ label:'🧪 '+clave, blob, isVideo:true, driveName:clave+'.mp4', upload:(bl)=>subirVideo(clave,bl,titulo), regen:gen, restore:{kind:'fitness-vid', clave, titulo} });
       } else {
         logLine('🧪 PRUEBA · '+base+'_v1 · generando '+lista.length+' imágenes…','info');
         const armar=async()=>{
@@ -1683,7 +1795,7 @@ async function pruebaUna(){
           return componerLamina(imgs,lista,combo.grupo,combo.equipo);
         };
         const blob=await armar();
-        await addJob({ label:'🧪 '+base+'_v1 · lámina', blob, driveName:base+'_v1.jpg', upload:(bl)=>subirLaminaVersion(base,1,bl), regen:armar });
+        await addJob({ label:'🧪 '+base+'_v1 · lámina', blob, driveName:base+'_v1.jpg', upload:(bl)=>subirLaminaVersion(base,1,bl), regen:armar, restore:{kind:'fitness-img', base, v:1} });
       }
     } else if(MODO==='pelu'){
       const clases=clasesPeluSeleccionadas();
@@ -1698,20 +1810,20 @@ async function pruebaUna(){
           logLine('🧪 PRUEBA · '+clase.id+' · video de apoyo (sin pasos)…','info');
           const genV=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.build({cat:clase.cat,catId:clase.cat,titulo:clase.titulo},'vid').prompt));
           const blob=await genV();
-          await addJob({ label:'🧪 '+clase.id+' · 🎬 video', blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_video.mp4', upload:(bl)=>subirPeluVideo(clase,bl), regen:genV });
+          await addJob({ label:'🧪 '+clase.id+' · 🎬 video', blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_video.mp4', upload:(bl)=>subirPeluVideo(clase,bl), regen:genV, restore:{kind:'pelu-vid-apoyo', claseId:clase.id} });
         } else {
           logLine('🧪 PRUEBA · '+clase.id+' · paso 1/'+pasos.length+' de video…','info');
           const prompt=MOTOR_PROMPTS.peluqueriaPaso(clase.cat, clase.titulo, clase.niv, pasos[0]);
           const genP=async()=>fetchToBlob(await genVideo(prompt));
           const blob=await genP();
-          await addJob({ label:'🧪 '+clase.id+' · paso 1/'+pasos.length, blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_paso_01.mp4', upload:(bl)=>subirPeluPaso(clase,0,bl), regen:genP });
+          await addJob({ label:'🧪 '+clase.id+' · paso 1/'+pasos.length, blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_paso_01.mp4', upload:(bl)=>subirPeluPaso(clase,0,bl), regen:genP, restore:{kind:'pelu-vid-paso', claseId:clase.id, idx:0} });
         }
       } else {
         const variant=([...SELP.var][0]||'cliente');
         logLine('🧪 PRUEBA · '+clase.id+' · '+variant+'…','info');
         const gen=async()=>fetchToBlob(await genImagen(MOTOR_PROMPTS.peluqueria(clase.cat,variant)));
         const blob=await gen();
-        await addJob({ label:'🧪 '+clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen });
+        await addJob({ label:'🧪 '+clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen, restore:{kind:'pelu-img', claseId:clase.id, variant} });
       }
     } else if(MODO==='hub'){
       const b=[...HUB_CARDS,...HUB_PORTADAS].find(x=>SELH.has(x.n));
@@ -1719,14 +1831,14 @@ async function pruebaUna(){
       logLine('🧪 PRUEBA · '+b.nom+'…','info');
       const gen=async()=>fetchToBlob(await genImagen(HUB_PROMPT[b.n]||('Professional elegant image about '+b.nom)));
       const blob=await gen();
-      await addJob({ label:'🧪 Hub · '+b.nom, blob, driveName:'hub_'+b.n+'.jpg', upload:(bl)=>subirHub(b.n,bl), regen:gen });
+      await addJob({ label:'🧪 Hub · '+b.nom, blob, driveName:'hub_'+b.n+'.jpg', upload:(bl)=>subirHub(b.n,bl), regen:gen, restore:{kind:'hub-img', n:b.n} });
     } else if(MODO==='corte'){
       const id=Object.keys(CORTE_LBL).find(x=>SELC.has(x));
       if(!id){ logLine('Selecciona un módulo.','err'); return; }
       logLine('🧪 PRUEBA · '+id+'…','info');
       const gen=async()=>fetchToBlob(await genImagen(CORTE_PROMPT[id]));
       const blob=await gen();
-      await addJob({ label:'🧪 '+id+' · '+CORTE_LBL[id], blob, driveName:'corte_'+id+'.jpg', upload:(bl)=>subirCorte(id,bl), regen:gen });
+      await addJob({ label:'🧪 '+id+' · '+CORTE_LBL[id], blob, driveName:'corte_'+id+'.jpg', upload:(bl)=>subirCorte(id,bl), regen:gen, restore:{kind:'corte-img', id} });
     }
     logLine('✅ Prueba lista · revísala abajo. Si te gusta, pulsa "Iniciar lote" para generar todo.','ok');
   }catch(e){ logLine('❌ Prueba falló: '+(e.message||e),'err'); }
@@ -1774,7 +1886,7 @@ async function iniciar(){
           logLine('🎬 '+clave+' · generando…','info');
           const gen=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.fitnessVideo(combo.grupo,combo.equipo,combo.motor,nombreEj)));
           const blob=await gen();
-          await addJob({ label:'🎬 '+base+' · '+titulo, blob, isVideo:true, driveName:clave+'.mp4', upload:(bl)=>subirVideo(clave,bl,titulo), regen:gen });
+          await addJob({ label:'🎬 '+base+' · '+titulo, blob, isVideo:true, driveName:clave+'.mp4', upload:(bl)=>subirVideo(clave,bl,titulo), regen:gen, restore:{kind:'fitness-vid', clave, titulo} });
           ok++;
         }catch(e){ err++; logLine('❌ '+clave+': '+(e.message||e),'err'); }
       }
@@ -1806,7 +1918,7 @@ async function iniciar(){
         setProg(done,combos.length,`${base} · versión ${v}/${nVer}`);
         const blob=await armarLamina();
         if(STOP) break;
-        await addJob({ label:claveV+' · lámina', blob, driveName:claveV+'.jpg', upload:(bl)=>subirLaminaVersion(base,v,bl), regen:armarLamina });
+        await addJob({ label:claveV+' · lámina', blob, driveName:claveV+'.jpg', upload:(bl)=>subirLaminaVersion(base,v,bl), regen:armarLamina, restore:{kind:'fitness-img', base, v} });
         hechas++; ok++;
         logLine('✅ '+claveV+' lista ('+Math.round(blob.size/1024)+' KB)','ok');
       }
@@ -1823,6 +1935,7 @@ fbInit().then(()=>{ FB.onAuth(FB.auth,()=>renderAuth()); renderAuth(); });
 renderDrive(); setGen('revisar'); manSysChange(); toggleDia();
 initProviders();
 document.getElementById('pillDrive').onclick=conectarDrive;
+restaurarGaleria(); // recupera lo generado y no subido de la última sesión (no se pierde más)
 </script>
 <script src="drive_fix.js"></script>ç
 <script src="pelu_drive_fix.js"></script>
