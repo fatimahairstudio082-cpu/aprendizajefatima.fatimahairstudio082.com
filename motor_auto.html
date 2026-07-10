@@ -1688,11 +1688,31 @@ async function pruebaUna(){
     } else if(MODO==='pelu'){
       const clases=clasesPeluSeleccionadas();
       if(!clases.length){ logLine('Selecciona una categoría.','err'); return; }
-      const clase=clases[0]; const variant=([...SELP.var][0]||'cliente');
-      logLine('🧪 PRUEBA · '+clase.id+' · '+variant+'…','info');
-      const gen=async()=>fetchToBlob(await genImagen(MOTOR_PROMPTS.peluqueria(clase.cat,variant)));
-      const blob=await gen();
-      await addJob({ label:'🧪 '+clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen });
+      const clase=clases[0];
+      // CORRECCIÓN: antes esta rama ignoraba el botón "🖼️ Imagen / 🎬 Video" y
+      // siempre generaba imagen. Ahora respeta tipoP, igual que ya hace iniciarPelu().
+      const tipoP=(document.querySelector('input[name="tipoP"]:checked')||{}).value||'img';
+      if(tipoP==='vid'){
+        const pasos=pasosDeClase(clase.txt);
+        if(!pasos.length){
+          logLine('🧪 PRUEBA · '+clase.id+' · video de apoyo (sin pasos)…','info');
+          const genV=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.build({cat:clase.cat,catId:clase.cat,titulo:clase.titulo},'vid').prompt));
+          const blob=await genV();
+          await addJob({ label:'🧪 '+clase.id+' · 🎬 video', blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_video.mp4', upload:(bl)=>subirPeluVideo(clase,bl), regen:genV });
+        } else {
+          logLine('🧪 PRUEBA · '+clase.id+' · paso 1/'+pasos.length+' de video…','info');
+          const prompt=MOTOR_PROMPTS.peluqueriaPaso(clase.cat, clase.titulo, clase.niv, pasos[0]);
+          const genP=async()=>fetchToBlob(await genVideo(prompt));
+          const blob=await genP();
+          await addJob({ label:'🧪 '+clase.id+' · paso 1/'+pasos.length, blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_paso_01.mp4', upload:(bl)=>subirPeluPaso(clase,0,bl), regen:genP });
+        }
+      } else {
+        const variant=([...SELP.var][0]||'cliente');
+        logLine('🧪 PRUEBA · '+clase.id+' · '+variant+'…','info');
+        const gen=async()=>fetchToBlob(await genImagen(MOTOR_PROMPTS.peluqueria(clase.cat,variant)));
+        const blob=await gen();
+        await addJob({ label:'🧪 '+clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen });
+      }
     } else if(MODO==='hub'){
       const b=[...HUB_CARDS,...HUB_PORTADAS].find(x=>SELH.has(x.n));
       if(!b){ logLine('Selecciona una tarjeta.','err'); return; }
