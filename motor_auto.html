@@ -622,6 +622,19 @@ function finLote(done,total,ok,omit,err,nombre){
 async function yaExistePelu(claseId){
   try{ const s=await FB.getDoc(FB.doc(FB.db,'clases_imgs',claseId)); return s.exists() && (s.data().url_jpg||s.data().url); }catch(_){ return false; }
 }
+// Revisión forense: el video de peluquería NO tenía chequeo de "ya existe" —
+// cada lote regeneraba TODAS las clases seleccionadas desde cero con Replicate,
+// aunque ya tuvieran su video, gastando créditos de más. url_video cubre el
+// video de apoyo único; videoActualizadoEn cubre el carrusel paso a paso
+// (subirPeluPaso lo marca aunque los pasos no se guarden 1 a 1 en Firestore).
+async function yaExistePeluVideo(claseId){
+  try{
+    const s=await FB.getDoc(FB.doc(FB.db,'clases_imgs',claseId));
+    if(!s.exists()) return false;
+    const d=s.data();
+    return !!(d.url_video || d.videoActualizadoEn);
+  }catch(_){ return false; }
+}
 async function subirPelu(clase, blob, variant){
   // Variante 'cliente' → imagen.jpg principal (la que lee la Academia).
   // Otras variantes → imagen_{variant}.jpg (no pisan la principal).
@@ -673,6 +686,7 @@ async function iniciarPelu(){
       setProg(done,total,clase.id+' · '+variant+' ('+(done+1)+'/'+total+')');
       try{
         if(tipoP==='vid'){
+          if(skip && !regen && await yaExistePeluVideo(clase.id)){ logLine('⏭️ '+clase.id+' ya tiene video · omitida','skip'); omit++; done++; continue; }
           // ── VIDEO PASO A PASO · carrusel de la Academia ──
           // Un clip por cada paso (punto) de la cláse → academia/{slug}/{id}/paso_NN.mp4
           const pasos=pasosDeClase(clase.txt);

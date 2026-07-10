@@ -185,7 +185,50 @@ header{background:var(--bg2);border-bottom:1px solid var(--borde);padding:0 1.5r
 .toast-err{background:#200d0d;border:1px solid var(--rojo);color:#ff7875;}
 
 @media(max-width:1100px){.layout{grid-template-columns:260px 1fr 290px;}}
-@media(max-width:800px){.layout{grid-template-columns:1fr;}.p-left,.p-right{display:none;}}
+
+/* ── MÓVIL: antes .p-left/.p-right se ocultaban por completo (display:none)
+   y no había forma de abrirlos — no se podía cambiar de clase ni ver el
+   progreso desde el celular. Ahora son cajones deslizables (drawer): se
+   abren con los botones del encabezado y se cierran tocando afuera o la ✕. */
+.mobile-toggle{display:none;}
+.panel-close{display:none;}
+.panel-mobile-hdr{display:none;}
+.mobile-backdrop{display:none;}
+@media(max-width:800px){
+  .layout{grid-template-columns:1fr;}
+  .mobile-toggle{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:34px;height:34px;background:var(--bg4);border:1px solid var(--borde);
+    color:var(--oro2);border-radius:8px;font-size:1rem;cursor:pointer;flex-shrink:0;
+  }
+  .mobile-toggle:hover{border-color:var(--oro);}
+  .p-left,.p-right{
+    display:flex;position:fixed;top:62px;bottom:0;width:84vw;max-width:320px;
+    z-index:500;transition:transform .28s ease;box-shadow:0 0 40px rgba(0,0,0,.55);
+  }
+  .p-left{left:0;transform:translateX(-100%);}
+  .p-left.abierto{transform:translateX(0);}
+  .p-right{right:0;transform:translateX(100%);}
+  .p-right.abierto{transform:translateX(0);}
+  .panel-mobile-hdr{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 14px;border-bottom:1px solid var(--borde);background:var(--bg4);
+    flex-shrink:0;font-size:.78rem;font-weight:700;color:var(--oro2);
+    letter-spacing:.5px;text-transform:uppercase;
+  }
+  .panel-close{
+    display:flex;align-items:center;justify-content:center;width:28px;height:28px;
+    background:var(--bg2);border:1px solid var(--borde);color:var(--txt2);
+    border-radius:7px;cursor:pointer;font-size:.85rem;flex-shrink:0;
+  }
+  .panel-close:hover{border-color:var(--rojo);color:var(--rojo);}
+  .mobile-backdrop{
+    display:block;position:fixed;top:62px;left:0;right:0;bottom:0;
+    background:rgba(0,0,0,.6);z-index:450;opacity:0;pointer-events:none;
+    transition:opacity .25s ease;
+  }
+  .mobile-backdrop.show{opacity:1;pointer-events:auto;}
+}
 </style>
 </head>
 <body>
@@ -239,16 +282,21 @@ header{background:var(--bg2);border-bottom:1px solid var(--borde);padding:0 1.5r
     </div>
   </div>
   <div class="hdr-right">
+    <button class="mobile-toggle" onclick="toggleMenu()" title="Módulos y clases"><i class="ti ti-menu-2"></i></button>
+    <button class="mobile-toggle" onclick="toggleProgreso()" title="Mi progreso"><i class="ti ti-chart-pie"></i></button>
     <div class="prog-pill"><i class="ti ti-chart-bar"></i><span id="hdr-prog">0% completado</span></div>
     <div class="user-pill"><i class="ti ti-user-circle"></i>Alumno: <span class="user-email" id="disp-correo">—</span></div>
     <button class="btn btn-ghost" onclick="cerrarSesion()" style="padding:6px 10px;font-size:.7rem;"><i class="ti ti-logout"></i></button>
   </div>
 </header>
 
+<div class="mobile-backdrop" id="mobile-backdrop" onclick="cerrarPaneles()"></div>
+
 <div class="layout">
 
   <!-- IZQUIERDO -->
-  <div class="panel p-left">
+  <div class="panel p-left" id="panel-izq">
+    <div class="panel-mobile-hdr"><span>📚 Módulos y Clases</span><button class="panel-close" onclick="cerrarPaneles()"><i class="ti ti-x"></i></button></div>
     <div class="vid-apoyo-wrap">
       <div class="vid-apoyo-lbl"><i class="ti ti-video"></i> Video de Apoyo</div>
       <div class="vid-apoyo-box" id="vid-apoyo-box">
@@ -323,7 +371,8 @@ header{background:var(--bg2);border-bottom:1px solid var(--borde);padding:0 1.5r
   </div>
 
   <!-- DERECHO -->
-  <div class="panel p-right">
+  <div class="panel p-right" id="panel-der">
+    <div class="panel-mobile-hdr"><span>📊 Mi Progreso</span><button class="panel-close" onclick="cerrarPaneles()"><i class="ti ti-x"></i></button></div>
     <div>
       <div class="r-lbl"><i class="ti ti-chart-pie"></i> Mi Progreso</div>
       <div class="stats-grid" style="margin-bottom:8px;">
@@ -360,5 +409,54 @@ header{background:var(--bg2);border-bottom:1px solid var(--borde);padding:0 1.5r
 <script src="peluqueria_hub_bridge.js"></script>
 <script src="academia_carrusel_pasos.js"></script>
 <script src="academia_drive_fix.js"></script>
+<script>
+/* ══ CAJONES MÓVILES (menú + progreso) ══════════════════════════════
+   Aditivo, no toca app.js ni ningún motor. Solo controla la clase
+   "abierto" en .p-left/.p-right, que el CSS de @media(max-width:800px)
+   usa para deslizarlos dentro/fuera de la pantalla. En escritorio
+   (>800px) esta clase no tiene ningún efecto: los paneles siguen fijos
+   como siempre. ══════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  function panelIzq(){ return document.getElementById('panel-izq'); }
+  function panelDer(){ return document.getElementById('panel-der'); }
+  function backdrop(){ return document.getElementById('mobile-backdrop'); }
+
+  window.cerrarPaneles = function(){
+    var pi=panelIzq(), pd=panelDer(), bd=backdrop();
+    if(pi) pi.classList.remove('abierto');
+    if(pd) pd.classList.remove('abierto');
+    if(bd) bd.classList.remove('show');
+  };
+  window.toggleMenu = function(){
+    var pi=panelIzq(); if(!pi) return;
+    var yaAbierto=pi.classList.contains('abierto');
+    window.cerrarPaneles();
+    if(!yaAbierto){ pi.classList.add('abierto'); var bd=backdrop(); if(bd) bd.classList.add('show'); }
+  };
+  window.toggleProgreso = function(){
+    var pd=panelDer(); if(!pd) return;
+    var yaAbierto=pd.classList.contains('abierto');
+    window.cerrarPaneles();
+    if(!yaAbierto){ pd.classList.add('abierto'); var bd=backdrop(); if(bd) bd.classList.add('show'); }
+  };
+
+  // Al elegir una clase desde el cajón de móvil, ciérralo solo para
+  // volver directo al contenido (en escritorio no hace nada, porque
+  // el panel nunca tiene la clase "abierto" ahí).
+  function envolverCierreAlElegir(){
+    if(typeof window.inyectar !== 'function'){ setTimeout(envolverCierreAlElegir,150); return; }
+    if(window.__CIERRE_MOVIL_OK) return;
+    window.__CIERRE_MOVIL_OK = true;
+    var orig = window.inyectar.bind(window);
+    window.inyectar = function(id){
+      orig(id);
+      if(window.matchMedia && window.matchMedia('(max-width:800px)').matches) window.cerrarPaneles();
+    };
+  }
+  document.addEventListener('DOMContentLoaded', envolverCierreAlElegir);
+  envolverCierreAlElegir();
+})();
+</script>
 </body>
 </html>
