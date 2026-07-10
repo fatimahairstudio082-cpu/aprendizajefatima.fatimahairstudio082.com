@@ -22,6 +22,17 @@
      app.js, motores P1/P2/P3, carrusel de pasos, créditos, login,
      localStorage, IDs, reglas. Solo envuelve 2 funciones del
      FirebaseMediaLoader guardando las originales como respaldo.
+
+   CORRECCIÓN (aditiva · no cambia nada de lo anterior):
+     Antes, cargarMapa() leía clases_imgs INMEDIATAMENTE al cargar el
+     script, sin comprobar si ya había sesión de la alumna. La regla
+     de Firestore exige sesión para leer esa colección
+     (allow read: if logueado()), así que la lectura salía SIEMPRE
+     "permission-denied" y el puente quedaba apagado en cada carga
+     (fatima_hub.html avisa "usuarioLogueado" recién a los 900ms,
+     y este archivo nunca escuchaba ese aviso). Ahora se espera a que
+     Firebase Auth resuelva la sesión (mismo patrón ya usado y
+     probado en bloque5_fitness.html) antes de intentar leer.
    ════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
@@ -71,10 +82,36 @@
 
   async function cargarMapa(){
     try{
-      var appM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
-      var fsM  = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      var appM  = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+      var authM = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+      var fsM   = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
       var app  = appM.getApps().length ? appM.getApp() : appM.initializeApp(CFG);
+      var auth = authM.getAuth(app);
       var db   = fsM.getFirestore(app);
+
+      // ESPERA DE SESIÓN (mismo patrón ya probado en bloque5_fitness.html):
+      // clases_imgs exige "allow read: if logueado()". Firebase Auth
+      // restaura la sesión de forma asíncrona; si se lee antes de que
+      // termine, la lectura sale "permission-denied" SIEMPRE, sin
+      // importar qué tan rápida sea la red. Por eso esperamos UNA vez
+      // a que Auth resuelva (con sesión o sin ella) antes de leer.
+      var user = await new Promise(function(resolve){
+        var unsub = authM.onAuthStateChanged(auth, function(u){
+          unsub();
+          resolve(u);
+        });
+      });
+
+      if (!user){
+        // Sin sesión no hay forma de leer clases_imgs (regla: logueado()).
+        // No se intenta una lectura que sabemos que va a fallar: se cae
+        // al comportamiento de siempre (Storage → respaldo), igual que
+        // si esta clase no tuviera registro en Firestore.
+        MAP = {};
+        console.warn('[academia_drive_fix] ⚠️ sin sesión activa todavía · clases_imgs no se pudo leer (la Academia sigue normal)');
+        return;
+      }
+
       var snap = await fsM.getDocs(fsM.collection(db,'clases_imgs'));
       var m = {};
       snap.forEach(function(doc){
