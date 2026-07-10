@@ -90,7 +90,8 @@
     'Archer Push-Up':'Archer Push-Up','L-Sit':'L-Sit Hold','Curl Isométrico':'Isometric Curl','Elevación Frontal':'Front Raise',
     'Curl Cable':'Cable Curl','Mariposa':'Pec Fly','Press Arnold':'Arnold Press','Curl Predikador':'Preacher Curl',
     'Press Banca':'Bench Press','Pseudo Planche':'Pseudo Planche Push-Up','Flexión Lenta':'Slow Tempo Push-Up','Isométrico Pecho':'Isometric Chest Hold',
-    'Curl Concentrado':'Concentration Curl'
+    'Curl Concentrado':'Concentration Curl',
+    'Abducción Pie':'Standing Hip Abduction', 'Puente Glúteo':'Glute Bridge'
   };
   function ejercicioEN(nombreEs){
     if (window.MOTOR_FITNESS && typeof window.MOTOR_FITNESS.ejercicioEN === 'function'){
@@ -209,14 +210,30 @@
     protocolo: 'clear technical protocol on a mannequin head, clean professional illustration, labeled sections',
     alertas: 'safety and warning visual, highlighting risks and contraindications, clinical clean background'
   };
+  /* Quita tildes antes de comparar (revisión forense: "cromat" NUNCA
+     coincidía con "Cromática" porque á ≠ a para una regex — así, ninguna
+     palabra clave con acento vuelve a fallar por esa razón). */
+  function _sinTildes(s){
+    return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
   /* Detección de tema por palabra clave → contexto en INGLÉS específico,
-     para que la IA represente la técnica real y no algo genérico. */
+     para que la IA represente la técnica real y no algo genérico.
+     Revisión forense (299 clases probadas contra estas reglas): 26 caían
+     en el prompt genérico por temas reales sin regla propia (Secado,
+     Mezclas, Cabello Graso, Cabello Reseco) — se agregaron sus 4 líneas.
+     Las 25 de Alertas Cliente/Peluquero (ética, precios, legal, redes)
+     no son técnica capilar — no había nada que "alucinar" ahí, pero se
+     les da un tema propio en vez de dejarlas en el genérico de cortes. */
   var PELU_TEMA_EN = [
     [/balayage|mechas|babylight|highlight/i, 'balayage / hair highlighting technique, painted lightened strands, natural sun-kissed blonde result'],
     [/querat|alis|botox capilar|nanoplast/i, 'keratin smoothing / straightening treatment, sleek glossy straight hair, flat iron sealing'],
     [/tinte|coloraci|color|tono|cromat|matiz/i, 'professional hair coloring, color application with brush and bowl, vivid even color result'],
     [/decolora|blanque|platino|rubio/i, 'hair bleaching / lightening, platinum blonde result, foils and lightener'],
+    [/mezcla/i, 'hair color formulation and mixing, colorist measuring and mixing multiple tint tubes in a bowl on a professional workstation'],
     [/peine|cepillo|tijera|plancha|secador|rizador|pincel|herramient|navaja/i, 'professional hairdressing tools close-up, scissors combs brushes flat iron arranged on a clean salon station'],
+    [/secad|blow.?dry|soplado/i, 'professional hair blow-drying technique, hairdryer and round brush styling, smooth voluminous finish'],
+    [/graso|grasa|sebo|seborr/i, 'oily scalp consultation and treatment, regulating shampoo application, scalp analysis at the salon'],
+    [/reseco|resec|deshidrat|porosidad|tricolog|danad|dañad/i, 'dry and damaged hair repair treatment, deep conditioning mask application, hair restoration'],
     [/lavado|champ|enjuague|hidrata|mascar|nutri|tratam/i, 'professional hair washing and treatment at the salon basin, foam and water, healthy shiny hydrated hair'],
     [/divisi|secci|zona|mapa|zigzag|pulgada|medida/i, 'professional hair sectioning and parting with a tail comb and clips on a mannequin head, neat divided sections'],
     [/corte|capas|fleco|bob|degrad/i, 'professional haircut technique, precise scissor cutting, clean layered finish'],
@@ -224,10 +241,11 @@
     [/bioseg|higien|desinfec|esteril|epp|guante|mascar|alergia|hongo|embaraz/i, 'salon hygiene and biosafety protocol, sterilized tools, gloves and mask, clean sanitized station'],
     [/eleva|proyec|geometr|angulo/i, 'haircut elevation and projection angles, geometric sectioning on a mannequin head'],
     [/recogid|peinad|updo|trenza|onda|rizo|volumen/i, 'professional hairstyling and updo, elegant finished styling with brushes and tools'],
-    [/extensi|peluca|postiz/i, 'hair extensions application, attaching wefts, long voluminous result']
+    [/extensi|peluca|postiz/i, 'hair extensions application, attaching wefts, long voluminous result'],
+    [/alerta|etica|legal|negocio|precio|redes sociales|burnout|responsabilidad|formacion continua|documentacion/i, 'confident professional hairstylist in a modern salon office, client consultation and professional standards, clean elegant business setting']
   ];
   function temaPeluEN(label){
-    var s = String(label || '');
+    var s = _sinTildes(label);
     for (var i = 0; i < PELU_TEMA_EN.length; i++){ if (PELU_TEMA_EN[i][0].test(s)) return PELU_TEMA_EN[i][1]; }
     return 'professional hairdressing technique in an elegant salon';
   }

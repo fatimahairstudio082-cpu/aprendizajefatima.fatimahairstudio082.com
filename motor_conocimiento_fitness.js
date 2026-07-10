@@ -436,7 +436,11 @@
     'Archer Push-Up':'Archer Push-Up','L-Sit':'L-Sit','Curl Isométrico':'Isometric Curl','Elevación Frontal':'Front Raise',
     'Curl Cable':'Cable Curl','Mariposa':'Chest Fly','Press Arnold':'Arnold Press','Curl Predikador':'Preacher Curl',
     'Press Banca':'Bench Press','Pseudo Planche':'Pseudo Planche','Flexión Lenta':'Slow Push-Up','Isométrico Pecho':'Isometric Chest Hold',
-    'Curl Concentrado':'Concentration Curl'
+    'Curl Concentrado':'Concentration Curl',
+    /* Revisión forense: estas 2 variantes (sin "de") se usan en
+       EJERCICIOS_DB pero faltaban aquí — quedaban sin traducir al
+       inglés en el prompt, mezclando español en un prompt en inglés. */
+    'Abducción Pie':'Standing Hip Abduction', 'Puente Glúteo':'Glute Bridge'
   };
   function ejercicioEN(nombreEs){ return EJERCICIO_EN[nombreEs] || nombreEs; }
 
