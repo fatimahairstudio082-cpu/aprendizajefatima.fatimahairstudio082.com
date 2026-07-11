@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escáner Total · ¿Qué falta por generar?</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Inter:wght@400;600&display=swap');
+  *{box-sizing:border-box;}
+  body{background:#020617;color:#fff;font-family:'Inter',sans-serif;margin:0 auto;padding:24px;max-width:960px;}
+  h1{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px;}
+  .sub{color:#94a3b8;font-size:13px;margin-bottom:20px;line-height:1.6;}
+  .box{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:18px;margin-bottom:16px;}
+  label{display:block;font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+  input,select{width:100%;padding:10px 12px;background:#020617;border:1px solid #1e293b;border-radius:8px;color:#fff;font-size:13px;margin-bottom:10px;font-family:inherit;}
+  button{padding:12px 20px;background:#1d4ed8;color:#fff;border:0;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  button.mini{padding:7px 12px;font-size:11px;background:#0e7490;}
+  .estado{font-size:12px;margin-top:10px;min-height:16px;}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
+  .chip{flex:1;min-width:130px;background:#0b1120;border:1px solid #1e293b;border-radius:10px;padding:12px;text-align:center;}
+  .chip .num{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;}
+  .chip .lbl{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+  .chip.ok .num{color:#22c55e;} .chip.miss .num{color:#f87171;} .chip.warn .num{color:#facc15;}
+  .row{display:flex;gap:10px;align-items:center;padding:9px 12px;background:#0b1120;border:1px solid #1e293b;border-radius:8px;margin-bottom:6px;font-size:12px;flex-wrap:wrap;}
+  .row.miss{border-color:#7f1d1d;}
+  .row.have{border-color:#14532d;}
+  .row.warn{border-color:#78350f;}
+  .row .nom{flex:1;min-width:150px;}
+  .row .key{font-family:monospace;font-size:10px;color:#64748b;word-break:break-all;}
+  .badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.5px;flex:none;}
+  .b-have{background:#065f46;color:#6ee7b7;}
+  .b-miss{background:#7f1d1d;color:#fca5a5;}
+  .b-warn{background:#78350f;color:#fcd34d;}
+  h3{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:#60a5fa;margin:24px 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  h3 .mini{margin-left:auto;}
+  .catbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .catbar select{flex:1;min-width:200px;margin:0;}
+  .catbar label{margin:0;display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;text-transform:none;letter-spacing:0;}
+  .catbar input[type=checkbox]{width:auto;margin:0;}
+  .nota{font-size:11px;color:#64748b;line-height:1.6;margin-top:8px;}
+  a{color:#60a5fa;}
+</style>
+</head>
+<body>
+
+<h1>🛰️ Escáner Total · ¿Qué falta por generar?</h1>
+<div class="sub">
+  Un solo tablero para <b>no generar duplicados</b>: recorre la <b>Academia</b> (todas las clases del motor),
+  los <b>módulos de Corte M1–M7</b>, las <b>tarjetas del Hub</b> y un resumen de <b>Fitness</b>.
+  Te dice qué imagen y qué video <b>ya existen</b> y cuáles <b>faltan</b>, con la clave exacta.
+  Solo LEE Firebase, no escribe nada. Para el detalle clip-por-clip del Bloque 5 usa
+  <a href="escaner_clips_faltantes.html">📡 el escáner de clips</a>.
+</div>
+
+<div class="box" id="paso1">
+  <label>Correo administradora</label>
+  <input type="email" id="email" placeholder="fatimahairstudio082@gmail.com">
+  <label>Contraseña</label>
+  <input type="password" id="pass" placeholder="••••••••">
+  <button id="btnLogin">🔑 Iniciar sesión y escanear todo</button>
+  <div class="estado" id="loginEstado"></div>
+</div>
+
+<div id="panel" style="display:none;">
+  <div class="chips" id="chips"></div>
+
+  <h3>🎓 Academia · <span id="acaTotal"></span> clases
+    <button class="mini" id="btnCopiaImg">📋 Copiar faltantes de IMAGEN</button>
+    <button class="mini" id="btnCopiaVid">📋 Copiar faltantes de VIDEO</button>
+  </h3>
+  <div class="catbar">
+    <select id="fCat"><option value="">— Todas las categorías —</option></select>
+    <select id="fQue">
+      <option value="todo">Ver todo</option>
+      <option value="faltan" selected>Solo lo que falta</option>
+      <option value="corrupto">Solo links corruptos</option>
+    </select>
+  </div>
+  <div id="acaLista"></div>
+
+  <h3>✂️ Motor de Corte · módulos M1–M7</h3>
+  <div id="corteLista"></div>
+
+  <h3>🎴 Tarjetas del Hub</h3>
+  <div id="hubLista"></div>
+  <div class="nota">Aquí se listan las tarjetas registradas en <code>hub_tarjetas</code>. Una tarjeta sin imagen aparece marcada.</div>
+
+  <h3>🏋️ Fitness · resumen de lo que existe</h3>
+  <div id="fitResumen"></div>
+  <div class="nota">
+    Fitness se genera por combinación (día · motor · grupo · equipo · nº ejercicios), así que "lo que falta"
+    depende de la clase que vayas a dictar: usa <a href="escaner_clips_faltantes.html">📡 el escáner de clips</a>
+    para el detalle ejercicio-por-ejercicio. Este resumen te muestra lo acumulado y los links corruptos.
+  </div>
+</div>
+
+<!-- Catálogo del motor (las 360 clases) — mismo orden que exige motor_helper.js -->
+<script src="motor_p1_bioseg_balayage.js"></script>
+<script src="motor_p2_queratina_elevaciones.js"></script>
+<script src="motor_p3_morfologia_alertas.js"></script>
+<script src="motor_helper.js"></script>
+
+<script type="module">
+  import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const CFG = {
+    apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",
+    authDomain:"aprendisajefatima.firebaseapp.com",
+    projectId:"aprendisajefatima",
+    storageBucket:"aprendisajefatima.firebasestorage.app",
+    messagingSenderId:"744176967394",
+    appId:"1:744176967394:web:1db2edfd2498ddbaa7c8bb"
+  };
+  const app = getApps().length ? getApp() : initializeApp(CFG);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const linkOk = u => /^https?:\/\//i.test(String(u||'').trim());
+
+  let CLASES_IMGS = {}, CORTE = {}, HUB = {}, FIT_V = {}, FIT_I = {};
+
+  async function leerColeccion(nombre){
+    const out = {};
+    const snap = await getDocs(collection(db, nombre));
+    snap.forEach(d => out[d.id] = d.data() || {});
+    return out;
+  }
+
+  $('btnLogin').onclick = async function(){
+    const em = $('email').value.trim(), pw = $('pass').value;
+    if(!em || !pw){ $('loginEstado').textContent='Completa correo y contraseña.'; $('loginEstado').style.color='#fca5a5'; return; }
+    $('btnLogin').disabled = true; $('loginEstado').textContent='⏳ Entrando…'; $('loginEstado').style.color='#fcd34d';
+    try{
+      await signInWithEmailAndPassword(auth, em, pw);
+      $('loginEstado').textContent='⏳ Leyendo Firebase (5 colecciones)…';
+      [CLASES_IMGS, CORTE, HUB, FIT_V, FIT_I] = await Promise.all([
+        leerColeccion('clases_imgs'),
+        leerColeccion('corte_modulos'),
+        leerColeccion('hub_tarjetas'),
+        leerColeccion('fitness_videos'),
+        leerColeccion('fitness_imgs')
+      ]);
+      $('loginEstado').textContent='✅ Sesión iniciada · escaneo completo';
+      $('loginEstado').style.color='#22c55e';
+      $('panel').style.display='block';
+      pintarTodo();
+    }catch(e){
+      // Igual que las páginas nuevas: el motivo EXACTO en rojo, nunca en silencio.
+      $('loginEstado').textContent='❌ '+(e.code||e.message);
+      $('loginEstado').style.color='#fca5a5';
+      $('btnLogin').disabled = false;
+    }
+  };
+
+  /* ── ACADEMIA · igual que los badges de admin_motores:
+        imagen = url_jpg || url · video = url_video ── */
+  function estadoClase(id){
+    const u = CLASES_IMGS[id] || {};
+    const imgUrl = u.url_jpg || u.url || '';
+    const vidUrl = u.url_video || '';
+    return {
+      img: imgUrl ? (linkOk(imgUrl) ? 'have' : 'warn') : 'miss',
+      vid: vidUrl ? (linkOk(vidUrl) ? 'have' : 'warn') : 'miss'
+    };
+  }
+
+  function pintarAcademia(){
+    const flat = window.MOTOR_FLAT || [];
+    const cat = $('fCat').value, que = $('fQue').value;
+    let html = '', vistos = 0;
+    for(const c of flat){
+      if(cat && (window.MOTOR_CAT ? window.MOTOR_CAT(c.id) : c.cat) !== cat) continue;
+      const st = estadoClase(c.id);
+      const falta = st.img !== 'have' || st.vid !== 'have';
+      const corrupto = st.img === 'warn' || st.vid === 'warn';
+      if(que === 'faltan' && !falta) continue;
+      if(que === 'corrupto' && !corrupto) continue;
+      vistos++;
+      if(vistos > 400){ html += '<div class="nota">… (lista recortada a 400 filas; filtra por categoría)</div>'; break; }
+      const cls = corrupto ? 'warn' : (falta ? 'miss' : 'have');
+      const bImg = st.img==='have' ? '<span class="badge b-have">🖼 ✅</span>'
+                 : st.img==='warn' ? '<span class="badge b-warn">🖼 link corrupto</span>'
+                 : '<span class="badge b-miss">🖼 FALTA</span>';
+      const bVid = st.vid==='have' ? '<span class="badge b-have">🎥 ✅</span>'
+                 : st.vid==='warn' ? '<span class="badge b-warn">🎥 link corrupto</span>'
+                 : '<span class="badge b-miss">🎥 FALTA</span>';
+      html += '<div class="row '+cls+'"><span class="nom">'+esc(c.n)+'</span>'+bImg+bVid
+            + '<span class="key">clases_imgs/'+esc(c.id)+'</span></div>';
+    }
+    $('acaLista').innerHTML = html || '<div class="row have"><span class="nom">✅ Nada pendiente con este filtro.</span></div>';
+  }
+
+  function faltantesAcademia(tipo){
+    return (window.MOTOR_FLAT||[]).filter(c => estadoClase(c.id)[tipo] !== 'have').map(c => c.id);
+  }
+
+  /* ── CORTE M1..M7 · corte_modulos/{Mn}.imgUrl ── */
+  function pintarCorte(){
+    let html = '';
+    for(let i=1;i<=7;i++){
+      const id = 'M'+i, u = (CORTE[id]||{}).imgUrl || '';
+      const st = u ? (linkOk(u) ? 'have' : 'warn') : 'miss';
+      html += '<div class="row '+(st==='have'?'have':st==='warn'?'warn':'miss')+'">'
+            + '<span class="nom">Módulo '+id+'</span>'
+            + (st==='have' ? '<span class="badge b-have">🖼 ✅ EXISTE</span>'
+              : st==='warn' ? '<span class="badge b-warn">🖼 link corrupto</span>'
+              : '<span class="badge b-miss">🖼 FALTA GENERAR</span>')
+            + '<span class="key">corte_modulos/'+id+'</span></div>';
+    }
+    $('corteLista').innerHTML = html;
+  }
+
+  /* ── HUB · hub_tarjetas/{n}.imgUrl ── */
+  function pintarHub(){
+    const ids = Object.keys(HUB).sort((a,b)=>(parseInt(a)||0)-(parseInt(b)||0));
+    if(!ids.length){ $('hubLista').innerHTML='<div class="row miss"><span class="nom">No hay tarjetas registradas en hub_tarjetas.</span></div>'; return; }
+    $('hubLista').innerHTML = ids.map(id=>{
+      const u = (HUB[id]||{}).imgUrl || '';
+      const st = u ? (linkOk(u) ? 'have' : 'warn') : 'miss';
+      return '<div class="row '+(st==='have'?'have':st==='warn'?'warn':'miss')+'">'
+        + '<span class="nom">Tarjeta '+esc(id)+(HUB[id]&&HUB[id].nombre?' · '+esc(HUB[id].nombre):'')+'</span>'
+        + (st==='have' ? '<span class="badge b-have">🖼 ✅</span>'
+          : st==='warn' ? '<span class="badge b-warn">🖼 link corrupto</span>'
+          : '<span class="badge b-miss">🖼 SIN IMAGEN</span>')
+        + '<span class="key">hub_tarjetas/'+esc(id)+'</span></div>';
+    }).join('');
+  }
+
+  /* ── FITNESS · resumen agrupado + links corruptos ── */
+  function pintarFitness(){
+    const grupos = {};
+    Object.keys(FIT_V).forEach(k=>{
+      const base = k.replace(/_(\d{2})_.*$/,'').replace(/^dia\d+_/,'');
+      (grupos[base]=grupos[base]||{n:0,malos:[]}).n++;
+      if(!linkOk((FIT_V[k]||{}).url_video)) grupos[base].malos.push(k);
+    });
+    const laminas = {};
+    Object.keys(FIT_I).forEach(k=>{
+      const base = k.replace(/_v\d+$/,'');
+      (laminas[base]=laminas[base]||{n:0,malos:[]}).n++;
+      if(!linkOk((FIT_I[k]||{}).url)) laminas[base].malos.push(k);
+    });
+    let html = '<div class="row have"><span class="nom">🎬 Clips de video: <b>'+Object.keys(FIT_V).length+'</b> en '+Object.keys(grupos).length+' clases</span></div>'
+             + '<div class="row have"><span class="nom">🖼 Láminas: <b>'+Object.keys(FIT_I).length+'</b> en '+Object.keys(laminas).length+' grupos</span></div>';
+    const malosV = Object.entries(grupos).filter(([,g])=>g.malos.length);
+    const malosI = Object.entries(laminas).filter(([,g])=>g.malos.length);
+    for(const [base,g] of malosV) html += '<div class="row warn"><span class="nom">'+esc(base)+'</span><span class="badge b-warn">⚠️ '+g.malos.length+' clip(s) con link corrupto</span><span class="key">'+esc(g.malos.join(' · '))+'</span></div>';
+    for(const [base,g] of malosI) html += '<div class="row warn"><span class="nom">'+esc(base)+'</span><span class="badge b-warn">⚠️ '+g.malos.length+' lámina(s) con link corrupto</span><span class="key">'+esc(g.malos.join(' · '))+'</span></div>';
+    if(!malosV.length && !malosI.length) html += '<div class="row have"><span class="nom">✅ Ningún link corrupto en fitness.</span></div>';
+    $('fitResumen').innerHTML = html;
+  }
+
+  function pintarChips(){
+    const flat = window.MOTOR_FLAT || [];
+    const total = flat.length;
+    const conImg = flat.filter(c=>estadoClase(c.id).img==='have').length;
+    const conVid = flat.filter(c=>estadoClase(c.id).vid==='have').length;
+    let corteOk = 0; for(let i=1;i<=7;i++){ const u=(CORTE['M'+i]||{}).imgUrl; if(linkOk(u)) corteOk++; }
+    const hubIds = Object.keys(HUB);
+    const hubOk = hubIds.filter(id=>linkOk((HUB[id]||{}).imgUrl)).length;
+    const chip = (num,lbl,cls)=>'<div class="chip '+cls+'"><div class="num">'+num+'</div><div class="lbl">'+lbl+'</div></div>';
+    $('chips').innerHTML =
+      chip(conImg+' / '+total,'Academia · imágenes', conImg===total?'ok':'miss')
+      + chip(conVid+' / '+total,'Academia · videos', conVid===total?'ok':'miss')
+      + chip(corteOk+' / 7','Corte M1–M7', corteOk===7?'ok':'miss')
+      + chip(hubOk+' / '+hubIds.length,'Hub · tarjetas', (hubIds.length&&hubOk===hubIds.length)?'ok':'warn')
+      + chip(Object.keys(FIT_V).length,'Fitness · clips','ok');
+  }
+
+  function pintarTodo(){
+    const cats = window.MOTOR_CATS || [];
+    $('acaTotal').textContent = (window.MOTOR_FLAT||[]).length;
+    $('fCat').innerHTML = '<option value="">— Todas las categorías —</option>'
+      + cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+    pintarChips(); pintarAcademia(); pintarCorte(); pintarHub(); pintarFitness();
+  }
+
+  $('fCat').onchange = pintarAcademia;
+  $('fQue').onchange = pintarAcademia;
+
+  async function copiar(txt, btn){
+    try{ await navigator.clipboard.writeText(txt); const t=btn.textContent; btn.textContent='✅ Copiado'; setTimeout(()=>btn.textContent=t,1500); }
+    catch(_){ prompt('Copia la lista:', txt); }
+  }
+  $('btnCopiaImg').onclick = function(){ copiar(faltantesAcademia('img').join('\n'), this); };
+  $('btnCopiaVid').onclick = function(){ copiar(faltantesAcademia('vid').join('\n'), this); };
+</script>
+
+</body>
+</html>

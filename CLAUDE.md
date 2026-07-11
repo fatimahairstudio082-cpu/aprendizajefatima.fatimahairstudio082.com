@@ -71,12 +71,14 @@ hub_tarjetas/{n}   (imgUrl)        corte_modulos/{M1..M7}   (imgUrl)
 
 Google Drive links must be converted before storage: images to the `thumbnail?...w1400` format, videos to `https://drive.google.com/file/d/{ID}/preview` (raw share or `uc?export=download` links render black). `biblioteca.js` auto-converts and rejects non-`https://` input on save; `conversor_drive.html` does manual conversion.
 
+`calc_cromatica_v8.html` loads React 18 from the vendored root files `react.production.min.js` / `react-dom.production.min.js` (with a unpkg CDN fallback) — keep them, or the colorimetry calculator renders a black page.
+
 ### Netlify functions (the only server code)
 
 `netlify.toml` points at `netlify/functions/` (esbuild bundler):
 
 - `netlify/functions/replicate.js` — CORS proxy to api.replicate.com. Token comes from the `Authorization` / `x-replicate-token` header or the `REPLICATE_API_TOKEN` Netlify env var. GET on the bare path is a health check.
-- `aiproxy.js` (root) — allowlist-based proxy for other AI providers (OpenAI, Stability, fal, Luma) keyed by the `x-ai-url` header. **Note: it currently sits in the repo root, but it must live in `netlify/functions/` to be deployed** — clients call `/.netlify/functions/aiproxy`.
+- `netlify/functions/aiproxy.js` — allowlist-based proxy for other AI providers (OpenAI, Stability, fal, Luma) keyed by the `x-ai-url` header; clients call `/.netlify/functions/aiproxy`.
 
 The point of both: browser talks to same-origin Netlify, keys never live in the public site, no CORS issues.
 
@@ -88,7 +90,8 @@ The point of both: browser talks to same-origin Netlify, keys never live in the 
 - `biblioteca.html` + `biblioteca.js` — upload videos/images/home cards/news.
 - `estudio.html` — private AI studio shell embedding `modulo1_imagen.html` (image gen), `modulo2_video.html` (video gen), `modulo3_voz.html` (browser TTS, no network), `modulo4_carpeta.html` (local folder, no network).
 - `motor_auto.html` + `motor_prompts.js` — batch AI generation panel: generate → review gallery (approve/regenerate/discard) → upload approved media to Firebase (+ optional Drive backup) at the contract keys above.
-- One-shot repair tools (not daily-use): `reparar_registros_video.html`, `migrar_links_video.html`, `escaner_clips_faltantes.html`.
+- `escaner_faltantes_total.html` — read-only dashboard of missing/existing media across Academia (`clases_imgs`), Corte M1–M7, Hub cards, and a fitness summary; `escaner_clips_faltantes.html` is the per-class fitness clip detail.
+- One-shot repair tools (not daily-use): `reparar_registros_video.html`, `migrar_links_video.html`.
 
 ### PWA
 

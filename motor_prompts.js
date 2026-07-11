@@ -183,9 +183,9 @@
       'This must clearly and unmistakably be the "' + en + '" exercise, training ' + (GRUPO_EN[grupo] || grupo) + '. ' +
       (MOTOR_EN[motor] || motor) + '. The working muscles (' + (MUSCLE_EN[grupo] || 'muscles') +
       ') subtly highlighted with a glowing orange anatomical overlay. ' +
-      'Full body in frame, correct posture mid-movement, fitted dark athletic wear, modern premium gym background, ' +
-      'soft professional studio lighting. Photorealistic, sharp focus, natural anatomy, ONE person only, centered. ' +
-      'STRICT: no text, no labels, no numbers, no watermark, no collage, no split panels, no multiple people. Vertical 3:4 portrait.';
+      'Full body in frame, correct posture mid-movement, fitted athletic wear, modern premium gym background, ' +
+      'bright high-key studio lighting, evenly lit, well-exposed, clear luminous image. Photorealistic, sharp focus, natural anatomy, ONE person only, centered. ' +
+      'STRICT: no text, no labels, no numbers, no watermark, no collage, no split panels, no multiple people, no dark or moody lighting, no underexposed shadows. Vertical 3:4 portrait.';
   }
 
   /* ── PROMPT · 1 ejercicio fitness (video) ── nombre en inglés, 1 persona, 1 ejercicio. */
@@ -196,8 +196,8 @@
       'The athlete demonstrates the COMPLETE repetition with correct form and full range of motion, slow and controlled. ' +
       (MOTOR_EN[motor] || motor) + ', ' + (GRUPO_EN[grupo] || grupo) + ' clearly engaged. ' +
       'Three-quarter side camera angle, whole body inside frame during the entire repetition. ' +
-      'Cinematic 60fps 1080p, professional gym lighting, ultra-stable camera, photorealistic, high detail. ' +
-      'STRICT: a single person doing a single exercise, one continuous shot, NO split screen, NO multiple panels, NO grid, NO text, NO numbers on screen, no watermark.';
+      '60fps 1080p, bright high-key professional gym lighting, evenly lit and well-exposed throughout, clear luminous footage, ultra-stable camera, photorealistic, high detail. ' +
+      'STRICT: a single person doing a single exercise, one continuous shot, NO split screen, NO multiple panels, NO grid, NO text, NO numbers on screen, no watermark, NO dark or moody lighting, NO underexposed or dim footage.';
   }
 
   /* ── PROMPT · peluquería / academia (imagen) ──
