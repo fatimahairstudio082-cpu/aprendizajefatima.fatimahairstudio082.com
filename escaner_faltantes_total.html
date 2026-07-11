@@ -195,7 +195,11 @@
   }
 
   function faltantesAcademia(tipo){
-    return (window.MOTOR_FLAT||[]).filter(c => estadoClase(c.id)[tipo] !== 'have').map(c => c.id);
+    // Respeta el filtro de categoría en pantalla: copia solo lo que estás viendo.
+    const cat = $('fCat').value;
+    return (window.MOTOR_FLAT||[])
+      .filter(c => !cat || (window.MOTOR_CAT ? window.MOTOR_CAT(c.id) : c.cat) === cat)
+      .filter(c => estadoClase(c.id)[tipo] !== 'have').map(c => c.id);
   }
 
   /* ── CORTE M1..M7 · corte_modulos/{Mn}.imgUrl ── */
@@ -268,7 +272,10 @@
       + chip(conVid+' / '+total,'Academia · videos', conVid===total?'ok':'miss')
       + chip(corteOk+' / 7','Corte M1–M7', corteOk===7?'ok':'miss')
       + chip(hubOk+' / '+hubIds.length,'Hub · tarjetas', (hubIds.length&&hubOk===hubIds.length)?'ok':'warn')
-      + chip(Object.keys(FIT_V).length,'Fitness · clips','ok');
+      + (function(){
+          const malos = Object.keys(FIT_V).filter(k=>!linkOk((FIT_V[k]||{}).url_video)).length;
+          return chip(Object.keys(FIT_V).length,'Fitness · clips', malos ? 'warn' : 'ok');
+        })();
   }
 
   function pintarTodo(){
