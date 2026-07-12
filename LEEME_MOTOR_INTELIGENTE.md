@@ -30,8 +30,28 @@ inteligente**, con el estado de cada cosa:
 2. Pulsa **🔍 Analizar mi selección** → te dice exactamente cuántas llamadas a
    la IA costará ANTES de gastar.
 3. (Opcional) **☁️ Escanear Drive** → descuenta lo que ya tengas respaldado.
-4. Pulsa **🎯 Generar SOLO lo que falta** → activa "omitir" ✅, apaga "forzar
-   regenerar" ❌ y lanza el lote solo con lo pendiente.
+4. Dos formas de generar:
+   - **🎯 Generar SOLO lo que falta** → activa "omitir" ✅, apaga "forzar
+     regenerar" ❌ y lanza el lote solo con lo pendiente.
+   - **Selección manual fila por fila**: en la lista del análisis, marca ✔
+     las clases exactas que quieras (solo las pendientes tienen casilla) y
+     pulsa **▶️ Generar las marcadas**. El tope "generar solo las primeras N"
+     también manda aquí.
+
+## Qué botón hace qué (ninguno es decorativo)
+
+- Los **contadores** (`Academia img 170/299`, `láminas`, `clips`, `hub`,
+  `corte`) son informativos: muestran cuánto existe ya en Firebase. No se
+  pulsan.
+- **🔍 Analizar mi selección** → calcula estados y costo de TU selección.
+- **☁️ Escanear Drive** → necesita Drive conectado antes (tarjeta "Respaldo
+  en Google Drive": Client ID + «Conectar Drive»).
+- **🔬 Verificar pasos en Storage** → solo para VIDEOS de la Academia
+  (modo Peluquería + 🎬): cuenta los clips paso_NN.mp4 reales.
+- **🎯 Generar SOLO lo que falta** / **▶️ Generar las marcadas** → lanzan la
+  producción; el avance sale en la barra y el registro negro de "🚀 Generar
+  y subir". Los avisos de cada botón también aparecen en dorado dentro del
+  propio panel.
 
 ## El guardián económico
 

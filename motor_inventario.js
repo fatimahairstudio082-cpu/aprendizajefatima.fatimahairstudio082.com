@@ -215,10 +215,12 @@ function driveArchivo(kind, clave){
 }
 async function invEscanearDrive(){
   if (typeof DRIVE==='undefined' || !DRIVE.token){
+    invMsg('☁️ Primero conecta Google Drive (botón «Conectar Drive» en la tarjeta de respaldo, más arriba) y vuelve a pulsar «Escanear Drive».');
     logLine('☁️ Conecta Google Drive primero (botón «Conectar Drive» arriba) y vuelve a pulsar «Escanear Drive».','err');
     return;
   }
   try{
+    invMsg('☁️ Escaneando tu carpeta de Drive…');
     logLine('☁️ Escaneando tu carpeta «Fátima Caldea · Generados»…','info');
     var folder = await driveFolder();
     var names = new Map(), pageToken = '';
@@ -232,9 +234,10 @@ async function invEscanearDrive(){
       pageToken = d.nextPageToken || '';
     } while(pageToken);
     INV.drive = names;
+    invMsg('☁️ Drive escaneado: '+names.size+' archivo(s) · lo que esté ahí sale como ☁️ y NO se regenera.');
     logLine('☁️ Drive escaneado: '+names.size+' archivo(s) de respaldo · lo que esté ahí NO se regenera.','ok');
     refrescarPanel();
-  }catch(e){ logLine('❌ Escaneo de Drive falló: '+(e.message||e),'err'); }
+  }catch(e){ invMsg('❌ Escaneo de Drive falló: '+(e.message||e)); logLine('❌ Escaneo de Drive falló: '+(e.message||e),'err'); }
 }
 /* Recupera de Drive SIN llamar a la IA: hace público el archivo y registra
    el link convertido en el mismo doc/campo que usaría la subida normal. */
@@ -286,7 +289,12 @@ window.invRecuperarDrive = invRecuperarDrive;
 /* ════════ PASOS REALES EN STORAGE (carruseles antiguos) ════════ */
 async function invVerificarPasosStorage(){
   var clases = (typeof clasesPeluSeleccionadas==='function') ? clasesPeluSeleccionadas() : [];
-  if (!clases.length){ logLine('Selecciona primero las categorías de la Academia que quieres verificar.','err'); return; }
+  if (!clases.length){
+    invMsg('🔬 Este botón es para los VIDEOS de la Academia: pasa a «✂️ Peluquería», marca categorías y vuelve a pulsarlo.');
+    logLine('Selecciona primero las categorías de la Academia que quieres verificar.','err');
+    return;
+  }
+  invMsg('🔬 Verificando pasos reales en Storage…');
   try{
     await fbInit();
     var fs = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js');
@@ -302,9 +310,10 @@ async function invVerificarPasosStorage(){
         INV.pasosStorage[c.id] = set;
       }catch(e){ console.warn('[pasosStorage]', c.id, e); }
     }
+    invMsg('🔬 Storage verificado · los pasos ya subidos cuentan como existentes.');
     logLine('🔬 Storage verificado · los pasos ya subidos cuentan como existentes.','ok');
     refrescarPanel();
-  }catch(e){ logLine('❌ Verificación de Storage falló: '+(e.message||e),'err'); }
+  }catch(e){ invMsg('❌ Verificación de Storage falló: '+(e.message||e)); logLine('❌ Verificación de Storage falló: '+(e.message||e),'err'); }
 }
 window.invVerificarPasosStorage = invVerificarPasosStorage;
 
@@ -402,14 +411,14 @@ function itemsSeleccion(){
       combos.forEach(function(cb){
         var lista = (cb.ejercicios && cb.ejercicios.length) ? cb.ejercicios : MOTOR_PROMPTS.ejerciciosDe(cb.grupo, cb.equipo, cb.nej, cb.motor);
         for (var v=1; v<=nVer; v++){
-          items.push({ kind:'fitness-img', clave:cb.claveImgBase+'_v'+v, label:cb.claveImgBase+' · versión '+v, coste:(lista.length||cb.nej) });
+          items.push({ kind:'fitness-img', clave:cb.claveImgBase+'_v'+v, label:cb.claveImgBase+' · versión '+v, coste:(lista.length||cb.nej), gen:{combo:cb, v:v} });
         }
       });
     } else {
       combos.forEach(function(cb){
         var lista = (cb.ejercicios && cb.ejercicios.length) ? cb.ejercicios : MOTOR_PROMPTS.ejerciciosDe(cb.grupo, cb.equipo, cb.nej, cb.motor);
         lista.forEach(function(nom, i){
-          items.push({ kind:'fitness-vid', clave:claveClip(cb.claveImgBase, i, nom), label:cb.claveImgBase+' · '+(i+1)+'. '+nom, coste:1 });
+          items.push({ kind:'fitness-vid', clave:claveClip(cb.claveImgBase, i, nom), label:cb.claveImgBase+' · '+(i+1)+'. '+nom, coste:1, gen:{combo:cb, i:i, nombre:nom} });
         });
       });
     }
@@ -418,25 +427,44 @@ function itemsSeleccion(){
     var tipoP = (document.querySelector('input[name="tipoP"]:checked')||{}).value || 'img';
     clases.forEach(function(c){
       if (tipoP==='img'){
-        items.push({ kind:'pelu-img', clave:c.id, label:c.id+' · '+c.titulo, coste:1 });
+        items.push({ kind:'pelu-img', clave:c.id, label:c.id+' · '+c.titulo, coste:1, gen:{clase:c} });
       } else {
         var st = estadoPeluVideo(c.id);
         items.push({ kind:'pelu-vid', clave:c.id,
           label: c.id+' · '+c.titulo + (st.total ? (' · pasos '+st.hechos+'/'+st.total) : ' · video de apoyo'),
-          coste: Math.max(1, (st.total||1) - st.hechos) });
+          coste: Math.max(1, (st.total||1) - st.hechos), gen:{clase:c} });
       }
     });
   } else if (MODO==='hub'){
     [].concat(HUB_CARDS, HUB_PORTADAS).forEach(function(b){
-      if (SELH.has(b.n)) items.push({ kind:'hub', clave:b.n, label:'Tarjeta '+b.n+' · '+b.nom, coste:1 });
+      if (SELH.has(b.n)) items.push({ kind:'hub', clave:b.n, label:'Tarjeta '+b.n+' · '+b.nom, coste:1, gen:{b:b} });
     });
   } else if (MODO==='corte'){
     Object.keys(CORTE_LBL).forEach(function(id){
-      if (SELC.has(id)) items.push({ kind:'corte', clave:id, label:id+' · '+CORTE_LBL[id], coste:1 });
+      if (SELC.has(id)) items.push({ kind:'corte', clave:id, label:id+' · '+CORTE_LBL[id], coste:1, gen:{id:id} });
     });
   }
   return items;
 }
+
+/* ── Selección manual dentro de la lista (casillas ✔) ── */
+var INV_SEL = new Set();          // claves marcadas: 'kind|clave'
+var ULT_ITEMS = [];               // items del último análisis (con su .gen)
+function invKey(it){ return it.kind+'|'+it.clave; }
+function esPendiente(est){ return est==='falta' || est==='corrupto' || est==='parcial'; }
+function invMarcar(key, on){
+  if (on) INV_SEL.add(key); else INV_SEL.delete(key);
+  var n = document.getElementById('invSelN'); if (n) n.textContent = INV_SEL.size;
+}
+function invMarcarFaltantes(on){
+  ULT_ITEMS.forEach(function(it){
+    if (!esPendiente(it.estado)) return;
+    if (on) INV_SEL.add(invKey(it)); else INV_SEL.delete(invKey(it));
+  });
+  invAnalizar();
+}
+window.invMarcar = invMarcar;
+window.invMarcarFaltantes = invMarcarFaltantes;
 
 function invAnalizar(){
   var res = document.getElementById('invResumen');
@@ -445,6 +473,7 @@ function invAnalizar(){
   if (!INV.listo){ res.innerHTML = '⏳ El inventario aún está cargando… (entra con tu sesión de administradora)'; return; }
   var items = itemsSeleccion();
   ULT_ANALISIS = true;
+  ULT_ITEMS = items;
   if (!items.length){
     res.innerHTML = 'Selecciona arriba qué quieres producir (grupos, categorías, tarjetas o módulos) y vuelve a pulsar 🔍.';
     lst.innerHTML = '';
@@ -472,25 +501,41 @@ function invAnalizar(){
   // aviso si "Forzar regenerar" está activo en el modo actual
   var rg = (MODO==='pelu') ? document.getElementById('optRegenP') : (MODO==='fitness') ? document.getElementById('optRegen') : null;
   if (rg && rg.checked) res.innerHTML += '<br>⚠️ <b>«Forzar regenerar» está ACTIVADO</b>: se volverá a generar TODO lo seleccionado aunque exista. Desmárcalo si no era tu intención.';
+  // limpiar marcas de claves que ya no están pendientes o salieron de la selección
+  var vigentes = new Set();
+  items.forEach(function(it){ if (esPendiente(it.estado)) vigentes.add(invKey(it)); });
+  Array.from(INV_SEL).forEach(function(k){ if(!vigentes.has(k)) INV_SEL.delete(k); });
+
   var filas = items.slice(0, 300).map(function(it){
+    var key = invKey(it);
+    var chk = esPendiente(it.estado)
+      ? '<input type="checkbox" onchange="invMarcar(\''+key+'\', this.checked)"'+(INV_SEL.has(key)?' checked':'')+' style="width:16px;height:16px;accent-color:#22c55e;cursor:pointer;flex:none;" title="Marcar para generar solo esta">'
+      : '<span style="width:16px;flex:none;display:inline-block;"></span>';
     var extra = (it.estado==='drive')
       ? ' <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="invRecuperarDrive(\''+it.kind+'\',\''+esc(it.clave)+'\')">♻️ Recuperar de Drive</button>'
       : '';
-    return '<div class="crow"><span>'+(EST_ICONO[it.estado]||'❔')+'</span>'
+    return '<div class="crow">'+chk+'<span>'+(EST_ICONO[it.estado]||'❔')+'</span>'
       + '<span class="cid">'+esc(it.clave)+'</span>'
       + '<span class="ctit" title="'+esc(it.label)+'">'+esc(it.label)+'</span>'
       + '<span class="cst '+(it.estado==='falta'||it.estado==='corrupto'?'no':'has')+'">'+(EST_TXT[it.estado]||it.estado)+'</span>'
       + extra + '</div>';
   }).join('');
   if (items.length > 300) filas += '<div class="crow"><span class="ctit">… lista recortada a 300 filas (afina la selección para ver el resto)</span></div>';
-  lst.innerHTML = '<div class="clist">'+filas+'</div>';
+  lst.innerHTML =
+    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">'
+    + '<button class="btn btn-ghost" onclick="invMarcarFaltantes(true)">☑️ Marcar todas las pendientes</button>'
+    + '<button class="btn btn-ghost" onclick="invMarcarFaltantes(false)">◻️ Quitar marcas</button>'
+    + '<button class="btn btn-go" onclick="invGenerarSeleccion()">▶️ Generar las marcadas (<span id="invSelN">'+INV_SEL.size+'</span>)</button>'
+    + '<span class="note">Marca ✔ solo las que TÚ quieras. El tope «generar solo las primeras N» también manda aquí.</span>'
+    + '</div>'
+    + '<div class="clist">'+filas+'</div>';
 }
 window.invAnalizar = invAnalizar;
 
 /* ════════ 🎯 GENERAR SOLO LO QUE FALTA ════════ */
 async function invGenerarFaltantes(){
-  if (typeof RUNNING!=='undefined' && RUNNING){ logLine('Ya hay un lote en marcha.','err'); return; }
-  if (!INV.listo){ logLine('⏳ Espera: el inventario aún está cargando.','err'); return; }
+  if (typeof RUNNING!=='undefined' && RUNNING){ invMsg('⏳ Ya hay un lote en marcha; espera o pulsa ⏹ Detener.'); logLine('Ya hay un lote en marcha.','err'); return; }
+  if (!INV.listo){ invMsg('⏳ Espera: el inventario aún está cargando.'); logLine('⏳ Espera: el inventario aún está cargando.','err'); return; }
   // si no seleccionaste nada, se toma TODO el sistema activo
   if (MODO==='fitness' && !combosSeleccionados().length && typeof selTodo==='function') selTodo();
   if (MODO==='pelu' && !clasesPeluSeleccionadas().length && typeof selPeluTodo==='function') selPeluTodo();
@@ -502,10 +547,131 @@ async function invGenerarFaltantes(){
   set('optSkipP', true); set('optRegenP', false);
   set('optSkipH', true); set('optSkipC', true);
   invAnalizar();
+  invMsg('🎯 Lote lanzado: solo lo que falta · el avance sale en la barra y el registro negro de abajo.');
   logLine('🎯 Generar SOLO lo que falta · omitir existentes ✅ · forzar regenerar ❌ · guardián activo.','info');
   iniciar();
 }
 window.invGenerarFaltantes = invGenerarFaltantes;
+
+/* ════════ ▶️ GENERAR LAS MARCADAS · selección manual fila por fila ════════
+   Fátima marca ✔ las clases que quiere en la lista del análisis y este
+   runner genera SOLO esas, con las mismas piezas del motor (mismos prompts,
+   mismas claves, misma galería de revisión, mismo guardián y mismo tope). */
+async function generarItem(it, presupuesto){
+  var g = it.gen || {};
+  if (presupuesto===undefined || presupuesto===null) presupuesto = Infinity;
+  if (it.kind==='fitness-img'){
+    var cb = g.combo, v = g.v;
+    var lista = (cb.ejercicios && cb.ejercicios.length) ? cb.ejercicios : MOTOR_PROMPTS.ejerciciosDe(cb.grupo, cb.equipo, cb.nej, cb.motor);
+    if (!lista.length) throw new Error(cb.claveImgBase+' sin ejercicios');
+    var armar = async function(){
+      var srcs = [];
+      for (var i=0;i<lista.length;i++){
+        if (STOP) break;
+        srcs.push(await genImagen(MOTOR_PROMPTS.fitnessSingle(cb.grupo, cb.equipo, cb.motor, lista[i]), {noRef:true}));
+      }
+      var imgs = await Promise.all(srcs.map(loadImgSafe));
+      return componerLamina(imgs, lista, cb.grupo, cb.equipo);
+    };
+    var blob = await armar();
+    await addJob({ label:it.clave+' · lámina', blob:blob, driveName:it.clave+'.jpg', upload:function(bl){ return subirLaminaVersion(cb.claveImgBase, v, bl); }, regen:armar, restore:{kind:'fitness-img', base:cb.claveImgBase, v:v} });
+    return 1;
+  }
+  if (it.kind==='fitness-vid'){
+    var cb2 = g.combo, titulo = (g.i+1)+'. '+g.nombre;
+    var genV = async function(){ return fetchToBlob(await genVideo(MOTOR_PROMPTS.fitnessVideo(cb2.grupo, cb2.equipo, cb2.motor, g.nombre))); };
+    var b2 = await genV();
+    await addJob({ label:'🎬 '+it.clave, blob:b2, isVideo:true, driveName:it.clave+'.mp4', upload:function(bl){ return subirVideo(it.clave, bl, titulo); }, regen:genV, restore:{kind:'fitness-vid', clave:it.clave, titulo:titulo} });
+    return 1;
+  }
+  if (it.kind==='pelu-img'){
+    var c = g.clase;
+    var genI = async function(){ return fetchToBlob(await genImagen(MOTOR_PROMPTS.peluqueria(c.cat, 'cliente', c))); };
+    var b3 = await genI();
+    await addJob({ label:c.id+' · cliente', blob:b3, driveName:c.slug+'_'+c.id+'_cliente.jpg', upload:function(bl){ return subirPelu(c, bl, 'cliente'); }, regen:genI, restore:{kind:'pelu-img', claseId:c.id, variant:'cliente'} });
+    return 1;
+  }
+  if (it.kind==='pelu-vid'){
+    var c2 = g.clase;
+    var pasos = (typeof pasosDeClase==='function') ? pasosDeClase(c2.txt) : [];
+    if (!pasos.length){
+      var genA = async function(){ return fetchToBlob(await genVideo(MOTOR_PROMPTS.build({cat:c2.cat, catId:c2.cat, titulo:c2.titulo}, 'vid').prompt)); };
+      var b4 = await genA();
+      await addJob({ label:c2.id+' · 🎬 video', blob:b4, isVideo:true, driveName:c2.slug+'_'+c2.id+'_video.mp4', upload:function(bl){ return subirPeluVideo(c2, bl); }, regen:genA, restore:{kind:'pelu-vid-apoyo', claseId:c2.id} });
+      return 1;
+    }
+    // solo los pasos que FALTAN (los existentes se saltan solos)
+    var hechos = 0;
+    for (var pi=0; pi<pasos.length; pi++){
+      if (STOP) break;
+      if (hechos>=presupuesto){ logLine('🔢 Tope alcanzado dentro del carrusel de '+c2.id+' · el resto queda para la próxima tanda.','info'); break; }
+      var estP = invEstado('pelu-paso', c2.id+'#'+(pi+1));
+      if (estP==='existe' || estP==='galeria' || estP==='drive'){ logLine('⏭️ '+c2.id+' · paso '+(pi+1)+' ya existe · omitido','skip'); continue; }
+      MOTOR_GUARD.declarar('pelu-paso', c2.id+'#'+(pi+1), 'falta');
+      var nn = String(pi+1).padStart(2,'0');
+      var genP = (function(prompt){ return async function(){ return fetchToBlob(await genVideo(prompt)); }; })(MOTOR_PROMPTS.peluqueriaPaso(c2.cat, c2.titulo, c2.niv, pasos[pi]));
+      var b5 = await genP();
+      await addJob({ label:c2.id+' · paso '+(pi+1)+'/'+pasos.length, blob:b5, isVideo:true, driveName:c2.slug+'_'+c2.id+'_paso_'+nn+'.mp4', upload:(function(idx){ return function(bl){ return subirPeluPaso(c2, idx, bl); }; })(pi), regen:genP, restore:{kind:'pelu-vid-paso', claseId:c2.id, idx:pi} });
+      hechos++;
+    }
+    return hechos;
+  }
+  if (it.kind==='hub'){
+    var b = g.b;
+    var genH = async function(){ return fetchToBlob(await genImagen(HUB_PROMPT[b.n] || ('Professional elegant image about '+b.nom+', photorealistic, no text'))); };
+    var b6 = await genH();
+    await addJob({ label:'Hub · '+b.nom, blob:b6, driveName:'hub_'+b.n+'.jpg', upload:function(bl){ return subirHub(b.n, bl); }, regen:genH, restore:{kind:'hub-img', n:b.n} });
+    return 1;
+  }
+  if (it.kind==='corte'){
+    var id = g.id;
+    var genC = async function(){ return fetchToBlob(await genImagen(CORTE_PROMPT[id])); };
+    var b7 = await genC();
+    await addJob({ label:id+' · '+CORTE_LBL[id], blob:b7, driveName:'corte_'+id+'.jpg', upload:function(bl){ return subirCorte(id, bl); }, regen:genC, restore:{kind:'corte-img', id:id} });
+    return 1;
+  }
+  throw new Error('Tipo desconocido: '+it.kind);
+}
+
+async function invGenerarSeleccion(){
+  if (typeof RUNNING!=='undefined' && RUNNING){ invMsg('⏳ Ya hay un lote en marcha; espera a que termine o pulsa ⏹ Detener.'); return; }
+  if (!INV.listo){ invMsg('⏳ El inventario aún está cargando.'); return; }
+  var sel = ULT_ITEMS.filter(function(it){ return INV_SEL.has(invKey(it)); });
+  if (!sel.length){ invMsg('Marca ✔ al menos una fila pendiente de la lista y vuelve a pulsar ▶️.'); return; }
+  if (!replicateKey()){ if(!confirm('No hay token de Replicate guardado. ¿El proxy ya tiene REPLICATE_API_TOKEN? Aceptar para continuar.')) return; }
+  if (GEN==='auto'){ var u = await ensureAuth(); if(!u){ logLine('Sin sesión admin no se puede subir.','err'); return; } }
+
+  RUNNING = true; STOP = false;
+  var bGo=document.getElementById('btnGo'), bSt=document.getElementById('btnStop');
+  if (bGo) bGo.style.display='none';
+  if (bSt) bSt.style.display='inline-block';
+  var limite = (typeof loteLimite==='function') ? loteLimite() : 0;
+  invMsg('▶️ Generando '+sel.length+' marcada(s)'+(limite?(' · tope: '+limite+' nuevas'):'')+' — el avance sale en la barra y el registro de abajo.');
+  logLine('▶️ Selección manual · '+sel.length+' elemento(s) marcados'+(limite?(' · tope: '+limite):''),'info');
+
+  var done=0, ok=0, omit=0, err=0, generadas=0;
+  for (var i=0;i<sel.length;i++){
+    var it = sel[i];
+    if (STOP) break;
+    if (limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s). Recarga y vuelve para las siguientes.','info'); break; }
+    setProg(done, sel.length, it.clave+' ('+(done+1)+'/'+sel.length+')');
+    try{
+      // re-verificación al momento (por si algo cambió desde el análisis)
+      var est = invEstado(it.kind, it.clave);
+      if (est==='existe' || est==='existe-legado' || est==='galeria' || est==='drive'){
+        logLine('⏭️ '+it.clave+' ya existe ('+est+') · omitida','skip'); omit++; done++; continue;
+      }
+      if (it.kind!=='pelu-vid') MOTOR_GUARD.declarar(it.kind, it.clave, 'falta'); // pelu-vid declara paso a paso
+      var n = await generarItem(it, limite ? (limite - generadas) : null);
+      ok++; generadas += (n||1); done++;
+      INV_SEL.delete(invKey(it));
+    }catch(e){ err++; done++; logLine('❌ '+it.clave+': '+(e.message||e),'err'); }
+  }
+  finLote(done, sel.length, ok, omit, err, 'Selección manual');
+  invMsg('🏁 Selección manual terminada · ✅ '+ok+' · ⏭️ '+omit+' · ❌ '+err+(GEN==='revisar'?' — revisa la galería y pulsa «Subir aprobadas».':''));
+  invAnalizar();
+}
+window.invGenerarSeleccion = invGenerarSeleccion;
 
 /* ════════ PANEL «PRODUCCIÓN INTELIGENTE» ════════ */
 function chipsGlobal(){
@@ -529,7 +695,7 @@ function chipsGlobal(){
        + pill('🎓 Academia video '+vidC+'/'+tot + (vidP ? (' · 🟡 '+vidP) : ''))
        + pill('🏋️ láminas '+laminas)
        + pill('🏋️ clips '+clips)
-       + pill('🎴 hub '+hubOk)
+       + pill('🎴 hub '+hubOk+'/9')
        + pill('✂️ corte '+corteOk+'/7');
 }
 function montarPanel(){
@@ -550,10 +716,19 @@ function montarPanel(){
     +   '<button class="btn btn-ghost" onclick="invVerificarPasosStorage()">🔬 Verificar pasos en Storage</button>'
     +   '<button class="btn btn-go" onclick="invGenerarFaltantes()">🎯 Generar SOLO lo que falta</button>'
     + '</div>'
-    + '<div class="note" id="invResumen" style="margin-top:10px;">Elige el sistema y la selección arriba, y pulsa <b>🔍 Analizar</b> para ver qué existe y qué falta antes de gastar un solo crédito.</div>'
+    + '<div class="note" id="invMsg" style="margin-top:8px;color:var(--gold2);min-height:14px;"></div>'
+    + '<div class="note" id="invResumen" style="margin-top:6px;">Elige el sistema y la selección arriba, y pulsa <b>🔍 Analizar</b> para ver qué existe y qué falta antes de gastar un solo crédito. En la lista puedes marcar ✔ una por una y generar solo esas.</div>'
     + '<div id="invLista" style="margin-top:10px;"></div>';
   cardExec.parentNode.insertBefore(div, cardExec);
 }
+/* Mensajes DENTRO del panel: los avisos también van al registro de abajo,
+   pero aquí quedan a la vista para que ningún botón parezca sin respuesta. */
+function invMsg(txt){
+  var el = document.getElementById('invMsg');
+  if (el) el.textContent = txt || '';
+}
+window.invMsg = invMsg;
+
 var _rpT = null;
 function refrescarPanel(){
   clearTimeout(_rpT);
