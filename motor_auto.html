@@ -641,30 +641,47 @@ async function pasosEnStorage(slug, id){
 // ── índice de la carpeta de respaldo en Drive («Fátima Caldea · Generados») ──
 // Permite mapear lo que SOLO está en Drive y nunca se registró en Firebase.
 var DRIVE_INDEX=null;
+// Lista paginada de archivos de Drive → añade {nombre→id} al índice.
+async function driveListarQuery(query, out){
+  let pageToken='', paginas=0;
+  do{
+    const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(query)+'&fields=nextPageToken,files(id,name)&pageSize=1000'+(pageToken?'&pageToken='+encodeURIComponent(pageToken):''),{headers:{Authorization:'Bearer '+DRIVE.token}});
+    if(!r.ok) break;
+    const d=await r.json();
+    (d.files||[]).forEach(f=>{ if(!(f.name in out)) out[f.name]=f.id; });
+    pageToken=d.nextPageToken||'';
+  }while(pageToken && ++paginas<10);   // tope de seguridad: 10.000 archivos
+}
 async function driveIndice(fresco){
   if(!DRIVE.token) return null;
   if(DRIVE_INDEX && !fresco) return DRIVE_INDEX;
+  const out={};
+  // 1) TODAS las carpetas «Fátima Caldea · Generados» — Fátima tiene la carpeta
+  //    DUPLICADA en su Drive (una llena y una vacía): hay que escanear todas,
+  //    no solo la primera que devuelva la búsqueda.
   try{
-    const folder=await driveFolder();
-    const out={}; let pageToken='';
-    do{
-      const q=encodeURIComponent(`'${folder}' in parents and trashed=false`);
-      const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=nextPageToken,files(id,name)&pageSize=1000'+(pageToken?'&pageToken='+encodeURIComponent(pageToken):''),{headers:{Authorization:'Bearer '+DRIVE.token}});
-      if(!r.ok) break;
-      const d=await r.json();
-      (d.files||[]).forEach(f=>{ if(!(f.name in out)) out[f.name]=f.id; });
-      pageToken=d.nextPageToken||'';
-    }while(pageToken);
-    DRIVE_INDEX=out;
-    return out;
-  }catch(_){ return null; }
+    const rf=await fetch('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent("name='Fátima Caldea · Generados' and mimeType='application/vnd.google-apps.folder' and trashed=false")+'&fields=files(id)',{headers:{Authorization:'Bearer '+DRIVE.token}});
+    if(rf.ok){
+      const folders=((await rf.json()).files)||[];
+      for(const f of folders) await driveListarQuery("'"+f.id+"' in parents and trashed=false", out);
+    }
+  }catch(_){}
+  // 2) TODO el Drive (imágenes y videos). Con el permiso de solo-lectura ampliado
+  //    ve el Drive completo; si el token solo tiene drive.file, Google devuelve
+  //    únicamente lo creado por el motor (no falla, solo ve menos).
+  try{
+    await driveListarQuery("(mimeType contains 'video/' or mimeType contains 'image/') and trashed=false", out);
+  }catch(_){}
+  DRIVE_INDEX=out;
+  return out;
 }
 // Busca en el índice de Drive el archivo de una clase (nombres que usa driveBackup/manAdd)
 function driveBuscaClase(idx, claseId, kind){
   if(!idx) return null;
   const nombres=Object.keys(idx);
   if(kind==='img'){
-    const n=nombres.find(n=>n.endsWith('_'+claseId+'_cliente.jpg')||n.endsWith('_'+claseId+'_img.jpg'));
+    // _imagen.jpg = pelu_drive_fix (modo Drive) · _cliente.jpg = respaldo del lote · _img.jpg = Subida inteligente
+    const n=nombres.find(n=>n.endsWith('_'+claseId+'_imagen.jpg')||n.endsWith('_'+claseId+'_cliente.jpg')||n.endsWith('_'+claseId+'_img.jpg'));
     return n?{name:n,id:idx[n],tipo:'img'}:null;
   }
   const nv=nombres.find(n=>n.endsWith('_'+claseId+'_video.mp4')||n.endsWith('_'+claseId+'_vid.mp4'));
