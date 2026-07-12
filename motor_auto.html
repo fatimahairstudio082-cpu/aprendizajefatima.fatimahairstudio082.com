@@ -412,7 +412,7 @@
     <div class="note" id="genDestHint" style="margin-top:6px;">🔥 <b>Firebase</b>: cada archivo se guarda en Firebase (lo de siempre) + copia de respaldo en Drive.</div>
     <div class="reviewbar" style="border:none;padding-top:4px;margin-top:4px;align-items:center;">
       <span class="note" style="margin-right:6px;">🔢 <b>Generar solo</b> las primeras</span>
-      <input id="lote_limite" type="number" min="0" max="999" value="10" style="width:72px;background:var(--bg3);border:1px solid var(--gold2);border-radius:6px;color:var(--text);padding:7px 9px;font-family:'JetBrains Mono',monospace;font-weight:700;">
+      <input id="lote_limite" type="number" min="0" max="999" value="10" oninput="refrescarContadores()" style="width:72px;background:var(--bg3);border:1px solid var(--gold2);border-radius:6px;color:var(--text);padding:7px 9px;font-family:'JetBrains Mono',monospace;font-weight:700;">
       <span class="note" style="margin-left:6px;">que <b>falten</b> (pon <b>0</b> = todas las que falten)</span>
     </div>
     <div class="note" style="margin-top:4px;color:var(--gold2);">💡 Así controlas el gasto: con "Omitir las que ya están" ✅ y este número en <b>10</b>, cada vez generas solo <b>10 nuevas</b> — nunca repites las que ya tienes. Recargas, vuelves y genera las 10 siguientes.</div>
@@ -502,8 +502,14 @@ function combosSeleccionados(){
 }
 function updateCount(){
   const k = combosSeleccionados().length;
-  document.getElementById('selCount').textContent = k+' lámina(s) seleccionada(s)';
+  document.getElementById('selCount').textContent = k+' lámina(s) seleccionada(s)'+topeTexto();
   document.getElementById('btnGo').disabled = (k===0||RUNNING);
+}
+// Aclara junto al contador que la selección NO es lo que se genera:
+// el tope manda. Elimina el miedo a "genera 81 sí o sí".
+function topeTexto(){
+  const l = (typeof loteLimite==='function') ? loteLimite() : 0;
+  return l ? ' · pero se generarán máx. '+l+' nuevas (tu tope; las que ya están se omiten)' : ' · se generarán TODAS las que falten (tope en 0)';
 }
 updateCount();
 
@@ -571,7 +577,7 @@ function clasesPeluSeleccionadas(){
 function updateCountP(){
   const k=clasesPeluSeleccionadas().length;
   const nv=SELP.var.size||1;
-  document.getElementById('selCountP').textContent = k+' clase(s) × '+nv+' variante(s) = '+(k*nv)+' imágenes';
+  document.getElementById('selCountP').textContent = k+' clase(s) × '+nv+' variante(s) = '+(k*nv)+' imágenes'+topeTexto();
   if(MODO==='pelu') document.getElementById('btnGo').disabled = (k===0||RUNNING);
 }
 function selPeluTodo(){ PELU_CATS.forEach(c=>SELP.cat.add(c)); document.querySelectorAll('#chPeluCat .chip').forEach(c=>c.classList.add('on')); updateCountP(); }
@@ -625,6 +631,16 @@ function loteLimite(){
   const el=document.getElementById('lote_limite');
   const v=el?parseInt(el.value):0;
   return (isNaN(v)||v<0)?0:v;
+}
+// Refresca el contador visible del sistema activo al cambiar el tope,
+// para que Fátima vea al instante "se generarán máx. N nuevas".
+function refrescarContadores(){
+  try{
+    if(MODO==='pelu') updateCountP();
+    else if(MODO==='hub' && typeof updateCountH==='function') updateCountH();
+    else if(MODO==='corte' && typeof updateCountC==='function') updateCountC();
+    else updateCount();
+  }catch(_){}
 }
 
 // helper de cierre de lote
