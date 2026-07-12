@@ -410,7 +410,13 @@
       </div>
     </div>
     <div class="note" id="genDestHint" style="margin-top:6px;">🔥 <b>Firebase</b>: cada archivo se guarda en Firebase (lo de siempre) + copia de respaldo en Drive.</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <div class="reviewbar" style="border:none;padding-top:4px;margin-top:4px;align-items:center;">
+      <span class="note" style="margin-right:6px;">🔢 <b>Generar solo</b> las primeras</span>
+      <input id="lote_limite" type="number" min="0" max="999" value="10" style="width:72px;background:var(--bg3);border:1px solid var(--gold2);border-radius:6px;color:var(--text);padding:7px 9px;font-family:'JetBrains Mono',monospace;font-weight:700;">
+      <span class="note" style="margin-left:6px;">que <b>falten</b> (pon <b>0</b> = todas las que falten)</span>
+    </div>
+    <div class="note" style="margin-top:4px;color:var(--gold2);">💡 Así controlas el gasto: con "Omitir las que ya están" ✅ y este número en <b>10</b>, cada vez generas solo <b>10 nuevas</b> — nunca repites las que ya tienes. Recargas, vuelves y genera las 10 siguientes.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
       <button class="btn btn-ghost" id="btnPrueba" onclick="pruebaUna()" style="border-color:var(--gold2);color:var(--gold2);">🧪 Generar 1 de prueba</button>
       <button class="btn btn-go" id="btnGo" onclick="iniciar()">▶️ Iniciar lote</button>
       <button class="btn btn-stop" id="btnStop" onclick="detener()" style="display:none;">⏹ Detener</button>
@@ -607,6 +613,16 @@ function setModo(m){
   refreshModelSelectors();
 }
 
+// ── Límite de lote: "generar solo las primeras N que falten" ──
+// Devuelve el tope leído del campo (0 = sin tope). Lo usan iniciar()/iniciarPelu()
+// para cortar tras N generaciones NUEVAS reales (las omitidas no cuentan),
+// así Fátima controla el gasto y nunca duplica lo ya generado.
+function loteLimite(){
+  const el=document.getElementById('lote_limite');
+  const v=el?parseInt(el.value):0;
+  return (isNaN(v)||v<0)?0:v;
+}
+
 // helper de cierre de lote
 function finLote(done,total,ok,omit,err,nombre){
   setProg(done,total,`Terminado · ✅ ${ok} · ⏭️ ${omit} · ❌ ${err}`);
@@ -675,14 +691,17 @@ async function iniciarPelu(){
   document.getElementById('preview').innerHTML='';
   const skip=document.getElementById('optSkipP').checked;
   const regen=document.getElementById('optRegenP').checked;
+  const limite=loteLimite();
   const total=clases.length*vars.length;
-  logLine('▶️ Peluquería · '+clases.length+' clase(s) × '+vars.length+' '+(tipoP==='vid'?'video(s)':'variante(s)')+' = '+total,'info');
+  logLine('▶️ Peluquería · '+clases.length+' clase(s) × '+vars.length+' '+(tipoP==='vid'?'video(s)':'variante(s)')+' = '+total+(limite?' · tope: '+limite+' nuevas':''),'info');
 
-  let done=0, ok=0, omit=0, err=0;
+  let done=0, ok=0, omit=0, err=0, generadas=0;
   for(const clase of clases){
     if(STOP) break;
+    if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s) generada(s). Recarga y vuelve para las siguientes.','info'); break; }
     for(const variant of vars){
       if(STOP) break;
+      if(limite && generadas>=limite) break;
       setProg(done,total,clase.id+' · '+variant+' ('+(done+1)+'/'+total+')');
       try{
         if(tipoP==='vid'){
@@ -696,18 +715,19 @@ async function iniciarPelu(){
             const genV=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.build({cat:clase.cat,catId:clase.cat,titulo:clase.titulo},'vid').prompt));
             const blob=await genV();
             await addJob({ label:clase.id+' · 🎬 video', blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_video.mp4', upload:(bl)=>subirPeluVideo(clase,bl), regen:genV, restore:{kind:'pelu-vid-apoyo', claseId:clase.id} });
-            ok++; done++; continue;
+            ok++; generadas++; done++; continue;
           }
           logLine('🎬 '+clase.id+' · '+pasos.length+' paso(s) de video (carrusel)…','info');
           for(let pi=0; pi<pasos.length; pi++){
             if(STOP) break;
+            if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s). Recarga y vuelve para las siguientes.','info'); break; }
             const nn=String(pi+1).padStart(2,'0');
             const prompt=MOTOR_PROMPTS.peluqueriaPaso(clase.cat, clase.titulo, clase.niv, pasos[pi]);
             const genP=async()=>fetchToBlob(await genVideo(prompt));
             try{
               const blob=await genP();
               await addJob({ label:clase.id+' · paso '+(pi+1)+'/'+pasos.length, blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_paso_'+nn+'.mp4', upload:((idx)=>(bl)=>subirPeluPaso(clase,idx,bl))(pi), regen:genP, restore:{kind:'pelu-vid-paso', claseId:clase.id, idx:pi} });
-              ok++;
+              ok++; generadas++;
             }catch(e){ err++; logLine('❌ '+clase.id+' paso '+(pi+1)+': '+(e.message||e),'err'); }
           }
           done++; continue;
@@ -717,7 +737,7 @@ async function iniciarPelu(){
         const gen=async()=>fetchToBlob(await genImagen(MOTOR_PROMPTS.peluqueria(clase.cat, variant, clase)));
         const blob=await gen();
         await addJob({ label:clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen, restore:{kind:'pelu-img', claseId:clase.id, variant} });
-        ok++; done++;
+        ok++; generadas++; done++;
       }catch(e){ err++; done++; logLine('❌ '+clase.id+' · '+variant+': '+(e.message||e),'err'); }
     }
   }
@@ -1876,10 +1896,13 @@ async function iniciar(){
 
   const skip=document.getElementById('optSkip').checked;
   const regen=document.getElementById('optRegen').checked;
-  let done=0, ok=0, omit=0, err=0;
+  const limite=loteLimite();
+  let done=0, ok=0, omit=0, err=0, generadas=0;
+  if(limite) logLine('🔢 Tope de este lote: '+limite+' nueva(s) · las que ya están se omiten sin gastar.','info');
 
   for(const combo of combos){
     if(STOP) break;
+    if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s) generada(s). Recarga y vuelve para las siguientes.','info'); break; }
     const base = combo.claveImgBase;          // grupo_obj_equipo_nej
     const lista = combo.ejercicios && combo.ejercicios.length ? combo.ejercicios : MOTOR_PROMPTS.ejerciciosDe(combo.grupo,combo.equipo,combo.nej,combo.motor);
 
@@ -1891,6 +1914,7 @@ async function iniciar(){
       logLine('🎬 '+base+' · generando '+lista.length+' clip(s) de ejercicio (carrusel)…','info');
       for(let i=0;i<lista.length;i++){
         if(STOP) break;
+        if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s). Recarga y vuelve para las siguientes.','info'); break; }
         const nombreEj=lista[i];
         const clave=claveClip(base,i,nombreEj);
         const titulo=(i+1)+'. '+nombreEj;
@@ -1901,7 +1925,7 @@ async function iniciar(){
           const gen=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.fitnessVideo(combo.grupo,combo.equipo,combo.motor,nombreEj)));
           const blob=await gen();
           await addJob({ label:'🎬 '+base+' · '+titulo, blob, isVideo:true, driveName:clave+'.mp4', upload:(bl)=>subirVideo(clave,bl,titulo), regen:gen, restore:{kind:'fitness-vid', clave, titulo} });
-          ok++;
+          ok++; generadas++;
         }catch(e){ err++; logLine('❌ '+clave+': '+(e.message||e),'err'); }
       }
       done++;
@@ -1926,6 +1950,7 @@ async function iniciar(){
       let hechas=0;
       for(let v=1; v<=nVer; v++){
         if(STOP) break;
+        if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s). Recarga y vuelve para las siguientes.','info'); break; }
         const claveV=base+'_v'+v;
         if(skip && !regen && await yaExiste(claveV)){ logLine('⏭️ '+claveV+' ya existe · omitida','skip'); omit++; continue; }
         logLine('🎨 '+claveV+' · generando '+lista.length+' imágenes…','info');
@@ -1933,7 +1958,7 @@ async function iniciar(){
         const blob=await armarLamina();
         if(STOP) break;
         await addJob({ label:claveV+' · lámina', blob, driveName:claveV+'.jpg', upload:(bl)=>subirLaminaVersion(base,v,bl), regen:armarLamina, restore:{kind:'fitness-img', base, v} });
-        hechas++; ok++;
+        hechas++; ok++; generadas++;
         logLine('✅ '+claveV+' lista ('+Math.round(blob.size/1024)+' KB)','ok');
       }
       done++;
