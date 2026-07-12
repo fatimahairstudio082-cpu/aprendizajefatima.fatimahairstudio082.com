@@ -135,11 +135,48 @@ function estadoPeluVideo(id){
   if (d && d.videoActualizadoEn) return { global:'existe-legado', hechos:hechos, total:total };
   return { global:'falta', hechos:hechos, total:total };
 }
+/* Los clips de video se buscan IGUAL que los lee el Bloque 5: por PREFIJO
+   base + índice _NN_, tolerando el prefijo antiguo dia{N}_ y cualquier slug
+   de ejercicio (los clips viejos se generaron con otros nombres — con la
+   clave exacta salían como "faltantes" y se habrían REGENERADO pagando). */
+/* Prefijo determinístico de un clip: la base SIEMPRE son 4 partes
+   (grupo_motor_equipo_nej) + índice _NN_. Así un ejercicio con números
+   en el nombre (p. ej. "prensa_45") no confunde el corte. */
+function prefijoClip(clave){
+  var t = String(clave).replace(/^dia\d+_/, '').split('_');
+  if (t.length >= 6 && /^\d\d$/.test(t[4])) return t.slice(0,4).join('_') + '_' + t[4] + '_';
+  return null;
+}
+/* El enlace del clip "venga como venga": misma cadena de campos que
+   reproduce el Bloque 5 (bloque5_fitness.html · getClaseVideoClips). */
+function urlClip(d){
+  if (!d) return '';
+  return d.url_video || d.url || d.link || d.enlace || d.video || d.url_drive || d.driveUrl || d.src || '';
+}
+function fbClipEstado(clave){
+  var V = INV.col.fitness_videos;
+  var u = urlClip(V[clave]);
+  if (u) return linkOk(u) ? 'existe' : 'corrupto';
+  var pref = prefijoClip(clave);
+  if (!pref) return 'falta';
+  var keys = Object.keys(V), mejor = null;
+  for (var i=0;i<keys.length;i++){
+    var kk = keys[i].replace(/^dia\d+_/, '');
+    if (kk.indexOf(pref)===0){
+      var uu = urlClip(V[keys[i]]);
+      if (uu){
+        if (linkOk(uu)) return 'existe';
+        mejor = 'corrupto';
+      }
+    }
+  }
+  return mejor || 'falta';
+}
 function fbEstado(kind, clave){
   var C=INV.col, d=null, u=null;
   switch(kind){
     case 'fitness-img': d=C.fitness_imgs[clave];  u=d && (d.url||d.url_jpg); break;
-    case 'fitness-vid': d=C.fitness_videos[clave];u=d && d.url_video; break;
+    case 'fitness-vid': return fbClipEstado(clave);
     case 'pelu-img':    d=C.clases_imgs[clave];   u=d && (d.url_jpg||d.url); break;
     case 'hub':         d=C.hub_tarjetas[clave];  u=d && d.imgUrl; break;
     case 'corte':       d=C.corte_modulos[clave]; u=d && d.imgUrl; break;
@@ -210,6 +247,21 @@ function driveArchivo(kind, clave){
   for (var i=0;i<noms.length;i++){
     var id = INV.drive.get(noms[i].toLowerCase());
     if (id) return { id:id, nombre:noms[i] };
+  }
+  // Clips de fitness: también por prefijo base_NN_ (mismo criterio que Firebase,
+  // los respaldos viejos pueden llevar otro slug de ejercicio o dia{N}_ delante).
+  if (kind==='fitness-vid'){
+    var pref = prefijoClip(clave);
+    if (pref){
+      pref = pref.toLowerCase();
+      var encontrado = null;
+      INV.drive.forEach(function(id2, nombre){
+        if (encontrado) return;
+        var nn = nombre.replace(/^fitness_/, '').replace(/^dia\d+_/, '');
+        if (nn.indexOf(pref)===0 && /\.mp4$/.test(nombre)) encontrado = { id:id2, nombre:nombre };
+      });
+      if (encontrado) return encontrado;
+    }
   }
   return null;
 }
@@ -744,6 +796,26 @@ function refrescarPanel(){
     if (ULT_ANALISIS) invAnalizar();
   }, 400);
 }
+
+/* ════════ RE-ANÁLISIS AUTOMÁTICO ════════
+   Si ya hay un análisis en pantalla, se rehace solo al cambiar de sistema,
+   de tipo 🖼️/🎬 o la selección de chips — antes la lista se quedaba vieja
+   y parecía que "los videos no funcionaban". */
+var _reT = null;
+function reanalizarSiAbierto(){
+  if (!ULT_ANALISIS) return;
+  clearTimeout(_reT);
+  _reT = setTimeout(function(){ try{ invAnalizar(); }catch(e){ console.warn('[inventario] re-análisis:', e); } }, 300);
+}
+try{
+  document.querySelectorAll('input[name="tipo"], input[name="tipoP"], input[name="modo"]').forEach(function(r){
+    r.addEventListener('change', reanalizarSiAbierto);
+  });
+  if (typeof updateCount==='function'){ var _uc=updateCount;  updateCount  = function(){ _uc();  reanalizarSiAbierto(); }; }
+  if (typeof updateCountP==='function'){ var _up=updateCountP; updateCountP = function(){ _up();  reanalizarSiAbierto(); }; }
+  if (typeof updateCountH==='function'){ var _uh=updateCountH; updateCountH = function(){ _uh();  reanalizarSiAbierto(); }; }
+  if (typeof updateCountC==='function'){ var _uk=updateCountC; updateCountC = function(){ _uk();  reanalizarSiAbierto(); }; }
+}catch(e){ console.warn('[inventario] hooks de re-análisis:', e); }
 
 /* ════════ ARRANQUE ════════ */
 montarPanel();

@@ -76,6 +76,19 @@ marca "Forzar regenerar", o usa el 🔄 de la galería, o entra desde
   por fin se ven como 🟡 parcial. Para carruseles antiguos (subidos antes de
   este cambio) usa **🔬 Verificar pasos en Storage**.
 
+## Videos de fitness: cómo los reconoce
+
+Los clips se emparejan **igual que los lee el Bloque 5**: por combinación +
+número de posición (`grupo_obj_equipo_nej_NN_…`), aceptando los clips
+antiguos aunque tengan otro nombre de ejercicio, el prefijo `diaN_` delante
+o el enlace guardado en otro campo (`url`, `link`, etc.). Así lo ya generado
+sale 🟢 y no se paga dos veces.
+
+Única excepción (sistema viejísimo): el video único "por día"
+(`dia5_masa_gluteo`, un solo video para toda la clase) NO cuenta como
+carrusel — si generas el carrusel de esa clase, convivirán y el Bloque 5
+mostrará el carrusel nuevo (prioridad de clips sobre el video único).
+
 ## Datos (para no romper nada)
 
 Solo se AÑADEN campos: `pasos` (mapa paso_NN → url) y `pasos_total` en
