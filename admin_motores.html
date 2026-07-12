@@ -463,7 +463,7 @@ body{
       <button class="amc-x" onclick="document.getElementById('amChatPanel').classList.remove('open')">×</button>
     </div>
     <div class="amc-body" id="amcBody">
-      <div class="amc-msg ia">¡Hola mi reina! 👑 Soy tu asistente. Puedo ayudarte a:<br/><br/>📚 Buscar una clase específica<br/>👥 Revisar accesos de una alumna<br/>🎨 Abrir M1/M2/M3 para generar media<br/>📊 Ver estado de las 360 clases<br/><br/>Pregúntame lo que quieras.</div>
+      <div class="amc-msg ia">¡Hola mi reina! 👑 Soy tu asistente. Puedo ayudarte a:<br/><br/>📚 Buscar una clase específica<br/>👥 Revisar accesos de una alumna<br/>🤖 Abrir el Motor Automático para generar media<br/>📊 Ver estado de las clases<br/><br/>Pregúntame lo que quieras.</div>
     </div>
     <div class="amc-input">
       <input type="text" id="amcIn" placeholder="Escribe tu pregunta…" onkeydown="if(event.key==='Enter')amcSend()"/>
@@ -810,9 +810,7 @@ function cardHTML(c, showCat){
         </div>
         <div class="studio-bar">✨   GENERAR CON IA   ✨</div>
         <div class="studio-bridge">
-          <button class="sb m1" onclick="openStudio('${c.id}','img')" title="Abrir Módulo 1 con el ID de esta clase pre-cargado">🎨 → M1 Imagen</button>
-          <button class="sb m2" onclick="openStudio('${c.id}','vid')" title="Abrir Módulo 2 con el ID de esta clase pre-cargado">🎬 → M2 Video</button>
-          <button class="sb m3" onclick="openStudio('${c.id}','aud')" title="Abrir Módulo 3 con el ID de esta clase pre-cargado">🔊 → M3 Voz</button>
+          <button class="sb m2" onclick="window.open('motor_auto.html','_blank')" title="Abrir el Motor Automático para generar imágenes y videos" style="grid-column:1 / -1;">🤖 → Motor Automático</button>
         </div>
       </div>
     </div>`;
@@ -1256,12 +1254,8 @@ window.amcSend = function(){
       r.innerHTML = `🔍 Usa la búsqueda arriba en el panel principal. Tienes <b>${(window.MOTOR_FLAT||[]).length}</b> clases disponibles. Filtra por categoría en el sidebar.`;
     } else if(low.includes('alumna') || low.includes('acceso') || low.includes('desbloquear')){
       r.innerHTML = `👥 Ve a la pestaña <b>"Alumnas & Accesos"</b> arriba. Selecciona la alumna, marca las clases con check y guarda. Se sincroniza con Firestore.`;
-    } else if(low.includes('imagen') || low.includes('m1')){
-      r.innerHTML = `🎨 Click en cualquier tarjeta de clase → botón <b>"🎨 → M1 Imagen"</b>. M1 se abre con el contexto pre-cargado para generar con IA.`;
-    } else if(low.includes('video') || low.includes('m2')){
-      r.innerHTML = `🎬 Click en la tarjeta de clase → <b>"🎬 → M2 Video"</b>. Igual que M1 pero para video.`;
-    } else if(low.includes('audio') || low.includes('voz') || low.includes('m3')){
-      r.innerHTML = `🔊 Click en la tarjeta de clase → <b>"🔊 → M3 Voz"</b>. M3 lee el guion automáticamente para TTS.`;
+    } else if(low.includes('imagen') || low.includes('video') || low.includes('generar') || low.includes('m1') || low.includes('m2') || low.includes('audio') || low.includes('voz') || low.includes('m3')){
+      r.innerHTML = `🤖 Usa el <b>Motor Automático</b> para generar imágenes y videos: pulsa <b>"🤖 → Motor Automático"</b> en cualquier tarjeta, o ábrelo desde el Centro de Administración. Genera en lotes, revisa y sube a Firebase.`;
     } else if(low.includes('estado') || low.includes('cuant')){
       const total = (window.MOTOR_FLAT||[]).length;
       r.innerHTML = `📊 Total <b>${total}</b> clases · ${Object.keys(window.MOTOR||{}).length} categorías. Mira los contadores en el sidebar para ver qué clases ya tienen media subida.`;

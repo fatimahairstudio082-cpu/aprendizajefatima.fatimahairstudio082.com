@@ -89,8 +89,8 @@ The point of both: browser talks to same-origin Netlify, keys never live in the 
 - `admin_motores.html` — assign/lock classes per student (`acceso_clases`); badge turns 🖼/🎥 when media exists for a claseId.
 - `panel_admin.html` + `panel_admin.js` — global credit pool + activate/deactivate students. (`admin2.html` is retired and just redirects here.)
 - `biblioteca.html` + `biblioteca.js` — upload videos/images/home cards/news.
-- `estudio.html` — private AI studio shell embedding `modulo1_imagen.html` (image gen), `modulo2_video.html` (video gen), `modulo3_voz.html` (browser TTS, no network), `modulo4_carpeta.html` (local folder, no network).
-- `motor_auto.html` + `motor_prompts.js` — batch AI generation panel: generate → review gallery (approve/regenerate/discard) → upload approved media to Firebase (+ optional Drive backup) at the contract keys above.
+- `motor_auto.html` + `motor_prompts.js` — the **only** generation tool in daily use: batch AI panel that generates → review gallery (approve/regenerate/discard) → uploads approved media to Firebase (+ optional Drive backup) at the contract keys above. Has a "generar solo N que falten" batch cap + "omitir las que ya están" so the owner generates in small tandas without duplicating cost.
+- `estudio.html` + `modulo1_imagen.html`/`modulo2_video.html`/`modulo3_voz.html`/`modulo4_carpeta.html` — the OLD private studio (M1–M4). The owner abandoned these (buggy) and generates everything via `motor_auto.html`. They are **hidden from the admin UI**: the `centro_admin.html` tabs and the `admin_motores.html` per-class studio-bridge buttons now point to `motor_auto.html`, and the old M1–M4 entries are commented out (files kept for possible reactivation). Don't re-surface them without being asked.
 - `escaner_faltantes_total.html` — read-only dashboard of missing/existing media across Academia (`clases_imgs`), Corte M1–M7, Hub cards, and a fitness summary; `escaner_clips_faltantes.html` is the per-class fitness clip detail.
 - One-shot repair tools (not daily-use): `reparar_registros_video.html`, `migrar_links_video.html`.
 
