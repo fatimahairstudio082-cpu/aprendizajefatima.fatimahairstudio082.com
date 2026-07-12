@@ -1,0 +1,23 @@
+{
+  "name": "Fátima Admin · Centro de Administración",
+  "short_name": "Fátima Admin",
+  "description": "Panel de administración de Fátima Pro: clases, créditos, biblioteca, motor automático y escáner.",
+  "start_url": "centro_admin.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#070a10",
+  "theme_color": "#0a0c12",
+  "lang": "es",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Motor Automático", "url": "motor_auto.html" },
+    { "name": "Escáner Total", "url": "escaner_faltantes_total.html" },
+    { "name": "Clases & Accesos", "url": "admin_motores.html" }
+  ]
+}

@@ -3,7 +3,17 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Fátima Pro · Centro de Administración</title>
+<title>Fátima Admin · Centro de Administración</title>
+<!-- ══ PWA · instalable como app con el ícono de Fátima (igual que el Hub) ══ -->
+<link rel="manifest" href="manifest-admin.json"/>
+<meta name="theme-color" content="#0a0c12"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Fátima Admin"/>
+<link rel="apple-touch-icon" href="apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png"/>
 <style>
   :root{
     --oro:#c9a84c; --oro2:#e6c97d; --bg:#070a10; --bg2:#0d1018;
@@ -180,6 +190,16 @@ function abrir(id){
 let inicial = 'clases';
 try{ const g = localStorage.getItem('fc_admin_tab'); if(g && TOOLS.some(t=>t.id===g)) inicial = g; }catch(_){}
 abrir(inicial);
+
+/* ══ PWA · registrar service worker → el Centro de Admin se puede INSTALAR
+      como app (icono de Fátima, pantalla propia), igual que el Hub. ══ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('service-worker.js')
+      .then(function(){ console.log('[Fátima Admin] service worker activo · app instalable'); })
+      .catch(function(e){ console.warn('[Fátima Admin] SW no registrado:', e); });
+  });
+}
 </script>
 </body>
 </html>
