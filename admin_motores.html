@@ -1045,6 +1045,10 @@ function optimizeImage(file, maxW=1200, q=0.85){
 }
 
 /* ════════════════ TAB ALUMNAS ════════════════ */
+/* Escapa texto que viene de Firestore (nombre/email de la alumna) antes de
+   pintarlo con innerHTML. Blindaje anti-XSS: una alumna podría registrarse con
+   un nombre malicioso; aquí queda inofensivo al mostrarse en el panel admin. */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 window.renderAlumnas = function(){
   const list = document.getElementById('almList');
   const q = (document.getElementById('almSearch').value||'').toLowerCase().trim();
@@ -1062,8 +1066,8 @@ window.renderAlumnas = function(){
     const n = (a.acceso_clases||[]).length;
     return `
       <div class="alm-item ${isOn?'active':''}" onclick="selectAlumna('${a.uid}')">
-        <div class="a-name">${a.nombre}</div>
-        <div class="a-email">${a.email}</div>
+        <div class="a-name">${esc(a.nombre)}</div>
+        <div class="a-email">${esc(a.email)}</div>
         <div class="a-stats">🔓 ${n} clases desbloqueadas · de ${FLAT.length} disponibles</div>
       </div>`;
   }).join('');
@@ -1098,8 +1102,8 @@ function renderAlumnaMain(){
   m.innerHTML = `
     <div class="alm-head">
       <div>
-        <h2>${CURRENT_ALUMNA.nombre}</h2>
-        <div class="a-mail">${CURRENT_ALUMNA.email}</div>
+        <h2>${esc(CURRENT_ALUMNA.nombre)}</h2>
+        <div class="a-mail">${esc(CURRENT_ALUMNA.email)}</div>
         <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
           <span class="pill ok">🔓 ${has} desbloqueadas</span>
           <span class="pill bio">🔒 ${total-has} bloqueadas</span>
@@ -1227,7 +1231,7 @@ window.saveAccessChanges = async function(){
     if(idx>=0) ALUMNAS[idx].acceso_clases = arr;
     ACCESS_DIRTY = false;
     document.getElementById('saveBar').classList.remove('on');
-    toast(`✅ <b>${arr.length}</b> clases desbloqueadas para <b>${CURRENT_ALUMNA.nombre}</b>`, 'ok');
+    toast(`✅ <b>${arr.length}</b> clases desbloqueadas para <b>${esc(CURRENT_ALUMNA.nombre)}</b>`, 'ok');
     renderAlumnas();
   }catch(e){
     console.error(e);

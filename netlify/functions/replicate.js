@@ -28,9 +28,20 @@ exports.handler = async (event) => {
   const url = 'https://api.replicate.com' + sub;
 
   const h = event.headers || {};
+
+  // ── Blindaje: el token de la dueña (variable de entorno) SOLO se usa para
+  //    peticiones que vengan del propio sitio. Así nadie de fuera puede llamar
+  //    a este puente sin token y gastar el saldo de Replicate de Fátima.
+  const origen = (h['origin'] || h['Origin'] || h['referer'] || h['Referer'] || '');
+  const esDominioPropio = /(^|\/\/)([a-z0-9-]+\.)*fatimahairstudio082\.com/i.test(origen)
+                       || /--aprendizajefatima\.netlify\.app/i.test(origen);
+
   let auth = h['authorization'] || h['Authorization'];
   if (!auth) {
-    const t = h['x-replicate-token'] || h['X-Replicate-Token'] || process.env.REPLICATE_API_TOKEN;
+    // Token pegado por el cliente (x-replicate-token): siempre válido.
+    // Token de entorno: solo si la petición es del dominio propio.
+    let t = h['x-replicate-token'] || h['X-Replicate-Token'];
+    if (!t && esDominioPropio) t = process.env.REPLICATE_API_TOKEN;
     if (t) auth = 'Bearer ' + t;
   }
   if (!auth) {

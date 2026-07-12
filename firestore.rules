@@ -30,9 +30,15 @@ service cloud.firestore {
       //  · máximo 10 créditos de prueba
       //  · NO puede nacer con clases desbloqueadas (acceso_clases debe ir vacío)
       //    → así NADIE puede auto-regalarse las 299 clases creando el doc a mano.
+      //  · el correo DEBE ser el suyo real (no puede suplantar a otra alumna en
+      //    las vistas del admin) y el nombre debe ser texto corto y sano
+      //    → cierra el hueco por el que un nombre malicioso llegaba al panel.
       allow create: if request.auth.uid == uid
                     && request.resource.data.get('creditos', 0) <= 10
-                    && request.resource.data.get('acceso_clases', []).size() == 0;
+                    && request.resource.data.get('acceso_clases', []).size() == 0
+                    && request.resource.data.get('email', request.auth.token.email) == request.auth.token.email
+                    && request.resource.data.get('nombre', '') is string
+                    && request.resource.data.get('nombre', '').size() <= 60;
 
       // Actualizar:
       //  · el ADMIN puede TODO (recargar créditos, activar/desactivar, asignar clases)

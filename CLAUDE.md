@@ -53,7 +53,8 @@ Single Firebase project **`aprendisajefatima`** (note the intentional misspellin
 `firestore.rules` in this repo is the source of truth for security but is **deployed manually** by pasting into the Firebase console — pushing to Netlify never updates it. Key invariants encoded there:
 
 - Students can never increase their own `creditos` or touch `acceso_clases` — only the admin assigns classes and recharges the global credit pool.
-- New user docs are created with ≤10 trial credits and zero unlocked classes.
+- New user docs are created with ≤10 trial credits, zero unlocked classes, an `email` matching the auth token, and a `nombre` that is a string ≤60 chars (the last two close a stored-XSS→admin-escalation path: student-controlled names/emails are rendered in the admin panels).
+- Admin panels that render student `nombre`/`email` via `innerHTML` MUST escape them (`esc()` helper in `admin_motores.html` and `panel_admin.js`) — the data is student-writable at create time.
 - Content collections (`fitness_videos`, `fitness_imgs`, `hub_tarjetas`, `hub_images`, `hub_tools`, `noticias`, `corte_modulos`, `clases_imgs`, `clases_videos`, `clases`) are read-by-logged-in, write-by-admin-only.
 - `usuarios_bloques` / `registros_bloques` are the legacy per-block credit system kept for blocks 6/8/9.
 
