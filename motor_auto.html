@@ -818,7 +818,7 @@ function buildHubChips(){
   updateCountH();
 }
 function updateCountH(){
-  document.getElementById('selCountH').textContent = SELH.size+' tarjeta(s) seleccionada(s)';
+  document.getElementById('selCountH').textContent = SELH.size+' tarjeta(s) seleccionada(s)'+(SELH.size?topeTexto():'');
   if(MODO==='hub') document.getElementById('btnGo').disabled=(SELH.size===0||RUNNING);
 }
 function selHubTodo(){ [...HUB_CARDS,...HUB_PORTADAS].forEach(b=>SELH.add(b.n)); document.querySelectorAll('#chHub .chip').forEach(c=>c.classList.add('on')); updateCountH(); }
@@ -850,11 +850,13 @@ async function iniciarHub(){
   document.getElementById('btnStop').style.display='inline-block';
   document.getElementById('preview').innerHTML='';
   const skip=document.getElementById('optSkipH').checked;
-  logLine('▶️ Hub · '+sel.length+' tarjeta(s)','info');
+  const limite=loteLimite();
+  logLine('▶️ Hub · '+sel.length+' tarjeta(s)'+(limite?' · tope: '+limite+' nuevas':''),'info');
 
-  let done=0, ok=0, omit=0, err=0;
+  let done=0, ok=0, omit=0, err=0, generadas=0;
   for(const b of sel){
     if(STOP) break;
+    if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s). Recarga y vuelve para las siguientes.','info'); break; }
     setProg(done,sel.length,'Tarjeta '+b.nom+' ('+(done+1)+'/'+sel.length+')');
     try{
       if(skip && await yaExisteHub(b.n)){ logLine('⏭️ '+b.nom+' ya tiene imagen','skip'); omit++; done++; continue; }
@@ -862,7 +864,7 @@ async function iniciarHub(){
       const gen=async()=>fetchToBlob(await genImagen(HUB_PROMPT[b.n]||('Professional elegant image about '+b.nom+', photorealistic, no text')));
       const blob=await gen();
       await addJob({ label:'Hub · '+b.nom, blob, driveName:'hub_'+b.n+'.jpg', upload:(bl)=>subirHub(b.n,bl), regen:gen, restore:{kind:'hub-img', n:b.n} });
-      ok++; done++;
+      ok++; generadas++; done++;
     }catch(e){ err++; done++; logLine('❌ '+b.nom+': '+(e.message||e),'err'); }
   }
   finLote(done,sel.length,ok,omit,err,'Hub');
@@ -889,7 +891,7 @@ function buildCorteChips(){
   });
   updateCountC();
 }
-function updateCountC(){ document.getElementById('selCountC').textContent=SELC.size+' módulo(s) seleccionado(s)'; if(MODO==='corte') document.getElementById('btnGo').disabled=(SELC.size===0||RUNNING); }
+function updateCountC(){ document.getElementById('selCountC').textContent=SELC.size+' módulo(s) seleccionado(s)'+(SELC.size?topeTexto():''); if(MODO==='corte') document.getElementById('btnGo').disabled=(SELC.size===0||RUNNING); }
 function selCorteTodo(){ Object.keys(CORTE_LBL).forEach(id=>SELC.add(id)); document.querySelectorAll('#chCorte .chip').forEach(c=>c.classList.add('on')); updateCountC(); }
 function selCorteNada(){ SELC.clear(); document.querySelectorAll('#chCorte .chip').forEach(c=>c.classList.remove('on')); updateCountC(); }
 async function yaExisteCorte(id){ try{ const s=await FB.getDoc(FB.doc(FB.db,'corte_modulos',id)); return s.exists() && s.data().imgUrl; }catch(_){ return false; } }
@@ -917,10 +919,12 @@ async function iniciarCorte(){
   document.getElementById('btnStop').style.display='inline-block';
   document.getElementById('preview').innerHTML='';
   const skip=document.getElementById('optSkipC').checked;
-  logLine('▶️ Motor de Corte · '+sel.length+' módulo(s)','info');
-  let done=0, ok=0, omit=0, err=0;
+  const limite=loteLimite();
+  logLine('▶️ Motor de Corte · '+sel.length+' módulo(s)'+(limite?' · tope: '+limite+' nuevas':''),'info');
+  let done=0, ok=0, omit=0, err=0, generadas=0;
   for(const id of sel){
     if(STOP) break;
+    if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s). Recarga y vuelve para las siguientes.','info'); break; }
     setProg(done,sel.length,id+' · '+CORTE_LBL[id]+' ('+(done+1)+'/'+sel.length+')');
     try{
       if(skip && await yaExisteCorte(id)){ logLine('⏭️ '+id+' ya tiene imagen','skip'); omit++; done++; continue; }
@@ -928,7 +932,7 @@ async function iniciarCorte(){
       const gen=async()=>fetchToBlob(await genImagen(CORTE_PROMPT[id]));
       const blob=await gen();
       await addJob({ label:id+' · '+CORTE_LBL[id], blob, driveName:'corte_'+id+'.jpg', upload:(bl)=>subirCorte(id,bl), regen:gen, restore:{kind:'corte-img', id} });
-      ok++; done++;
+      ok++; generadas++; done++;
     }catch(e){ err++; done++; logLine('❌ '+id+': '+(e.message||e),'err'); }
   }
   finLote(done,sel.length,ok,omit,err,'Motor de Corte');
