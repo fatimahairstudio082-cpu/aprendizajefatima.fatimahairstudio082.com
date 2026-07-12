@@ -599,8 +599,10 @@ function selPeluNada(){ SELP.cat.clear(); document.querySelectorAll('#chPeluCat 
    · lo guardado como link de Google Drive (🔗);
    · y, con Drive conectado, lo que está en la carpeta de respaldo de Drive
      pero nunca se registró en Firebase (botón "registrar"). */
-let MAPA_CACHE={};
-function mapaInvalidar(){ MAPA_CACHE={}; DRIVE_INDEX=null; }
+/* var (no let): updateCount() corre durante la carga inicial, antes de esta
+   línea; con let quedaría en zona muerta y rompería TODO el script. */
+var MAPA_CACHE={};
+function mapaInvalidar(){ MAPA_CACHE={}; DRIVE_INDEX=null; PASOS_STORAGE_CACHE={}; }
 async function mapaColeccion(nombre, fresco){
   await fbInit();
   if(!fresco && MAPA_CACHE[nombre]) return MAPA_CACHE[nombre];
@@ -618,10 +620,27 @@ function videoPelu(d){
   d=d||{};
   return { tiene:!!(d.url_video||d.videoActualizadoEn), drive:esLinkDrive(d.url_video), soloPasos:(!d.url_video && !!d.videoActualizadoEn) };
 }
+// El sello videoActualizadoEn también lo escribe pelu_drive_fix cuando los pasos
+// se subieron SOLO a Drive (y esos el carrusel de la Academia no los ve, porque
+// lee Storage). Para no mentir en el mapa, se comprueba paso_01.mp4 en Storage
+// con un HEAD — exactamente igual que hace academia_carrusel_pasos.js.
+var PASOS_STORAGE_CACHE={};
+function urlPasoStorage(slug, id){
+  if(window.FirebaseMediaLoader && FirebaseMediaLoader.buildURL) return FirebaseMediaLoader.buildURL(slug, id, 'paso_01.mp4');
+  return 'https://firebasestorage.googleapis.com/v0/b/aprendisajefatima.appspot.com/o/'
+    + encodeURIComponent('academia/'+slug+'/'+id+'/paso_01.mp4') + '?alt=media';
+}
+async function pasosEnStorage(slug, id){
+  if(id in PASOS_STORAGE_CACHE) return PASOS_STORAGE_CACHE[id];
+  let ok=false;
+  try{ const r=await fetch(urlPasoStorage(slug,id),{method:'HEAD'}); ok=r.ok; }catch(_){}
+  PASOS_STORAGE_CACHE[id]=ok;
+  return ok;
+}
 
 // ── índice de la carpeta de respaldo en Drive («Fátima Caldea · Generados») ──
 // Permite mapear lo que SOLO está en Drive y nunca se registró en Firebase.
-let DRIVE_INDEX=null;
+var DRIVE_INDEX=null;
 async function driveIndice(fresco){
   if(!DRIVE.token) return null;
   if(DRIVE_INDEX && !fresco) return DRIVE_INDEX;
@@ -673,7 +692,7 @@ async function registrarDriveClase(claseId, fileId, kind){
 }
 
 // Refresco automático del mapa (con un pequeño respiro para no leer de más)
-let MAPA_TIMER=null;
+var MAPA_TIMER=null;
 function programarMapa(){
   clearTimeout(MAPA_TIMER);
   MAPA_TIMER=setTimeout(()=>{
@@ -695,13 +714,20 @@ async function verClasesPelu(fresco){
   try{ docs=await mapaColeccion('clases_imgs', fresco); }
   catch(e){ cont.innerHTML='<div class="note" style="color:#E74C3C;">❌ No se pudo leer <b>clases_imgs</b>: '+esc(e.code||e.message||String(e))+' — inicia sesión de admin y pulsa "🔄 Actualizar mapa".</div>'; return; }
   const idx=await driveIndice(fresco);   // null si Drive no está conectado
+  // Para las clases "solo pasos", verificar en Storage que el carrusel de verdad
+  // los tenga (si se subieron con «Drive · solo el link», la Academia no los ve).
+  await Promise.all(clases.map(c=>{
+    const v=videoPelu(docs[c.id]||{});
+    return v.soloPasos ? pasosEnStorage(c.slug, c.id) : null;
+  }));
   let conImg=0, conVid=0;
   const filas=clases.map(c=>{
     const d=docs[c.id]||{};
     const img=!!(d.url_jpg||d.url);
     const v=videoPelu(d);
+    if(v.soloPasos && PASOS_STORAGE_CACHE[c.id]===false) v.pasosSoloDrive=true;
     if(img) conImg++;
-    if(v.tiene) conVid++;
+    if(v.tiene && !v.pasosSoloDrive) conVid++;   // pasos solo-en-Drive no cuentan: la Academia no los ve
     let celImg, celVid;
     if(img) celImg='<span class="cst has">✓ sí'+(esLinkDrive(d.url_jpg||d.url)?' · 🔗Drive':'')+'</span>';
     else{
@@ -710,7 +736,8 @@ async function verClasesPelu(fresco){
         ? '<span class="cst no">— no</span> <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px;" onclick="registrarDriveClase(\''+c.id+'\',\''+f.id+'\',\'img\')" title="La imagen ya está en tu Drive pero no estaba registrada en Firebase. Esto guarda su link (no re-genera nada).">☁️ en Drive · registrar</button>'
         : '<span class="cst no">— no</span>';
     }
-    if(v.tiene) celVid='<span class="cst has">✓ '+(v.soloPasos?'pasos (carrusel)':'sí')+(v.drive?' · 🔗Drive':'')+'</span>';
+    if(v.pasosSoloDrive) celVid='<span class="cst no" title="Los clips de pasos se subieron con «Drive · solo el link»: están en tu Drive, pero el carrusel de la Academia lee Firebase Storage y NO los muestra. Regenera con destino 🔥 Firebase o re-súbelos con la Subida inteligente.">⚠️ pasos solo en Drive · la Academia no los ve</span>';
+    else if(v.tiene) celVid='<span class="cst has">✓ '+(v.soloPasos?'pasos (carrusel)':'sí')+(v.drive?' · 🔗Drive':'')+'</span>';
     else{
       const f=driveBuscaClase(idx,c.id,'vid');
       if(f && f.tipo==='pasos') celVid='<span class="cst no" title="Hay '+f.n+' clip(s) de pasos en tu Drive, pero el carrusel de la Academia los lee desde Firebase Storage: re-súbelos con la Subida inteligente (destino Firebase).">☁️ '+f.n+' paso(s) solo en Drive</span>';
@@ -893,9 +920,10 @@ async function iniciarPelu(){
   const limite=loteLimite();
   const total=clases.length*vars.length;
   logLine('▶️ Peluquería · '+clases.length+' clase(s) × '+vars.length+' '+(tipoP==='vid'?'video(s)':'variante(s)')+' = '+total+(limite?' · tope: '+limite+' nuevas':''),'info');
-  // Aviso honesto: la Academia y su carrusel de pasos leen Firebase Storage,
-  // por eso Peluquería SIEMPRE guarda en Firebase aunque elijas "Drive · solo el link".
-  if(window.GEN_DEST==='drive') logLine('⚠️ Peluquería se guarda SIEMPRE en Firebase (la Academia lee Storage). La opción "Drive · solo el link" no aplica a este bloque.','skip');
+  // Aviso honesto: con «Drive · solo el link» (parche pelu_drive_fix) la imagen y el
+  // video de apoyo sí funcionan como link, pero los clips de PASOS quedan solo en tu
+  // Drive y el carrusel de la Academia (que lee Firebase Storage) NO los mostrará.
+  if(window.GEN_DEST==='drive' && tipoP==='vid') logLine('⚠️ Elegiste «Drive · solo el link»: los clips de PASOS quedarán solo en tu Drive y el carrusel de la Academia NO los mostrará a las alumnas (ese carrusel lee Firebase Storage). Para el carrusel usa destino 🔥 Firebase.','skip');
 
   let done=0, ok=0, omit=0, err=0, generadas=0;
   for(const clase of clases){
@@ -1868,7 +1896,7 @@ async function gateCheck(){
   FB.onAuth(FB.auth, u=>{
     const gate=document.getElementById('authGate');
     const esAdmin = u && u.email && u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase();
-    if(esAdmin){ gate.style.display='none'; }
+    if(esAdmin){ gate.style.display='none'; if(typeof programarMapa==='function') programarMapa(); }   // al entrar, el mapa se pinta solo
     else { gate.style.display='flex'; }
     renderAuth();
   });
