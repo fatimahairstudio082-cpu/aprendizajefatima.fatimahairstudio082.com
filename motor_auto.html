@@ -272,8 +272,12 @@
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="selTodo()">Seleccionar todo</button>
       <button class="btn btn-ghost" onclick="selNada()">Limpiar</button>
+      <button class="btn btn-ghost" onclick="verMapaFitness(true)">🔄 Actualizar mapa (releer Firebase)</button>
       <span class="count" id="selCount">0 láminas seleccionadas</span>
     </div>
+    <!-- Mapa automático: al marcar grupo/motor/equipo se muestra qué láminas
+         o clips YA existen en Firebase y cuáles faltan (imágenes y videos). -->
+    <div id="fitMapa" style="margin-top:12px;"></div>
   </div>
 
   <!-- SELECCIÓN · PELUQUERÍA -->
@@ -300,15 +304,16 @@
       <label><input type="radio" name="tipoP" value="vid" onchange="refreshModelSelectors()"> 🎬 Video paso a paso (carrusel)</label>
     </div>
     <div class="opts">
-      <label><input type="checkbox" id="optSkipP" checked> Omitir las que ya tienen imagen (reanudar)</label>
+      <label><input type="checkbox" id="optSkipP" checked> Omitir las que ya tienen su imagen/video (reanudar)</label>
       <label><input type="checkbox" id="optRegenP"> Forzar regenerar</label>
     </div>
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="selPeluTodo()">Seleccionar todas las categorías</button>
       <button class="btn btn-ghost" onclick="selPeluNada()">Limpiar</button>
-      <button class="btn btn-ghost" onclick="verClasesPelu()">👁️ Ver las clases que se generarán</button>
+      <button class="btn btn-ghost" onclick="verClasesPelu(true)">🔄 Actualizar mapa (releer Firebase)</button>
       <span class="count" id="selCountP">0 clases seleccionadas</span>
     </div>
+    <!-- El mapa se pinta SOLO al marcar categorías (ya no hace falta pulsar un botón) -->
     <div id="peluClaseList" style="margin-top:12px;"></div>
   </div>
 
@@ -504,6 +509,7 @@ function updateCount(){
   const k = combosSeleccionados().length;
   document.getElementById('selCount').textContent = k+' lámina(s) seleccionada(s)'+topeTexto();
   document.getElementById('btnGo').disabled = (k===0||RUNNING);
+  if(typeof programarMapa==='function') programarMapa();   // mapa automático
 }
 // Aclara junto al contador que la selección NO es lo que se genera:
 // el tope manda. Elimina el miedo a "genera 81 sí o sí".
@@ -579,35 +585,208 @@ function updateCountP(){
   const nv=SELP.var.size||1;
   document.getElementById('selCountP').textContent = k+' clase(s) × '+nv+' variante(s) = '+(k*nv)+' imágenes'+topeTexto();
   if(MODO==='pelu') document.getElementById('btnGo').disabled = (k===0||RUNNING);
+  if(typeof programarMapa==='function') programarMapa();   // mapa automático
 }
 function selPeluTodo(){ PELU_CATS.forEach(c=>SELP.cat.add(c)); document.querySelectorAll('#chPeluCat .chip').forEach(c=>c.classList.add('on')); updateCountP(); }
 function selPeluNada(){ SELP.cat.clear(); document.querySelectorAll('#chPeluCat .chip').forEach(c=>c.classList.remove('on')); updateCountP(); }
 
-// Lista las clases que se generarán, con su claseId y si ya tienen imagen/video.
-async function verClasesPelu(){
+/* ══════════ MAPA DE CONTENIDO (el motor deja de ser "ciego") ══════════
+   Al marcar categorías/combos, el motor consulta Firebase UNA sola vez por
+   colección y pinta qué imagen y qué video YA existen y cuáles faltan —
+   para Peluquería Y para Fitness, imágenes Y videos. Reconoce también:
+   · el carrusel de pasos (subirPeluPaso solo marca videoActualizadoEn,
+     los clips viven en Storage academia/{slug}/{id}/paso_NN.mp4);
+   · lo guardado como link de Google Drive (🔗);
+   · y, con Drive conectado, lo que está en la carpeta de respaldo de Drive
+     pero nunca se registró en Firebase (botón "registrar"). */
+let MAPA_CACHE={};
+function mapaInvalidar(){ MAPA_CACHE={}; DRIVE_INDEX=null; }
+async function mapaColeccion(nombre, fresco){
+  await fbInit();
+  if(!fresco && MAPA_CACHE[nombre]) return MAPA_CACHE[nombre];
+  const out={};
+  const snap=await FB.getDocs(FB.collection(FB.db,nombre));
+  snap.forEach(d=>{ out[d.id]=d.data()||{}; });
+  MAPA_CACHE[nombre]=out;
+  return out;
+}
+const esLinkDrive = u => /drive\.google\.com/i.test(String(u||''));
+const linkValido  = u => /^https?:\/\//i.test(String(u||'').trim());
+// Un video de peluquería existe si hay video de apoyo (url_video) O si ya se
+// generó el carrusel de pasos (que solo deja videoActualizadoEn en el doc).
+function videoPelu(d){
+  d=d||{};
+  return { tiene:!!(d.url_video||d.videoActualizadoEn), drive:esLinkDrive(d.url_video), soloPasos:(!d.url_video && !!d.videoActualizadoEn) };
+}
+
+// ── índice de la carpeta de respaldo en Drive («Fátima Caldea · Generados») ──
+// Permite mapear lo que SOLO está en Drive y nunca se registró en Firebase.
+let DRIVE_INDEX=null;
+async function driveIndice(fresco){
+  if(!DRIVE.token) return null;
+  if(DRIVE_INDEX && !fresco) return DRIVE_INDEX;
+  try{
+    const folder=await driveFolder();
+    const out={}; let pageToken='';
+    do{
+      const q=encodeURIComponent(`'${folder}' in parents and trashed=false`);
+      const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=nextPageToken,files(id,name)&pageSize=1000'+(pageToken?'&pageToken='+encodeURIComponent(pageToken):''),{headers:{Authorization:'Bearer '+DRIVE.token}});
+      if(!r.ok) break;
+      const d=await r.json();
+      (d.files||[]).forEach(f=>{ if(!(f.name in out)) out[f.name]=f.id; });
+      pageToken=d.nextPageToken||'';
+    }while(pageToken);
+    DRIVE_INDEX=out;
+    return out;
+  }catch(_){ return null; }
+}
+// Busca en el índice de Drive el archivo de una clase (nombres que usa driveBackup/manAdd)
+function driveBuscaClase(idx, claseId, kind){
+  if(!idx) return null;
+  const nombres=Object.keys(idx);
+  if(kind==='img'){
+    const n=nombres.find(n=>n.endsWith('_'+claseId+'_cliente.jpg')||n.endsWith('_'+claseId+'_img.jpg'));
+    return n?{name:n,id:idx[n],tipo:'img'}:null;
+  }
+  const nv=nombres.find(n=>n.endsWith('_'+claseId+'_video.mp4')||n.endsWith('_'+claseId+'_vid.mp4'));
+  if(nv) return {name:nv,id:idx[nv],tipo:'video'};
+  const pasos=nombres.filter(n=>n.indexOf('_'+claseId+'_paso_')>=0);
+  if(pasos.length) return {name:pasos[0],id:idx[pasos[0]],tipo:'pasos',n:pasos.length};
+  return null;
+}
+// Registra en Firebase el link público de un archivo que ya vive en Drive
+// (mismo formato de link y mismos docs/campos que la subida normal).
+async function registrarDriveClase(claseId, fileId, kind){
+  try{
+    const user=await ensureAuth(); if(!user){ logLine('Sin sesión admin no se puede registrar.','err'); return; }
+    if(!PELU_FLAT.length) cargarPelu();
+    const clase=PELU_FLAT.find(c=>c.id===claseId)||{id:claseId,slug:'academia',cat:'',niv:'p'};
+    try{ await fetch('https://www.googleapis.com/drive/v3/files/'+fileId+'/permissions',{method:'POST',headers:{Authorization:'Bearer '+DRIVE.token,'Content-Type':'application/json'},body:JSON.stringify({role:'reader',type:'anyone'})}); }catch(_){}
+    const url = kind==='img'
+      ? 'https://drive.google.com/thumbnail?id='+fileId+'&sz=w1400'
+      : 'https://drive.google.com/uc?export=download&id='+fileId;
+    if(kind==='img') await regPeluImg(clase,url); else await regPeluVideo(clase,url);
+    mapaInvalidar();
+    logLine('🔗 '+claseId+' · '+(kind==='img'?'imagen':'video')+' registrado desde Drive (link guardado en Firebase)','ok');
+    verClasesPelu();
+  }catch(e){ logLine('❌ Registrar desde Drive: '+(e.message||e),'err'); }
+}
+
+// Refresco automático del mapa (con un pequeño respiro para no leer de más)
+let MAPA_TIMER=null;
+function programarMapa(){
+  clearTimeout(MAPA_TIMER);
+  MAPA_TIMER=setTimeout(()=>{
+    try{
+      if(MODO==='pelu') verClasesPelu().catch(()=>{});
+      else if(MODO==='fitness') verMapaFitness().catch(()=>{});
+    }catch(_){}
+  },400);
+}
+
+// Mapa de PELUQUERÍA: qué imagen y qué video ya tiene cada clase seleccionada.
+async function verClasesPelu(fresco){
   const clases=clasesPeluSeleccionadas();
   const cont=document.getElementById('peluClaseList');
-  if(!clases.length){ cont.innerHTML='<div class="note">Selecciona al menos una categoría para ver sus clases.</div>'; return; }
+  if(!cont) return;
+  if(!clases.length){ cont.innerHTML='<div class="note">Marca una categoría y aquí verás el mapa: qué imagen y qué video ya existen y cuáles faltan.</div>'; return; }
   cont.innerHTML='<div class="note">⏳ Consultando estado en Firebase…</div>';
-  await fbInit();
-  // leer estado actual de cada clase
-  const rows=await Promise.all(clases.map(async c=>{
-    let img=false, vid=false;
-    try{ const s=await FB.getDoc(FB.doc(FB.db,'clases_imgs',c.id)); if(s.exists()){ const d=s.data(); img=!!(d.url_jpg||d.url); vid=!!d.url_video; } }catch(_){}
-    return {c, img, vid};
-  }));
+  let docs;
+  try{ docs=await mapaColeccion('clases_imgs', fresco); }
+  catch(e){ cont.innerHTML='<div class="note" style="color:#E74C3C;">❌ No se pudo leer <b>clases_imgs</b>: '+esc(e.code||e.message||String(e))+' — inicia sesión de admin y pulsa "🔄 Actualizar mapa".</div>'; return; }
+  const idx=await driveIndice(fresco);   // null si Drive no está conectado
+  let conImg=0, conVid=0;
+  const filas=clases.map(c=>{
+    const d=docs[c.id]||{};
+    const img=!!(d.url_jpg||d.url);
+    const v=videoPelu(d);
+    if(img) conImg++;
+    if(v.tiene) conVid++;
+    let celImg, celVid;
+    if(img) celImg='<span class="cst has">✓ sí'+(esLinkDrive(d.url_jpg||d.url)?' · 🔗Drive':'')+'</span>';
+    else{
+      const f=driveBuscaClase(idx,c.id,'img');
+      celImg = f
+        ? '<span class="cst no">— no</span> <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px;" onclick="registrarDriveClase(\''+c.id+'\',\''+f.id+'\',\'img\')" title="La imagen ya está en tu Drive pero no estaba registrada en Firebase. Esto guarda su link (no re-genera nada).">☁️ en Drive · registrar</button>'
+        : '<span class="cst no">— no</span>';
+    }
+    if(v.tiene) celVid='<span class="cst has">✓ '+(v.soloPasos?'pasos (carrusel)':'sí')+(v.drive?' · 🔗Drive':'')+'</span>';
+    else{
+      const f=driveBuscaClase(idx,c.id,'vid');
+      if(f && f.tipo==='pasos') celVid='<span class="cst no" title="Hay '+f.n+' clip(s) de pasos en tu Drive, pero el carrusel de la Academia los lee desde Firebase Storage: re-súbelos con la Subida inteligente (destino Firebase).">☁️ '+f.n+' paso(s) solo en Drive</span>';
+      else if(f) celVid='<span class="cst no">— no</span> <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px;" onclick="registrarDriveClase(\''+c.id+'\',\''+f.id+'\',\'vid\')" title="El video ya está en tu Drive pero no estaba registrado en Firebase. Esto guarda su link (no re-genera nada).">☁️ en Drive · registrar</button>';
+      else celVid='<span class="cst no">— no</span>';
+    }
+    return '<div class="crow">'
+      + '<span class="cid">'+esc(c.id)+'</span>'
+      + '<span class="ctit" title="'+esc(c.titulo)+'">'+esc(c.titulo)+'</span>'
+      + '<span class="cniv">'+esc(NIV_LBL[c.niv]||c.niv)+'</span>'
+      + celImg + celVid
+      + '</div>';
+  });
   cont.innerHTML =
-    '<div class="clist">'+
-    '<div class="crow chead"><span class="cid">claseId</span><span class="ctit">Título</span><span class="cniv">Nivel</span><span class="cst">Imagen</span><span class="cst">Video</span></div>'+
-    rows.map(({c,img,vid})=>`<div class="crow">
-        <span class="cid">${esc(c.id)}</span>
-        <span class="ctit" title="${esc(c.titulo)}">${esc(c.titulo)}</span>
-        <span class="cniv">${esc((NIV_LBL[c.niv]||c.niv))}</span>
-        <span class="cst ${img?'has':'no'}">${img?'✓ sí':'— no'}</span>
-        <span class="cst ${vid?'has':'no'}">${vid?'✓ sí':'— no'}</span>
-      </div>`).join('')+
-    '</div>'+
-    '<div class="note" style="margin-top:8px;">📁 Cada clase sube a <b>academia/'+esc(clases[0].slug)+'/{claseId}/</b> · doc Firestore <b>clases_imgs/{claseId}</b>. Ese <b>claseId</b> es el que lee la Academia en tiempo real.</div>';
+    '<div class="note" style="margin:0 0 8px;color:var(--gold2);">🗺️ Mapa: <b>'+clases.length+'</b> clase(s) · 🖼 <b>'+conImg+'</b> con imagen (faltan '+(clases.length-conImg)+') · 🎥 <b>'+conVid+'</b> con video (faltan '+(clases.length-conVid)+')'
+      + (idx?'':' · 🔌 conecta Google Drive arriba y el mapa detecta también lo que solo está en Drive')
+      + '</div>'
+    + '<div class="clist">'
+    + '<div class="crow chead"><span class="cid">claseId</span><span class="ctit">Título</span><span class="cniv">Nivel</span><span class="cst">Imagen</span><span class="cst">Video</span></div>'
+    + filas.join('')
+    + '</div>'
+    + '<div class="note" style="margin-top:8px;">📁 Cada clase sube a <b>academia/'+esc(clases[0].slug)+'/{claseId}/</b> · doc Firestore <b>clases_imgs/{claseId}</b>. "✓ pasos" = ya tiene su carrusel paso a paso. Con "Omitir las que ya tienen su imagen/video" ✅ solo se generan las que aquí salen "— no".</div>';
+}
+
+// Mapa de FITNESS: qué láminas (imágenes) o clips (videos) ya existen por combo.
+async function verMapaFitness(fresco){
+  const cont=document.getElementById('fitMapa');
+  if(!cont) return;
+  const combos=combosSeleccionados();
+  const tipo=(document.querySelector('input[name="tipo"]:checked')||{}).value||'img';
+  if(!combos.length){ cont.innerHTML='<div class="note">Marca grupo/motor/equipo y aquí verás el mapa: qué '+(tipo==='vid'?'clips de video':'láminas')+' ya existen y cuáles faltan.</div>'; return; }
+  cont.innerHTML='<div class="note">⏳ Consultando estado en Firebase…</div>';
+  const colNombre = tipo==='vid' ? 'fitness_videos' : 'fitness_imgs';
+  let docs;
+  try{ docs=await mapaColeccion(colNombre, fresco); }
+  catch(e){ cont.innerHTML='<div class="note" style="color:#E74C3C;">❌ No se pudo leer <b>'+colNombre+'</b>: '+esc(e.code||e.message||String(e))+' — inicia sesión de admin y pulsa "🔄 Actualizar mapa".</div>'; return; }
+  const claves=Object.keys(docs);
+  let completos=0, filas='';
+  for(const combo of combos){
+    const base=combo.claveImgBase;   // grupo_obj_equipo_nej
+    if(tipo==='img'){
+      const vs=[];
+      for(let v=1;v<=12;v++){ const d=docs[base+'_v'+v]; if(d && linkValido(d.url||d.url_jpg)) vs.push('v'+v); }
+      const k=vs.length;
+      if(k) completos++;
+      filas += '<div class="crow">'
+        + '<span class="cid">'+esc(base)+'</span>'
+        + '<span class="ctit">'+(k?('versiones listas: '+esc(vs.join(' '))):'— ninguna versión generada aún')+'</span>'
+        + '<span class="cst '+(k?'has':'no')+'">'+(k?('✓ '+k+'/12'):'✗ falta')+'</span>'
+        + '</div>';
+    } else {
+      const lista = combo.ejercicios && combo.ejercicios.length ? combo.ejercicios : MOTOR_PROMPTS.ejerciciosDe(combo.grupo,combo.equipo,combo.nej,combo.motor);
+      let okN=0; const faltan=[];
+      for(let i=0;i<lista.length;i++){
+        const nn=String(i+1).padStart(2,'0');
+        // mismas claves que lee el carrusel del Bloque 5: {base}_{NN}_{slug} (con o sin diaN_)
+        const re=new RegExp('^(dia\\d+_)?'+base+'_'+nn+'_');
+        const kEx=claves.find(k=>re.test(k) && linkValido((docs[k]||{}).url_video));
+        if(kEx) okN++; else faltan.push(nn+'·'+lista[i]);
+      }
+      const completo = lista.length>0 && okN===lista.length;
+      if(completo) completos++;
+      filas += '<div class="crow">'
+        + '<span class="cid">'+esc(base)+'</span>'
+        + '<span class="ctit" title="'+esc(faltan.join(' · '))+'">'+(completo?'todos los clips del carrusel listos':(okN?('faltan: '+esc(faltan.join(' · '))):'— ningún clip generado aún'))+'</span>'
+        + '<span class="cst '+(completo?'has':'no')+'">'+okN+'/'+lista.length+' clips</span>'
+        + '</div>';
+    }
+  }
+  cont.innerHTML =
+    '<div class="note" style="margin:0 0 8px;color:var(--gold2);">🗺️ Mapa '+(tipo==='vid'?'de VIDEOS (clips del carrusel del Bloque 5)':'de LÁMINAS (imágenes)')+': <b>'+combos.length+'</b> combo(s) · <b>'+completos+'</b> '+(tipo==='vid'?'completo(s)':'con alguna versión')+' · <b>'+(combos.length-completos)+'</b> por generar</div>'
+    + '<div class="clist">'
+    + '<div class="crow chead"><span class="cid">clave</span><span class="ctit">Estado</span><span class="cst">'+(tipo==='vid'?'Clips':'Versiones')+'</span></div>'
+    + filas
+    + '</div>'
+    + '<div class="note" style="margin-top:8px;">📁 '+(tipo==='vid'?'Cada clip vive en <b>fitness_videos/{base}_{NN}_{ejercicio}</b> — con "Omitir las que ya están" ✅ el lote genera solo los que faltan.':'Cada versión vive en <b>fitness_imgs/{base}_vN</b> — con "Omitir las que ya están" ✅ el lote genera solo las que faltan.')+'</div>';
 }
 
 function setModo(m){
@@ -714,6 +893,9 @@ async function iniciarPelu(){
   const limite=loteLimite();
   const total=clases.length*vars.length;
   logLine('▶️ Peluquería · '+clases.length+' clase(s) × '+vars.length+' '+(tipoP==='vid'?'video(s)':'variante(s)')+' = '+total+(limite?' · tope: '+limite+' nuevas':''),'info');
+  // Aviso honesto: la Academia y su carrusel de pasos leen Firebase Storage,
+  // por eso Peluquería SIEMPRE guarda en Firebase aunque elijas "Drive · solo el link".
+  if(window.GEN_DEST==='drive') logLine('⚠️ Peluquería se guarda SIEMPRE en Firebase (la Academia lee Storage). La opción "Drive · solo el link" no aplica a este bloque.','skip');
 
   let done=0, ok=0, omit=0, err=0, generadas=0;
   for(const clase of clases){
@@ -1285,6 +1467,7 @@ async function addJob(meta){
     if(!meta.isVideo) blob=await optimizarImg(blob, JPG_Q);
     await meta.upload(blob);
     if(!meta.noBackup && window.GEN_DEST!=='drive') await driveBackup(blob, meta.driveName);
+    mapaInvalidar();   // lo recién subido debe verse en el mapa
     return {subido:true};
   }
   // modo revisar → encolar
@@ -1362,6 +1545,7 @@ async function subirAprobadas(){
   }
   setProg(ap.length,ap.length,`Subidas ${ok} · errores ${err}`);
   logLine(`🏁 ${ok} subida(s) · ${err} error(es) · sistema público actualizado en tiempo real.`,'ok');
+  if(ok){ mapaInvalidar(); if(typeof programarMapa==='function') programarMapa(); }   // el mapa refleja lo recién subido
   // quitar las subidas de la galería
   JOBS=JOBS.filter(j=>j.estado!=='subido'); renderReview();
 }
@@ -1614,6 +1798,7 @@ async function fbInit(){
   const app=appMod.getApps().length?appMod.getApp():appMod.initializeApp(FB_CFG);
   FB={ app, storage:fs.getStorage(app), sRef:fs.ref, uploadBytes:fs.uploadBytes, getDownloadURL:fs.getDownloadURL,
        db:fst.getFirestore(app), doc:fst.doc, setDoc:fst.setDoc, getDoc:fst.getDoc,
+       getDocs:fst.getDocs, collection:fst.collection,
        auth:authMod.getAuth(app), onAuth:authMod.onAuthStateChanged, signIn:authMod.signInWithEmailAndPassword };
   FB.onAuth(FB.auth, ()=>renderAuth());
   return FB;
@@ -1820,6 +2005,7 @@ function refreshModelSelectors(){
   const gi=document.getElementById('grpImgModel'); if(gi) gi.style.display = vid?'none':'';
   const gv=document.getElementById('grpVidModel'); if(gv) gv.style.display = vid?'':'none';
   const gr=document.getElementById('grpRef');      if(gr) gr.style.display = vid?'none':''; // la referencia es solo para imágenes
+  if(typeof programarMapa==='function') programarMapa();   // al cambiar imagen↔video el mapa cambia también
 }
 function detener(){ STOP=true; logLine('⏹ Deteniendo tras la lámina actual…','info'); }
 
@@ -2047,7 +2233,7 @@ restaurarGaleria(); // recupera lo generado y no subido de la última sesión (n
   }catch(e){ console.warn('atajo desde tarjeta falló:', e); }
 })();
 </script>
-<script src="drive_fix.js"></script>ç
+<script src="drive_fix.js"></script>
 <script src="pelu_drive_fix.js"></script>
 </body>
 </html>

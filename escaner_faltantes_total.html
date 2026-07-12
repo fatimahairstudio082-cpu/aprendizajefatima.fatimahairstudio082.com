@@ -157,14 +157,17 @@
   };
 
   /* ── ACADEMIA · igual que los badges de admin_motores:
-        imagen = url_jpg || url · video = url_video ── */
+        imagen = url_jpg || url
+        video  = url_video (video de apoyo) O videoActualizadoEn (el carrusel de
+        pasos del Motor Automático solo deja esa marca; los clips paso_NN.mp4
+        viven en Storage, no en Firestore) ── */
   function estadoClase(id){
     const u = CLASES_IMGS[id] || {};
     const imgUrl = u.url_jpg || u.url || '';
     const vidUrl = u.url_video || '';
     return {
       img: imgUrl ? (linkOk(imgUrl) ? 'have' : 'warn') : 'miss',
-      vid: vidUrl ? (linkOk(vidUrl) ? 'have' : 'warn') : 'miss'
+      vid: vidUrl ? (linkOk(vidUrl) ? 'have' : 'warn') : (u.videoActualizadoEn ? 'have' : 'miss')
     };
   }
 

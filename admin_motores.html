@@ -588,7 +588,8 @@ function hideLoader(){ document.getElementById('loader').classList.add('hidden')
 
 function hasAnyMedia(id){
   const u = UPLOADED[id];
-  return u && (u.url_jpg || u.url || u.url_video || u.url_pdf || u.url_audio);
+  // videoActualizadoEn = carrusel de pasos generado por el Motor Automático (clips en Storage)
+  return u && (u.url_jpg || u.url || u.url_video || u.videoActualizadoEn || u.url_pdf || u.url_audio);
 }
 
 /* ────────── BOOT ────────── */
@@ -779,7 +780,9 @@ function cardHTML(c, showCat){
   const u = UPLOADED[c.id] || {};
   const imgUrl = u.url_jpg || u.url || c.img || '';
   const hasImg = !!(u.url_jpg || u.url);
-  const hasVid = !!u.url_video;
+  // Video = video de apoyo (url_video) O carrusel de pasos ya generado
+  // (el Motor Automático solo marca videoActualizadoEn; los clips paso_NN.mp4 viven en Storage).
+  const hasVid = !!(u.url_video || u.videoActualizadoEn);
   const hasPdf = !!u.url_pdf;
   const hasAud = !!u.url_audio;
   const niv = c.niv || 'p';
@@ -822,7 +825,7 @@ function updateGlobalStats(){
   const totalCats = Object.keys(CONOCIMIENTO).length;
   const totalClases = FLAT.length;
   const withImg = FLAT.filter(c=>{const u=UPLOADED[c.id]||{};return !!(u.url_jpg||u.url);}).length;
-  const withVid = FLAT.filter(c=>!!(UPLOADED[c.id]||{}).url_video).length;
+  const withVid = FLAT.filter(c=>{const u=UPLOADED[c.id]||{};return !!(u.url_video||u.videoActualizadoEn);}).length;
   document.getElementById('globalStats').textContent =
     `${totalCats} cat · ${totalClases} clases · 🖼 ${withImg} · 🎥 ${withVid} · 👥 ${ALUMNAS.length} alumnas`;
 }
@@ -974,6 +977,7 @@ window.doDelete = async function(){
     if(UPLOADED[claseId]){
       delete UPLOADED[claseId][meta.field];
       delete UPLOADED[claseId][meta.path];
+      delete UPLOADED[claseId][meta.dateField];   // p.ej. videoActualizadoEn: si queda, el badge 🎥 seguiría encendido
       if(type==='img') delete UPLOADED[claseId].url;
     }
     toast(`🗑 <b>${meta.label}</b> eliminado de <b>${claseId}</b>`, 'info');
@@ -1097,7 +1101,7 @@ function renderAlumnaMain(){
                 const u = UPLOADED[c.id] || {};
                 const m = [
                   (u.url_jpg||u.url) ? '🖼️' : '',
-                  u.url_video ? '🎥' : '',
+                  (u.url_video||u.videoActualizadoEn) ? '🎥' : '',
                   u.url_pdf ? '📄' : '',
                   u.url_audio ? '🎵' : ''
                 ].filter(Boolean).join(' ');
