@@ -463,7 +463,7 @@ body{
       <button class="amc-x" onclick="document.getElementById('amChatPanel').classList.remove('open')">×</button>
     </div>
     <div class="amc-body" id="amcBody">
-      <div class="amc-msg ia">¡Hola mi reina! 👑 Soy tu asistente. Puedo ayudarte a:<br/><br/>📚 Buscar una clase específica<br/>👥 Revisar accesos de una alumna<br/>🎨 Abrir M1/M2/M3 para generar media<br/>📊 Ver estado de las 360 clases<br/><br/>Pregúntame lo que quieras.</div>
+      <div class="amc-msg ia">¡Hola mi reina! 👑 Soy tu asistente. Puedo ayudarte a:<br/><br/>📚 Buscar una clase específica<br/>👥 Revisar accesos de una alumna<br/>🤖 Abrir el Motor Automático para generar media<br/>📊 Ver estado de las clases<br/><br/>Pregúntame lo que quieras.</div>
     </div>
     <div class="amc-input">
       <input type="text" id="amcIn" placeholder="Escribe tu pregunta…" onkeydown="if(event.key==='Enter')amcSend()"/>
@@ -809,10 +809,9 @@ function cardHTML(c, showCat){
           <button class="ab aud ${hasAud?'has':''}" onclick="openUpload('${c.id}','aud')">🎵 Audio</button>
         </div>
         <div class="studio-bar">✨   GENERAR CON IA   ✨</div>
-        <div class="studio-bridge">
-          <button class="sb m1" onclick="openStudio('${c.id}','img')" title="Abrir Módulo 1 con el ID de esta clase pre-cargado">🎨 → M1 Imagen</button>
-          <button class="sb m2" onclick="openStudio('${c.id}','vid')" title="Abrir Módulo 2 con el ID de esta clase pre-cargado">🎬 → M2 Video</button>
-          <button class="sb m3" onclick="openStudio('${c.id}','aud')" title="Abrir Módulo 3 con el ID de esta clase pre-cargado">🔊 → M3 Voz</button>
+        <div class="studio-bridge" style="grid-template-columns:1fr 1fr;">
+          <button class="sb m1" onclick="genEnMotor('${c.id}','img')" title="Abrir el Motor Automático con esta clase lista para generar su IMAGEN">🖼️ Generar imagen</button>
+          <button class="sb m2" onclick="genEnMotor('${c.id}','vid')" title="Abrir el Motor Automático con esta clase lista para generar su VIDEO">🎬 Generar video</button>
         </div>
       </div>
     </div>`;
@@ -836,59 +835,19 @@ const TYPE_META = {
   aud:{label:'Audio',icon:'🎵',accept:'audio/mpeg,audio/mp3,audio/wav,audio/ogg',file:'audio.mp3',field:'url_audio',path:'path_audio',dateField:'audioActualizadoEn',hint:'MP3 · WAV · OGG'}
 };
 
-/* ════════════════ PUENTE AL ESTUDIO (M1/M2/M3) ════════════════ */
-// Mapa de tipo → módulo del estudio
-const STUDIO_FILE = {
-  img: 'modulo1_imagen.html',
-  vid: 'modulo2_video.html',
-  aud: 'modulo3_voz.html',
-  pdf: 'modulo4_carpeta.html'   // PDF/manual van directo a M4
-};
-const STUDIO_NAME = {
-  img: 'M1 · Imagen IA',
-  vid: 'M2 · Video IA',
-  aud: 'M3 · Voz',
-  pdf: 'M4 · Carpeta'
-};
-
-window.openStudio = function(claseId, kind){
+/* ════════════════ ATAJO AL MOTOR AUTOMÁTICO ════════════════
+   Fátima pulsa "Generar imagen/video" en una tarjeta de clase y se
+   abre motor_auto.html con ESA clase ya cargada y lista para generar.
+   El claseId viaja en la URL; el motor lo lee al arrancar (SELP.solo).
+   (openStudio/M1-M4 quedó retirado: ahora todo pasa por el Motor Automático.) */
+window.genEnMotor = function(claseId, kind){
   const clase = FLAT.find(c => c.id === claseId);
   if(!clase){ toast(`❌ Clase no encontrada: ${claseId}`, 'err'); return; }
-
-  // 1. Escribir el target en localStorage (usando helper si está cargado)
-  const ok = (typeof window.MOTOR_SET_TARGET === 'function')
-    ? window.MOTOR_SET_TARGET(claseId, kind)
-    : (function(){
-        const payload = {
-          claseId, kind,
-          cat: clase.cat,
-          slug: catToSlug(clase.cat),
-          titulo: clase.n || clase.titulo || claseId,
-          niv: clase.niv || 'p',
-          nivName: NIV_NAME[clase.niv] || '',
-          targetPath: `academia/${catToSlug(clase.cat)}/${claseId}/${kind==='img'?'imagen.jpg':kind==='vid'?'video.mp4':kind==='aud'?'audio.mp3':'guion.pdf'}`,
-          stamped: new Date().toISOString()
-        };
-        try{ localStorage.setItem('fc_admin_target', JSON.stringify(payload)); return true; }
-        catch(e){ return false; }
-      })();
-
-  if(!ok){
-    toast('❌ No se pudo guardar el contexto en localStorage', 'err');
-    return;
-  }
-
-  // 2. Abrir el módulo del estudio en nueva pestaña
-  const file = STUDIO_FILE[kind] || 'modulo1_imagen.html';
-  const url = file + '#claseId=' + encodeURIComponent(claseId);
-  const w = window.open(url, '_blank', 'noopener,noreferrer');
-  if(!w){
-    toast(`⚠️ Bloqueado por el navegador. Permite popups o abre manualmente: <b>${file}</b>`, 'err');
-    return;
-  }
-
-  // 3. Toast de confirmación
-  toast(`🚀 <b>${STUDIO_NAME[kind]}</b> abierto para <b>${claseId}</b>`, 'ok');
+  const tipo = kind==='vid' ? 'vid' : 'img';
+  const url = 'motor_auto.html?clase=' + encodeURIComponent(claseId) + '&tipo=' + tipo;
+  const w = window.open(url, '_blank');
+  if(!w){ toast(`⚠️ Permite las ventanas emergentes o abre: <b>motor_auto.html</b>`, 'err'); return; }
+  toast(`🤖 Motor Automático abierto para <b>${esc(claseId)}</b> · ${tipo==='vid'?'🎬 video':'🖼️ imagen'}`, 'ok');
 };
 
 window.openUpload = function(claseId, type){
@@ -1256,12 +1215,8 @@ window.amcSend = function(){
       r.innerHTML = `🔍 Usa la búsqueda arriba en el panel principal. Tienes <b>${(window.MOTOR_FLAT||[]).length}</b> clases disponibles. Filtra por categoría en el sidebar.`;
     } else if(low.includes('alumna') || low.includes('acceso') || low.includes('desbloquear')){
       r.innerHTML = `👥 Ve a la pestaña <b>"Alumnas & Accesos"</b> arriba. Selecciona la alumna, marca las clases con check y guarda. Se sincroniza con Firestore.`;
-    } else if(low.includes('imagen') || low.includes('m1')){
-      r.innerHTML = `🎨 Click en cualquier tarjeta de clase → botón <b>"🎨 → M1 Imagen"</b>. M1 se abre con el contexto pre-cargado para generar con IA.`;
-    } else if(low.includes('video') || low.includes('m2')){
-      r.innerHTML = `🎬 Click en la tarjeta de clase → <b>"🎬 → M2 Video"</b>. Igual que M1 pero para video.`;
-    } else if(low.includes('audio') || low.includes('voz') || low.includes('m3')){
-      r.innerHTML = `🔊 Click en la tarjeta de clase → <b>"🔊 → M3 Voz"</b>. M3 lee el guion automáticamente para TTS.`;
+    } else if(low.includes('imagen') || low.includes('video') || low.includes('generar') || low.includes('m1') || low.includes('m2') || low.includes('audio') || low.includes('voz') || low.includes('m3')){
+      r.innerHTML = `🤖 Usa el <b>Motor Automático</b> para generar imágenes y videos: pulsa <b>"🤖 → Motor Automático"</b> en cualquier tarjeta, o ábrelo desde el Centro de Administración. Genera en lotes, revisa y sube a Firebase.`;
     } else if(low.includes('estado') || low.includes('cuant')){
       const total = (window.MOTOR_FLAT||[]).length;
       r.innerHTML = `📊 Total <b>${total}</b> clases · ${Object.keys(window.MOTOR||{}).length} categorías. Mira los contadores en el sidebar para ver qué clases ya tienen media subida.`;

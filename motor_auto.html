@@ -410,7 +410,13 @@
       </div>
     </div>
     <div class="note" id="genDestHint" style="margin-top:6px;">🔥 <b>Firebase</b>: cada archivo se guarda en Firebase (lo de siempre) + copia de respaldo en Drive.</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <div class="reviewbar" style="border:none;padding-top:4px;margin-top:4px;align-items:center;">
+      <span class="note" style="margin-right:6px;">🔢 <b>Generar solo</b> las primeras</span>
+      <input id="lote_limite" type="number" min="0" max="999" value="10" oninput="refrescarContadores()" style="width:72px;background:var(--bg3);border:1px solid var(--gold2);border-radius:6px;color:var(--text);padding:7px 9px;font-family:'JetBrains Mono',monospace;font-weight:700;">
+      <span class="note" style="margin-left:6px;">que <b>falten</b> (pon <b>0</b> = todas las que falten)</span>
+    </div>
+    <div class="note" style="margin-top:4px;color:var(--gold2);">💡 Así controlas el gasto: con "Omitir las que ya están" ✅ y este número en <b>10</b>, cada vez generas solo <b>10 nuevas</b> — nunca repites las que ya tienes. Recargas, vuelves y genera las 10 siguientes.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
       <button class="btn btn-ghost" id="btnPrueba" onclick="pruebaUna()" style="border-color:var(--gold2);color:var(--gold2);">🧪 Generar 1 de prueba</button>
       <button class="btn btn-go" id="btnGo" onclick="iniciar()">▶️ Iniciar lote</button>
       <button class="btn btn-stop" id="btnStop" onclick="detener()" style="display:none;">⏹ Detener</button>
@@ -496,8 +502,14 @@ function combosSeleccionados(){
 }
 function updateCount(){
   const k = combosSeleccionados().length;
-  document.getElementById('selCount').textContent = k+' lámina(s) seleccionada(s)';
+  document.getElementById('selCount').textContent = k+' lámina(s) seleccionada(s)'+topeTexto();
   document.getElementById('btnGo').disabled = (k===0||RUNNING);
+}
+// Aclara junto al contador que la selección NO es lo que se genera:
+// el tope manda. Elimina el miedo a "genera 81 sí o sí".
+function topeTexto(){
+  const l = (typeof loteLimite==='function') ? loteLimite() : 0;
+  return l ? ' · pero se generarán máx. '+l+' nuevas (tu tope; las que ya están se omiten)' : ' · se generarán TODAS las que falten (tope en 0)';
 }
 updateCount();
 
@@ -507,7 +519,9 @@ const VAR_LBL = {cliente:'Cliente (resultado)', peluquero:'Técnica', protocolo:
 let MODO='fitness';
 let PELU_FLAT=[];                       // [{id, cat, slug, titulo, niv}]
 let PELU_CATS=[];                       // [cat,...]
-const SELP={cat:new Set(), niv:new Set(), var:new Set(['cliente'])};
+const SELP={cat:new Set(), niv:new Set(), var:new Set(['cliente']), solo:null};
+// SELP.solo = claseId cuando se abre el motor desde una tarjeta de admin_motores
+// (motor_auto.html?clase=ID&tipo=img|vid). En ese modo se genera SOLO esa clase.
 
 function catToSlug(cat){ return String(cat).replace(/[^\w\s]/g,'').trim().toLowerCase().replace(/\s+/g,'_'); }
 
@@ -553,6 +567,8 @@ function buildPeluChips(){
   updateCountP();
 }
 function clasesPeluSeleccionadas(){
+  // Modo "solo esta clase": abierto desde una tarjeta de admin_motores.
+  if(SELP.solo) return PELU_FLAT.filter(c => c.id===SELP.solo);
   return PELU_FLAT.filter(c =>
     (SELP.cat.size?SELP.cat.has(c.cat):false) &&
     (SELP.niv.size?SELP.niv.has(c.niv):true)
@@ -561,7 +577,7 @@ function clasesPeluSeleccionadas(){
 function updateCountP(){
   const k=clasesPeluSeleccionadas().length;
   const nv=SELP.var.size||1;
-  document.getElementById('selCountP').textContent = k+' clase(s) × '+nv+' variante(s) = '+(k*nv)+' imágenes';
+  document.getElementById('selCountP').textContent = k+' clase(s) × '+nv+' variante(s) = '+(k*nv)+' imágenes'+topeTexto();
   if(MODO==='pelu') document.getElementById('btnGo').disabled = (k===0||RUNNING);
 }
 function selPeluTodo(){ PELU_CATS.forEach(c=>SELP.cat.add(c)); document.querySelectorAll('#chPeluCat .chip').forEach(c=>c.classList.add('on')); updateCountP(); }
@@ -605,6 +621,26 @@ function setModo(m){
   else if(m==='corte'){ if(!document.getElementById('chCorte').children.length) buildCorteChips(); updateCountC(); }
   else updateCount();
   refreshModelSelectors();
+}
+
+// ── Límite de lote: "generar solo las primeras N que falten" ──
+// Devuelve el tope leído del campo (0 = sin tope). Lo usan iniciar()/iniciarPelu()
+// para cortar tras N generaciones NUEVAS reales (las omitidas no cuentan),
+// así Fátima controla el gasto y nunca duplica lo ya generado.
+function loteLimite(){
+  const el=document.getElementById('lote_limite');
+  const v=el?parseInt(el.value):0;
+  return (isNaN(v)||v<0)?0:v;
+}
+// Refresca el contador visible del sistema activo al cambiar el tope,
+// para que Fátima vea al instante "se generarán máx. N nuevas".
+function refrescarContadores(){
+  try{
+    if(MODO==='pelu') updateCountP();
+    else if(MODO==='hub' && typeof updateCountH==='function') updateCountH();
+    else if(MODO==='corte' && typeof updateCountC==='function') updateCountC();
+    else updateCount();
+  }catch(_){}
 }
 
 // helper de cierre de lote
@@ -675,14 +711,17 @@ async function iniciarPelu(){
   document.getElementById('preview').innerHTML='';
   const skip=document.getElementById('optSkipP').checked;
   const regen=document.getElementById('optRegenP').checked;
+  const limite=loteLimite();
   const total=clases.length*vars.length;
-  logLine('▶️ Peluquería · '+clases.length+' clase(s) × '+vars.length+' '+(tipoP==='vid'?'video(s)':'variante(s)')+' = '+total,'info');
+  logLine('▶️ Peluquería · '+clases.length+' clase(s) × '+vars.length+' '+(tipoP==='vid'?'video(s)':'variante(s)')+' = '+total+(limite?' · tope: '+limite+' nuevas':''),'info');
 
-  let done=0, ok=0, omit=0, err=0;
+  let done=0, ok=0, omit=0, err=0, generadas=0;
   for(const clase of clases){
     if(STOP) break;
+    if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s) generada(s). Recarga y vuelve para las siguientes.','info'); break; }
     for(const variant of vars){
       if(STOP) break;
+      if(limite && generadas>=limite) break;
       setProg(done,total,clase.id+' · '+variant+' ('+(done+1)+'/'+total+')');
       try{
         if(tipoP==='vid'){
@@ -696,18 +735,19 @@ async function iniciarPelu(){
             const genV=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.build({cat:clase.cat,catId:clase.cat,titulo:clase.titulo},'vid').prompt));
             const blob=await genV();
             await addJob({ label:clase.id+' · 🎬 video', blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_video.mp4', upload:(bl)=>subirPeluVideo(clase,bl), regen:genV, restore:{kind:'pelu-vid-apoyo', claseId:clase.id} });
-            ok++; done++; continue;
+            ok++; generadas++; done++; continue;
           }
           logLine('🎬 '+clase.id+' · '+pasos.length+' paso(s) de video (carrusel)…','info');
           for(let pi=0; pi<pasos.length; pi++){
             if(STOP) break;
+            if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s). Recarga y vuelve para las siguientes.','info'); break; }
             const nn=String(pi+1).padStart(2,'0');
             const prompt=MOTOR_PROMPTS.peluqueriaPaso(clase.cat, clase.titulo, clase.niv, pasos[pi]);
             const genP=async()=>fetchToBlob(await genVideo(prompt));
             try{
               const blob=await genP();
               await addJob({ label:clase.id+' · paso '+(pi+1)+'/'+pasos.length, blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_paso_'+nn+'.mp4', upload:((idx)=>(bl)=>subirPeluPaso(clase,idx,bl))(pi), regen:genP, restore:{kind:'pelu-vid-paso', claseId:clase.id, idx:pi} });
-              ok++;
+              ok++; generadas++;
             }catch(e){ err++; logLine('❌ '+clase.id+' paso '+(pi+1)+': '+(e.message||e),'err'); }
           }
           done++; continue;
@@ -717,7 +757,7 @@ async function iniciarPelu(){
         const gen=async()=>fetchToBlob(await genImagen(MOTOR_PROMPTS.peluqueria(clase.cat, variant, clase)));
         const blob=await gen();
         await addJob({ label:clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen, restore:{kind:'pelu-img', claseId:clase.id, variant} });
-        ok++; done++;
+        ok++; generadas++; done++;
       }catch(e){ err++; done++; logLine('❌ '+clase.id+' · '+variant+': '+(e.message||e),'err'); }
     }
   }
@@ -778,7 +818,7 @@ function buildHubChips(){
   updateCountH();
 }
 function updateCountH(){
-  document.getElementById('selCountH').textContent = SELH.size+' tarjeta(s) seleccionada(s)';
+  document.getElementById('selCountH').textContent = SELH.size+' tarjeta(s) seleccionada(s)'+(SELH.size?topeTexto():'');
   if(MODO==='hub') document.getElementById('btnGo').disabled=(SELH.size===0||RUNNING);
 }
 function selHubTodo(){ [...HUB_CARDS,...HUB_PORTADAS].forEach(b=>SELH.add(b.n)); document.querySelectorAll('#chHub .chip').forEach(c=>c.classList.add('on')); updateCountH(); }
@@ -810,11 +850,13 @@ async function iniciarHub(){
   document.getElementById('btnStop').style.display='inline-block';
   document.getElementById('preview').innerHTML='';
   const skip=document.getElementById('optSkipH').checked;
-  logLine('▶️ Hub · '+sel.length+' tarjeta(s)','info');
+  const limite=loteLimite();
+  logLine('▶️ Hub · '+sel.length+' tarjeta(s)'+(limite?' · tope: '+limite+' nuevas':''),'info');
 
-  let done=0, ok=0, omit=0, err=0;
+  let done=0, ok=0, omit=0, err=0, generadas=0;
   for(const b of sel){
     if(STOP) break;
+    if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s). Recarga y vuelve para las siguientes.','info'); break; }
     setProg(done,sel.length,'Tarjeta '+b.nom+' ('+(done+1)+'/'+sel.length+')');
     try{
       if(skip && await yaExisteHub(b.n)){ logLine('⏭️ '+b.nom+' ya tiene imagen','skip'); omit++; done++; continue; }
@@ -822,7 +864,7 @@ async function iniciarHub(){
       const gen=async()=>fetchToBlob(await genImagen(HUB_PROMPT[b.n]||('Professional elegant image about '+b.nom+', photorealistic, no text')));
       const blob=await gen();
       await addJob({ label:'Hub · '+b.nom, blob, driveName:'hub_'+b.n+'.jpg', upload:(bl)=>subirHub(b.n,bl), regen:gen, restore:{kind:'hub-img', n:b.n} });
-      ok++; done++;
+      ok++; generadas++; done++;
     }catch(e){ err++; done++; logLine('❌ '+b.nom+': '+(e.message||e),'err'); }
   }
   finLote(done,sel.length,ok,omit,err,'Hub');
@@ -849,7 +891,7 @@ function buildCorteChips(){
   });
   updateCountC();
 }
-function updateCountC(){ document.getElementById('selCountC').textContent=SELC.size+' módulo(s) seleccionado(s)'; if(MODO==='corte') document.getElementById('btnGo').disabled=(SELC.size===0||RUNNING); }
+function updateCountC(){ document.getElementById('selCountC').textContent=SELC.size+' módulo(s) seleccionado(s)'+(SELC.size?topeTexto():''); if(MODO==='corte') document.getElementById('btnGo').disabled=(SELC.size===0||RUNNING); }
 function selCorteTodo(){ Object.keys(CORTE_LBL).forEach(id=>SELC.add(id)); document.querySelectorAll('#chCorte .chip').forEach(c=>c.classList.add('on')); updateCountC(); }
 function selCorteNada(){ SELC.clear(); document.querySelectorAll('#chCorte .chip').forEach(c=>c.classList.remove('on')); updateCountC(); }
 async function yaExisteCorte(id){ try{ const s=await FB.getDoc(FB.doc(FB.db,'corte_modulos',id)); return s.exists() && s.data().imgUrl; }catch(_){ return false; } }
@@ -877,10 +919,12 @@ async function iniciarCorte(){
   document.getElementById('btnStop').style.display='inline-block';
   document.getElementById('preview').innerHTML='';
   const skip=document.getElementById('optSkipC').checked;
-  logLine('▶️ Motor de Corte · '+sel.length+' módulo(s)','info');
-  let done=0, ok=0, omit=0, err=0;
+  const limite=loteLimite();
+  logLine('▶️ Motor de Corte · '+sel.length+' módulo(s)'+(limite?' · tope: '+limite+' nuevas':''),'info');
+  let done=0, ok=0, omit=0, err=0, generadas=0;
   for(const id of sel){
     if(STOP) break;
+    if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s). Recarga y vuelve para las siguientes.','info'); break; }
     setProg(done,sel.length,id+' · '+CORTE_LBL[id]+' ('+(done+1)+'/'+sel.length+')');
     try{
       if(skip && await yaExisteCorte(id)){ logLine('⏭️ '+id+' ya tiene imagen','skip'); omit++; done++; continue; }
@@ -888,7 +932,7 @@ async function iniciarCorte(){
       const gen=async()=>fetchToBlob(await genImagen(CORTE_PROMPT[id]));
       const blob=await gen();
       await addJob({ label:id+' · '+CORTE_LBL[id], blob, driveName:'corte_'+id+'.jpg', upload:(bl)=>subirCorte(id,bl), regen:gen, restore:{kind:'corte-img', id} });
-      ok++; done++;
+      ok++; generadas++; done++;
     }catch(e){ err++; done++; logLine('❌ '+id+': '+(e.message||e),'err'); }
   }
   finLote(done,sel.length,ok,omit,err,'Motor de Corte');
@@ -1876,10 +1920,13 @@ async function iniciar(){
 
   const skip=document.getElementById('optSkip').checked;
   const regen=document.getElementById('optRegen').checked;
-  let done=0, ok=0, omit=0, err=0;
+  const limite=loteLimite();
+  let done=0, ok=0, omit=0, err=0, generadas=0;
+  if(limite) logLine('🔢 Tope de este lote: '+limite+' nueva(s) · las que ya están se omiten sin gastar.','info');
 
   for(const combo of combos){
     if(STOP) break;
+    if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s) generada(s). Recarga y vuelve para las siguientes.','info'); break; }
     const base = combo.claveImgBase;          // grupo_obj_equipo_nej
     const lista = combo.ejercicios && combo.ejercicios.length ? combo.ejercicios : MOTOR_PROMPTS.ejerciciosDe(combo.grupo,combo.equipo,combo.nej,combo.motor);
 
@@ -1891,6 +1938,7 @@ async function iniciar(){
       logLine('🎬 '+base+' · generando '+lista.length+' clip(s) de ejercicio (carrusel)…','info');
       for(let i=0;i<lista.length;i++){
         if(STOP) break;
+        if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s). Recarga y vuelve para las siguientes.','info'); break; }
         const nombreEj=lista[i];
         const clave=claveClip(base,i,nombreEj);
         const titulo=(i+1)+'. '+nombreEj;
@@ -1901,7 +1949,7 @@ async function iniciar(){
           const gen=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.fitnessVideo(combo.grupo,combo.equipo,combo.motor,nombreEj)));
           const blob=await gen();
           await addJob({ label:'🎬 '+base+' · '+titulo, blob, isVideo:true, driveName:clave+'.mp4', upload:(bl)=>subirVideo(clave,bl,titulo), regen:gen, restore:{kind:'fitness-vid', clave, titulo} });
-          ok++;
+          ok++; generadas++;
         }catch(e){ err++; logLine('❌ '+clave+': '+(e.message||e),'err'); }
       }
       done++;
@@ -1926,6 +1974,7 @@ async function iniciar(){
       let hechas=0;
       for(let v=1; v<=nVer; v++){
         if(STOP) break;
+        if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s). Recarga y vuelve para las siguientes.','info'); break; }
         const claveV=base+'_v'+v;
         if(skip && !regen && await yaExiste(claveV)){ logLine('⏭️ '+claveV+' ya existe · omitida','skip'); omit++; continue; }
         logLine('🎨 '+claveV+' · generando '+lista.length+' imágenes…','info');
@@ -1933,7 +1982,7 @@ async function iniciar(){
         const blob=await armarLamina();
         if(STOP) break;
         await addJob({ label:claveV+' · lámina', blob, driveName:claveV+'.jpg', upload:(bl)=>subirLaminaVersion(base,v,bl), regen:armarLamina, restore:{kind:'fitness-img', base, v} });
-        hechas++; ok++;
+        hechas++; ok++; generadas++;
         logLine('✅ '+claveV+' lista ('+Math.round(blob.size/1024)+' KB)','ok');
       }
       done++;
@@ -1950,6 +1999,53 @@ renderDrive(); setGen('revisar'); manSysChange(); toggleDia();
 initProviders();
 document.getElementById('pillDrive').onclick=conectarDrive;
 restaurarGaleria(); // recupera lo generado y no subido de la última sesión (no se pierde más)
+
+/* ══════════════════════════════════════════════════════════════════
+   ATAJO DESDE ADMIN_MOTORES · motor_auto.html?clase=ID&tipo=img|vid
+   Fátima pulsa una clase en el mapa de motores y llega aquí con esa
+   clase YA cargada y lista para generar (solo pulsar "Iniciar lote").
+   ══════════════════════════════════════════════════════════════════ */
+(function abrirDesdeTarjeta(){
+  try{
+    const q = new URLSearchParams(location.search);
+    const clase = (q.get('clase')||'').trim();
+    if(!clase) return;
+    const tipo = (q.get('tipo')||'img').trim()==='vid' ? 'vid' : 'img';
+
+    // 1. Cambiar a modo Peluquería (Academia) y marcar el radio.
+    const rp = document.querySelector('input[name="modo"][value="pelu"]');
+    if(rp){ rp.checked = true; }
+    setModo('pelu');
+    if(!PELU_FLAT.length) cargarPelu();
+
+    // 2. Fijar "solo esta clase".
+    const c = PELU_FLAT.find(x=>x.id===clase);
+    SELP.solo = clase;
+
+    // 3. Imagen o video según lo pedido.
+    const rt = document.querySelector('input[name="tipoP"][value="'+tipo+'"]');
+    if(rt){ rt.checked = true; if(typeof refreshModelSelectors==='function') refreshModelSelectors(); }
+
+    // Como elegiste esta clase a propósito, se genera aunque ya exista (regenerar).
+    // Igual cae en la galería de revisión: nada se sube hasta que apruebes.
+    const rg=document.getElementById('optRegenP'); if(rg) rg.checked=true;
+
+    // 4. Banner claro arriba de la selección + recuento.
+    const card = document.getElementById('cardPelu');
+    if(card){
+      let b = document.getElementById('soloClaseBanner');
+      if(!b){ b=document.createElement('div'); b.id='soloClaseBanner'; card.insertBefore(b, card.firstChild); }
+      b.style.cssText='background:linear-gradient(90deg,rgba(201,168,76,.15),transparent);border:1px solid var(--gold2,#e6c97d);border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--gold2,#e6c97d);';
+      b.innerHTML = '🎯 <b>Generando solo esta clase:</b> '+esc((c&&c.titulo)||clase)
+        + ' <span style="opacity:.7;font-family:monospace;">('+esc(clase)+')</span> · '
+        + (tipo==='vid'?'🎬 Video paso a paso':'🖼️ Imagen')
+        + ' — pulsa <b>▶️ Iniciar lote</b> abajo. '
+        + '<button onclick="SELP.solo=null;this.parentNode.remove();updateCountP();" style="margin-left:8px;background:transparent;border:1px solid currentColor;color:inherit;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;">✖ generar por categorías</button>';
+    }
+    updateCountP();
+    setTimeout(()=>{ const g=document.getElementById('btnGo'); if(g) g.scrollIntoView({behavior:'smooth',block:'center'}); }, 300);
+  }catch(e){ console.warn('atajo desde tarjeta falló:', e); }
+})();
 </script>
 <script src="drive_fix.js"></script>ç
 <script src="pelu_drive_fix.js"></script>
