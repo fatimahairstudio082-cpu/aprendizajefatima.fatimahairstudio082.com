@@ -809,8 +809,9 @@ function cardHTML(c, showCat){
           <button class="ab aud ${hasAud?'has':''}" onclick="openUpload('${c.id}','aud')">🎵 Audio</button>
         </div>
         <div class="studio-bar">✨   GENERAR CON IA   ✨</div>
-        <div class="studio-bridge">
-          <button class="sb m2" onclick="window.open('motor_auto.html','_blank')" title="Abrir el Motor Automático para generar imágenes y videos" style="grid-column:1 / -1;">🤖 → Motor Automático</button>
+        <div class="studio-bridge" style="grid-template-columns:1fr 1fr;">
+          <button class="sb m1" onclick="genEnMotor('${c.id}','img')" title="Abrir el Motor Automático con esta clase lista para generar su IMAGEN">🖼️ Generar imagen</button>
+          <button class="sb m2" onclick="genEnMotor('${c.id}','vid')" title="Abrir el Motor Automático con esta clase lista para generar su VIDEO">🎬 Generar video</button>
         </div>
       </div>
     </div>`;
@@ -834,59 +835,19 @@ const TYPE_META = {
   aud:{label:'Audio',icon:'🎵',accept:'audio/mpeg,audio/mp3,audio/wav,audio/ogg',file:'audio.mp3',field:'url_audio',path:'path_audio',dateField:'audioActualizadoEn',hint:'MP3 · WAV · OGG'}
 };
 
-/* ════════════════ PUENTE AL ESTUDIO (M1/M2/M3) ════════════════ */
-// Mapa de tipo → módulo del estudio
-const STUDIO_FILE = {
-  img: 'modulo1_imagen.html',
-  vid: 'modulo2_video.html',
-  aud: 'modulo3_voz.html',
-  pdf: 'modulo4_carpeta.html'   // PDF/manual van directo a M4
-};
-const STUDIO_NAME = {
-  img: 'M1 · Imagen IA',
-  vid: 'M2 · Video IA',
-  aud: 'M3 · Voz',
-  pdf: 'M4 · Carpeta'
-};
-
-window.openStudio = function(claseId, kind){
+/* ════════════════ ATAJO AL MOTOR AUTOMÁTICO ════════════════
+   Fátima pulsa "Generar imagen/video" en una tarjeta de clase y se
+   abre motor_auto.html con ESA clase ya cargada y lista para generar.
+   El claseId viaja en la URL; el motor lo lee al arrancar (SELP.solo).
+   (openStudio/M1-M4 quedó retirado: ahora todo pasa por el Motor Automático.) */
+window.genEnMotor = function(claseId, kind){
   const clase = FLAT.find(c => c.id === claseId);
   if(!clase){ toast(`❌ Clase no encontrada: ${claseId}`, 'err'); return; }
-
-  // 1. Escribir el target en localStorage (usando helper si está cargado)
-  const ok = (typeof window.MOTOR_SET_TARGET === 'function')
-    ? window.MOTOR_SET_TARGET(claseId, kind)
-    : (function(){
-        const payload = {
-          claseId, kind,
-          cat: clase.cat,
-          slug: catToSlug(clase.cat),
-          titulo: clase.n || clase.titulo || claseId,
-          niv: clase.niv || 'p',
-          nivName: NIV_NAME[clase.niv] || '',
-          targetPath: `academia/${catToSlug(clase.cat)}/${claseId}/${kind==='img'?'imagen.jpg':kind==='vid'?'video.mp4':kind==='aud'?'audio.mp3':'guion.pdf'}`,
-          stamped: new Date().toISOString()
-        };
-        try{ localStorage.setItem('fc_admin_target', JSON.stringify(payload)); return true; }
-        catch(e){ return false; }
-      })();
-
-  if(!ok){
-    toast('❌ No se pudo guardar el contexto en localStorage', 'err');
-    return;
-  }
-
-  // 2. Abrir el módulo del estudio en nueva pestaña
-  const file = STUDIO_FILE[kind] || 'modulo1_imagen.html';
-  const url = file + '#claseId=' + encodeURIComponent(claseId);
-  const w = window.open(url, '_blank', 'noopener,noreferrer');
-  if(!w){
-    toast(`⚠️ Bloqueado por el navegador. Permite popups o abre manualmente: <b>${file}</b>`, 'err');
-    return;
-  }
-
-  // 3. Toast de confirmación
-  toast(`🚀 <b>${STUDIO_NAME[kind]}</b> abierto para <b>${claseId}</b>`, 'ok');
+  const tipo = kind==='vid' ? 'vid' : 'img';
+  const url = 'motor_auto.html?clase=' + encodeURIComponent(claseId) + '&tipo=' + tipo;
+  const w = window.open(url, '_blank');
+  if(!w){ toast(`⚠️ Permite las ventanas emergentes o abre: <b>motor_auto.html</b>`, 'err'); return; }
+  toast(`🤖 Motor Automático abierto para <b>${esc(claseId)}</b> · ${tipo==='vid'?'🎬 video':'🖼️ imagen'}`, 'ok');
 };
 
 window.openUpload = function(claseId, type){

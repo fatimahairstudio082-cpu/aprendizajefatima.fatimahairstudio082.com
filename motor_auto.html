@@ -513,7 +513,9 @@ const VAR_LBL = {cliente:'Cliente (resultado)', peluquero:'Técnica', protocolo:
 let MODO='fitness';
 let PELU_FLAT=[];                       // [{id, cat, slug, titulo, niv}]
 let PELU_CATS=[];                       // [cat,...]
-const SELP={cat:new Set(), niv:new Set(), var:new Set(['cliente'])};
+const SELP={cat:new Set(), niv:new Set(), var:new Set(['cliente']), solo:null};
+// SELP.solo = claseId cuando se abre el motor desde una tarjeta de admin_motores
+// (motor_auto.html?clase=ID&tipo=img|vid). En ese modo se genera SOLO esa clase.
 
 function catToSlug(cat){ return String(cat).replace(/[^\w\s]/g,'').trim().toLowerCase().replace(/\s+/g,'_'); }
 
@@ -559,6 +561,8 @@ function buildPeluChips(){
   updateCountP();
 }
 function clasesPeluSeleccionadas(){
+  // Modo "solo esta clase": abierto desde una tarjeta de admin_motores.
+  if(SELP.solo) return PELU_FLAT.filter(c => c.id===SELP.solo);
   return PELU_FLAT.filter(c =>
     (SELP.cat.size?SELP.cat.has(c.cat):false) &&
     (SELP.niv.size?SELP.niv.has(c.niv):true)
@@ -1975,6 +1979,53 @@ renderDrive(); setGen('revisar'); manSysChange(); toggleDia();
 initProviders();
 document.getElementById('pillDrive').onclick=conectarDrive;
 restaurarGaleria(); // recupera lo generado y no subido de la última sesión (no se pierde más)
+
+/* ══════════════════════════════════════════════════════════════════
+   ATAJO DESDE ADMIN_MOTORES · motor_auto.html?clase=ID&tipo=img|vid
+   Fátima pulsa una clase en el mapa de motores y llega aquí con esa
+   clase YA cargada y lista para generar (solo pulsar "Iniciar lote").
+   ══════════════════════════════════════════════════════════════════ */
+(function abrirDesdeTarjeta(){
+  try{
+    const q = new URLSearchParams(location.search);
+    const clase = (q.get('clase')||'').trim();
+    if(!clase) return;
+    const tipo = (q.get('tipo')||'img').trim()==='vid' ? 'vid' : 'img';
+
+    // 1. Cambiar a modo Peluquería (Academia) y marcar el radio.
+    const rp = document.querySelector('input[name="modo"][value="pelu"]');
+    if(rp){ rp.checked = true; }
+    setModo('pelu');
+    if(!PELU_FLAT.length) cargarPelu();
+
+    // 2. Fijar "solo esta clase".
+    const c = PELU_FLAT.find(x=>x.id===clase);
+    SELP.solo = clase;
+
+    // 3. Imagen o video según lo pedido.
+    const rt = document.querySelector('input[name="tipoP"][value="'+tipo+'"]');
+    if(rt){ rt.checked = true; if(typeof refreshModelSelectors==='function') refreshModelSelectors(); }
+
+    // Como elegiste esta clase a propósito, se genera aunque ya exista (regenerar).
+    // Igual cae en la galería de revisión: nada se sube hasta que apruebes.
+    const rg=document.getElementById('optRegenP'); if(rg) rg.checked=true;
+
+    // 4. Banner claro arriba de la selección + recuento.
+    const card = document.getElementById('cardPelu');
+    if(card){
+      let b = document.getElementById('soloClaseBanner');
+      if(!b){ b=document.createElement('div'); b.id='soloClaseBanner'; card.insertBefore(b, card.firstChild); }
+      b.style.cssText='background:linear-gradient(90deg,rgba(201,168,76,.15),transparent);border:1px solid var(--gold2,#e6c97d);border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--gold2,#e6c97d);';
+      b.innerHTML = '🎯 <b>Generando solo esta clase:</b> '+esc((c&&c.titulo)||clase)
+        + ' <span style="opacity:.7;font-family:monospace;">('+esc(clase)+')</span> · '
+        + (tipo==='vid'?'🎬 Video paso a paso':'🖼️ Imagen')
+        + ' — pulsa <b>▶️ Iniciar lote</b> abajo. '
+        + '<button onclick="SELP.solo=null;this.parentNode.remove();updateCountP();" style="margin-left:8px;background:transparent;border:1px solid currentColor;color:inherit;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;">✖ generar por categorías</button>';
+    }
+    updateCountP();
+    setTimeout(()=>{ const g=document.getElementById('btnGo'); if(g) g.scrollIntoView({behavior:'smooth',block:'center'}); }, 300);
+  }catch(e){ console.warn('atajo desde tarjeta falló:', e); }
+})();
 </script>
 <script src="drive_fix.js"></script>ç
 <script src="pelu_drive_fix.js"></script>
