@@ -321,7 +321,7 @@
       <div class="chips" id="chHub"></div>
     </div>
     <div class="opts">
-      <label><input type="checkbox" id="optSkipH"> Omitir las que ya tienen imagen</label>
+      <label><input type="checkbox" id="optSkipH" checked> Omitir las que ya tienen imagen</label>
     </div>
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="selHubTodo()">Seleccionar todas</button>
@@ -339,7 +339,7 @@
       <div class="chips" id="chCorte"></div>
     </div>
     <div class="opts">
-      <label><input type="checkbox" id="optSkipC"> Omitir los que ya tienen imagen</label>
+      <label><input type="checkbox" id="optSkipC" checked> Omitir los que ya tienen imagen</label>
     </div>
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="selCorteTodo()">Seleccionar todos</button>
@@ -732,6 +732,7 @@ async function iniciarPelu(){
           if(!pasos.length){
             // sin pasos detectados → 1 video de apoyo (comportamiento anterior)
             logLine('🎬 '+clase.id+' · video de apoyo (sin pasos)…','info');
+            if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('pelu-vid', clase.id, regen?'forzado':(skip?'falta':'skip-desactivado'));
             const genV=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.build({cat:clase.cat,catId:clase.cat,titulo:clase.titulo},'vid').prompt));
             const blob=await genV();
             await addJob({ label:clase.id+' · 🎬 video', blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_video.mp4', upload:(bl)=>subirPeluVideo(clase,bl), regen:genV, restore:{kind:'pelu-vid-apoyo', claseId:clase.id} });
@@ -742,7 +743,11 @@ async function iniciarPelu(){
             if(STOP) break;
             if(limite && generadas>=limite){ logLine('🔢 Tope alcanzado: '+limite+' nueva(s). Recarga y vuelve para las siguientes.','info'); break; }
             const nn=String(pi+1).padStart(2,'0');
+            // INVENTARIO: cada paso se verifica POR SEPARADO → un carrusel a medias
+            // solo genera los pasos que faltan, nunca el carrusel completo otra vez.
+            if(skip && !regen && window.yaExistePeluPaso && await yaExistePeluPaso(clase.id,pi)){ logLine('⏭️ '+clase.id+' · paso '+(pi+1)+' ya existe · omitido','skip'); omit++; continue; }
             const prompt=MOTOR_PROMPTS.peluqueriaPaso(clase.cat, clase.titulo, clase.niv, pasos[pi]);
+            if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('pelu-paso', clase.id+'#'+(pi+1), regen?'forzado':(skip?'falta':'skip-desactivado'));
             const genP=async()=>fetchToBlob(await genVideo(prompt));
             try{
               const blob=await genP();
@@ -754,6 +759,7 @@ async function iniciarPelu(){
         }
         if(skip && !regen && variant==='cliente' && await yaExistePelu(clase.id)){ logLine('⏭️ '+clase.id+' ya tiene imagen · omitida','skip'); omit++; done++; continue; }
         logLine('🎨 '+clase.id+' · '+variant+' · generando…','info');
+        if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('pelu-img', clase.id, variant!=='cliente' ? ('variante-'+variant) : (regen?'forzado':(skip?'falta':'skip-desactivado')));
         const gen=async()=>fetchToBlob(await genImagen(MOTOR_PROMPTS.peluqueria(clase.cat, variant, clase)));
         const blob=await gen();
         await addJob({ label:clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen, restore:{kind:'pelu-img', claseId:clase.id, variant} });
@@ -861,6 +867,7 @@ async function iniciarHub(){
     try{
       if(skip && await yaExisteHub(b.n)){ logLine('⏭️ '+b.nom+' ya tiene imagen','skip'); omit++; done++; continue; }
       logLine('🎨 '+b.nom+' · generando…','info');
+      if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('hub', b.n, skip?'falta':'skip-desactivado');
       const gen=async()=>fetchToBlob(await genImagen(HUB_PROMPT[b.n]||('Professional elegant image about '+b.nom+', photorealistic, no text')));
       const blob=await gen();
       await addJob({ label:'Hub · '+b.nom, blob, driveName:'hub_'+b.n+'.jpg', upload:(bl)=>subirHub(b.n,bl), regen:gen, restore:{kind:'hub-img', n:b.n} });
@@ -929,6 +936,7 @@ async function iniciarCorte(){
     try{
       if(skip && await yaExisteCorte(id)){ logLine('⏭️ '+id+' ya tiene imagen','skip'); omit++; done++; continue; }
       logLine('🎨 '+id+' · generando…','info');
+      if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('corte', id, skip?'falta':'skip-desactivado');
       const gen=async()=>fetchToBlob(await genImagen(CORTE_PROMPT[id]));
       const blob=await gen();
       await addJob({ label:id+' · '+CORTE_LBL[id], blob, driveName:'corte_'+id+'.jpg', upload:(bl)=>subirCorte(id,bl), regen:gen, restore:{kind:'corte-img', id} });
@@ -1328,6 +1336,7 @@ async function rvRegen(id){
   const j=JOBS.find(x=>x.id===id); if(!j||!j.regen) return;
   const el=document.getElementById('rv-'+id); if(el) el.style.opacity='.5';
   try{
+    if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('galeria', j.label, 'regeneracion-manual');
     const nb=await j.regen();
     try{URL.revokeObjectURL(j.objUrl);}catch(_){}
     j.blob=nb; j.objUrl=URL.createObjectURL(nb); j.estado='pendiente';
@@ -1841,11 +1850,13 @@ async function pruebaUna(){
         const clave=claveClip(base,0,nombreEj);
         const titulo='1. '+nombreEj;
         logLine('🧪 PRUEBA · '+clave+' · generando clip del 1er ejercicio…','info');
+        if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('fitness-vid', clave, 'prueba');
         const gen=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.fitnessVideo(combo.grupo,combo.equipo,combo.motor,nombreEj)));
         const blob=await gen();
         await addJob({ label:'🧪 '+clave, blob, isVideo:true, driveName:clave+'.mp4', upload:(bl)=>subirVideo(clave,bl,titulo), regen:gen, restore:{kind:'fitness-vid', clave, titulo} });
       } else {
         logLine('🧪 PRUEBA · '+base+'_v1 · generando '+lista.length+' imágenes…','info');
+        if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('fitness-img', base+'_v1', 'prueba');
         const armar=async()=>{
           const srcs=[];
           for(let i=0;i<lista.length;i++){ if(STOP)break; srcs.push(await genImagen(MOTOR_PROMPTS.fitnessSingle(combo.grupo,combo.equipo,combo.motor,lista[i]),{noRef:true})); }
@@ -1866,11 +1877,13 @@ async function pruebaUna(){
         const pasos=pasosDeClase(clase.txt);
         if(!pasos.length){
           logLine('🧪 PRUEBA · '+clase.id+' · video de apoyo (sin pasos)…','info');
+          if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('pelu-vid', clase.id, 'prueba');
           const genV=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.build({cat:clase.cat,catId:clase.cat,titulo:clase.titulo},'vid').prompt));
           const blob=await genV();
           await addJob({ label:'🧪 '+clase.id+' · 🎬 video', blob, isVideo:true, driveName:clase.slug+'_'+clase.id+'_video.mp4', upload:(bl)=>subirPeluVideo(clase,bl), regen:genV, restore:{kind:'pelu-vid-apoyo', claseId:clase.id} });
         } else {
           logLine('🧪 PRUEBA · '+clase.id+' · paso 1/'+pasos.length+' de video…','info');
+          if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('pelu-paso', clase.id+'#1', 'prueba');
           const prompt=MOTOR_PROMPTS.peluqueriaPaso(clase.cat, clase.titulo, clase.niv, pasos[0]);
           const genP=async()=>fetchToBlob(await genVideo(prompt));
           const blob=await genP();
@@ -1879,6 +1892,7 @@ async function pruebaUna(){
       } else {
         const variant=([...SELP.var][0]||'cliente');
         logLine('🧪 PRUEBA · '+clase.id+' · '+variant+'…','info');
+        if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('pelu-img', clase.id, 'prueba');
         const gen=async()=>fetchToBlob(await genImagen(MOTOR_PROMPTS.peluqueria(clase.cat,variant)));
         const blob=await gen();
         await addJob({ label:'🧪 '+clase.id+' · '+variant, blob, driveName:clase.slug+'_'+clase.id+'_'+variant+'.jpg', upload:(bl)=>subirPelu(clase,bl,variant), regen:gen, restore:{kind:'pelu-img', claseId:clase.id, variant} });
@@ -1887,6 +1901,7 @@ async function pruebaUna(){
       const b=[...HUB_CARDS,...HUB_PORTADAS].find(x=>SELH.has(x.n));
       if(!b){ logLine('Selecciona una tarjeta.','err'); return; }
       logLine('🧪 PRUEBA · '+b.nom+'…','info');
+      if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('hub', b.n, 'prueba');
       const gen=async()=>fetchToBlob(await genImagen(HUB_PROMPT[b.n]||('Professional elegant image about '+b.nom)));
       const blob=await gen();
       await addJob({ label:'🧪 Hub · '+b.nom, blob, driveName:'hub_'+b.n+'.jpg', upload:(bl)=>subirHub(b.n,bl), regen:gen, restore:{kind:'hub-img', n:b.n} });
@@ -1894,6 +1909,7 @@ async function pruebaUna(){
       const id=Object.keys(CORTE_LBL).find(x=>SELC.has(x));
       if(!id){ logLine('Selecciona un módulo.','err'); return; }
       logLine('🧪 PRUEBA · '+id+'…','info');
+      if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('corte', id, 'prueba');
       const gen=async()=>fetchToBlob(await genImagen(CORTE_PROMPT[id]));
       const blob=await gen();
       await addJob({ label:'🧪 '+id+' · '+CORTE_LBL[id], blob, driveName:'corte_'+id+'.jpg', upload:(bl)=>subirCorte(id,bl), regen:gen, restore:{kind:'corte-img', id} });
@@ -1946,6 +1962,7 @@ async function iniciar(){
         try{
           if(skip && !regen && await yaExisteVideo(clave)){ logLine('⏭️ '+clave+' ya existe · omitido','skip'); omit++; continue; }
           logLine('🎬 '+clave+' · generando…','info');
+          if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('fitness-vid', clave, regen?'forzado':(skip?'falta':'skip-desactivado'));
           const gen=async()=>fetchToBlob(await genVideo(MOTOR_PROMPTS.fitnessVideo(combo.grupo,combo.equipo,combo.motor,nombreEj)));
           const blob=await gen();
           await addJob({ label:'🎬 '+base+' · '+titulo, blob, isVideo:true, driveName:clave+'.mp4', upload:(bl)=>subirVideo(clave,bl,titulo), regen:gen, restore:{kind:'fitness-vid', clave, titulo} });
@@ -1978,6 +1995,7 @@ async function iniciar(){
         const claveV=base+'_v'+v;
         if(skip && !regen && await yaExiste(claveV)){ logLine('⏭️ '+claveV+' ya existe · omitida','skip'); omit++; continue; }
         logLine('🎨 '+claveV+' · generando '+lista.length+' imágenes…','info');
+        if(window.MOTOR_GUARD) MOTOR_GUARD.declarar('fitness-img', claveV, regen?'forzado':(skip?'falta':'skip-desactivado'));
         setProg(done,combos.length,`${base} · versión ${v}/${nVer}`);
         const blob=await armarLamina();
         if(STOP) break;
@@ -2040,14 +2058,17 @@ restaurarGaleria(); // recupera lo generado y no subido de la última sesión (n
         + ' <span style="opacity:.7;font-family:monospace;">('+esc(clase)+')</span> · '
         + (tipo==='vid'?'🎬 Video paso a paso':'🖼️ Imagen')
         + ' — pulsa <b>▶️ Iniciar lote</b> abajo. '
-        + '<button onclick="SELP.solo=null;this.parentNode.remove();updateCountP();" style="margin-left:8px;background:transparent;border:1px solid currentColor;color:inherit;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;">✖ generar por categorías</button>';
+        + '<button onclick="SELP.solo=null;optRegenP.checked=false;this.parentNode.remove();updateCountP();" style="margin-left:8px;background:transparent;border:1px solid currentColor;color:inherit;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;">✖ generar por categorías</button>';
     }
     updateCountP();
     setTimeout(()=>{ const g=document.getElementById('btnGo'); if(g) g.scrollIntoView({behavior:'smooth',block:'center'}); }, 300);
   }catch(e){ console.warn('atajo desde tarjeta falló:', e); }
 })();
 </script>
-<script src="drive_fix.js"></script>ç
+<script src="drive_fix.js"></script>
 <script src="pelu_drive_fix.js"></script>
+<!-- 🧠 Cerebro del motor: inventario en vivo + guardián anti-duplicados.
+     SIEMPRE el último script: envuelve las funciones ya parcheadas. -->
+<script src="motor_inventario.js"></script>
 </body>
 </html>
