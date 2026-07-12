@@ -611,8 +611,15 @@ if(window.speechSynthesis) {
 document.addEventListener('DOMContentLoaded', () => { initCR(); });
 </script>
 
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<!-- React LOCAL (viaja con el sitio): la calculadora ya no depende de unpkg.com
+     y no se queda en negro esperando un servidor externo en teléfonos lentos. -->
+<script src="react.production.min.js"></script>
+<script src="react-dom.production.min.js"></script>
+<script>
+/* Respaldo: si los archivos locales faltaran, carga del CDN como antes. */
+if(!window.React) document.write('<scr'+'ipt src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin><\/scr'+'ipt>');
+if(!window.ReactDOM) document.write('<scr'+'ipt src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin><\/scr'+'ipt>');
+</script>
 
 <script>
 window.addEventListener('DOMContentLoaded', function() {
