@@ -56,6 +56,9 @@
       var m = s.match(/[-\w]{25,}/);
       if (m) return 'https://drive.google.com/file/d/' + m[0] + '/preview';
     }
+    // YouTube crudo bloquea el framing → /embed/ sí se ve dentro del hub
+    var yt = s.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w\-]{6,})/);
+    if (yt) return 'https://www.youtube.com/embed/' + yt[1];
     return s;
   }
   function esMp4(u) { return /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)|firebasestorage/i.test(String(u || '')); }

@@ -233,12 +233,19 @@
       if (!/^[A-Za-z0-9_\-]+\.html$/.test(src)) return error('Para un bloque HTML escribe solo el nombre del archivo, ej: bloque_maquillaje.html (sin http, sin carpetas).');
     } else if (tipo === 'video') {
       src = normVid(src);
-      if (!/^https:\/\//i.test(src)) return error('El link del video debe ser https (Drive, Storage o MP4).');
+      // YouTube en un iframe crudo bloquea el framing (pantalla negra):
+      // se convierte a /embed/, que sí se puede ver dentro del hub.
+      var yt = String(src).match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w\-]{6,})/);
+      if (yt) src = 'https://www.youtube.com/embed/' + yt[1];
+      if (!/^https:\/\//i.test(src)) return error('El link del video debe ser https (Drive, Storage, MP4 o YouTube).');
     } else {
       src = normImg(src);
       if (!/^https:\/\//i.test(src)) return error('El link de la imagen debe ser https (o un link/ID de Drive).');
     }
-    if (img) img = normImg(img);
+    if (img) {
+      img = normImg(img);
+      if (!/^https:\/\//i.test(img)) return error('La imagen de portada debe ser https (o un link/ID de Drive).');
+    }
 
     var slot, id;
     if (editando) { id = editando; slot = BLQ[id] && BLQ[id].slot || parseInt(id.slice(4), 10); }
