@@ -126,6 +126,9 @@ function estadoPeluVideo(id){
   }
   var st = INV.pasosStorage[id];
   if (st) hechos = Math.max(hechos, st.size);
+  // Pasos que viven en Drive (tras «☁️ Escanear Drive»): cuentan como hechos
+  // para NO regenerarlos; el botón ♻️ los registra para que la Academia los vea.
+  if (INV.drive){ try{ hechos = Math.max(hechos, drivePasosDe(id).length); }catch(_){} }
   if (!d && !hechos) return { global:'falta', hechos:0, total:total };
   if (d && d.url_video && linkOk(d.url_video)) return { global:'existe', hechos:hechos, total:total };
   if (total>0 && hechos>=total) return { global:'existe', hechos:hechos, total:total };
@@ -337,6 +340,56 @@ async function invRecuperarDrive(kind, clave){
 }
 window.invEscanearDrive = invEscanearDrive;
 window.invRecuperarDrive = invRecuperarDrive;
+
+/* ── Pasos de carrusel guardados en Drive ── */
+function drivePasosDe(claseId){
+  if (!INV.drive) return [];
+  var c = peluDe(claseId); if (!c) return [];
+  var pref = (c.slug + '_' + claseId + '_paso_').toLowerCase();
+  var out = [];
+  INV.drive.forEach(function(id, nombre){
+    if (nombre.indexOf(pref) === 0){
+      var m = nombre.slice(pref.length).match(/^(\d\d)\.mp4$/);
+      if (m) out.push({ nn:m[1], id:id, nombre:nombre });
+    }
+  });
+  out.sort(function(a,b){ return a.nn < b.nn ? -1 : 1; });
+  return out;
+}
+/* ♻️ Registra en clases_imgs.pasos TODOS los pasos de una clase que estén en
+   Drive (los hace públicos y apunta su enlace) — la Academia los muestra al
+   instante y NO se gasta ni una llamada a la IA. */
+async function invRecuperarPasosDrive(claseId){
+  try{
+    if (typeof DRIVE==='undefined' || !DRIVE.token){ invMsg('☁️ Conecta Google Drive y escanéalo primero.'); return; }
+    var user = await ensureAuth(); if (!user) return;
+    var lista = drivePasosDe(claseId);
+    if (!lista.length){ invMsg('❌ No hay pasos de '+claseId+' en el escaneo de Drive.'); return; }
+    var c = peluDe(claseId);
+    invMsg('♻️ Registrando '+lista.length+' paso(s) de '+claseId+' desde Drive…');
+    var patch = { pasos:{} };
+    for (var i=0;i<lista.length;i++){
+      var f = lista[i];
+      try{
+        await fetch('https://www.googleapis.com/drive/v3/files/'+f.id+'/permissions', {
+          method:'POST',
+          headers:{ Authorization:'Bearer '+DRIVE.token, 'Content-Type':'application/json' },
+          body: JSON.stringify({ role:'reader', type:'anyone' })
+        });
+      }catch(_){}
+      patch.pasos['paso_'+f.nn] = 'https://drive.google.com/uc?export=download&id='+f.id;
+    }
+    var total = (c && c.txt && typeof pasosDeClase==='function') ? pasosDeClase(c.txt).length : 0;
+    if (total) patch.pasos_total = total;
+    await FB.setDoc(FB.doc(FB.db,'clases_imgs',claseId), patch, {merge:true});
+    logLine('♻️ '+claseId+': '+lista.length+' paso(s) de Drive registrados · la Academia ya puede mostrarlos · 0 llamadas a la IA.','ok');
+    invMsg('♻️ '+claseId+': '+lista.length+' paso(s) registrados · revisa la clase en la Academia.');
+  }catch(e){
+    invMsg('❌ Recuperar pasos de '+claseId+': '+(e.message||e));
+    logLine('❌ Recuperar pasos de '+claseId+': '+(e.message||e),'err');
+  }
+}
+window.invRecuperarPasosDrive = invRecuperarPasosDrive;
 
 /* ════════ PASOS REALES EN STORAGE (carruseles antiguos) ════════ */
 async function invVerificarPasosStorage(){
@@ -566,6 +619,12 @@ function invAnalizar(){
     var extra = (it.estado==='drive')
       ? ' <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="invRecuperarDrive(\''+it.kind+'\',\''+esc(it.clave)+'\')">♻️ Recuperar de Drive</button>'
       : '';
+    // Pasos de carrusel en Drive aún sin registrar → botón ♻️ por clase
+    if (it.kind==='pelu-vid' && INV.drive){
+      var regP = (INV.col.clases_imgs[it.clave]||{}).pasos || {};
+      var dp = drivePasosDe(it.clave).filter(function(f){ return !regP['paso_'+f.nn]; });
+      if (dp.length) extra += ' <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="invRecuperarPasosDrive(\''+esc(it.clave)+'\')">♻️ Registrar '+dp.length+' paso(s) de Drive</button>';
+    }
     return '<div class="crow">'+chk+'<span>'+(EST_ICONO[it.estado]||'❔')+'</span>'
       + '<span class="cid">'+esc(it.clave)+'</span>'
       + '<span class="ctit" title="'+esc(it.label)+'">'+esc(it.label)+'</span>'
