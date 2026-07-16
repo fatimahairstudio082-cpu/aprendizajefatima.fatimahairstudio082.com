@@ -204,7 +204,12 @@
       DIN.sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); });
       pintarDin();
       console.log('[hub_din] ✅ ' + DIN.length + ' bloque(s) dinámico(s) en vivo');
-    }, function (e) { console.warn('[hub_din] ⚠️ sin lectura de hub_tarjetas (el hub sigue normal):', e && e.message); });
+    }, function (e) {
+      // Si la sesión se cerró (permission-denied) el snapshot muere: se
+      // baja la bandera para que el próximo login re-suscriba solo.
+      SUSCRITO = false;
+      console.warn('[hub_din] ⚠️ sin lectura de hub_tarjetas (el hub sigue normal):', e && e.message);
+    });
   }
   function arrancar() {
     try {

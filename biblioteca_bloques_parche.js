@@ -258,7 +258,7 @@
       src: src,
       orden: parseInt(document.getElementById('blq-orden').value, 10) || 7,
       slot: slot,
-      activo: editando ? (BLQ[id].activo !== false) : true,
+      activo: editando ? ((BLQ[id] || {}).activo !== false) : true,
       actualizado: firebase.firestore.FieldValue.serverTimestamp()
     };
     db.collection('hub_tarjetas').doc(id).set(data, { merge: true })
