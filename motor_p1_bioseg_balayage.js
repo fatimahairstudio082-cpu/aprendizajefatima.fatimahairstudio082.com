@@ -31,8 +31,13 @@
 // ─────────────────────────────────────────────────────────────
 window.FirebaseMediaLoader = {
 
-  /** Bucket de Storage del proyecto aprendisajefatima */
-  BUCKET: 'aprendisajefatima.appspot.com',
+  /** Bucket de Storage del proyecto aprendisajefatima.
+   *  CORRECCIÓN FORENSE: antes decía 'aprendisajefatima.appspot.com',
+   *  un bucket que NO existe en este proyecto (los proyectos nuevos usan
+   *  *.firebasestorage.app — es el que aparece en TODAS las configs y al
+   *  que sube el motor). Todas las sondas daban 404 y ni el video de
+   *  apoyo ni el carrusel de pasos podían encontrarse jamás en Storage. */
+  BUCKET: 'aprendisajefatima.firebasestorage.app',
 
   /** URL base pública de Firebase Storage */
   buildURL(catSlug, claseId, archivo) {

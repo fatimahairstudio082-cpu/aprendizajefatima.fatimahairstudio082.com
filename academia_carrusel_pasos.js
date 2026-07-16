@@ -25,7 +25,9 @@
   }
   function urlDe(slug, id, file) {
     if (window.FirebaseMediaLoader && FirebaseMediaLoader.buildURL) return FirebaseMediaLoader.buildURL(slug, id, file);
-    return 'https://firebasestorage.googleapis.com/v0/b/aprendisajefatima.appspot.com/o/' +
+    // CORRECCIÓN FORENSE: el bucket real del proyecto es *.firebasestorage.app
+    // (el 'appspot.com' de antes no existe: todas las sondas daban 404).
+    return 'https://firebasestorage.googleapis.com/v0/b/aprendisajefatima.firebasestorage.app/o/' +
       encodeURIComponent('academia/' + slug + '/' + id + '/' + file) + '?alt=media';
   }
   // Pasos numerados (puntos) del txt de la clase → ['texto 1', 'texto 2', …]
@@ -46,12 +48,39 @@
 
   async function montar(c) {
     var labels = pasosTexto(c.txt);
-    if (!labels.length) return;                 // clase sin pasos → no tocar nada
-    var slug = slugDe(c.cat), clips = [];
-    for (var i = 1; i <= labels.length; i++) {
-      var nn = (i < 10 ? '0' : '') + i;
-      var u = urlDe(slug, c.id, 'paso_' + nn + '.mp4');
-      if (await existe(u)) clips.push({ url: u, label: labels[i - 1] || ('Paso ' + i) });
+    var clips = [];
+
+    // 1) PRIMERO la fuente de verdad: los enlaces registrados por el motor
+    //    en clases_imgs/{claseId}.pasos (los publica academia_drive_fix en
+    //    window.ACADEMIA_MAP). Cubre Drive Y Storage — igual que fitness:
+    //    el que sube apunta la dirección, el que muestra la lee.
+    try {
+      if (window.ACADEMIA_MAP_READY) await window.ACADEMIA_MAP_READY;
+      var reg = window.ACADEMIA_MAP && window.ACADEMIA_MAP[c.id];
+      if (reg && reg.pasos) {
+        Object.keys(reg.pasos).sort().forEach(function (k) {
+          var mk = k.match(/^paso_(\d\d)$/);
+          if (!mk || !reg.pasos[k]) return;
+          var idx = parseInt(mk[1], 10);
+          clips.push({
+            url: reg.pasos[k],
+            drive: String(reg.pasos[k]).indexOf('drive.google') >= 0,
+            label: labels[idx - 1] || ('Paso ' + idx)
+          });
+        });
+      }
+    } catch (_) {}
+
+    // 2) RESPALDO (época Storage): sondear paso_NN.mp4 como siempre,
+    //    ahora contra el bucket correcto.
+    if (!clips.length) {
+      if (!labels.length) return;               // clase sin pasos → no tocar nada
+      var slug = slugDe(c.cat);
+      for (var i = 1; i <= labels.length; i++) {
+        var nn = (i < 10 ? '0' : '') + i;
+        var u = urlDe(slug, c.id, 'paso_' + nn + '.mp4');
+        if (await existe(u)) clips.push({ url: u, label: labels[i - 1] || ('Paso ' + i) });
+      }
     }
     if (!clips.length) return;                   // aún no se han generado los clips
     // la clase pudo cambiar mientras consultábamos
@@ -78,6 +107,19 @@
     v.playsInline = true; v.muted = true; v.controls = true;
     v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
     ov.appendChild(v);
+
+    // Visor para clips guardados en Google Drive (los enlaces de Drive no se
+    // reproducen bien en <video>; el /preview en iframe sí — mismo formato
+    // que ya usa el video de apoyo de la Academia).
+    var ifr = document.createElement('iframe');
+    ifr.setAttribute('allow', 'autoplay');
+    ifr.setAttribute('allowfullscreen', '');
+    ifr.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;display:none;';
+    ov.appendChild(ifr);
+    function drivePreview(u) {
+      var m = String(u || '').match(/[-\w]{25,}/);
+      return m ? ('https://drive.google.com/file/d/' + m[0] + '/preview') : u;
+    }
 
     var total = clips.length, cur = 0;
     function nav(html, side) {
@@ -111,8 +153,17 @@
     function show(i) {
       cur = (i + total) % total;
       var cl = clips[cur];
-      v.src = cl.url; v.load();
-      var p = v.play(); if (p && p.catch) p.catch(function () {});
+      if (cl.drive) {
+        try { v.pause(); } catch (_) {}
+        v.style.display = 'none'; v.removeAttribute('src');
+        ifr.src = drivePreview(cl.url);
+        ifr.style.display = 'block';
+      } else {
+        ifr.style.display = 'none'; ifr.src = '';
+        v.style.display = 'block';
+        v.src = cl.url; v.load();
+        var p = v.play(); if (p && p.catch) p.catch(function () {});
+      }
       cnt.textContent = 'Paso ' + (cur + 1) + ' / ' + total;
       lbl.textContent = cl.label;
       if (dots) [].forEach.call(dots.children, function (dd, di) { dd.style.background = di === cur ? '#C9A84C' : '#555'; });

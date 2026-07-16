@@ -76,6 +76,24 @@ marca "Forzar regenerar", o usa el 🔄 de la galería, o entra desde
   por fin se ven como 🟡 parcial. Para carruseles antiguos (subidos antes de
   este cambio) usa **🔬 Verificar pasos en Storage**.
 
+## Reparación de la Academia (Bloque 3): los videos por fin se ven
+
+Antes el carrusel de pasos ADIVINABA rutas en Firebase Storage — y encima en
+un bucket que no existe (`appspot.com`): por eso nunca mostró nada. Ahora
+funciona como fitness: **lee los enlaces registrados** en
+`clases_imgs/{claseId}.pasos` (los publica `academia_drive_fix.js` como
+`window.ACADEMIA_MAP`), reproduce clips de Drive con el visor `/preview` y
+los de Storage con el reproductor normal; el sondeo a Storage queda solo de
+respaldo, ya con el bucket correcto (`firebasestorage.app`).
+
+Para tus clips que quedaron SOLO en Drive (bio_p01, bio_p02…):
+1. En el motor: **☁️ Escanear Drive**.
+2. Modo ✂️ Peluquería + 🎬 Video → **🔍 Analizar** → esas clases muestran el
+   botón **«♻️ Registrar N paso(s) de Drive»**: los hace públicos y apunta
+   sus enlaces en Firebase. **0 llamadas a la IA.**
+3. Abre la clase en la Academia: el carrusel ya los muestra. Los pasos que
+   falten se generan con las casillas ✔ de siempre.
+
 ## Videos de fitness: cómo los reconoce
 
 Los clips se emparejan **igual que los lee el Bloque 5**: por combinación +

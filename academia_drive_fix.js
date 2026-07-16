@@ -39,8 +39,20 @@
   if (window.__academiaDriveFix) return;
 
   var CFG = {apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",authDomain:"aprendisajefatima.firebaseapp.com",projectId:"aprendisajefatima",storageBucket:"aprendisajefatima.firebasestorage.app",messagingSenderId:"744176967394",appId:"1:744176967394:web:743b7c2a455e1e6ba7c8bb"};
-  var MAP = null;        // claseId → {img, vid} · null = aún cargando
+  var MAP = null;        // claseId → {img, vid, pasos, pasos_total} · null = aún cargando
   var PENDING = [];      // imágenes pedidas antes de que llegue el mapa
+
+  // AMPLIACIÓN (aditiva): el mapa completo se publica en window.ACADEMIA_MAP
+  // para que el carrusel de pasos LEA los enlaces registrados en
+  // clases_imgs.pasos (misma fuente de verdad que usa fitness) en vez de
+  // adivinar rutas en Storage. ACADEMIA_MAP_READY resuelve cuando el mapa
+  // terminó de cargar (con sesión o sin ella).
+  var _mapListo;
+  window.ACADEMIA_MAP_READY = new Promise(function(res){ _mapListo = res; });
+  function publicarMapa(){
+    window.ACADEMIA_MAP = MAP || {};
+    try{ _mapListo(window.ACADEMIA_MAP); }catch(_){}
+  }
 
   // Drive video → formato /preview (el iframe de tu reproductor lo abre solo)
   function toPreview(u){
@@ -108,6 +120,7 @@
         // al comportamiento de siempre (Storage → respaldo), igual que
         // si esta clase no tuviera registro en Firestore.
         MAP = {};
+        publicarMapa();
         console.warn('[academia_drive_fix] ⚠️ sin sesión activa todavía · clases_imgs no se pudo leer (la Academia sigue normal)');
         return;
       }
@@ -116,9 +129,11 @@
       var m = {};
       snap.forEach(function(doc){
         var d = doc.data() || {};
-        m[doc.id] = { img: d.url_jpg || d.url || '', vid: d.url_video || '' };
+        m[doc.id] = { img: d.url_jpg || d.url || '', vid: d.url_video || '',
+                      pasos: d.pasos || null, pasos_total: d.pasos_total || 0 };
       });
       MAP = m;
+      publicarMapa();
       // re-aplicar a las imágenes que se pidieron antes de tener el mapa
       PENDING.forEach(function(p){
         var d = MAP[p.claseId];
@@ -142,6 +157,7 @@
       console.log('[academia_drive_fix] ✅ puente activo · ' + Object.keys(m).length + ' clase(s) con registro en clases_imgs');
     }catch(e){
       MAP = {};  // sin mapa → todo sigue como hoy, sin romper nada
+      publicarMapa();
       console.warn('[academia_drive_fix] ⚠️ no se pudo leer clases_imgs (la Academia sigue normal):', e && (e.message||e));
     }
   }
