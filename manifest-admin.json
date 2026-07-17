@@ -1,0 +1,23 @@
+{
+  "name": "Fátima Caldea · Centro de Administración",
+  "short_name": "Centro Admin",
+  "description": "Panel privado de administración: motores, biblioteca, alumnas, créditos y generación de contenido.",
+  "start_url": "centro_admin.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070a10",
+  "theme_color": "#0d1018",
+  "lang": "es",
+  "categories": ["productivity", "business"],
+  "icons": [
+    { "src": "icono_admin_192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icono_admin_512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icono_admin_maskable_512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Motor Automático", "url": "motor_auto.html" },
+    { "name": "Biblioteca", "url": "biblioteca.html" },
+    { "name": "Alumnas y Créditos", "url": "panel_admin.html" }
+  ]
+}
