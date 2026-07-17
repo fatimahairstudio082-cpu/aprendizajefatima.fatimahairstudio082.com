@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
 :root{
   --bg:#020408;--panel:#0a111f;--panel2:#0c1525;
@@ -782,6 +783,13 @@ async function cargarModulosFirebase(){
         messagingSenderId:"744176967394",
         appId:"1:744176967394:web:1db2edfd2498ddbaa7c8bb"
       });
+    }
+    /* Las reglas de Firestore exigen sesión para leer corte_modulos:
+       esperar a que Auth restaure la sesión (heredada del hub, mismo origen)
+       antes de pedir los overrides — sin esto la lectura sale sin token
+       y se rechaza en silencio. */
+    if(firebase.auth){
+      await new Promise(res=>{const off=firebase.auth().onAuthStateChanged(()=>{off();res();});});
     }
     const snap=await firebase.firestore().collection('corte_modulos').get();
     if(snap.empty) return;
