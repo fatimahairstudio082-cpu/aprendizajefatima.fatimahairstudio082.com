@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agente de Media · Fátima Caldea Studio</title>
+<style>
+:root{
+  --bg:#0e1117;--bg2:#161b25;--bg3:#1e2533;--border:#2a3344;
+  --text:#e6e9ef;--muted:#7c879b;--gold:#C9A84C;--gold2:#e3c869;
+  --green:#22c55e;--red:#E74C3C;--blue:#3b82f6;--cyan:#00bcd4;--orange:#f97316;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:13px;}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.logo{font-weight:800;letter-spacing:.5px;}
+.logo span{color:var(--gold);}
+.sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.pill{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);}
+.pill.ok{color:var(--green);border-color:rgba(34,197,94,.4);}
+.pill.no{color:var(--red);border-color:rgba(231,76,60,.4);cursor:pointer;}
+.wrap{max-width:1200px;margin:0 auto;padding:22px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:18px;}
+.card h2{margin:0 0 4px;font-size:14px;}
+.card p.h{margin:0 0 14px;font-size:11px;color:var(--muted);}
+.btn{border:none;border-radius:8px;padding:11px 18px;font-size:13px;font-weight:700;cursor:pointer;transition:.12s;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn-go{background:linear-gradient(135deg,#22c55e,#16a34a);color:#04210f;}
+.btn-scan{background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;}
+.btn-stop{background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.4);color:var(--red);}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-weight:600;}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:18px;}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.stat .val{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--gold2);}
+.stat .lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+.stat .bar{height:5px;background:var(--bg3);border-radius:3px;margin-top:10px;overflow:hidden;}
+.stat .barfill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .4s;}
+.stat.done .val{color:var(--green);}
+.stat.done .barfill{background:var(--green);}
+.progwrap{height:10px;background:var(--bg3);border-radius:6px;overflow:hidden;margin:14px 0 6px;}
+.progfill{height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .3s;}
+.progtxt{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+.log{background:#0a0d13;border:1px solid var(--border);border-radius:8px;padding:12px;height:280px;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;}
+.log .ok{color:var(--green);}.log .err{color:var(--red);}.log .skip{color:var(--muted);}.log .info{color:var(--cyan);}.log .warn{color:var(--orange);}
+.opts{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:12px;}
+.opts label{display:flex;align-items:center;gap:6px;color:var(--muted);cursor:pointer;}
+select,input[type=number]{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:12px;}
+.ctls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;}
+.badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid var(--border);}
+.badge.falta{color:var(--orange);border-color:rgba(249,115,22,.4);}
+.badge.tiene{color:var(--green);border-color:rgba(34,197,94,.4);}
+.badge.skip{color:var(--muted);}
+.queue-list{max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;}
+.qi{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;}
+.qi:last-child{border-bottom:none;}
+.qi .qid{font-family:'JetBrains Mono',monospace;color:var(--gold2);min-width:110px;font-size:10px;}
+.qi .qtit{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qi .qst{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:8px;border:1px solid var(--border);}
+.qi .qst.pend{color:var(--orange);border-color:rgba(249,115,22,.35);}
+.qi .qst.run{color:var(--cyan);border-color:rgba(0,188,212,.35);}
+.qi .qst.ok{color:var(--green);border-color:rgba(34,197,94,.35);}
+.qi .qst.err{color:var(--red);border-color:rgba(231,76,60,.35);}
+.qi .qst.skip{color:var(--muted);}
+.keybox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.keybox input{flex:1;min-width:240px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:9px 11px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+.row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;}
+.group{display:flex;flex-direction:column;gap:6px;}
+.group label{font-size:11px;color:var(--gold2);}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div>
+    <div class="logo">FÁTIMA CALDEA — <span>AGENTE DE MEDIA</span></div>
+    <div class="sub">Escanea lo que falta · genera y sube en piloto automático · sin intervención manual</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="pill" id="pillEngine">⚙️ flux-dev</span>
+    <span class="pill no" id="pillAuth">🔒 sin sesión</span>
+    <a href="motor_auto.html" class="pill" style="text-decoration:none;color:var(--muted);">← Motor Manual</a>
+  </div>
+</div>
+
+<!-- AUTH GATE -->
+<div id="authGate" style="position:fixed;inset:0;z-index:9999;background:rgba(8,10,14,.97);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:34px 30px;max-width:380px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6);">
+    <div style="font-size:40px;margin-bottom:8px;">🤖</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--gold2);letter-spacing:1px;">AGENTE DE MEDIA</div>
+    <div style="font-size:12px;color:var(--muted);margin:6px 0 20px;">Solo para administración.<br>Inicia sesión para acceder al agente.</div>
+    <input id="gateEmail" type="email" placeholder="Correo admin" autocomplete="username" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:#fff;padding:11px 12px;font-size:13px;margin-bottom:9px;box-sizing:border-box;">
+    <input id="gatePass" type="password" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')gateLogin()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:#fff;padding:11px 12px;font-size:13px;margin-bottom:14px;box-sizing:border-box;">
+    <button class="btn btn-go" onclick="gateLogin()" style="width:100%;">🔓 Entrar al Agente</button>
+    <div id="gateMsg" style="font-size:11px;color:#E74C3C;margin-top:10px;min-height:14px;"></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- CLAVE REPLICATE -->
+<div class="card">
+  <h2>🔑 Token Replicate <span style="font-size:11px;color:var(--muted);font-weight:400;">(opcional si Netlify ya tiene REPLICATE_API_TOKEN)</span></h2>
+  <div class="keybox">
+    <input id="keyReplicate" type="password" placeholder="Replicate token r8_… (o vacío si el proxy ya lo tiene)">
+    <button class="btn btn-ghost" onclick="guardarKey()">Guardar</button>
+  </div>
+</div>
+
+<!-- CONFIGURACIÓN DEL AGENTE -->
+<div class="card">
+  <h2>⚙️ Configuración del Agente</h2>
+  <p class="h">Ajusta qué genera el agente, qué modelos usa y a qué velocidad trabaja.</p>
+  <div class="row" style="margin-bottom:14px;">
+    <div class="group">
+      <label>Modelo de imagen</label>
+      <select id="imgModel" onchange="window.IMG_MODEL=this.value;document.getElementById('pillEngine').textContent='⚙️ '+this.value.split('/').pop();">
+        <option value="black-forest-labs/flux-dev" selected>flux-dev · equilibrado (recomendado)</option>
+        <option value="black-forest-labs/flux-1.1-pro">flux 1.1 pro · máxima calidad</option>
+        <option value="black-forest-labs/flux-schnell">flux-schnell · rápido y barato</option>
+      </select>
+    </div>
+    <div class="group">
+      <label>Modelo de video</label>
+      <select id="vidModel" onchange="window.VID_MODEL=this.value;">
+        <option value="wan-video/wan-2.2-t2v-fast" selected>⚡ Wan 2.2 fast · económico (recomendado)</option>
+        <option value="minimax/video-01">🥇 Hailuo / MiniMax · máxima calidad</option>
+        <option value="kwaivgi/kling-v1.6-standard">🥈 Kling 1.6 · alta calidad</option>
+        <option value="lightricks/ltx-video">💸 LTX · el más rápido y barato</option>
+      </select>
+    </div>
+    <div class="group">
+      <label>Tope por sesión (0 = sin límite)</label>
+      <input type="number" id="loteTope" value="10" min="0" max="500" style="width:100px;">
+    </div>
+    <div class="group">
+      <label>Pausa entre items (segundos)</label>
+      <input type="number" id="pausaS" value="2" min="0" max="30" style="width:80px;">
+    </div>
+  </div>
+  <div class="opts">
+    <label><input type="checkbox" id="optAcadImg" checked> Academia — Imágenes</label>
+    <label><input type="checkbox" id="optAcadVid"> Academia — Videos de apoyo</label>
+    <label><input type="checkbox" id="optFitImg" checked> Fitness — Láminas</label>
+    <label><input type="checkbox" id="optFitVid"> Fitness — Clips (caro, muchos clips)</label>
+  </div>
+</div>
+
+<!-- DASHBOARD DE ESTADO -->
+<div class="stats" id="statsGrid">
+  <div class="stat" id="stAcadImg"><div class="val" id="stAcadImgV">—</div><div class="lbl">Academia · Imágenes</div><div class="bar"><div class="barfill" id="stAcadImgB" style="width:0%"></div></div></div>
+  <div class="stat" id="stAcadVid"><div class="val" id="stAcadVidV">—</div><div class="lbl">Academia · Videos</div><div class="bar"><div class="barfill" id="stAcadVidB" style="width:0%"></div></div></div>
+  <div class="stat" id="stFitImg"><div class="val" id="stFitImgV">—</div><div class="lbl">Fitness · Láminas (v1)</div><div class="bar"><div class="barfill" id="stFitImgB" style="width:0%"></div></div></div>
+  <div class="stat" id="stFitVid"><div class="val" id="stFitVidV">—</div><div class="lbl">Fitness · Clips (videos)</div><div class="bar"><div class="barfill" id="stFitVidB" style="width:0%"></div></div></div>
+</div>
+
+<!-- CONTROLES PRINCIPALES -->
+<div class="card">
+  <h2>🤖 Control del Agente</h2>
+  <p class="h">Primero escanea para ver qué falta. Luego inicia el agente para generar todo en automático.</p>
+  <div class="ctls">
+    <button class="btn btn-scan" id="btnScan" onclick="escanear()">🔍 Escanear Firebase</button>
+    <button class="btn btn-go" id="btnGo" onclick="iniciarAgente()" disabled>▶️ Iniciar Agente</button>
+    <button class="btn btn-stop" id="btnStop" onclick="detener()" style="display:none;">⏹ Detener</button>
+    <button class="btn btn-ghost" onclick="limpiarLog()">🗑 Limpiar log</button>
+  </div>
+  <div class="progwrap" style="margin-top:16px;"><div class="progfill" id="progFill"></div></div>
+  <div class="progtxt" id="progTxt">Escanea primero para ver el estado de tu media.</div>
+</div>
+
+<!-- COLA DE TRABAJO -->
+<div class="card" id="cardQueue" style="display:none;">
+  <h2>📋 Cola de trabajo <span id="queueCount" style="color:var(--muted);font-weight:400;font-size:12px;"></span></h2>
+  <p class="h">Items que el agente va a generar, en orden de prioridad.</p>
+  <div class="queue-list" id="queueList"></div>
+</div>
+
+<!-- LOG -->
+<div class="card">
+  <h2>📟 Log en tiempo real</h2>
+  <div class="log" id="logBox"></div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- DATA DEL MOTOR -->
+<script src="motor_conocimiento_fitness.js"></script>
+<script src="motor_p1_bioseg_balayage.js"></script>
+<script src="motor_p2_queratina_elevaciones.js"></script>
+<script src="motor_p3_morfologia_alertas.js"></script>
+<script src="motor_helper.js"></script>
+<script src="motor_prompts.js"></script>
+
+<script>
+/* ═══════ CONFIG ═══════ */
+const FB_CFG={apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",authDomain:"aprendisajefatima.firebaseapp.com",projectId:"aprendisajefatima",storageBucket:"aprendisajefatima.firebasestorage.app",messagingSenderId:"744176967394",appId:"1:744176967394:web:743b7c2a455e1e6ba7c8bb"};
+const ADMIN_EMAIL='fatimahairstudio082@gmail.com';
+const PROXY=location.origin+'/.netlify/functions/replicate';
+
+window.IMG_MODEL='black-forest-labs/flux-dev';
+window.VID_MODEL='wan-video/wan-2.2-t2v-fast';
+
+/* ═══════ FIREBASE ═══════ */
+let FB=null;
+async function fbInit(){
+  if(FB) return FB;
+  const [appMod,fs,fst,authMod]=await Promise.all([
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js')
+  ]);
+  const app=appMod.getApps().length?appMod.getApp():appMod.initializeApp(FB_CFG);
+  FB={
+    app,storage:fs.getStorage(app),sRef:fs.ref,uploadBytes:fs.uploadBytes,getDownloadURL:fs.getDownloadURL,
+    db:fst.getFirestore(app),doc:fst.doc,setDoc:fst.setDoc,getDoc:fst.getDoc,getDocs:fst.getDocs,collection:fst.collection,
+    auth:authMod.getAuth(app),onAuth:authMod.onAuthStateChanged,signIn:authMod.signInWithEmailAndPassword
+  };
+  FB.onAuth(FB.auth,()=>renderAuth());
+  return FB;
+}
+function renderAuth(){
+  const p=document.getElementById('pillAuth');const u=FB&&FB.auth&&FB.auth.currentUser;
+  if(u){p.textContent='✅ '+(u.email||u.uid);p.className='pill ok';}
+  else{p.textContent='🔒 sin sesión';p.className='pill no';}
+}
+
+/* ═══════ AUTH GATE ═══════ */
+async function gateCheck(){
+  await fbInit();
+  FB.onAuth(FB.auth,u=>{
+    const gate=document.getElementById('authGate');
+    const esAdmin=u&&u.email&&u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase();
+    gate.style.display=esAdmin?'none':'flex';
+    renderAuth();
+  });
+  const u=FB.auth.currentUser;
+  if(!(u&&u.email&&u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()))
+    document.getElementById('authGate').style.display='flex';
+}
+async function gateLogin(){
+  const email=(document.getElementById('gateEmail').value||'').trim();
+  const pass=document.getElementById('gatePass').value||'';
+  const msg=document.getElementById('gateMsg');
+  msg.style.color='#E74C3C';
+  if(!email||!pass){msg.textContent='Escribe correo y contraseña.';return;}
+  if(email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){msg.textContent='Solo el correo de administración puede entrar.';return;}
+  msg.style.color='#8b93a5';msg.textContent='Verificando…';
+  try{
+    await fbInit();
+    await FB.signIn(FB.auth,email,pass);
+    msg.textContent='';
+    document.getElementById('gatePass').value='';
+  }catch(e){msg.style.color='#E74C3C';msg.textContent='❌ '+(e.code||e.message);}
+}
+
+/* ═══════ CLAVE ═══════ */
+function replicateKey(){return localStorage.getItem('fc_key_replicate')||'';}
+function guardarKey(){
+  const v=document.getElementById('keyReplicate').value.trim();
+  if(v){localStorage.setItem('fc_key_replicate',v);logLine('✓ Token Replicate guardado','ok');document.getElementById('keyReplicate').value='';}
+}
+(function loadKey(){const k=replicateKey();if(k)document.getElementById('keyReplicate').placeholder='Token guardado ✓';})();
+
+/* ═══════ LOG ═══════ */
+function logLine(msg,cls){
+  const b=document.getElementById('logBox');
+  const d=document.createElement('div');
+  d.className=cls||'';
+  const t=new Date().toLocaleTimeString('es-ES',{hour12:false});
+  d.textContent='['+t+'] '+msg;
+  b.appendChild(d);
+  b.scrollTop=b.scrollHeight;
+}
+function limpiarLog(){document.getElementById('logBox').innerHTML='';}
+
+/* ═══════ PROGRESO ═══════ */
+function setProg(done,total,label){
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progTxt').textContent=(label||'')+' · '+done+'/'+total+' ('+pct+'%)';
+}
+
+/* ═══════ STATS ═══════ */
+function setStat(id,faltan,total){
+  const tiene=total-faltan;
+  const pct=total>0?Math.round(tiene/total*100):100;
+  document.getElementById('st'+id+'V').textContent=faltan===0?'✓ '+total:faltan+' faltan';
+  document.getElementById('st'+id+'B').style.width=pct+'%';
+  const card=document.getElementById('st'+id);
+  card.classList.toggle('done',faltan===0);
+}
+
+/* ═══════ QUEUE ═══════ */
+let QUEUE=[];
+let RUNNING=false,STOP=false;
+
+function renderQueue(){
+  const list=document.getElementById('queueList');
+  const card=document.getElementById('cardQueue');
+  if(!QUEUE.length){card.style.display='none';return;}
+  card.style.display='';
+  document.getElementById('queueCount').textContent='('+QUEUE.length+' pendientes)';
+  list.innerHTML='';
+  const max=50;
+  QUEUE.slice(0,max).forEach(q=>{
+    const row=document.createElement('div');row.className='qi';row.id='qi_'+q.id;
+    const stCls=q.status==='ok'?'ok':q.status==='err'?'err':q.status==='run'?'run':q.status==='skip'?'skip':'pend';
+    const stLbl=q.status==='ok'?'✅ listo':q.status==='err'?'❌ error':q.status==='run'?'⏳ generando…':q.status==='skip'?'⏭ omitido':'⏳ pendiente';
+    row.innerHTML=`<span class="qid">${q.id}</span><span class="qtit">${q.titulo}</span><span class="qst ${stCls}">${stLbl}</span>`;
+    list.appendChild(row);
+  });
+  if(QUEUE.length>max){const more=document.createElement('div');more.style.cssText='padding:8px 12px;font-size:11px;color:var(--muted);';more.textContent='… y '+(QUEUE.length-max)+' más';list.appendChild(more);}
+}
+function updateQueueRow(id,status){
+  const q=QUEUE.find(x=>x.id===id);if(!q)return;q.status=status;
+  const row=document.getElementById('qi_'+id);if(!row)return;
+  const stEl=row.querySelector('.qst');if(!stEl)return;
+  const stCls=status==='ok'?'ok':status==='err'?'err':status==='run'?'run':status==='skip'?'skip':'pend';
+  const stLbl=status==='ok'?'✅ listo':status==='err'?'❌ error':status==='run'?'⏳ generando…':status==='skip'?'⏭ omitido':'⏳ pendiente';
+  stEl.className='qst '+stCls;stEl.textContent=stLbl;
+}
+
+/* ═══════ ESCANEAR FIREBASE ═══════ */
+async function escanear(){
+  document.getElementById('btnScan').disabled=true;
+  document.getElementById('btnScan').textContent='🔍 Escaneando…';
+  logLine('🔍 Iniciando escaneo de Firebase…','info');
+  try{
+    await fbInit();
+
+    /* ── 1. Leer todas las clases conocidas del motor ── */
+    const clases=window.MOTOR_FLAT||[];
+    if(!clases.length){logLine('⚠️ MOTOR_FLAT vacío · los scripts del motor no cargaron correctamente.','warn');return;}
+    logLine('📚 '+clases.length+' clases en el motor · consultando Firestore…','info');
+
+    /* ── 2. Leer colección clases_imgs de Firestore ── */
+    const snap=await FB.getDocs(FB.collection(FB.db,'clases_imgs'));
+    const existentes={};
+    snap.forEach(d=>{existentes[d.id]=d.data();});
+    logLine('📂 clases_imgs: '+snap.size+' docs encontrados en Firebase','info');
+
+    /* ── 3. Clasificar clases ── */
+    const sinImg=[],sinVid=[];
+    clases.forEach(c=>{
+      const d=existentes[c.id];
+      if(!d||!(d.url_jpg||d.url)) sinImg.push(c);
+      if(!d||(!(d.url_video)&&!(d.videoActualizadoEn))) sinVid.push(c);
+    });
+    logLine('🖼️ Academia · sin imagen: '+sinImg.length+'/'+clases.length,'info');
+    logLine('🎬 Academia · sin video: '+sinVid.length+'/'+clases.length,'info');
+    setStat('AcadImg',sinImg.length,clases.length);
+    setStat('AcadVid',sinVid.length,clases.length);
+
+    /* ── 4. Fitness láminas — leer fitness_imgs ── */
+    const fitCombos=typeof MOTOR_PROMPTS!=='undefined'?MOTOR_PROMPTS.fitnessCombos():buildFitCombos();
+    const fitSnap=await FB.getDocs(FB.collection(FB.db,'fitness_imgs'));
+    const fitExist=new Set();fitSnap.forEach(d=>{fitExist.add(d.id);});
+    const sinFitImg=fitCombos.filter(c=>!fitExist.has(c.claveImgBase+'_v1')||!fitSnap.docs.find(d=>d.id===c.claveImgBase+'_v1'&&d.data().url));
+    logLine('💪 Fitness láminas · sin v1: '+sinFitImg.length+'/'+fitCombos.length,'info');
+    setStat('FitImg',sinFitImg.length,fitCombos.length);
+
+    /* ── 5. Fitness clips de video — estimación rápida ── */
+    const fitVidSnap=await FB.getDocs(FB.collection(FB.db,'fitness_videos'));
+    const totalClips=fitCombos.reduce((acc,c)=>{
+      const lista=typeof MOTOR_PROMPTS!=='undefined'?MOTOR_PROMPTS.ejerciciosDe(c.grupo,c.equipo,c.nej,c.motor):[];
+      return acc+(lista?lista.length:6);
+    },0);
+    const tieneVid=fitVidSnap.size;
+    const sinFitVid=Math.max(0,totalClips-tieneVid);
+    logLine('🎬 Fitness clips · estimado faltante: '+sinFitVid+'/~'+totalClips,'info');
+    setStat('FitVid',sinFitVid,totalClips);
+
+    /* ── 6. Construir cola ── */
+    QUEUE=[];
+    if(document.getElementById('optAcadImg').checked)
+      sinImg.forEach(c=>QUEUE.push({id:c.id,titulo:c.n||c.titulo||c.id,tipo:'acad-img',clase:c,status:'pend'}));
+    if(document.getElementById('optAcadVid').checked)
+      sinVid.forEach(c=>QUEUE.push({id:c.id+'__vid',titulo:(c.n||c.titulo||c.id)+' [video]',tipo:'acad-vid',clase:c,status:'pend'}));
+    if(document.getElementById('optFitImg').checked)
+      sinFitImg.forEach(c=>QUEUE.push({id:c.claveImgBase,titulo:'Fitness lámina · '+c.claveImgBase,tipo:'fit-img',combo:c,status:'pend'}));
+    if(document.getElementById('optFitVid').checked){
+      // Sólo encola combos sin ningún clip (verificación ligera)
+      const basesConVid=new Set();
+      fitVidSnap.forEach(d=>{const base=d.id.split('_').slice(0,4).join('_');basesConVid.add(base);});
+      fitCombos.forEach(c=>{
+        if(!basesConVid.has(c.claveImgBase))
+          QUEUE.push({id:c.claveImgBase+'__fitVid',titulo:'Fitness clips · '+c.claveImgBase,tipo:'fit-vid',combo:c,status:'pend'});
+      });
+    }
+
+    const tope=parseInt(document.getElementById('loteTope').value)||0;
+    logLine('📋 Cola construida: '+QUEUE.length+' items'+(tope?' · tope: '+tope:''),'ok');
+    renderQueue();
+    document.getElementById('btnGo').disabled=QUEUE.length===0;
+    if(QUEUE.length===0) logLine('🎉 Todo el media ya existe en Firebase · nada que generar.','ok');
+    else{
+      setProg(0,QUEUE.length,'Listo para iniciar');
+      logLine('▶️ Pulsa "Iniciar Agente" para generar los '+QUEUE.length+' items pendientes.','info');
+    }
+  }catch(e){
+    logLine('❌ Error al escanear: '+(e.message||e),'err');
+    console.error(e);
+  }finally{
+    document.getElementById('btnScan').disabled=false;
+    document.getElementById('btnScan').textContent='🔍 Escanear Firebase';
+  }
+}
+
+/* Fallback si motor_prompts.js no expone fitnessCombos (muy improbable) */
+function buildFitCombos(){
+  const grupos=['gluteo','pierna','superior'];
+  const motores=['masa','perder','mantener'];
+  const equipos=['maquina','mancuerna','corporal'];
+  const nejs=[6,8,12];
+  const combos=[];
+  grupos.forEach(g=>motores.forEach(m=>equipos.forEach(e=>nejs.forEach(n=>{
+    combos.push({grupo:g,motor:m,equipo:e,nej:n,claveImgBase:g+'_'+m+'_'+e+'_'+n,ejercicios:[]});
+  }))));
+  return combos;
+}
+
+/* ═══════ GENERAR ═══════ */
+async function replicatePredict(modelPath,input){
+  const uiKey=replicateKey();
+  const headers={'Content-Type':'application/json','Prefer':'wait'};
+  if(uiKey) headers['Authorization']='Bearer '+uiKey;
+  let r=await fetch(PROXY+'/v1/models/'+modelPath+'/predictions',{method:'POST',headers,body:JSON.stringify({input})});
+  let d;try{d=await r.json();}catch(_){throw new Error('Replicate: respuesta no-JSON (HTTP '+r.status+')');}
+  if(d.error) throw new Error('Replicate: '+(typeof d.error==='string'?d.error:JSON.stringify(d.error)));
+  const pollH=uiKey?{'Authorization':'Bearer '+uiKey}:{};
+  let i=0;
+  while(d.status&&d.status!=='succeeded'&&d.status!=='failed'&&d.status!=='canceled'&&i<80){
+    await new Promise(res=>setTimeout(res,1500));
+    const pr=await fetch(PROXY+'/v1/predictions/'+d.id,{headers:pollH});
+    d=await pr.json();i++;
+  }
+  if(d.status==='failed') throw new Error('Replicate: generación fallida · '+(d.error||'sin detalle'));
+  if(d.status==='canceled') throw new Error('Replicate: cancelada');
+  const out=Array.isArray(d.output)?d.output[d.output.length-1]:d.output;
+  if(!out) throw new Error('Replicate: sin salida (¿crédito agotado?)');
+  return out;
+}
+
+async function genImagen(prompt){
+  const model=window.IMG_MODEL||'black-forest-labs/flux-dev';
+  const input={prompt,aspect_ratio:'3:4',output_format:'jpg',num_outputs:1};
+  if(/flux/.test(model)){input.guidance=3.5;input.num_inference_steps=30;}
+  return await replicatePredict(model,input);
+}
+
+async function genVideo(prompt){
+  const uiKey=replicateKey();
+  const headers={'Content-Type':'application/json'};
+  if(uiKey) headers['Authorization']='Bearer '+uiKey;
+  const model=window.VID_MODEL||'wan-video/wan-2.2-t2v-fast';
+  const startR=await fetch(PROXY+'/v1/models/'+model+'/predictions',{method:'POST',headers,body:JSON.stringify({input:{prompt}})});
+  const pred=await startR.json();
+  if(pred.error) throw new Error('Replicate: '+(typeof pred.error==='string'?pred.error:JSON.stringify(pred.error)));
+  let d=pred;
+  const pollH=uiKey?{'Authorization':'Bearer '+uiKey}:{};
+  let i=0;
+  while(d.status&&d.status!=='succeeded'&&d.status!=='failed'&&d.status!=='canceled'&&i<160){
+    await new Promise(res=>setTimeout(res,3000));
+    const r=await fetch(PROXY+'/v1/predictions/'+d.id,{headers:pollH});
+    d=await r.json();i++;
+  }
+  if(d.status==='failed'||d.status==='canceled') throw new Error('Video: '+(d.error||'fallida'));
+  const out=Array.isArray(d.output)?d.output[d.output.length-1]:d.output;
+  if(!out) throw new Error('Video: sin URL en la respuesta');
+  return out;
+}
+
+async function fetchToBlob(url){
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok) throw new Error('Descarga falló HTTP '+r.status);
+  return await r.blob();
+}
+
+/* ═══════ SUBIDA A FIREBASE ═══════ */
+function catToSlug(cat){return String(cat).replace(/[^\w\s]/g,'').trim().toLowerCase().replace(/\s+/g,'_');}
+
+async function subirAcadImg(clase,blob){
+  const slug=catToSlug(clase.cat||clase.c||'');
+  const path='academia/'+slug+'/'+clase.id+'/imagen.jpg';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  const ts=new Date().toISOString();
+  await FB.setDoc(FB.doc(FB.db,'clases_imgs',clase.id),{claseId:clase.id,cat:clase.cat||'',niv:clase.niv||'',url_jpg:url,url,url_jpg_path:path,imgActualizadoEn:ts},{merge:true});
+  return url;
+}
+
+async function subirAcadVid(clase,blob){
+  const slug=catToSlug(clase.cat||clase.c||'');
+  const path='academia/'+slug+'/'+clase.id+'/video.mp4';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  await FB.setDoc(FB.doc(FB.db,'clases_imgs',clase.id),{claseId:clase.id,cat:clase.cat||'',niv:clase.niv||'',url_video:url,path_video:path,videoActualizadoEn:new Date().toISOString()},{merge:true});
+  return url;
+}
+
+async function subirFitImg(base,blob){
+  const path='fitness/'+base+'/imagen.jpg';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  const ts=new Date().toISOString();
+  const writes=[];
+  for(let v=1;v<=12;v++)
+    writes.push(FB.setDoc(FB.doc(FB.db,'fitness_imgs',base+'_v'+v),{url,url_path:path,claseId:base+'_v'+v,cat:'fitness',imgActualizadoEn:ts},{merge:true}));
+  await Promise.all(writes);
+  return url;
+}
+
+function slugEj(nombre){
+  return String(nombre||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+}
+
+async function subirFitVid(clave,blob,titulo){
+  const path='fitness/videos/'+clave+'.mp4';
+  const ref=FB.sRef(FB.storage,path);
+  await FB.uploadBytes(ref,blob);
+  const url=await FB.getDownloadURL(ref);
+  await FB.setDoc(FB.doc(FB.db,'fitness_videos',clave),{url_video:url,path_video:path,titulo:titulo||clave,cat:'fitness',videoActualizadoEn:new Date().toISOString()},{merge:true});
+  return url;
+}
+
+/* ═══════ LAMINA FITNESS (Canvas) ═══════ */
+function loadImgSafe(src){
+  return new Promise(async(resolve)=>{
+    let url=src;
+    try{
+      if(/^https?:/.test(src)){
+        const r=await fetch(src,{cache:'no-store'});
+        if(r.ok){const b=await r.blob();if(b&&b.size>1024)url=URL.createObjectURL(b);}
+      }
+    }catch(_){}
+    const im=new Image();im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=()=>resolve(null);im.src=url;
+  });
+}
+async function componerLamina(imgs,nombres,grupo,equipo){
+  const n=imgs.length;
+  const cols=n<=6?3:n<=8?4:4;
+  const rows=Math.ceil(n/cols);
+  const cw=440,ch=440,head=92;
+  const cv=document.createElement('canvas');
+  cv.width=cols*cw;cv.height=head+rows*ch;
+  const x=cv.getContext('2d');
+  x.fillStyle='#080c16';x.fillRect(0,0,cv.width,cv.height);
+  const G={gluteo:'GLÚTEO 🍑',pierna:'PIERNA 🦵',superior:'TREN SUPERIOR 💪'};
+  const E={maquina:'Máquina',mancuerna:'Mancuerna',corporal:'Corporal'};
+  const titulo=(G[grupo]||grupo.toUpperCase())+' · '+(E[equipo]||equipo);
+  x.fillStyle='#C9A84C';x.font='bold 28px Arial,sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.fillText(titulo,cv.width/2,head/2);
+  function drawCover(ctx,img,px,py,w,h){
+    const ar=img.naturalWidth/img.naturalHeight,fr=w/h;
+    let sw,sh,sx,sy;
+    if(ar>fr){sh=img.naturalHeight;sw=sh*fr;sx=(img.naturalWidth-sw)/2;sy=0;}
+    else{sw=img.naturalWidth;sh=sw/fr;sx=0;sy=(img.naturalHeight-sh)/2;}
+    ctx.drawImage(img,sx,sy,sw,sh,px,py,w,h);
+  }
+  const bd=2;
+  imgs.forEach((im,i)=>{
+    const c=i%cols,r=Math.floor(i/cols),px=c*cw,py=head+r*ch;
+    x.save();x.beginPath();x.rect(px,py,cw,ch);x.clip();
+    if(im)drawCover(x,im,px,py,cw,ch);else{x.fillStyle='#1b2740';x.fillRect(px,py,cw,ch);}
+    let gb=x.createLinearGradient(0,py+ch-70,0,py+ch);gb.addColorStop(0,'rgba(8,12,22,0)');gb.addColorStop(1,'rgba(8,12,22,.9)');x.fillStyle=gb;x.fillRect(px,py+ch-70,cw,70);
+    x.fillStyle='#f3e3c0';x.textAlign='left';x.textBaseline='bottom';x.font='bold 22px Arial,sans-serif';
+    const lbl=String((i+1)+'. '+(nombres[i]||'')).toUpperCase();
+    x.fillText(lbl.slice(0,28),px+14,py+ch-12);
+    x.restore();
+    x.strokeStyle='#c8662a';x.lineWidth=bd;x.strokeRect(px+bd/2,py+bd/2,cw-bd,ch-bd);
+  });
+  return new Promise(res=>cv.toBlob(b=>res(b),'image/jpeg',.9));
+}
+
+/* ═══════ MOTOR DEL AGENTE ═══════ */
+function detener(){STOP=true;logLine('⏹ Deteniendo tras el item actual…','warn');}
+
+async function iniciarAgente(){
+  if(RUNNING) return;
+  if(!QUEUE.length){logLine('⚠️ Escanea primero para construir la cola.','warn');return;}
+  const tope=parseInt(document.getElementById('loteTope').value)||0;
+  const pausa=parseFloat(document.getElementById('pausaS').value)||0;
+  RUNNING=true;STOP=false;
+  document.getElementById('btnGo').disabled=true;
+  document.getElementById('btnStop').style.display='inline-block';
+  document.getElementById('btnScan').disabled=true;
+  logLine('🤖 Agente iniciado · '+QUEUE.length+' items · tope: '+(tope||'∞'),'info');
+
+  let done=0,ok=0,err=0,omit=0,generadas=0;
+  const total=QUEUE.length;
+
+  for(const item of QUEUE){
+    if(STOP) break;
+    if(tope&&generadas>=tope){logLine('🔢 Tope alcanzado ('+tope+'). Ejecuta "Escanear" y vuelve a iniciar para continuar.','warn');break;}
+    done++;
+    setProg(done,total,item.titulo);
+    updateQueueRow(item.id,'run');
+    try{
+      if(item.tipo==='acad-img'){
+        const clase=item.clase;
+        // Verificar de nuevo antes de generar
+        const s=await FB.getDoc(FB.doc(FB.db,'clases_imgs',clase.id));
+        if(s.exists()&&(s.data().url_jpg||s.data().url)){logLine('⏭ '+clase.id+' ya tiene imagen · omitido','skip');omit++;updateQueueRow(item.id,'skip');continue;}
+        logLine('🎨 '+clase.id+' · generando imagen…','info');
+        const prompt=MOTOR_PROMPTS.peluqueria(clase.cat,'cliente',clase);
+        const url=await genImagen(prompt);
+        const blob=await fetchToBlob(url);
+        await subirAcadImg(clase,blob);
+        logLine('✅ '+clase.id+' · imagen subida','ok');
+        ok++;generadas++;updateQueueRow(item.id,'ok');
+      }
+      else if(item.tipo==='acad-vid'){
+        const clase=item.clase;
+        const s=await FB.getDoc(FB.doc(FB.db,'clases_imgs',clase.id));
+        if(s.exists()&&(s.data().url_video||s.data().videoActualizadoEn)){logLine('⏭ '+clase.id+' ya tiene video · omitido','skip');omit++;updateQueueRow(item.id,'skip');continue;}
+        logLine('🎬 '+clase.id+' · generando video…','info');
+        const pbuild=MOTOR_PROMPTS.build({cat:clase.cat,catId:clase.cat,titulo:clase.n||clase.titulo||clase.id},'vid');
+        const vidUrl=await genVideo(pbuild.prompt);
+        const blob=await fetchToBlob(vidUrl);
+        await subirAcadVid(clase,blob);
+        logLine('✅ '+clase.id+' · video subido','ok');
+        ok++;generadas++;updateQueueRow(item.id,'ok');
+      }
+      else if(item.tipo==='fit-img'){
+        const combo=item.combo;
+        const base=combo.claveImgBase;
+        const s=await FB.getDoc(FB.doc(FB.db,'fitness_imgs',base+'_v1'));
+        if(s.exists()&&s.data().url){logLine('⏭ '+base+' ya tiene lámina · omitido','skip');omit++;updateQueueRow(item.id,'skip');continue;}
+        logLine('💪 '+base+' · generando lámina…','info');
+        const lista=typeof MOTOR_PROMPTS!=='undefined'?MOTOR_PROMPTS.ejerciciosDe(combo.grupo,combo.equipo,combo.nej,combo.motor):[];
+        if(!lista||!lista.length){logLine('⚠️ '+base+' sin ejercicios en la base de datos','warn');err++;updateQueueRow(item.id,'err');continue;}
+        const srcs=[];
+        for(const ej of lista){
+          const imgUrl=await genImagen(MOTOR_PROMPTS.fitnessSingle(combo.grupo,combo.equipo,combo.motor,ej));
+          srcs.push(imgUrl);
+        }
+        const imgs=await Promise.all(srcs.map(loadImgSafe));
+        const blob=await componerLamina(imgs,lista,combo.grupo,combo.equipo);
+        await subirFitImg(base,blob);
+        logLine('✅ '+base+' · lámina subida (12 versiones)','ok');
+        ok++;generadas++;updateQueueRow(item.id,'ok');
+      }
+      else if(item.tipo==='fit-vid'){
+        const combo=item.combo;
+        const base=combo.claveImgBase;
+        const lista=typeof MOTOR_PROMPTS!=='undefined'?MOTOR_PROMPTS.ejerciciosDe(combo.grupo,combo.equipo,combo.nej,combo.motor):[];
+        if(!lista||!lista.length){logLine('⚠️ '+base+' sin ejercicios','warn');err++;updateQueueRow(item.id,'err');continue;}
+        let clipOk=0;
+        for(let i=0;i<lista.length;i++){
+          if(STOP) break;
+          if(tope&&generadas>=tope) break;
+          const nombreEj=lista[i];
+          const clave=base+'_'+String(i+1).padStart(2,'0')+'_'+slugEj(nombreEj);
+          const ex=await FB.getDoc(FB.doc(FB.db,'fitness_videos',clave));
+          if(ex.exists()&&ex.data().url_video){logLine('⏭ '+clave+' ya existe','skip');omit++;continue;}
+          logLine('🎬 clip '+clave+' · generando…','info');
+          const vidUrl=await genVideo(MOTOR_PROMPTS.fitnessVideo(combo.grupo,combo.equipo,combo.motor,nombreEj));
+          const blob=await fetchToBlob(vidUrl);
+          await subirFitVid(clave,blob,(i+1)+'. '+nombreEj);
+          logLine('✅ '+clave+' · clip subido','ok');
+          clipOk++;generadas++;
+          if(pausa>0) await new Promise(res=>setTimeout(res,pausa*1000));
+        }
+        ok+=(clipOk>0?1:0);updateQueueRow(item.id,'ok');
+      }
+    }catch(e){
+      err++;
+      logLine('❌ '+item.id+': '+(e.message||e),'err');
+      updateQueueRow(item.id,'err');
+      console.error(item.id,e);
+    }
+    if(pausa>0&&item.tipo!=='fit-vid') await new Promise(res=>setTimeout(res,pausa*1000));
+  }
+
+  RUNNING=false;STOP=false;
+  document.getElementById('btnGo').disabled=false;
+  document.getElementById('btnStop').style.display='none';
+  document.getElementById('btnScan').disabled=false;
+  setProg(done,total,'Sesión terminada');
+  logLine('🏁 Agente terminado · ✅ '+ok+' generados · ⏭ '+omit+' omitidos · ❌ '+err+' errores','ok');
+  if(generadas>0) logLine('💡 Vuelve a escanear para ver el nuevo estado actualizado.','info');
+}
+
+/* ═══════ INICIO ═══════ */
+fbInit().then(()=>FB.onAuth(FB.auth,()=>renderAuth())).catch(e=>console.warn('fbInit:',e));
+gateCheck();
+</script>
+</body>
+</html>
