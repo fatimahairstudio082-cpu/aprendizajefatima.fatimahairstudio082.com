@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
 :root{
   --bg:#020408;--panel:#0a111f;--panel2:#0c1525;
@@ -95,7 +96,8 @@ svg[id^="mesh_"].off{display:none;}
 .mv-close:hover{color:#fff;}
 .mv-player{width:100%;background:#000;}
 .mv-player video{width:100%;max-height:400px;display:block;}
-.mv-player iframe{width:100%;height:380px;border:none;display:block;}
+.mv-player iframe{width:100%;min-height:220px;aspect-ratio:16/9;border:none;display:block;}
+.mv-player .mv-portada{width:100%;max-height:420px;object-fit:contain;display:block;background:#000;}
 .mv-nv{padding:32px;text-align:center;color:#334155;font-size:10px;}
 .mv-ctrl{display:flex;gap:8px;padding:8px 14px;background:#030f1a;border-top:1px solid rgba(201,168,76,.1);flex-wrap:wrap;align-items:center;}
 .mv-ctrl button{padding:5px 10px;border-radius:5px;border:1px solid rgba(201,168,76,.3);background:transparent;color:var(--oro);font-size:9px;cursor:pointer;font-family:Monaco,monospace;}
@@ -493,7 +495,10 @@ function abrirModulo(id){
   // Video
   const player=document.getElementById('mvPlayer');
   const ctrl=document.getElementById('mvCtrl');
-  const nv=document.getElementById('mvNoVideo');
+  let nv=document.getElementById('mvNoVideo');
+  /* Si una apertura anterior con video destruyó el aviso, recrearlo:
+     sin esto el visor quedaba roto tras ver un módulo con video. */
+  if(!nv){nv=document.createElement('div');nv.className='mv-nv';nv.id='mvNoVideo';}
   player.innerHTML='';player.appendChild(nv);ctrl.style.display='none';
   if(modActual.videoUrl){
     const isGD=modActual.videoUrl.includes('drive.google.com');
@@ -505,11 +510,23 @@ function abrirModulo(id){
     } else {
       let url=modActual.videoUrl;
       if(isGD){const match=url.match(/[-\w]{25,}/);if(match)url=`https://drive.google.com/file/d/${match[0]}/preview`;}
-      const fr=document.createElement('iframe');fr.id='mvVid';fr.src=url;fr.style.cssText='width:100%;height:380px;border:none;display:block;';fr.allowFullscreen=true;
+      const fr=document.createElement('iframe');fr.id='mvVid';fr.src=url;fr.style.cssText='width:100%;aspect-ratio:16/9;border:none;display:block;';fr.allowFullscreen=true;
       player.innerHTML='';player.appendChild(fr);nv.style.display='none';
     }
   } else {
-    nv.style.display='block';nv.textContent='🎬 Video próximamente — '+modActual.titulo;
+    /* Sin video: mostrar la portada del módulo en grande (misma imagen
+       que la tarjeta, actualizable desde la Biblioteca). Si tampoco hay
+       imagen (o falla la carga), queda el aviso de siempre. */
+    const portada=modActual.imgUrl?modActual.imgUrl:(modActual.driveId?`https://drive.google.com/thumbnail?id=${modActual.driveId}&sz=w1400`:'');
+    if(portada){
+      const im=document.createElement('img');
+      im.className='mv-portada';im.alt=modActual.titulo;
+      im.onerror=()=>{if(!im.isConnected)return;im.remove();nv.style.display='block';nv.textContent='🎬 Video próximamente — '+modActual.titulo;};
+      im.src=portada;
+      player.insertBefore(im,nv);nv.style.display='none';
+    } else {
+      nv.style.display='block';nv.textContent='🎬 Video próximamente — '+modActual.titulo;
+    }
   }
   document.getElementById('modalVideo').classList.add('open');
   document.body.style.overflow='hidden';
@@ -782,6 +799,13 @@ async function cargarModulosFirebase(){
         messagingSenderId:"744176967394",
         appId:"1:744176967394:web:1db2edfd2498ddbaa7c8bb"
       });
+    }
+    /* Las reglas de Firestore exigen sesión para leer corte_modulos:
+       esperar a que Auth restaure la sesión (heredada del hub, mismo origen)
+       antes de pedir los overrides — sin esto la lectura sale sin token
+       y se rechaza en silencio. */
+    if(firebase.auth){
+      await new Promise(res=>{const off=firebase.auth().onAuthStateChanged(()=>{off();res();});});
     }
     const snap=await firebase.firestore().collection('corte_modulos').get();
     if(snap.empty) return;
