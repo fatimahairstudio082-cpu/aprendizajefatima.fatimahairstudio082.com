@@ -689,8 +689,21 @@ html,body{height:100%;background:var(--bg);color:var(--txt);}
   <iframe id="frame7" class="bloque-frame" src="about:blank" data-src="calc_cromatica_v8.html"></iframe>
   <iframe id="frame8" class="bloque-frame" src="about:blank" data-src="bloque8_construccion.html"></iframe>
   <iframe id="frame9" class="bloque-frame" src="about:blank" data-src="bloque9_ejercicios.html"></iframe>
-<iframe id="iframe10" class="bloque-frame" src="about:blank" 
+<iframe id="iframe10" class="bloque-frame" src="about:blank"
   data-src="juegos_fatima.html"></iframe>
+
+  <!-- POOL DINÁMICO · slots 11–20 en reserva (los usa hub_bloques_dinamicos.js;
+       vacíos no cargan nada — el data-src se asigna desde Firestore) -->
+  <iframe id="frame11" class="bloque-frame" src="about:blank"></iframe>
+  <iframe id="frame12" class="bloque-frame" src="about:blank"></iframe>
+  <iframe id="frame13" class="bloque-frame" src="about:blank"></iframe>
+  <iframe id="frame14" class="bloque-frame" src="about:blank"></iframe>
+  <iframe id="frame15" class="bloque-frame" src="about:blank"></iframe>
+  <iframe id="frame16" class="bloque-frame" src="about:blank"></iframe>
+  <iframe id="frame17" class="bloque-frame" src="about:blank"></iframe>
+  <iframe id="frame18" class="bloque-frame" src="about:blank"></iframe>
+  <iframe id="frame19" class="bloque-frame" src="about:blank"></iframe>
+  <iframe id="frame20" class="bloque-frame" src="about:blank"></iframe>
 
  <div id="panelDashboard" style="position:absolute;inset:0;display:none;overflow-y:auto;padding:24px 24px 100px;"></div>
 
@@ -1526,7 +1539,9 @@ window.toast=toast;
 HUB_TTS.init();
 </script>
 <script src="fatima_modules.js"></script>
-<script src="hub_core_parche.js"></script> ```
+<script src="hub_core_parche.js"></script>
 <script src="peluqueria_hub_bridge.js"></script>
+<!-- Bloques dinámicos desde Firestore (hub_tarjetas/din_*) · parche aditivo -->
+<script src="hub_bloques_dinamicos.js"></script>
 </body>
 </html>
