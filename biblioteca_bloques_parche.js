@@ -20,8 +20,14 @@
  *    Guarda en Firestore hub_tarjetas/din_{slot}; el hub las pinta en
  *    tiempo real gracias a hub_bloques_dinamicos.js.
  *
- *  Reutiliza (sin modificarlos) los ayudantes de biblioteca.js:
- *    db, esc(), toast(), normImg(), normVid(), tab() vía BIB.tab.
+ *  AUTOSUFICIENTE (corrección forense): biblioteca.js encierra TODO
+ *  en una cápsula (IIFE) y solo publica window.BIB — sus variables
+ *  db/esc/toast/normImg/normVid son privadas e invisibles desde aquí.
+ *  La primera versión de este parche las esperaba y por eso la
+ *  pestaña nunca aparecía. Ahora el parche trae sus PROPIOS
+ *  ayudantes (equivalentes 1:1 a los de biblioteca.js) y su propio
+ *  manejo de Firestore vía el global firebase (compat, ya cargado
+ *  por biblioteca.html). Solo usa BIB.tab si existe, con respaldo.
  *  Cargado standalone o sin sesión admin es un no-op (las reglas de
  *  Firestore rechazan cualquier escritura que no sea de la admin).
  * ═══════════════════════════════════════════════════════════════ */
@@ -32,6 +38,51 @@
 
   var BLQ = {};        // espejo hub_tarjetas (docs din_* y 1..6)
   var editando = null; // id del doc din_* en edición (null = nuevo)
+
+  /* ── Ayudantes PROPIOS (biblioteca.js es una cápsula cerrada) ── */
+  var CFG = {apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",authDomain:"aprendisajefatima.firebaseapp.com",projectId:"aprendisajefatima",storageBucket:"aprendisajefatima.firebasestorage.app",messagingSenderId:"744176967394",appId:"1:744176967394:web:743b7c2a455e1e6ba7c8bb"};
+  function fdb() {
+    try { if (!(firebase.apps && firebase.apps.length)) firebase.initializeApp(CFG); } catch (_) {}
+    return firebase.firestore();
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  var _tt;
+  function toast(m) {
+    var t = document.getElementById('toast');
+    if (!t) { console.log('[bib_bloques]', m); return; }
+    t.textContent = m; t.classList.add('show');
+    clearTimeout(_tt); _tt = setTimeout(function () { t.classList.remove('show'); }, 2600);
+  }
+  /* mismos criterios de conversión de Drive que biblioteca.js */
+  function normImg(v) {
+    if (!v) return '';
+    var s = String(v).trim(), m;
+    if (/^https?:\/\//i.test(s)) {
+      if (s.indexOf('drive.google') >= 0) { m = s.match(/[-\w]{25,}/); if (m) return 'https://drive.google.com/thumbnail?id=' + m[0] + '&sz=w1400'; }
+      return s;
+    }
+    if (/^[-\w]{20,}$/.test(s)) return 'https://drive.google.com/thumbnail?id=' + s + '&sz=w1400';
+    return s;
+  }
+  function normVid(v) {
+    if (!v) return '';
+    var s = String(v).trim(), m;
+    if (/youtube|youtu\.be|vimeo|\.(mp4|webm|ogg|mov|m4v)(\?|#|$)|firebasestorage/i.test(s)) return s;
+    if (/drive\.google|googleusercontent/i.test(s)) { m = s.match(/[-\w]{25,}/); if (m) return 'https://drive.google.com/file/d/' + m[0] + '/preview'; }
+    if (/^[-\w]{20,}$/.test(s)) return 'https://drive.google.com/file/d/' + s + '/preview';
+    return s;
+  }
+  function irAPestana(t) {
+    if (window.BIB && typeof BIB.tab === 'function') { BIB.tab(t); return; }
+    // respaldo: misma lógica de tab() de biblioteca.js
+    [].forEach.call(document.querySelectorAll('.tab'), function (b) { b.classList.toggle('active', b.dataset.t === t); });
+    [].forEach.call(document.querySelectorAll('.pane'), function (p) { p.classList.remove('active'); });
+    var p = document.getElementById('pane-' + t); if (p) p.classList.add('active');
+  }
 
   var ORIGINALES = {
     '1': '✂️ Motor de Corte & Diagnóstico',
@@ -67,7 +118,7 @@
     var btn = document.createElement('button');
     btn.className = 'tab'; btn.dataset.t = 'bloques';
     btn.innerHTML = '<span class="ic">🚀</span> Bloques del Hub';
-    btn.onclick = function () { BIB.tab('bloques'); };
+    btn.onclick = function () { irAPestana('bloques'); };
     tabs.appendChild(btn);
 
     var pane = document.createElement('div');
@@ -178,7 +229,7 @@
   function toggleActivo(id) {
     var d = BLQ[id] || {};
     var nuevo = !(d.activo !== false);
-    db.collection('hub_tarjetas').doc(id).set(
+    fdb().collection('hub_tarjetas').doc(id).set(
       { activo: nuevo, actualizado: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
       .then(function () { toast(nuevo ? 'Tarjeta encendida ✅ — visible en el hub' : 'Tarjeta apagada — oculta del hub'); })
       .catch(function (e) { toast('Error: ' + e.message); });
@@ -187,7 +238,7 @@
   function quitar(id) {
     var d = BLQ[id] || {};
     if (!confirm('¿Quitar la categoría "' + (d.nom || id) + '" del hub?\nEsto borra su tarjeta (el archivo HTML no se toca).')) return;
-    db.collection('hub_tarjetas').doc(id).delete()
+    fdb().collection('hub_tarjetas').doc(id).delete()
       .then(function () { toast('Categoría quitada del hub'); })
       .catch(function (e) { toast('Error: ' + e.message); });
   }
@@ -268,7 +319,7 @@
       activo: editando ? ((BLQ[id] || {}).activo !== false) : true,
       actualizado: firebase.firestore.FieldValue.serverTimestamp()
     };
-    db.collection('hub_tarjetas').doc(id).set(data, { merge: true })
+    fdb().collection('hub_tarjetas').doc(id).set(data, { merge: true })
       .then(function () {
         cerrarModal();
         toast('✅ "' + nom + '" publicada — ya está en vivo en el hub (slot ' + slot + ')');
@@ -279,7 +330,7 @@
   /* ── Espejo en tiempo real (propio, no toca los listeners existentes) ── */
   function suscribir() {
     try {
-      db.collection('hub_tarjetas').onSnapshot(function (s) {
+      fdb().collection('hub_tarjetas').onSnapshot(function (s) {
         BLQ = {};
         s.forEach(function (doc) {
           if (doc.id.indexOf('din_') === 0 || /^[1-9]$/.test(doc.id)) BLQ[doc.id] = doc.data() || {};
@@ -290,8 +341,9 @@
   }
 
   function arrancar() {
-    if (!window.firebase || !firebase.auth || typeof db === 'undefined') { setTimeout(arrancar, 400); return; }
-    firebase.auth().onAuthStateChanged(function (u) { if (u) suscribir(); });
+    if (!window.firebase || !firebase.auth || !firebase.firestore) { setTimeout(arrancar, 400); return; }
+    fdb(); // garantiza app inicializada aun standalone, antes del listener de auth
+    try { firebase.auth().onAuthStateChanged(function (u) { if (u) suscribir(); }); } catch (e) { console.warn('[bib_bloques] auth:', e && e.message); }
     montarUI();
   }
   arrancar();
