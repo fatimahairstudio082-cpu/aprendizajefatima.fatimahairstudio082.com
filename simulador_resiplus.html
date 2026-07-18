@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Simulador R+ · Fátima Pro</title>
+<style>
+:root{
+  --azul:#1e3a5f;--azul2:#2563eb;--azul3:#3b82f6;--azul-cl:#dbeafe;
+  --verde:#16a34a;--verde-cl:#dcfce7;
+  --rojo:#dc2626;--rojo-cl:#fee2e2;
+  --ambar:#d97706;--ambar-cl:#fef3c7;
+  --bg-cl:#f0f4f8;--bg-form:#fff;
+  --borde:#d1d5db;--borde2:#e5e7eb;
+  --txt:#111827;--txt2:#6b7280;--txt3:#374151;
+  --sombra:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg-cl);color:var(--txt);height:100vh;
+  display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── HEADER ── */
+.app-hdr{background:var(--azul);color:#fff;padding:0 16px;height:52px;
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+  border-bottom:3px solid var(--azul2);}
+.hdr-logo{font-size:20px;}
+.hdr-title{font-size:15px;font-weight:700;letter-spacing:.5px;}
+.hdr-sub{font-size:10px;color:rgba(255,255,255,.6);margin-top:1px;letter-spacing:.5px;}
+.hdr-sp{flex:1;}
+.badge-practica{background:var(--ambar);color:#fff;border-radius:6px;padding:4px 10px;
+  font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+
+/* ── LAYOUT ── */
+.app-body{display:flex;flex:1;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:240px;background:#1a2744;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+.sb-title{font-size:10px;color:rgba(255,255,255,.5);letter-spacing:2px;text-transform:uppercase;
+  padding:14px 14px 8px;border-bottom:1px solid rgba(255,255,255,.08);}
+.res-list{flex:1;overflow-y:auto;padding:8px;}
+.res-item{padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:4px;
+  transition:background .12s;border:1px solid transparent;}
+.res-item:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);}
+.res-item.act{background:rgba(37,99,235,.3);border-color:rgba(59,130,246,.5);}
+.res-nom{font-size:12px;font-weight:600;color:#e8f0fe;line-height:1.3;}
+.res-info{font-size:10px;color:rgba(255,255,255,.45);margin-top:2px;}
+.res-tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;
+  margin-top:4px;text-transform:uppercase;letter-spacing:.5px;}
+.tag-m{background:rgba(37,99,235,.3);color:#93c5fd;}
+.tag-f{background:rgba(219,39,119,.3);color:#f9a8d4;}
+
+.sb-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 0;}
+.sb-menu-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;
+  font-size:11px;color:rgba(255,255,255,.6);transition:all .12s;font-weight:600;letter-spacing:.3px;}
+.sb-menu-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+.sb-menu-item .smi{font-size:16px;}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* Resident header bar */
+.res-hdr{background:#fff;border-bottom:1px solid var(--borde);padding:12px 20px;
+  display:flex;align-items:center;gap:16px;flex-shrink:0;box-shadow:var(--sombra);}
+.res-hdr-nom{font-size:16px;font-weight:700;color:var(--azul);}
+.res-hdr-meta{font-size:11px;color:var(--txt2);margin-top:2px;}
+.res-hdr-badges{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;}
+.mdt{display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;}
+.mdt-azul{background:var(--azul-cl);color:var(--azul2);}
+.mdt-rojo{background:var(--rojo-cl);color:var(--rojo);}
+.mdt-ambar{background:var(--ambar-cl);color:var(--ambar);}
+.mdt-verde{background:var(--verde-cl);color:var(--verde);}
+
+/* Tabs */
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--borde2);flex-shrink:0;overflow-x:auto;}
+.tabs::-webkit-scrollbar{height:0;}
+.tab-btn{padding:12px 18px;font-size:12px;font-weight:600;color:var(--txt2);cursor:pointer;
+  border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;
+  white-space:nowrap;transition:all .12s;font-family:inherit;letter-spacing:.3px;}
+.tab-btn:hover{color:var(--azul2);}
+.tab-btn.act{color:var(--azul2);border-bottom-color:var(--azul2);}
+.tab-btn .tic{margin-right:5px;}
+
+/* Section */
+.section{flex:1;overflow-y:auto;padding:20px;}
+
+/* Form elements */
+.form-group{margin-bottom:18px;}
+.form-label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--txt3);
+  margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+.form-label .req{color:var(--rojo);font-size:14px;}
+.help-ic{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
+  border-radius:50%;background:var(--azul-cl);color:var(--azul2);font-size:9px;font-weight:800;
+  cursor:help;flex-shrink:0;position:relative;}
+.help-ic:hover .htip{display:block;}
+.htip{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:#1e3a5f;color:#fff;font-size:10px;font-weight:400;line-height:1.5;
+  padding:8px 10px;border-radius:8px;width:220px;z-index:100;text-align:left;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);letter-spacing:0;text-transform:none;}
+.htip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:#1e3a5f;}
+
+.check-row{display:flex;flex-wrap:wrap;gap:8px;}
+.chk-lbl{display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--borde);
+  border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt3);background:var(--bg-form);
+  transition:all .12s;user-select:none;}
+.chk-lbl:hover{border-color:var(--azul3);background:var(--azul-cl);}
+.chk-lbl input[type=checkbox]{accent-color:var(--azul2);width:14px;height:14px;}
+.chk-lbl.checked{background:var(--azul-cl);border-color:var(--azul2);color:var(--azul);}
+
+.radio-row{display:flex;flex-wrap:wrap;gap:8px;}
+.rad-lbl{display:flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--borde);
+  border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt3);background:var(--bg-form);
+  transition:all .12s;user-select:none;}
+.rad-lbl:hover{border-color:var(--azul3);}
+.rad-lbl input[type=radio]{accent-color:var(--azul2);width:14px;height:14px;}
+.rad-lbl.checked{background:var(--azul-cl);border-color:var(--azul2);color:var(--azul);font-weight:600;}
+
+select,input[type=text],input[type=number],input[type=time],textarea{
+  width:100%;padding:9px 12px;border:1px solid var(--borde);border-radius:8px;
+  font-family:inherit;font-size:13px;color:var(--txt);background:var(--bg-form);
+  transition:border .12s;}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--azul2);
+  box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+textarea{resize:vertical;min-height:80px;line-height:1.5;}
+
+.ingesta-row{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--borde2);}
+.ingesta-row:last-child{border-bottom:none;}
+.ing-lbl{font-size:12px;color:var(--txt3);font-weight:600;}
+.pct-opts{display:flex;gap:6px;}
+.pct-opt{padding:5px 10px;border:1px solid var(--borde);border-radius:6px;cursor:pointer;
+  font-size:11px;font-weight:600;color:var(--txt2);background:var(--bg-form);transition:all .1s;}
+.pct-opt:hover{border-color:var(--azul3);}
+.pct-opt.sel-0{background:#fee2e2;border-color:var(--rojo);color:var(--rojo);}
+.pct-opt.sel-25{background:#fef3c7;border-color:var(--ambar);color:var(--ambar);}
+.pct-opt.sel-50{background:#fef9c3;border-color:#ca8a04;color:#854d0e;}
+.pct-opt.sel-75{background:#dcfce7;border-color:var(--verde);color:var(--verde);}
+.pct-opt.sel-100{background:#bbf7d0;border-color:#15803d;color:#14532d;}
+
+.const-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
+.const-box{background:var(--bg-form);border:1px solid var(--borde);border-radius:10px;padding:12px;}
+.const-box label{display:block;font-size:10px;font-weight:700;color:var(--txt2);letter-spacing:.5px;
+  text-transform:uppercase;margin-bottom:6px;}
+.const-box .const-in{display:flex;align-items:center;gap:6px;}
+.const-box input{flex:1;padding:8px 10px;border:1px solid var(--borde);border-radius:7px;
+  font-size:16px;font-weight:700;color:var(--azul);text-align:center;background:#f8fafc;}
+.const-box input:focus{outline:none;border-color:var(--azul2);}
+.const-box .unit{font-size:10px;color:var(--txt2);font-weight:600;white-space:nowrap;}
+.const-rango{font-size:10px;color:var(--txt2);margin-top:4px;text-align:center;}
+
+/* Consejos panel */
+.consejos{background:var(--ambar-cl);border:1px solid #fcd34d;border-radius:10px;
+  padding:14px;margin-bottom:18px;}
+.consejos summary{font-size:12px;font-weight:700;color:var(--ambar);cursor:pointer;
+  display:flex;align-items:center;gap:8px;list-style:none;}
+.consejos summary::-webkit-details-marker{display:none;}
+.consejos summary::before{content:'💡';}
+.consejos .tip-list{margin-top:10px;padding-left:4px;}
+.consejos .tip-list li{font-size:11px;color:#78350f;line-height:1.6;margin-bottom:4px;
+  padding-left:16px;position:relative;}
+.consejos .tip-list li::before{content:'→';position:absolute;left:0;color:var(--ambar);}
+
+/* Escenarios */
+.esc-panel{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:16px;margin-bottom:18px;}
+.esc-panel h3{font-size:12px;font-weight:700;color:var(--azul);letter-spacing:.5px;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;}
+.esc-card{border:1px solid var(--borde2);border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;
+  transition:all .12s;background:#fafafa;}
+.esc-card:hover{border-color:var(--azul3);background:var(--azul-cl);}
+.esc-card h4{font-size:12px;font-weight:700;color:var(--txt);margin-bottom:4px;}
+.esc-card p{font-size:11px;color:var(--txt2);line-height:1.5;}
+.esc-card .esc-type{display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:700;
+  text-transform:uppercase;margin-bottom:6px;}
+
+/* Action bar */
+.action-bar{background:#fff;border-top:1px solid var(--borde);padding:12px 20px;
+  display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:0 -1px 3px rgba(0,0,0,.06);}
+.btn-guardar{background:var(--verde);color:#fff;border:none;border-radius:9px;padding:11px 22px;
+  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.3px;transition:filter .1s;}
+.btn-guardar:hover{filter:brightness(1.08);}
+.btn-limpiar{background:none;border:1px solid var(--borde);color:var(--txt2);border-radius:9px;
+  padding:11px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .1s;}
+.btn-limpiar:hover{border-color:var(--rojo);color:var(--rojo);}
+.btn-ver{background:var(--azul-cl);color:var(--azul2);border:1px solid var(--azul3);border-radius:9px;
+  padding:11px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .1s;
+  margin-left:auto;}
+.btn-ver:hover{background:var(--azul2);color:#fff;}
+
+/* Resumen modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;
+  align-items:center;justify-content:center;padding:20px;}
+.modal-bg.hide{display:none;}
+.modal{background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);}
+.modal-hdr{padding:18px 20px 14px;border-bottom:1px solid var(--borde);display:flex;align-items:center;gap:12px;}
+.modal-hdr h2{font-size:16px;font-weight:700;color:var(--azul);flex:1;}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--txt2);padding:4px;}
+.modal-body{padding:18px 20px;}
+.sumario-blk{margin-bottom:16px;}
+.sumario-blk h3{font-size:11px;font-weight:700;color:var(--azul2);text-transform:uppercase;letter-spacing:.5px;
+  margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--borde2);}
+.sum-row{display:flex;gap:10px;padding:4px 0;font-size:12px;}
+.sum-k{color:var(--txt2);min-width:140px;flex-shrink:0;}
+.sum-v{color:var(--txt);font-weight:600;}
+
+/* Pantalla de bienvenida */
+.welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px;text-align:center;color:var(--txt2);}
+.welcome .big-ic{font-size:52px;margin-bottom:16px;}
+.welcome h2{font-size:18px;font-weight:700;color:var(--azul);margin-bottom:8px;}
+.welcome p{font-size:13px;line-height:1.7;max-width:360px;}
+
+/* Toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:#15803d;color:#fff;border-radius:10px;padding:12px 22px;font-size:13px;font-weight:700;
+  z-index:600;transition:transform .25s;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.3);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* Responsive */
+@media(max-width:640px){
+  .sidebar{display:none;}
+  .sidebar.mob-show{display:flex;position:fixed;inset:0;z-index:400;width:100%;}
+  .btn-mob-res{display:flex!important;}
+  .const-grid{grid-template-columns:repeat(2,1fr);}
+}
+.btn-mob-res{display:none;align-items:center;gap:8px;padding:8px 14px;background:var(--azul-cl);
+  border:1px solid var(--azul3);color:var(--azul2);border-radius:8px;font-size:12px;font-weight:700;
+  cursor:pointer;font-family:inherit;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-hdr">
+  <div class="hdr-logo">🏥</div>
+  <div>
+    <div class="hdr-title">RESIPLUS R+ · Simulador de Prácticas</div>
+    <div class="hdr-sub">Practica el registro como en la residencia — los datos son ficticios</div>
+  </div>
+  <div class="hdr-sp"></div>
+  <div class="badge-practica">🎓 Modo práctica</div>
+</div>
+
+<!-- BODY -->
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-title">Residentes</div>
+    <div class="res-list" id="resList"></div>
+    <div class="sb-divider"></div>
+    <div class="sb-menu-item" onclick="verEscenarios()"><span class="smi">🎯</span>Escenarios de práctica</div>
+    <div class="sb-menu-item" onclick="verGuia()"><span class="smi">📖</span>Guía de campos R+</div>
+    <div class="sb-menu-item" onclick="verHistorial()"><span class="smi">📋</span>Mis registros guardados</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="mainPanel">
+    <div class="welcome" id="welcome">
+      <div class="big-ic">🩺</div>
+      <h2>Bienvenida al Simulador R+</h2>
+      <p>Selecciona un residente de la lista para empezar a practicar el registro de cuidados, tal como lo harías en la residencia con el software Resiplus.</p>
+      <div style="margin-top:24px;font-size:11px;color:#9ca3af;line-height:1.8;">
+        5 residentes ficticios · Formularios completos · Consejos para cada sección<br>
+        Todo se guarda en tu dispositivo — nadie más lo ve
+      </div>
+      <button class="btn-mob-res" id="btnMobRes" style="margin-top:20px;" onclick="document.getElementById('sidebar').classList.toggle('mob-show')">
+        👤 Ver residentes
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESUMEN -->
+<div class="modal-bg hide" id="modalBg">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div style="font-size:24px;">✅</div>
+      <h2 id="modalTit">Registro guardado</h2>
+      <button class="modal-close" onclick="document.getElementById('modalBg').classList.add('hide')">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">Guardado ✓</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   DATOS FICTICIOS DE RESIDENTES
+═══════════════════════════════════════════════════════ */
+const RESIDENTES = [
+  {
+    id:'r1', nom:'García López, María Josefa', edad:84, hab:'12-A', planta:'2ª',
+    sexo:'F', ingreso:'15/03/2022', medico:'Dr. Pérez',
+    diag:['Alzheimer moderado','HTA','Diabetes tipo 2','Incontinencia urinaria'],
+    tags:['alzheimer','hta','diabetes'],
+    notas:'Orientación temporal/espacial muy reducida. Reconoce a la auxiliar pero confunde nombres. Camina con andador.'
+  },
+  {
+    id:'r2', nom:'Martínez Ruiz, Antonio', edad:78, hab:'5-B', planta:'1ª',
+    sexo:'M', ingreso:'02/09/2023', medico:'Dra. Sánchez',
+    diag:['Parkinson grado II','EPOC leve','Disfagia moderada'],
+    tags:['parkinson','disfagia','epoc'],
+    notas:'Dieta triturada con espesante. Tendencia a atragantarse con líquidos. Temblor en mano derecha. Necesita supervisión en comidas.'
+  },
+  {
+    id:'r3', nom:'Sánchez Torres, Carmen', edad:91, hab:'18-C', planta:'3ª',
+    sexo:'F', ingreso:'10/01/2021', medico:'Dr. Pérez',
+    diag:['Demencia severa','Encamada','UPP sacra grado II','Alimentación oral asistida'],
+    tags:['encamada','upp','demencia'],
+    notas:'Dependiente total. No verbaliza. Revisar y registrar UPP sacra en cada turno. Cambios posturales cada 2h. Riesgo Braden alto.'
+  },
+  {
+    id:'r4', nom:'Fernández Blanco, José Luis', edad:72, hab:'9-A', planta:'2ª',
+    sexo:'M', ingreso:'07/06/2024', medico:'Dra. Sánchez',
+    diag:['ACV isquémico (hemiplejia dcha)','Afasia motora','HTA','Fisioterapia diaria'],
+    tags:['acv','afasia','hta'],
+    notas:'Comprende pero no puede hablar. Usa tablero de comunicación. Hemiplejia derecha: necesita ayuda total para transferencias. Muy colaborador.'
+  },
+  {
+    id:'r5', nom:'Domínguez Vega, Rosa María', edad:86, hab:'3-B', planta:'1ª',
+    sexo:'F', ingreso:'21/11/2023', medico:'Dr. Gómez',
+    diag:['Artrosis severa bilateral','Depresión leve','Hipertensión controlada'],
+    tags:['artrosis','depresion'],
+    notas:'Camina con bastón. Come bien. Humor variable según el día. Le gusta hablar y participar en actividades. Visitas frecuentes de su hija los martes.'
+  },
+];
+
+/* ═══════════════════════════════════════════════════════
+   ESTADO DE LA APP
+═══════════════════════════════════════════════════════ */
+let resActivo = null;
+let tabActiva = 'higiene';
+let registros = {};
+
+function loadReg(){ try{ registros = JSON.parse(localStorage.getItem('rp_registros')||'{}'); }catch(_){ registros={}; } }
+function saveReg(){ try{ localStorage.setItem('rp_registros', JSON.stringify(registros)); }catch(_){} }
+loadReg();
+
+/* ═══════════════════════════════════════════════════════
+   RENDER SIDEBAR
+═══════════════════════════════════════════════════════ */
+function renderSidebar(){
+  const ul = document.getElementById('resList'); ul.innerHTML='';
+  RESIDENTES.forEach(r=>{
+    const div = document.createElement('div');
+    div.className = 'res-item'+(resActivo&&resActivo.id===r.id?' act':'');
+    const tagColors = {alzheimer:'tag-f',demencia:'tag-f',parkinson:'tag-m',encamada:'tag-f',acv:'tag-m'};
+    const firstTag = r.tags[0]; const tcls = tagColors[firstTag]||'tag-m';
+    div.innerHTML = `<div class="res-nom">${r.nom}</div>
+      <div class="res-info">${r.edad} años · Hab. ${r.hab} · ${r.planta} planta</div>
+      <span class="res-tag ${tcls}">${r.diag[0]}</span>`;
+    div.onclick = ()=>{ selResidente(r); document.getElementById('sidebar').classList.remove('mob-show'); };
+    ul.appendChild(div);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   SELECCIONAR RESIDENTE
+═══════════════════════════════════════════════════════ */
+function selResidente(r){
+  resActivo = r;
+  renderSidebar();
+  renderMain();
+}
+
+function renderMain(){
+  if(!resActivo) return;
+  const main = document.getElementById('mainPanel');
+  main.innerHTML = `
+    <div class="res-hdr">
+      <div style="font-size:28px">${resActivo.sexo==='F'?'👩‍🦳':'👴'}</div>
+      <div style="flex:1">
+        <div class="res-hdr-nom">${resActivo.nom}</div>
+        <div class="res-hdr-meta">${resActivo.edad} años · Hab. ${resActivo.hab} · ${resActivo.planta} planta · ${resActivo.medico}</div>
+        <div class="res-hdr-badges" id="resBadges"></div>
+      </div>
+      <button class="btn-mob-res" id="btnMobRes2" onclick="document.getElementById('sidebar').classList.toggle('mob-show')">
+        👤 Cambiar
+      </button>
+    </div>
+    <div class="tabs" id="tabBar"></div>
+    <div class="section" id="seccion"></div>
+    <div class="action-bar">
+      <button class="btn-guardar" onclick="guardarSeccion()">💾 Guardar registro</button>
+      <button class="btn-limpiar" onclick="limpiarForm()">↺ Limpiar</button>
+      <button class="btn-ver" onclick="verResumen()">📋 Ver resumen</button>
+    </div>
+  `;
+  // Badges diagnósticos
+  const bd = document.getElementById('resBadges');
+  resActivo.diag.forEach((d,i)=>{
+    const cls = i===0?'mdt-rojo':i===1?'mdt-ambar':i===2?'mdt-azul':'mdt-verde';
+    const sp = document.createElement('span');
+    sp.className='mdt '+cls; sp.textContent=d; bd.appendChild(sp);
+  });
+  renderTabs();
+  renderSeccion(tabActiva);
+}
+
+/* ═══════════════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════════════ */
+const TABS = [
+  {id:'higiene',  ic:'🧼', nom:'Higiene'},
+  {id:'alim',     ic:'🍽️', nom:'Alimentación'},
+  {id:'const',    ic:'💓', nom:'Constantes'},
+  {id:'incid',    ic:'⚠️', nom:'Incidencias'},
+  {id:'diario',   ic:'📝', nom:'Diario'},
+  {id:'ficha',    ic:'📄', nom:'Ficha'},
+];
+
+function renderTabs(){
+  const bar = document.getElementById('tabBar'); bar.innerHTML='';
+  TABS.forEach(t=>{
+    const b = document.createElement('button');
+    b.className='tab-btn'+(tabActiva===t.id?' act':'');
+    b.innerHTML=`<span class="tic">${t.ic}</span>${t.nom}`;
+    b.onclick=()=>{ tabActiva=t.id; renderTabs(); renderSeccion(t.id); };
+    bar.appendChild(b);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDERIZAR SECCIÓN ACTIVA
+═══════════════════════════════════════════════════════ */
+function renderSeccion(id){
+  const sec = document.getElementById('seccion'); if(!sec) return;
+  const fns = {higiene:secHigiene, alim:secAlim, const:secConst, incid:secIncid, diario:secDiario, ficha:secFicha};
+  const fn = fns[id]; if(fn) fn(sec);
+}
+
+/* ─── HIGIENE ─── */
+function secHigiene(sec){
+  sec.innerHTML=`
+  <details class="consejos">
+    <summary>Consejos para registrar la HIGIENE</summary>
+    <ul class="tip-list">
+      <li>Registra siempre el tipo de aseo que se realizó, aunque sea un aseo parcial.</li>
+      <li>Si no se pudo hacer el aseo completo, indica el motivo en observaciones (rechazó, dolor, agitación…).</li>
+      <li>El número de cambios de absorbente es importante para detectar infecciones urinarias a tiempo.</li>
+      <li>La higiene oral previene neumonías aspirativas en residentes encamados o con disfagia.</li>
+      <li>Inspecciona siempre la piel al cambiar el pañal: registra cualquier enrojecimiento aunque sea pequeño.</li>
+      <li>Las UPP (úlceras por presión) deben documentarse con localización exacta y grado.</li>
+    </ul>
+  </details>
+  <div class="form-group">
+    <div class="form-label">Tipo de aseo realizado <span class="req">*</span>
+      <span class="help-ic">?<span class="htip">Indica qué tipo de higiene se realizó hoy. Si el residente rechazó el aseo, selecciona "Sin aseo" y explica el motivo abajo.</span></span>
+    </div>
+    <div class="radio-row" id="tipoAseo">
+      ${rOpts('tipoAseo',['Ducha completa','Aseo en cama','Lavado parcial (cara/manos)','Sin aseo (motivo en obs.)'])}
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="form-label">Higiene oral
+      <span class="help-ic">?<span class="htip">La higiene oral es especialmente importante en residentes con disfagia y encamados. Reduce el riesgo de neumonía aspirativa.</span></span>
+    </div>
+    <div class="radio-row" id="higOral">
+      ${rOpts('higOral',['Realizada','No realizada (rechazó)','No procede (edéntulo sin prótesis)'])}
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="form-label">Cambios de absorbente/pañal
+      <span class="help-ic">?<span class="htip">Registra el número total de cambios en tu turno. Un número inusualmente alto o bajo puede indicar problemas de salud.</span></span>
+    </div>
+    <select id="numPanales">
+      <option value="">-- Selecciona --</option>
+      ${[0,1,2,3,4,5,6,7,8].map(n=>`<option value="${n}">${n} cambio${n!==1?'s':''}</option>`).join('')}
+    </select>
+  </div>
+  <div class="form-group">
+    <div class="form-label">Cuidados adicionales</div>
+    <div class="check-row" id="cuidados">
+      ${cOpts('cuidados',['Hidratación cutánea','Cambio de ropa','Afeitado / arreglo personal','Cambio de pañal preventivo','Aplicación de crema zona perineal'])}
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="form-label">Movilización
+      <span class="help-ic">?<span class="htip">Documenta el nivel de ayuda que necesitó. Es importante para el plan de cuidados y para detectar cambios en la autonomía.</span></span>
+    </div>
+    <div class="radio-row" id="moviliz">
+      ${rOpts('moviliz',['Independiente','Ayuda parcial (supervisión)','Ayuda total (2 auxiliares)','Encamado — sin movilización activa'])}
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="form-label">Estado de la piel
+      <span class="help-ic">?<span class="htip">Inspeccionamos la piel especialmente en zonas de presión: sacro, talones, codos, trocánteres. Cualquier hallazgo debe registrarse aunque sea pequeño.</span></span>
+    </div>
+    <div class="check-row" id="piel">
+      ${cOpts('piel',['Íntegra y normal','Enrojecimiento zona sacra','Enrojecimiento talones','UPP — ver localización abajo','Maceración zona perineal','Hematoma / lesión nueva'])}
+    </div>
+  </div>
+  <div class="form-group" id="fUPP" style="display:none">
+    <div class="form-label">Localización y grado de UPP</div>
+    <input type="text" id="uppDesc" placeholder="Ej: UPP sacra grado II, 3x2 cm, lecho limpio, exudado escaso"/>
+  </div>
+  <div class="form-group">
+    <div class="form-label">Observaciones de higiene</div>
+    <textarea id="obsHigiene" placeholder="Ej: Rechazó la ducha inicialmente pero colaboró al final. Se observa piel seca en piernas, se aplicó crema hidratante."></textarea>
+  </div>`;
+  // Mostrar/ocultar campo UPP
+  document.getElementById('piel').addEventListener('change', ()=>{
+    const checks = document.querySelectorAll('#piel input:checked');
+    const hasUPP = Array.from(checks).some(c=>c.value.includes('UPP'));
+    document.getElementById('fUPP').style.display = hasUPP ? 'block':'none';
+  });
+  initCheckLabels();
+}
+
+/* ─── ALIMENTACIÓN ─── */
+function secAlim(sec){
+  const comidas = ['Desayuno','Almuerzo – 1er plato','Almuerzo – 2do plato','Postre','Merienda','Cena'];
+  sec.innerHTML=`
+  <details class="consejos">
+    <summary>Consejos para registrar la ALIMENTACIÓN</summary>
+    <ul class="tip-list">
+      <li>Registra la ingesta real que observaste, no la que debería haber tomado.</li>
+      <li>Si come menos del 50% durante más de 2-3 días consecutivos, debes comunicarlo a enfermería.</li>
+      <li>En residentes con disfagia: observa si se atraganta, tose durante/después de comer, o tiene voz húmeda.</li>
+      <li>Anota siempre los rechazos: si rechaza sistemáticamente la fruta, el puré, o pide más, eso es información clínica importante.</li>
+      <li>La hidratación es tan importante como la alimentación. Un residente mayor con escasa ingesta hídrica puede deshidratarse en pocas horas.</li>
+    </ul>
+  </details>
+  <div style="background:var(--bg-form);border:1px solid var(--borde);border-radius:10px;overflow:hidden;margin-bottom:18px;">
+    <div style="background:var(--azul);color:#fff;padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;">Ingesta por comida</div>
+    <div style="padding:4px 16px;">
+      ${comidas.map(c=>`
+      <div class="ingesta-row">
+        <div class="ing-lbl">${c}</div>
+        <div class="pct-opts" data-comida="${c}">
+          ${['0%','25%','50%','75%','100%'].map(p=>`<div class="pct-opt" data-val="${p}" onclick="selPct(this,'${c}')">${p}</div>`).join('')}
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="form-label">Ingesta hídrica total (agua, zumos, infusiones…)
+      <span class="help-ic">?<span class="htip">Estima el total de líquidos bebidos en tu turno. No incluyas lo que tomó en otras comidas ya registradas.</span></span>
+    </div>
+    <div class="radio-row" id="hidrata">
+      ${rOpts('hidrata',['Menos de 250 ml (muy escasa)','250–500 ml (escasa)','500–800 ml (normal)','Más de 800 ml (buena'])}
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="form-label">Tipo de dieta
+      <span class="help-ic">?<span class="htip">Verifica siempre la dieta prescrita en la ficha del residente antes de servirle. Un error de dieta puede ser peligroso.</span></span>
+    </div>
+    <select id="tipoDieta">
+      <option value="">-- Selecciona --</option>
+      <option>Dieta general / basal</option>
+      <option>Dieta triturada (puré)</option>
+      <option>Dieta blanda / fácil masticación</option>
+      <option>Dieta diabética</option>
+      <option>Dieta hiposódica (sin sal)</option>
+      <option>Con espesante (disfagia)</option>
+      <option>Alimentación enteral / SNG</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <div class="form-label">Observaciones de alimentación</div>
+    <textarea id="obsAlim" placeholder="Ej: Comió bien el primer plato pero apenas tocó el segundo. Pidió más agua. Se observó ligero atragantamiento al beber el zumo."></textarea>
+  </div>`;
+}
+
+/* ─── CONSTANTES ─── */
+function secConst(sec){
+  sec.innerHTML=`
+  <details class="consejos">
+    <summary>Consejos para registrar las CONSTANTES VITALES</summary>
+    <ul class="tip-list">
+      <li>Anota siempre la hora exacta de la toma — los valores cambian a lo largo del día.</li>
+      <li>TA normal en mayores: hasta 140/90 mmHg. Por encima de 160/100 avisa a enfermería.</li>
+      <li>FC normal: 60-100 ppm. Por debajo de 50 o por encima de 120 comunícalo siempre.</li>
+      <li>Temperatura: febrícula 37,1-37,9°C. Fiebre desde 38°C. Avisa siempre que pase de 38°C.</li>
+      <li>SpO2: normal ≥ 95%. Por debajo de 92% es urgente. En EPOC el valor habitual puede ser más bajo.</li>
+      <li>Si no puedes tomar una constante (residente no colabora, equipo averiado), regístralo en observaciones.</li>
+    </ul>
+  </details>
+  <div style="margin-bottom:16px;font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:8px;">
+    <span>Hora de toma:</span>
+    <input type="time" id="horaConst" style="width:120px;" value="${new Date().toTimeString().substring(0,5)}"/>
+  </div>
+  <div class="const-grid">
+    <div class="const-box">
+      <label>Tensión Arterial <span class="help-ic" style="vertical-align:middle">?<span class="htip">Sistólica / Diastólica. Espera 5 min con el residente sentado y tranquilo. No tomes si acaba de comer o moverse.</span></span></label>
+      <div class="const-in">
+        <input type="number" id="taSis" placeholder="120" min="60" max="250" style="width:70px"/>
+        <span style="font-weight:700;color:var(--txt2)">/</span>
+        <input type="number" id="taDia" placeholder="80" min="40" max="150" style="width:70px"/>
+        <span class="unit">mmHg</span>
+      </div>
+      <div class="const-rango">Normal: 90-140 / 60-90</div>
+    </div>
+    <div class="const-box">
+      <label>Frecuencia Cardíaca <span class="help-ic" style="vertical-align:middle">?<span class="htip">Pulsa durante 30 segundos y multiplica por 2. O usa el pulsioxímetro. Indica si el ritmo es irregular.</span></span></label>
+      <div class="const-in">
+        <input type="number" id="fc" placeholder="72" min="30" max="200"/>
+        <span class="unit">ppm</span>
+      </div>
+      <div class="const-rango">Normal: 60-100 ppm</div>
+    </div>
+    <div class="const-box">
+      <label>Temperatura <span class="help-ic" style="vertical-align:middle">?<span class="htip">Axilar es la más habitual en residencias. Suma 0,5°C si usas axila. Timpánica es más precisa.</span></span></label>
+      <div class="const-in">
+        <input type="number" id="temp" placeholder="36.5" min="34" max="42" step="0.1"/>
+        <span class="unit">°C</span>
+      </div>
+      <div class="const-rango">Normal: 36,0-37,0°C</div>
+    </div>
+    <div class="const-box">
+      <label>Saturación O₂ <span class="help-ic" style="vertical-align:middle">?<span class="htip">Usa pulsioxímetro en el dedo. El dedo debe estar limpio, caliente y sin esmalte. Espera 30 segundos a que se estabilice.</span></span></label>
+      <div class="const-in">
+        <input type="number" id="spo2" placeholder="97" min="70" max="100"/>
+        <span class="unit">%</span>
+      </div>
+      <div class="const-rango">Normal: ≥ 95%</div>
+    </div>
+    <div class="const-box">
+      <label>Glucemia capilar <span class="help-ic" style="vertical-align:middle">?<span class="htip">Solo si el residente tiene diabetes o pauta de control. Basal: antes de comer. Postprandial: 2h después de comer.</span></span></label>
+      <div class="const-in">
+        <input type="number" id="gluc" placeholder="—" min="30" max="600"/>
+        <span class="unit">mg/dL</span>
+      </div>
+      <div class="const-rango">Normal basal: 70-110</div>
+    </div>
+    <div class="const-box">
+      <label>Peso <span class="help-ic" style="vertical-align:middle">?<span class="htip">Normalmente se pesa una vez por semana, siempre a la misma hora (en ayunas, sin ropa de cama). Comunica bajadas > 1 kg en una semana.</span></span></label>
+      <div class="const-in">
+        <input type="number" id="peso" placeholder="—" min="30" max="200" step="0.1"/>
+        <span class="unit">kg</span>
+      </div>
+      <div class="const-rango">Control: 1 vez/semana</div>
+    </div>
+  </div>
+  <div class="form-group" style="margin-top:18px;">
+    <div class="form-label">Observaciones de constantes</div>
+    <textarea id="obsConst" placeholder="Ej: TA elevada respecto a ayer. Avisada enfermera de guardia. Residente refería dolor de cabeza."></textarea>
+  </div>`;
+}
+
+/* ─── INCIDENCIAS ─── */
+function secIncid(sec){
+  sec.innerHTML=`
+  <details class="consejos">
+    <summary>Consejos para registrar INCIDENCIAS</summary>
+    <ul class="tip-list">
+      <li>Todo lo que se salga de la rutina diaria es una incidencia y debe documentarse.</li>
+      <li>En una CAÍDA: anota la hora exacta, si la presenciaste o la encontraste, el estado en que estaba (consciente, con dolor, corte…), las medidas tomadas y a quién lo comunicaste.</li>
+      <li>Nunca subestimes un golpe en la cabeza: aunque parezca sin importancia, debe valorarlo la enfermera y avisar a la familia.</li>
+      <li>La AGITACIÓN también es una incidencia: describe el comportamiento, el contexto y cómo se manejó.</li>
+      <li>Una NEGATIVA a tomar medicación debe documentarse con la hora y el medicamento.</li>
+      <li>Sé objetivo y preciso: describe lo que viste y lo que hiciste, no lo que crees que pasó.</li>
+    </ul>
+  </details>
+  <div class="form-group">
+    <div class="form-label">¿Ha ocurrido alguna incidencia en este turno? <span class="req">*</span></div>
+    <div class="radio-row" id="hayIncid">
+      <label class="rad-lbl"><input type="radio" name="hayIncid" value="no" onchange="toggleIncid()"> No ha habido incidencias</label>
+      <label class="rad-lbl"><input type="radio" name="hayIncid" value="si" onchange="toggleIncid()"> Sí, ha habido una incidencia</label>
+    </div>
+  </div>
+  <div id="blqIncid" style="display:none">
+    <div class="form-group">
+      <div class="form-label">Tipo de incidencia <span class="req">*</span></div>
+      <select id="tipoIncid">
+        <option value="">-- Selecciona el tipo --</option>
+        <option>Caída (sin lesiones aparentes)</option>
+        <option>Caída con lesión (hematoma/herida/dolor)</option>
+        <option>Agitación / conducta disruptiva</option>
+        <option>Dificultad respiratoria</option>
+        <option>Fiebre (≥38°C)</option>
+        <option>Dolor intenso referido</option>
+        <option>Negativa a tomar medicación</option>
+        <option>Negativa a cuidados (aseo/alimentación)</option>
+        <option>Vómitos / náuseas</option>
+        <option>Deposición con sangre / alterada</option>
+        <option>Confusión aguda / cambio de comportamiento</option>
+        <option>Otro (describir abajo)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Hora en que ocurrió <span class="req">*</span></div>
+      <input type="time" id="horaIncid" style="width:140px;"/>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Descripción detallada <span class="req">*</span>
+        <span class="help-ic">?<span class="htip">Describe QUÉ pasó, CÓMO lo encontraste o presenciaste, el ESTADO del residente y cualquier detalle relevante. Sé objetivo: describe hechos, no suposiciones.</span></span>
+      </div>
+      <textarea id="descIncid" placeholder="Ej: A las 15:30 escuché un ruido en la habitación. Al entrar encontré al residente en el suelo junto a la cama. Consciente y orientado. Refería dolor leve en cadera derecha. Sin heridas visibles ni deformidad aparente."></textarea>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Medidas tomadas
+        <span class="help-ic">?<span class="htip">¿Qué hiciste? Ej: llamé a la enfermera, puse al residente en posición de seguridad, apliqué frío, tomé constantes, tranquilicé al residente.</span></span>
+      </div>
+      <textarea id="medidasIncid" placeholder="Ej: Se avisó a la enfermera de guardia. Se tomaron constantes vitales (normales). Se dejó al residente en cama en posición de reposo. Se aplicó frío en zona dolorosa. Se rellenó parte de caídas."></textarea>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Comunicado a:</div>
+      <div class="check-row" id="comunicado">
+        ${cOpts('comunicado',['Enfermera de turno','Médico de guardia','Supervisor/Coordinadora','Familia del residente','No fue necesario comunicar'])}
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Estado del residente al final del turno</div>
+      <div class="radio-row" id="estadoFinal">
+        ${rOpts('estadoFinal',['Estable y tranquilo','Valorando — pendiente de enfermería','Derivado a urgencias','Requiere observación continuada'])}
+      </div>
+    </div>
+  </div>`;
+  initCheckLabels();
+}
+function toggleIncid(){
+  const si = document.querySelector('#hayIncid input[value=si]');
+  document.getElementById('blqIncid').style.display = (si&&si.checked)?'block':'none';
+  initCheckLabels();
+}
+
+/* ─── DIARIO ─── */
+function secDiario(sec){
+  sec.innerHTML=`
+  <details class="consejos">
+    <summary>Consejos para el DIARIO DE TURNO</summary>
+    <ul class="tip-list">
+      <li>El diario es el resumen de todo lo relevante del turno. Lo leerá la siguiente auxiliar antes de entrar.</li>
+      <li>Incluye cómo estaba el residente en general, si recibió visitas, si tuvo algún momento difícil.</li>
+      <li>Si hubo incidencia, ya la registraste en la sección anterior — aquí puedes resumirla con el resultado final.</li>
+      <li>Menciona cambios de comportamiento que no llegan a incidencia pero que conviene monitorizar.</li>
+      <li>Escribe siempre en pasado y primera persona: "El residente colaboró bien en el aseo…".</li>
+    </ul>
+  </details>
+  <div class="form-group">
+    <div class="form-label">Estado general del residente durante el turno <span class="req">*</span></div>
+    <div class="radio-row" id="estadoGral">
+      ${rOpts('estadoGral',['Buen estado general','Estado regular (precisa vigilancia)','Bajo estado de ánimo','Agitado o inquieto','Somnoliento / muy apático','Muy colaborador y activo'])}
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="form-label">¿Recibió visitas?</div>
+    <div class="radio-row" id="visitas">
+      ${rOpts('visitas',['No recibió visitas','Sí — familiar/amigo','Sí — médico / personal sanitario'])}
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="form-label">Nota de visita / observación familiar</div>
+    <input type="text" id="notaVisita" placeholder="Ej: Vino su hija María a las 17h. Refirió que la nota ayer comió mejor en casa. Estuvo 1h."/>
+  </div>
+  <div class="form-group">
+    <div class="form-label">Observaciones del turno
+      <span class="help-ic">?<span class="htip">Escribe todo lo relevante que no hayas podido registrar en las otras secciones. Este campo es libre y es muy importante para la continuidad de los cuidados.</span></span>
+    </div>
+    <textarea id="obsDiario" rows="6" placeholder="Ej: Turno tranquilo en general. El residente estuvo animado por la mañana y participó en la actividad grupal. A media tarde se mostró algo ansioso, preguntando repetidamente por su familia. Se le tranquilizó y calmó al poco rato. Come bien. Colabora en el aseo aunque lento."></textarea>
+  </div>
+  <div class="form-group">
+    <div class="form-label">Firma / Iniciales del auxiliar</div>
+    <input type="text" id="firma" placeholder="Ej: F.H." style="width:120px;"/>
+  </div>`;
+  initCheckLabels();
+}
+
+/* ─── FICHA ─── */
+function secFicha(sec){
+  if(!resActivo) return;
+  const r = resActivo;
+  sec.innerHTML=`
+  <div style="background:#fff;border:1px solid var(--borde);border-radius:12px;overflow:hidden;max-width:600px;">
+    <div style="background:var(--azul);color:#fff;padding:14px 18px;font-size:13px;font-weight:700;letter-spacing:.5px;">
+      📄 FICHA DEL RESIDENTE
+    </div>
+    <div style="padding:20px;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        ${fila('Nombre completo', r.nom)}
+        ${fila('Edad', r.edad+' años')}
+        ${fila('Habitación', r.hab+' · '+r.planta+' planta')}
+        ${fila('Médico responsable', r.medico)}
+        ${fila('Fecha de ingreso', r.ingreso)}
+        ${fila('Diagnósticos principales', r.diag.map(d=>`<span class="mdt mdt-azul" style="margin-right:4px">${d}</span>`).join(' '))}
+        ${fila('Notas importantes', `<em style="color:var(--txt2)">${r.notas}</em>`)}
+      </table>
+    </div>
+  </div>
+  <div style="margin-top:16px;background:var(--ambar-cl);border:1px solid #fcd34d;border-radius:10px;padding:14px;max-width:600px;">
+    <div style="font-size:12px;font-weight:700;color:var(--ambar);margin-bottom:6px;">⚠️ Recuerda antes de iniciar el turno:</div>
+    <ul style="font-size:11px;color:#78350f;padding-left:18px;line-height:2;">
+      <li>Lee el diario del turno anterior</li>
+      <li>Comprueba si hay pautas médicas nuevas</li>
+      <li>Revisa la medicación que corresponde a tu turno</li>
+      <li>Confirma el tipo de dieta si hay cambios recientes</li>
+      <li>Lee las alertas de alergias o restricciones especiales</li>
+    </ul>
+  </div>`;
+  function fila(k,v){ return `<tr style="border-bottom:1px solid var(--borde2)">
+    <td style="padding:10px 12px;font-weight:600;color:var(--txt2);width:200px;vertical-align:top">${k}</td>
+    <td style="padding:10px 12px;color:var(--txt)">${v}</td></tr>`; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   HELPERS PARA RADIO / CHECKBOX
+═══════════════════════════════════════════════════════ */
+function rOpts(nm, opts){
+  return opts.map(o=>`<label class="rad-lbl"><input type="radio" name="${nm}" value="${o}" onchange="updRad(this)"> ${o}</label>`).join('');
+}
+function cOpts(nm, opts){
+  return opts.map(o=>`<label class="chk-lbl"><input type="checkbox" name="${nm}" value="${o}" onchange="updChk(this)"> ${o}</label>`).join('');
+}
+function updRad(el){ const g = el.closest('.radio-row'); if(!g) return;
+  g.querySelectorAll('.rad-lbl').forEach(l=>l.classList.toggle('checked', l.querySelector('input').checked)); }
+function updChk(el){ el.closest('.chk-lbl').classList.toggle('checked', el.checked); }
+function initCheckLabels(){
+  document.querySelectorAll('.rad-lbl input').forEach(i=>{ if(i.checked) updRad(i); });
+  document.querySelectorAll('.chk-lbl input').forEach(i=>{ if(i.checked) updChk(i); });
+}
+function selPct(el, comida){
+  const row = el.closest('.pct-opts');
+  row.querySelectorAll('.pct-opt').forEach(o=>o.className='pct-opt');
+  const cls = {'0%':'sel-0','25%':'sel-25','50%':'sel-50','75%':'sel-75','100%':'sel-100'}[el.dataset.val]||'';
+  el.classList.add(cls);
+}
+
+/* ═══════════════════════════════════════════════════════
+   GUARDAR SECCIÓN
+═══════════════════════════════════════════════════════ */
+function guardarSeccion(){
+  if(!resActivo){ alert('Selecciona un residente primero.'); return; }
+  const secId = tabActiva;
+  const datos = recogerDatos(secId);
+  if(!datos) return;
+
+  const k = resActivo.id+'_'+secId;
+  if(!registros[resActivo.id]) registros[resActivo.id]={};
+  if(!registros[resActivo.id][secId]) registros[resActivo.id][secId]=[];
+  registros[resActivo.id][secId].unshift({
+    fecha: new Date().toLocaleDateString('es-ES'),
+    hora: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
+    datos
+  });
+  saveReg();
+  mostrarResumen(secId, datos);
+}
+
+function recogerDatos(secId){
+  const d = {};
+  const getRadio = nm=>{ const el=document.querySelector(`[name="${nm}"]:checked`); return el?el.value:''; };
+  const getChecks = nm=>Array.from(document.querySelectorAll(`[name="${nm}"]:checked`)).map(e=>e.value);
+  const getVal = id=>{ const el=document.getElementById(id); return el?el.value.trim():''; };
+
+  if(secId==='higiene'){
+    d['Tipo de aseo'] = getRadio('tipoAseo');
+    if(!d['Tipo de aseo']){ alert('⚠️ Selecciona el tipo de aseo realizado.'); return null; }
+    d['Higiene oral'] = getRadio('higOral');
+    d['Cambios de absorbente'] = getVal('numPanales');
+    d['Cuidados adicionales'] = getChecks('cuidados').join(', ')||'Ninguno';
+    d['Movilización'] = getRadio('moviliz');
+    d['Estado de la piel'] = getChecks('piel').join(', ')||'No registrado';
+    if(getChecks('piel').some(c=>c.includes('UPP'))) d['UPP – descripción'] = getVal('uppDesc');
+    d['Observaciones'] = getVal('obsHigiene');
+  }
+  else if(secId==='alim'){
+    ['Desayuno','Almuerzo – 1er plato','Almuerzo – 2do plato','Postre','Merienda','Cena'].forEach(c=>{
+      const sel = document.querySelector(`.pct-opts[data-comida="${c}"] .pct-opt.sel-0,
+        .pct-opts[data-comida="${c}"] .pct-opt.sel-25,
+        .pct-opts[data-comida="${c}"] .pct-opt.sel-50,
+        .pct-opts[data-comida="${c}"] .pct-opt.sel-75,
+        .pct-opts[data-comida="${c}"] .pct-opt.sel-100`);
+      d[c] = sel ? sel.dataset.val : 'No registrado';
+    });
+    d['Hidratación'] = getRadio('hidrata');
+    d['Tipo de dieta'] = getVal('tipoDieta');
+    d['Observaciones'] = getVal('obsAlim');
+  }
+  else if(secId==='const'){
+    d['Hora de toma'] = getVal('horaConst');
+    const taSis=getVal('taSis'), taDia=getVal('taDia');
+    d['Tensión arterial'] = (taSis&&taDia) ? taSis+'/'+taDia+' mmHg' : '—';
+    d['Frecuencia cardíaca'] = getVal('fc') ? getVal('fc')+' ppm' : '—';
+    d['Temperatura'] = getVal('temp') ? getVal('temp')+'°C' : '—';
+    d['Saturación O₂'] = getVal('spo2') ? getVal('spo2')+'%' : '—';
+    d['Glucemia'] = getVal('gluc') ? getVal('gluc')+' mg/dL' : 'No tomada';
+    d['Peso'] = getVal('peso') ? getVal('peso')+' kg' : 'No tomado';
+    d['Observaciones'] = getVal('obsConst');
+  }
+  else if(secId==='incid'){
+    d['¿Hubo incidencia?'] = getRadio('hayIncid');
+    if(d['¿Hubo incidencia?']==='si'){
+      d['Tipo'] = getVal('tipoIncid');
+      d['Hora'] = getVal('horaIncid');
+      d['Descripción'] = getVal('descIncid');
+      d['Medidas tomadas'] = getVal('medidasIncid');
+      d['Comunicado a'] = getChecks('comunicado').join(', ')||'—';
+      d['Estado final'] = getRadio('estadoFinal');
+    }
+  }
+  else if(secId==='diario'){
+    d['Estado general'] = getRadio('estadoGral');
+    d['Visitas'] = getRadio('visitas');
+    d['Nota de visita'] = getVal('notaVisita');
+    d['Observaciones del turno'] = getVal('obsDiario');
+    d['Firma'] = getVal('firma');
+  }
+  return d;
+}
+
+/* ═══════════════════════════════════════════════════════
+   MOSTRAR RESUMEN EN MODAL
+═══════════════════════════════════════════════════════ */
+function mostrarResumen(secId, datos){
+  const nombres = {higiene:'Higiene y Cuidados',alim:'Alimentación',const:'Constantes Vitales',incid:'Incidencias',diario:'Diario de Turno'};
+  document.getElementById('modalTit').textContent = '✅ Registro guardado — '+nombres[secId];
+  let html = `<div class="sumario-blk">
+    <h3>${resActivo.nom}</h3>
+    <div class="sum-row"><span class="sum-k">Fecha y hora:</span><span class="sum-v">${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</span></div>
+  </div><div class="sumario-blk"><h3>Datos registrados</h3>`;
+  Object.entries(datos).forEach(([k,v])=>{
+    if(v) html+=`<div class="sum-row"><span class="sum-k">${k}:</span><span class="sum-v">${v}</span></div>`;
+  });
+  html+=`</div><div style="background:var(--verde-cl);border:1px solid var(--verde);border-radius:8px;padding:12px;margin-top:8px;">
+    <div style="font-size:12px;color:var(--verde);font-weight:700">✔ Registro completado correctamente</div>
+    <div style="font-size:11px;color:#15803d;margin-top:4px">Buen trabajo. En la residencia real, este registro quedaría guardado en el historial del residente y podría consultarlo el turno siguiente.</div>
+  </div>`;
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalBg').classList.remove('hide');
+}
+
+function verResumen(){
+  if(!resActivo){ toast2('Selecciona un residente primero',true); return; }
+  const reg = registros[resActivo.id];
+  if(!reg||!Object.keys(reg).length){ toast2('No hay registros guardados para este residente',true); return; }
+  const nombres = {higiene:'Higiene',alim:'Alimentación',const:'Constantes',incid:'Incidencias',diario:'Diario'};
+  let html = `<div class="sumario-blk"><h3>Últimos registros — ${resActivo.nom}</h3></div>`;
+  Object.entries(reg).forEach(([sec,arr])=>{
+    if(!arr.length) return;
+    html+=`<div class="sumario-blk"><h3>${nombres[sec]||sec}</h3>`;
+    arr.slice(0,3).forEach(r=>{
+      html+=`<div style="font-size:10px;color:var(--txt2);margin-bottom:8px;padding:8px;background:#f9fafb;border-radius:6px;">
+        <strong>${r.fecha} ${r.hora}</strong><br>`;
+      Object.entries(r.datos).forEach(([k,v])=>{ if(v) html+=`<span style="margin-right:12px">${k}: <b>${v}</b></span>`; });
+      html+=`</div>`;
+    });
+    html+=`</div>`;
+  });
+  document.getElementById('modalTit').textContent = '📋 Historial de práctica';
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalBg').classList.remove('hide');
+}
+
+function limpiarForm(){ if(!resActivo) return; renderSeccion(tabActiva); toast2('Formulario limpiado'); }
+
+/* ═══════════════════════════════════════════════════════
+   ESCENARIOS DE PRÁCTICA
+═══════════════════════════════════════════════════════ */
+const ESCENARIOS = [
+  {
+    ic:'🤕', tipo:'Caída', color:'mdt-rojo',
+    tit:'Caída al levantarse de la silla',
+    desc:'El Sr. Fernández intentó levantarse solo de la silla a las 16:15. Al entrar a la habitación lo encuentras en el suelo. Consciente, orientado, refiere dolor leve en cadera derecha. No hay heridas visibles.',
+    guia:'Ve a la sección INCIDENCIAS. Selecciona "Sí, hubo incidencia" → "Caída sin lesiones aparentes" → indica la hora, describe exactamente lo que encontraste. Medidas: avisar enfermera, tomar constantes, dejar en reposo.',
+    res:'r4', tab:'incid'
+  },
+  {
+    ic:'🍽️', tipo:'Alimentación', color:'mdt-ambar',
+    tit:'Rechaza la comida — 3er día consecutivo',
+    desc:'La Sra. García apenas ha comido: tomó 2 cucharadas de puré y rechazó el resto. Ayer y antes de ayer también comió menos del 25%. Dice que "no le apetece". No refiere náuseas.',
+    guia:'Ve a ALIMENTACIÓN. Marca 0% o 25% en los platos. En observaciones describe que lleva 3 días con escasa ingesta. Luego ve a DIARIO y refleja el estado anímico. Esto debe comunicarse a enfermería.',
+    res:'r1', tab:'alim'
+  },
+  {
+    ic:'🌡️', tipo:'Fiebre', color:'mdt-rojo',
+    tit:'Fiebre y confusión aguda',
+    desc:'A las 14:30 notas que Carmen está más agitada de lo habitual. Tomas temperatura: 38.7°C. La residente está confusa y no responde a su nombre. Tiene las mejillas enrojecidas.',
+    guia:'Ve a CONSTANTES: registra la temperatura de 38.7°C con la hora. Luego ve a INCIDENCIAS: "Fiebre ≥38°C" + describe los síntomas + medidas tomadas (avisar enfermería/médico). No esperes: 38.7°C en una persona mayor siempre es urgente.',
+    res:'r3', tab:'const'
+  },
+  {
+    ic:'💊', tipo:'Medicación', color:'mdt-ambar',
+    tit:'Negativa a tomar la medicación',
+    desc:'El Sr. Martínez se niega a tomar sus pastillas del mediodía, escupiendo las que le has dado. Dice que le hacen daño en el estómago. Es la primera vez que ocurre.',
+    guia:'Ve a INCIDENCIAS: selecciona "Negativa a tomar medicación". Indica la hora, describe los medicamentos implicados y lo que dijo el residente. Comunícalo a enfermería (nunca fuerces la medicación).',
+    res:'r2', tab:'incid'
+  },
+  {
+    ic:'🩹', tipo:'UPP', color:'mdt-rojo',
+    tit:'Hallazgo de nueva lesión en el sacro',
+    desc:'Al hacer el cambio de pañal de Carmen, aprecias un enrojecimiento nuevo en la zona sacra que no blanquea al presionar. La piel está íntegra pero muy enrojecida, aproximadamente 3x3 cm.',
+    guia:'Ve a HIGIENE: marca "UPP — ver localización" en estado de la piel. Describe en el campo de UPP: "Eritema no blanqueable sacro, aprox 3x3 cm, piel íntegra, grado I". Comunica a enfermería para que inicie el plan de cuidados.',
+    res:'r3', tab:'higiene'
+  },
+];
+
+function verEscenarios(){
+  const main = document.getElementById('mainPanel');
+  resActivo = null; renderSidebar();
+  main.innerHTML = `
+  <div style="padding:20px;overflow-y:auto;flex:1;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div style="font-size:28px">🎯</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--azul)">Escenarios de práctica</div>
+        <div style="font-size:12px;color:var(--txt2)">Situaciones reales que deberás registrar correctamente en la residencia</div>
+      </div>
+    </div>
+    ${ESCENARIOS.map((e,i)=>`
+    <div class="esc-card" onclick="iniciarEscenario(${i})">
+      <span class="esc-type mdt ${e.color}">${e.tipo}</span>
+      <h4>${e.ic} ${e.tit}</h4>
+      <p>${e.desc}</p>
+      <div style="margin-top:8px;font-size:10px;color:var(--azul2);font-weight:600">👆 Haz clic para practicar este escenario →</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function iniciarEscenario(idx){
+  const e = ESCENARIOS[idx];
+  const res = RESIDENTES.find(r=>r.id===e.res); if(!res) return;
+  resActivo = res; tabActiva = e.tab;
+  renderSidebar();
+  renderMain();
+  // Mostrar guía del escenario
+  const sec = document.getElementById('seccion'); if(!sec) return;
+  const guiaDiv = document.createElement('div');
+  guiaDiv.style.cssText = 'background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;padding:16px;margin-bottom:18px;';
+  guiaDiv.innerHTML = `<div style="font-size:13px;font-weight:700;color:#15803d;margin-bottom:8px">🎯 ${e.ic} ${e.tit}</div>
+    <p style="font-size:12px;color:#166534;line-height:1.6;margin-bottom:10px"><strong>Situación:</strong> ${e.desc}</p>
+    <div style="background:#dcfce7;border-radius:8px;padding:10px;">
+      <div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:4px">📌 Qué debes hacer:</div>
+      <div style="font-size:11px;color:#14532d;line-height:1.7">${e.guia}</div>
+    </div>`;
+  sec.insertBefore(guiaDiv, sec.firstChild);
+}
+
+/* ═══════════════════════════════════════════════════════
+   GUÍA DE CAMPOS
+═══════════════════════════════════════════════════════ */
+function verGuia(){
+  const main = document.getElementById('mainPanel');
+  resActivo = null; renderSidebar();
+  main.innerHTML = `
+  <div style="padding:20px;overflow-y:auto;flex:1;max-width:720px;">
+    <div style="font-size:16px;font-weight:700;color:var(--azul);margin-bottom:20px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:28px">📖</span> Guía de referencia — Registro R+
+    </div>
+    ${[
+      ['🧼 Higiene y Cuidados','Por qué es importante: La higiene diaria previene infecciones, úlceras y mejora el bienestar del residente. Qué registrar siempre: tipo de aseo, higiene oral, cambios de pañal, estado de la piel. Tip: cualquier enrojecimiento en zonas de presión, por pequeño que sea, se registra y se comunica.'],
+      ['🍽️ Alimentación','Por qué es importante: La malnutrición es muy frecuente en mayores institucionalizados y pasa desapercibida. Qué registrar siempre: ingesta por comida (%), hidratación, tipo de dieta, incidencias al comer (tos, atragantamiento). Tip: si come menos del 50% más de 2 días, comunícalo siempre a enfermería.'],
+      ['💓 Constantes Vitales','Por qué es importante: Las constantes son la "ventana" al estado de salud real del residente. Los cambios pueden ser la primera señal de infección, descompensación cardíaca o ictus. Qué registrar siempre: hora de toma + todos los valores con sus unidades. Tip: no interpretes solos los resultados — si algo se sale del rango normal, comunícalo.'],
+      ['⚠️ Incidencias','Por qué es importante: Documenta todo lo que se sale de la rutina. Sirve para auditorías, para protegerte legalmente y para la continuidad de los cuidados. Qué registrar siempre: hora exacta, descripción objetiva, medidas tomadas, a quién comunicaste. Tip: no supongas, describe solo lo que viste y lo que hiciste.'],
+      ['📝 Diario de Turno','Por qué es importante: Es el "parte" que leerá la siguiente auxiliar antes de empezar. Una buena nota de turno ahorra tiempo y previene errores. Qué incluir: estado general, cambios observados, incidencias resumidas, visitas, pendientes para el siguiente turno. Tip: escribe como si la que lee no sabe nada de ese residente.'],
+    ].map(([t,c])=>`
+    <div style="background:#fff;border:1px solid var(--borde);border-radius:10px;padding:16px;margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:700;color:var(--azul);margin-bottom:8px">${t}</div>
+      <div style="font-size:12px;color:var(--txt3);line-height:1.7">${c}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   HISTORIAL
+═══════════════════════════════════════════════════════ */
+function verHistorial(){
+  if(!Object.keys(registros).length){
+    toast2('Aún no tienes registros guardados. Practica con algún residente primero.', true); return;
+  }
+  verResumen();
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════ */
+function toast2(msg, err){
+  const el = document.getElementById('toast');
+  el.textContent=msg; el.style.background=err?'#dc2626':'#15803d';
+  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2600);
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+renderSidebar();
+</script>
+</body>
+</html>
