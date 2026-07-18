@@ -237,6 +237,20 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </div>
     <div class="ai-status" id="aiStatus"></div>
 
+    <!-- Patrón semanal visual -->
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--linea);">
+      <div style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;margin-bottom:8px;text-transform:uppercase;">⚡ Patrón semanal — toca cada día y elige turno</div>
+      <div id="patronWidget" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-g" onclick="aplicarPatronSemanal()">📅 Aplicar al mes</button>
+        <button class="btn-s" onclick="limpiarPatron()">↺ Limpiar</button>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--txt2);line-height:1.6;">
+        Asigna un turno a cada día de la semana → rellena <em>todos</em> los días de ese tipo en el mes elegido.<br>
+        También puedes escribir: <code style="color:var(--oro2)">Lunes tarde, Martes noche, Miércoles libre</code>
+      </div>
+    </div>
+
     <!-- Alternativa manual -->
     <details style="margin-top:16px;">
       <summary style="font-size:10px;color:var(--txt2);letter-spacing:1px;cursor:pointer;text-transform:uppercase;padding:6px 0;user-select:none;">▸ Escribir el horario a mano</summary>
@@ -399,6 +413,11 @@ function abrirPicker(el, kk, labelFecha){
 function cerrarPicker(){ document.getElementById('picker').classList.remove('on'); document.getElementById('overlay').classList.remove('on'); pickerK=null; }
 function asignar(t){
   if(!pickerK) return;
+  if(pickerK.startsWith('__ps__')){
+    const jd = parseInt(pickerK.slice(6));
+    if(t===null) delete psData[jd]; else psData[jd]=t;
+    cerrarPicker(); renderPatronWidget(); return;
+  }
   if(t===null) delete datos[pickerK]; else datos[pickerK]=t;
   save(); cerrarPicker(); renderHero(); renderStrip(); renderCal();
 }
@@ -425,7 +444,7 @@ function guardarNombre(){
   try{ if(v) localStorage.setItem('fp_nombre_empleado',v); }catch(_){}
 }
 function cargarNombre(){
-  try{ const v=localStorage.getItem('fp_nombre_empleado'); document.getElementById('nombreEmpleado').value=v||'EDDEILIS'; }catch(_){ document.getElementById('nombreEmpleado').value='EDDEILIS'; }
+  try{ const v=localStorage.getItem('fp_nombre_empleado'); document.getElementById('nombreEmpleado').value=v||''; }catch(_){ document.getElementById('nombreEmpleado').value=''; }
 }
 
 function mapTurno(s){
@@ -443,7 +462,36 @@ function mapTurno(s){
 
 function parsearHorario(txt, mes, ano){
   const resultado={};
-  const lines=txt.split(/[\n;]+/).map(l=>l.trim()).filter(Boolean);
+  const lines=txt.split(/[\n;,]+/).map(l=>l.trim()).filter(Boolean);
+  // ── Patrón semanal: "Lunes mañana, Martes tarde, Miércoles libre" ──
+  const MAPA_DS = {
+    lunes:1,lune:1,lu:1,
+    martes:2,marte:2,ma:2,mar:2,
+    miercoles:3,mierco:3,mierc:3,mi:3,x:3,
+    jueves:4,jueve:4,ju:4,jue:4,
+    viernes:5,vterne:5,vi:5,vie:5,
+    sabado:6,saba:6,sa:6,sab:6,
+    domingo:0,domin:0,do:0,dom:0
+  };
+  let patronSem = {}, totalPS = 0;
+  for(const linea of lines){
+    const n2 = linea.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+    const mDS = n2.match(/^(lunes?|martes?|mierco?l?e?s?|jueves?|viernes?|s[a]?bados?|domingos?|lu|ma|mi|x|ju|vi|sa|do)\b[\s:=\-]+(\w+)/);
+    if(mDS){
+      const dn = mDS[1].replace(/s$/,'');
+      const jd = MAPA_DS[dn];
+      const t = mapTurno(mDS[2]);
+      if(jd !== undefined && t){ patronSem[jd] = t; totalPS++; }
+    }
+  }
+  if(totalPS > 0){
+    const diasMes = new Date(ano, mes+1, 0).getDate();
+    for(let d=1; d<=diasMes; d++){
+      const fecha = new Date(ano, mes, d);
+      if(patronSem[fecha.getDay()] !== undefined) resultado[k(fecha)] = patronSem[fecha.getDay()];
+    }
+    if(Object.keys(resultado).length) return resultado;
+  }
   let hitCount=0;
   for(const linea of lines){
     const norm=linea.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
@@ -490,7 +538,8 @@ function parsearTexto(){
 
 async function escanearHorario(input){
   const file=input.files[0]; if(!file) return;
-  const nombre=(document.getElementById('nombreEmpleado').value.trim()||'EDDEILIS').toUpperCase();
+  const nombre=document.getElementById('nombreEmpleado').value.trim().toUpperCase();
+  if(!nombre){ toast('⚠️ Escribe tu nombre antes de escanear', true); input.value=''; return; }
   const st=document.getElementById('aiStatus');
   const mes=parseInt(document.getElementById('impMes').value);
   const ano=parseInt(document.getElementById('impAno').value);
@@ -534,7 +583,7 @@ async function escanearHorario(input){
       input.value=''; return;
     }
 
-    const mapaT={M:'manana',T:'tarde',N:'noche',L:'libre'};
+    const mapaT={M:'manana',T:'tarde',N:'noche',L:'libre',F:'festivo'};
     const resultado2={};
     codigos.forEach((c,i)=>{
       const dia=i+1; if(dia>diasMes) return;
@@ -623,6 +672,47 @@ function borrarTodo(){
   toast('🗑️ Todos los turnos eliminados');
 }
 
+/* ── PATRÓN SEMANAL ── */
+const PS_LABELS = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+const PS_JDAY   = [1,2,3,4,5,6,0];
+let psData = {};
+
+function renderPatronWidget(){
+  const el = document.getElementById('patronWidget'); if(!el) return;
+  el.innerHTML = '';
+  PS_LABELS.forEach((dl, i)=>{
+    const jd = PS_JDAY[i]; const t = psData[jd]; const inf = t ? TURNOS[t] : null;
+    const div = document.createElement('div');
+    div.style.cssText = 'text-align:center;padding:7px 3px;border-radius:9px;cursor:pointer;'+
+      'border:1px solid;transition:all .12s;user-select:none;';
+    div.style.borderColor = inf ? colorTurno(t,.55) : 'var(--linea)';
+    div.style.background  = inf ? colorTurno(t,.1) : 'var(--pan)';
+    div.innerHTML = '<div style="font-size:9px;color:var(--txt2);font-weight:700;letter-spacing:.4px;margin-bottom:2px;">'+dl+'</div>'+
+      '<div style="font-size:18px;min-height:22px;">'+(inf?inf.ic:'·')+'</div>'+
+      '<div style="font-size:8px;color:var(--txt2);min-height:9px;margin-top:1px;">'+(inf?inf.lbl.replace('TURNO DE ','').replace('DÍA ',''):'')+'</div>';
+    div.addEventListener('click', function(e){
+      abrirPicker(div, '__ps__'+jd, PS_LABELS[i]);
+    });
+    el.appendChild(div);
+  });
+}
+
+function aplicarPatronSemanal(){
+  if(!Object.keys(psData).length){ toast('Asigna al menos un turno al patrón', true); return; }
+  const mes2 = parseInt(document.getElementById('impMes').value);
+  const ano2 = parseInt(document.getElementById('impAno').value);
+  const diasMes = new Date(ano2, mes2+1, 0).getDate();
+  let cnt = 0;
+  for(let d=1; d<=diasMes; d++){
+    const fecha = new Date(ano2, mes2, d);
+    if(psData[fecha.getDay()] !== undefined){ datos[k(fecha)] = psData[fecha.getDay()]; cnt++; }
+  }
+  if(cnt){ save(); toast('✅ '+cnt+' días aplicados'); renderHero(); renderStrip(); renderCal(); }
+  else toast('No hay días que coincidan', true);
+}
+
+function limpiarPatron(){ psData = {}; renderPatronWidget(); toast('Patrón limpiado'); }
+
 /* ── INIT ── */
 load();
 const hoy = new Date();
@@ -630,7 +720,7 @@ calAno = hoy.getFullYear(); calMes = hoy.getMonth();
 document.getElementById('btnPrev').onclick = ()=>{ calMes--; if(calMes<0){calMes=11;calAno--;} renderCal(); };
 document.getElementById('btnNext').onclick = ()=>{ calMes++; if(calMes>11){calMes=0;calAno++;} renderCal(); };
 renderHero(); renderStrip(); renderCal();
-initImpSelects(); cargarNombre(); initDropZones();
+initImpSelects(); cargarNombre(); initDropZones(); renderPatronWidget();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </body>
