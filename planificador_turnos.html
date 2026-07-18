@@ -208,10 +208,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
 </div>
 
-<!-- Escáner de horario -->
+<!-- Cargar horario del mes -->
 <div class="simp" style="margin-top:18px;">
   <div class="simp-hdr">
-    <h3>📷 Escáner de horario</h3>
+    <h3>✏️ Cargar horario del mes</h3>
     <div class="simp-mes">
       <span>Mes:</span>
       <select id="impMes"></select>
@@ -219,26 +219,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </div>
   </div>
   <div class="simp-body">
-    <!-- Nombre -->
-    <div style="margin-bottom:16px;">
-      <label style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;">Tu nombre exacto en el horario</label>
-      <input type="text" id="nombreEmpleado" placeholder="Ej: EDDEILIS" oninput="guardarNombre()"
-        style="width:100%;background:rgba(255,255,255,.06);border:1px solid var(--oro);border-radius:8px;
-        color:var(--oro2);font-size:15px;font-weight:800;padding:9px 12px;font-family:inherit;letter-spacing:1px;"/>
-    </div>
-    <!-- Zona de foto -->
-    <div class="drop-zone" id="dzImg" onclick="document.getElementById('imgInput').click()">
-      <input type="file" id="imgInput" accept="image/*" onchange="escanearHorario(this)"/>
-      <div class="dz-ic">📷</div>
-      <div class="dz-t">
-        <b>Toca aquí para subir la foto del horario del mes</b><br>
-        El sistema lee la imagen automáticamente — sin clave, sin coste extra
-      </div>
-    </div>
-    <div class="ai-status" id="aiStatus"></div>
 
     <!-- Patrón semanal visual -->
-    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--linea);">
+    <div>
       <div style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;margin-bottom:8px;text-transform:uppercase;">⚡ Patrón semanal — toca cada día y elige turno</div>
       <div id="patronWidget" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px;"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -246,26 +229,24 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <button class="btn-s" onclick="limpiarPatron()">↺ Limpiar</button>
       </div>
       <div style="margin-top:8px;font-size:10px;color:var(--txt2);line-height:1.6;">
-        Asigna un turno a cada día de la semana → rellena <em>todos</em> los días de ese tipo en el mes elegido.<br>
-        También puedes escribir: <code style="color:var(--oro2)">Lunes tarde, Martes noche, Miércoles libre</code>
+        Asigna un turno a cada día de la semana → rellena todos los días de ese tipo en el mes elegido.
       </div>
     </div>
 
-    <!-- Alternativa manual -->
-    <details style="margin-top:16px;">
-      <summary style="font-size:10px;color:var(--txt2);letter-spacing:1px;cursor:pointer;text-transform:uppercase;padding:6px 0;user-select:none;">▸ Escribir el horario a mano</summary>
-      <div style="margin-top:10px;">
-        <div style="font-size:10px;color:var(--txt2);margin-bottom:6px;line-height:1.7;">
-          Un día por línea: <code style="color:var(--oro2)">1 tarde</code> · <code style="color:var(--oro2)">2 noche</code> · <code style="color:var(--oro2)">3 libre</code>
-        </div>
-        <textarea id="impTxt" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--linea);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12px;padding:10px;resize:vertical;min-height:70px;" placeholder="1 tarde&#10;2 tarde&#10;3 noche&#10;4 libre..."></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-          <button class="btn-g" onclick="parsearTexto()">✅ Cargar</button>
-          <button class="btn-s" onclick="exportarTexto()">📋 Ver todo</button>
-          <button class="btn-s" onclick="borrarTodo()">🗑️ Borrar todo</button>
-        </div>
+    <!-- Entrada de texto -->
+    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--linea);">
+      <div style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;margin-bottom:6px;text-transform:uppercase;">✍️ O escribe el horario a mano</div>
+      <div style="font-size:10px;color:var(--txt2);margin-bottom:8px;line-height:1.8;">
+        Por nombre de día: <code style="color:var(--oro2)">Lunes tarde, Martes libre, Miércoles noche</code><br>
+        Por número: <code style="color:var(--oro2)">1 tarde</code> · <code style="color:var(--oro2)">2 noche</code> · <code style="color:var(--oro2)">3 libre</code>
       </div>
-    </details>
+      <textarea id="impTxt" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--linea);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12px;padding:10px;resize:vertical;min-height:70px;" placeholder="Lunes tarde&#10;Martes noche&#10;Miércoles libre&#10;— o —&#10;1 tarde&#10;2 noche&#10;3 libre..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <button class="btn-g" onclick="parsearTexto()">✅ Cargar</button>
+        <button class="btn-s" onclick="exportarTexto()">📋 Ver todo</button>
+        <button class="btn-s" onclick="borrarTodo()">🗑️ Borrar todo</button>
+      </div>
+    </div>
 
     <!-- Preview -->
     <div class="prev-wrap" id="prevWrap" style="display:none;">
@@ -439,14 +420,6 @@ function initImpSelects(){
   }
 }
 
-function guardarNombre(){
-  const v=document.getElementById('nombreEmpleado').value.trim().toUpperCase();
-  try{ if(v) localStorage.setItem('fp_nombre_empleado',v); }catch(_){}
-}
-function cargarNombre(){
-  try{ const v=localStorage.getItem('fp_nombre_empleado'); document.getElementById('nombreEmpleado').value=v||''; }catch(_){ document.getElementById('nombreEmpleado').value=''; }
-}
-
 function mapTurno(s){
   if(!s) return null;
   s=s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
@@ -536,74 +509,6 @@ function parsearTexto(){
   mostrarPreview(resultado);
 }
 
-async function escanearHorario(input){
-  const file=input.files[0]; if(!file) return;
-  const nombre=document.getElementById('nombreEmpleado').value.trim().toUpperCase();
-  if(!nombre){ toast('⚠️ Escribe tu nombre antes de escanear', true); input.value=''; return; }
-  const st=document.getElementById('aiStatus');
-  const mes=parseInt(document.getElementById('impMes').value);
-  const ano=parseInt(document.getElementById('impAno').value);
-  const diasMes=new Date(ano,mes+1,0).getDate();
-
-  st.className='ai-status wait'; st.textContent='⏳ Leyendo imagen… (puede tardar 10-20 segundos)';
-
-  try{
-    if(typeof Tesseract==='undefined') throw new Error('Librería de lectura no cargó. Revisa tu conexión y recarga la página.');
-
-    const resultado=await Tesseract.recognize(file,'spa+eng',{
-      logger: m=>{ if(m.status==='recognizing text') st.textContent='⏳ Leyendo… '+Math.round((m.progress||0)*100)+'%'; }
-    });
-
-    const textoCompleto=resultado.data.text;
-    const lineas=textoCompleto.split('\n').map(l=>l.trim()).filter(Boolean);
-
-    const nombreNorm=nombre.replace(/\s+/g,'');
-    let lineaEmpleado=null;
-    for(const l of lineas){
-      const lNorm=l.toUpperCase().replace(/\s+/g,'');
-      if(lNorm.includes(nombreNorm) || nombreNorm.split('').filter(c=>lNorm.includes(c)).length >= Math.min(4,nombreNorm.length)){
-        const codesEnLinea=(l.toUpperCase().match(/[MTNL]/g)||[]).length;
-        if(codesEnLinea>=3){ lineaEmpleado=l; break; }
-      }
-    }
-
-    if(!lineaEmpleado){
-      st.className='ai-status err';
-      st.textContent='⚠️ No encontré "'+nombre+'" en el horario. Prueba con una foto más clara o más cerca de tu fila.';
-      input.value=''; return;
-    }
-
-    const posNombre=lineaEmpleado.toUpperCase().indexOf(nombreNorm.substring(0,4));
-    const despues=posNombre>=0 ? lineaEmpleado.substring(posNombre+nombreNorm.length) : lineaEmpleado;
-    const codigos=(despues.toUpperCase().match(/[MTNL]/g)||[]);
-
-    if(codigos.length<3){
-      st.className='ai-status err';
-      st.textContent='⚠️ Se detectó la fila pero no se leyeron bien los turnos. Intenta con la foto más nítida.';
-      input.value=''; return;
-    }
-
-    const mapaT={M:'manana',T:'tarde',N:'noche',L:'libre',F:'festivo'};
-    const resultado2={};
-    codigos.forEach((c,i)=>{
-      const dia=i+1; if(dia>diasMes) return;
-      const turno=mapaT[c]; if(!turno) return;
-      const f=new Date(ano,mes,dia); if(f.getMonth()===mes) resultado2[k(f)]=turno;
-    });
-
-    if(!Object.keys(resultado2).length){
-      st.className='ai-status err'; st.textContent='⚠️ No se pudieron mapear turnos. Revisa la foto.'; input.value=''; return;
-    }
-
-    const cnt={manana:0,tarde:0,noche:0,libre:0};
-    Object.values(resultado2).forEach(t=>{ if(cnt[t]!==undefined) cnt[t]++; });
-    st.className='ai-status ok';
-    st.textContent='✅ '+nombre+': ☀️ '+cnt.manana+' mañanas · 🌤️ '+cnt.tarde+' tardes · 🌙 '+cnt.noche+' noches · 🟢 '+cnt.libre+' libres';
-    mostrarPreview(resultado2, nombre);
-  }catch(e){ st.className='ai-status err'; st.textContent='❌ '+e.message; }
-  input.value='';
-}
-
 function colorTurno(t,a){
   const c={manana:`rgba(255,149,0,${a})`,tarde:`rgba(74,158,255,${a})`,noche:`rgba(155,89,182,${a})`,libre:`rgba(46,204,113,${a})`,festivo:`rgba(231,76,60,${a})`};
   return c[t]||`rgba(138,144,160,${a})`;
@@ -636,19 +541,6 @@ function aplicarPreview(){
 
 function cancelarPreview(){
   previewDatos=null; document.getElementById('prevWrap').style.display='none';
-}
-
-function initDropZones(){
-  const dz=document.getElementById('dzImg'), inp=document.getElementById('imgInput');
-  if(!dz||!inp) return;
-  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
-  dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
-  dz.addEventListener('drop',e=>{
-    e.preventDefault(); dz.classList.remove('over');
-    const f=e.dataTransfer.files[0]; if(!f) return;
-    try{ const dt=new DataTransfer(); dt.items.add(f); inp.files=dt.files; }catch(_){}
-    escanearHorario(inp);
-  });
 }
 
 /* ── EXPORTAR ── */
@@ -720,8 +612,7 @@ calAno = hoy.getFullYear(); calMes = hoy.getMonth();
 document.getElementById('btnPrev').onclick = ()=>{ calMes--; if(calMes<0){calMes=11;calAno--;} renderCal(); };
 document.getElementById('btnNext').onclick = ()=>{ calMes++; if(calMes>11){calMes=0;calAno++;} renderCal(); };
 renderHero(); renderStrip(); renderCal();
-initImpSelects(); cargarNombre(); initDropZones(); renderPatronWidget();
+initImpSelects(); renderPatronWidget();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </body>
 </html>
