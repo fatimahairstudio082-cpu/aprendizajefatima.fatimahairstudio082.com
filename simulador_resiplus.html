@@ -227,6 +227,38 @@ textarea{resize:vertical;min-height:80px;line-height:1.5;}
 .btn-mob-res{display:none;align-items:center;gap:8px;padding:8px 14px;background:var(--azul-cl);
   border:1px solid var(--azul3);color:var(--azul2);border-radius:8px;font-size:12px;font-weight:700;
   cursor:pointer;font-family:inherit;}
+
+/* ── REPRODUCTOR DE VOZ ── */
+.audio-wrap{background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);border-radius:12px;
+  padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;
+  box-shadow:0 4px 16px rgba(37,99,235,.25);}
+.audio-wrap .aw-ic{font-size:26px;flex-shrink:0;}
+.audio-wrap.playing .aw-ic{animation:aw-pulse 1.4s ease-in-out infinite;}
+@keyframes aw-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:.8}}
+.audio-wrap .aw-info{flex:1;min-width:0;}
+.audio-wrap .aw-title{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.audio-wrap .aw-sub{font-size:10px;color:rgba(255,255,255,.65);margin-top:2px;}
+.aw-btns{display:flex;gap:6px;flex-shrink:0;}
+.aw-btn{padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-size:11px;
+  font-weight:700;font-family:inherit;transition:all .12s;white-space:nowrap;}
+.aw-play{background:#fff;color:var(--azul2);}
+.aw-play:hover{background:#f0f4f8;}
+.aw-stop{background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.2);}
+.aw-stop:hover{background:rgba(255,255,255,.28);}
+
+/* Guía de voz — panel completo */
+.voz-card{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:16px;
+  margin-bottom:10px;display:flex;align-items:center;gap:14px;transition:box-shadow .12s;}
+.voz-card:hover{box-shadow:0 4px 16px rgba(37,99,235,.12);}
+.voz-card-ic{font-size:30px;flex-shrink:0;}
+.voz-card-info{flex:1;}
+.voz-card-tit{font-size:14px;font-weight:700;color:var(--azul);}
+.voz-card-sub{font-size:11px;color:var(--txt2);margin-top:3px;line-height:1.5;}
+.voz-play-btn{background:var(--azul2);color:#fff;border:none;border-radius:9px;padding:9px 16px;
+  font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:filter .12s;}
+.voz-play-btn:hover{filter:brightness(1.1);}
+.voz-play-btn.jugando{background:var(--ambar);}
+.voz-play-btn.pausado{background:#6b7280;}
 </style>
 </head>
 <body>
@@ -250,6 +282,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.5;}
     <div class="sb-title">Residentes</div>
     <div class="res-list" id="resList"></div>
     <div class="sb-divider"></div>
+    <div class="sb-menu-item" onclick="verGuiaVoz()" style="background:rgba(37,99,235,.18);border-left:3px solid var(--azul2);"><span class="smi">🔊</span><span style="color:#93c5fd;font-weight:700;">Guía de voz paso a paso</span></div>
     <div class="sb-menu-item" onclick="verEscenarios()"><span class="smi">🎯</span>Escenarios de práctica</div>
     <div class="sb-menu-item" onclick="verGuia()"><span class="smi">📖</span>Guía de campos R+</div>
     <div class="sb-menu-item" onclick="verHistorial()"><span class="smi">📋</span>Mis registros guardados</div>
@@ -1073,6 +1106,313 @@ function toast2(msg, err){
   el.textContent=msg; el.style.background=err?'#dc2626':'#15803d';
   el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2600);
 }
+
+/* ═══════════════════════════════════════════════════════
+   GUÍA DE VOZ — Web Speech API (sin coste, sin API)
+═══════════════════════════════════════════════════════ */
+const VOCE_GUIAS = {
+  higiene:{
+    ic:'🧼', tit:'Duchas y Aseos',
+    sub:'Cómo registrar el aseo diario, higiene oral, pañal y estado de la piel',
+    txt:`Guía de Higiene y Aseo. Vamos paso a paso.
+
+Paso uno: Tipo de aseo. Antes de entrar a la habitación, mira en la hoja del residente qué tipo de higiene está pautado. Después selecciona: ducha completa, aseo en cama, lavado parcial de cara y manos, o sin aseo. Si el residente rechazó el aseo, selecciona sin aseo y explica el motivo en el campo de observaciones. Por ejemplo: rechazó por agitación, o por dolor al mover el brazo.
+
+Paso dos: Higiene oral. Marca siempre si se realizó o no. La higiene oral es muy importante, especialmente en residentes encamados o con dificultad para tragar, porque previene infecciones pulmonares graves llamadas neumonías aspirativas. Si el residente rechazó o no fue posible hacerla, escríbelo también.
+
+Paso tres: Cambios de absorbente o pañal. Anota el número total de cambios que hiciste en tu turno. Un número muy alto puede indicar una infección urinaria. Uno muy bajo puede indicar que el residente no está bebiendo suficiente agua. Esta información es valiosa para la enfermera.
+
+Paso cuatro: Estado de la piel. Esto es lo más importante. Al hacer cada cambio de pañal y al hacer el aseo, examina siempre las zonas de presión: el sacro, que es el hueso al final de la espalda, los talones, los codos, y las caderas. Si ves cualquier enrojecimiento, aunque sea pequeño y aunque la piel esté intacta, márcalo en el apartado de estado de la piel. Si ese enrojecimiento no blanquea al presionar con el dedo, puede ser el inicio de una úlcera por presión de grado uno, y debes comunicarlo a la enfermera ese mismo turno. No esperes al día siguiente.
+
+Paso cinco: Observaciones. Escribe siempre algo en el campo de observaciones aunque sea breve. Por ejemplo: el residente colaboró bien, o se mostró más rígido de lo habitual, o la piel estaba muy seca en las piernas y se aplicó crema hidratante.
+
+Recuerda: un buen registro de higiene protege al residente y te protege a ti.`
+  },
+  sabanas:{
+    ic:'🛏️', tit:'Cambio de Sábanas y Ropa de Cama',
+    sub:'Cuándo y cómo registrar el cambio de ropa de cama',
+    txt:`Guía para el cambio de sábanas y ropa de cama.
+
+El cambio de ropa de cama se registra en la sección de Higiene, en el apartado de Cuidados adicionales. Simplemente marca la casilla que dice cambio de ropa.
+
+En el campo de observaciones de higiene, puedes anotar si fue necesario cambiar las sábanas durante el turno y el motivo: por orina, por sudoración, por vómitos o por otra causa.
+
+Para residentes encamados, el cambio de sábanas siempre va unido a la movilización y al cambio postural. Aprovecha ese momento para revisar la piel en todas las zonas de presión: el sacro, los talones, las caderas, los codos y los omóplatos.
+
+Si el residente tiene una úlcera por presión, anota en observaciones el estado de la lesión en cada cambio: si está limpia, si tiene secreción, si huele mal, si ha crecido o si ha mejorado. Cualquier cambio en una herida debe comunicarse a la enfermera.
+
+En residentes con incontinencia, cambia las sábanas siempre que estén húmedas, aunque no haya pasado mucho tiempo desde el último cambio. Dejar la piel en contacto con la humedad favorece las úlceras y las irritaciones.
+
+Cuando cambies la cama de un residente encamado, hazlo siempre entre dos personas si es posible. Es más seguro para el residente y para ti.`
+  },
+  caidas:{
+    ic:'🤕', tit:'Caídas — Cómo Actuar y Registrar',
+    sub:'Pasos exactos antes, durante y después de una caída',
+    txt:`Guía de caídas. Esto es muy importante y debes aprenderlo bien.
+
+Cuando encuentres a un residente en el suelo o presencies una caída, sigue estos pasos en orden.
+
+Lo primero es mantener la calma. Habla al residente con voz tranquila: di su nombre, dile que estás ahí. No lo muevas todavía.
+
+Segundo: llama a la enfermera de inmediato. No intentes levantarlo tú sola hasta que la enfermera lo valore, especialmente si el residente refiere dolor en la cadera, la espalda o el cuello, o si se ha golpeado la cabeza.
+
+Tercero: mientras esperas, observa y anota mentalmente: la hora exacta, si presenciaste la caída o la encontraste en el suelo, en qué posición estaba, si está consciente y orientado, si refiere dolor y dónde exactamente, si hay heridas visibles, hematomas o deformidades en alguna extremidad.
+
+Una vez que la enfermera ha valorado al residente, ve a la sección de Incidencias en Resiplus.
+
+Selecciona sí, ha habido incidencia. Elige el tipo: caída sin lesiones aparentes, o caída con lesión.
+
+En la hora, escribe la hora en que ocurrió, no la hora en que lo estás registrando.
+
+En la descripción, sé muy precisa. Escribe: si presenciaste la caída o lo encontraste ya en el suelo. La posición en que estaba. Si estaba consciente y orientado. Si refería dolor, dónde. Si había heridas, hematomas o deformidad visible. Escribe los hechos, no suposiciones.
+
+En medidas tomadas, escribe todo lo que hiciste: llamé a la enfermera de turno, tomé las constantes vitales, dejé al residente en reposo en la cama, apliqué frío en la zona dolorosa si lo indicó la enfermera, rellené el parte de caídas del centro.
+
+Marca a quién comunicaste la caída. Siempre mínimo la enfermera. Si hay lesión, también el médico y la familia.
+
+Un golpe en la cabeza siempre hay que reportarlo aunque parezca sin importancia. Puede causar un hematoma interno que no se ve por fuera.`
+  },
+  incidencias:{
+    ic:'⚠️', tit:'Incidencias — Cualquier Tipo',
+    sub:'Qué es una incidencia y cómo documentarla correctamente',
+    txt:`Guía de incidencias. Este apartado es fundamental para tu trabajo diario.
+
+Una incidencia es cualquier situación que se salga de la rutina normal del residente. Si algo te llama la atención, si algo está diferente de lo habitual, si algo te preocupa, eso es una incidencia y debe registrarse.
+
+Los tipos más frecuentes son: caídas, agitación o conducta disruptiva, dificultad respiratoria, fiebre, dolor intenso que el residente refiere, negativa a cuidados como el aseo o la alimentación, cambios bruscos de comportamiento, y vómitos o náuseas.
+
+Para registrar una incidencia, ve a la sección Incidencias. Selecciona sí, ha habido una incidencia. Elige el tipo que mejor describe lo que ocurrió.
+
+Anota la hora exacta. Si ocurrió a las tres y cuarto, escribe las tres y cuarto, no las tres.
+
+La descripción es la parte más importante. Aquí debes ser objetiva y precisa. Escribe lo que viste con tus propios ojos: qué estaba haciendo el residente, qué dijo, cómo era su aspecto, qué síntomas presentaba. No escribas lo que crees que pasó ni lo que supondría que pasó. Solo describe los hechos.
+
+Ejemplos correctos: el residente estaba sentado en la silla y de repente empezó a gritar y a agitar los brazos. O: al entrar a la habitación el residente refería dolor fuerte en el pecho y se veía pálido y sudoroso.
+
+En medidas tomadas, escribe cada cosa que hiciste: qué le dijiste al residente, a quién llamaste, qué posición le pusiste, si tomaste sus constantes.
+
+Marca siempre a quién comunicaste la incidencia. En caso de duda, comunica siempre. Es mucho mejor comunicar algo de más que quedarte callada ante una situación que podría complicarse.
+
+Recuerda: una incidencia bien documentada te protege a ti como trabajadora y garantiza que el turno siguiente sepa qué pasó.`
+  },
+  medicacion:{
+    ic:'💊', tit:'Negativa a Tomar Medicación',
+    sub:'Qué hacer y cómo registrar cuando un residente rechaza las pastillas',
+    txt:`Guía de medicación. Cómo actuar cuando un residente rechaza tomar sus medicamentos.
+
+Lo primero y más importante: nunca fuerces la medicación. Un residente tiene derecho a rechazar cualquier tratamiento. Forzarlo podría ser considerado una agresión y es contrario a su dignidad.
+
+Cuando un residente se niega a tomar su medicación, sigue estos pasos.
+
+Primero: intenta entender por qué. Pregúntale con calma. A veces el motivo es sencillo: las pastillas le caen mal al estómago, no le gusta tragarlas, o simplemente ese día no quiere. Escucha su respuesta.
+
+Segundo: si sigue negándose, no insistas más. Respeta su decisión.
+
+Tercero: comunícalo inmediatamente a la enfermera. Es ella quien decidirá si se puede dar la medicación de otra forma, si se puede triturar, si se puede aplazar la toma, o si hay que notificar al médico. Tú no tomes esa decisión sola.
+
+Cuarto: ve a la sección Incidencias en Resiplus. Selecciona sí, ha habido incidencia. Elige el tipo: negativa a tomar medicación.
+
+Anota la hora exacta.
+
+En la descripción, escribe el nombre del medicamento o medicamentos que rechazó. Si el residente dijo algo, cita sus palabras: dijo que le ponía malo el estómago, o dijo que no quería más pastillas. Si escupió la pastilla después de que se la dabas, eso también cuenta como no administrada. Escríbelo.
+
+En medidas tomadas, escribe: comuniqué la situación a la enfermera de turno, quien valorará la pauta.
+
+En el parte de medicación del centro, deja constancia de que ese medicamento no se administró ese turno y el motivo.
+
+Si el residente rechaza la medicación de forma repetida, varios días seguidos, es importante documentarlo cada vez porque el médico necesita saberlo para ajustar el tratamiento.`
+  },
+  alim:{
+    ic:'🍽️', tit:'Alimentación y Disfagia',
+    sub:'Registrar la ingesta, detectar dificultad para tragar y cuándo alertar',
+    txt:`Guía de alimentación. Presta mucha atención porque esto es muy importante.
+
+Antes de cada comida, comprueba siempre el tipo de dieta que tiene prescrito el residente. Es imprescindible hacerlo. En residentes con disfagia, que son los que tienen dificultad para tragar, la dieta triturada con espesante es obligatoria. Darle líquidos sin espesante o comida sin triturar a un residente con disfagia puede provocar que el alimento pase a los pulmones en lugar del estómago, causando una neumonía aspirativa, que puede ser mortal.
+
+Señales de disfagia que debes conocer: el residente tose durante o justo después de comer o beber, tiene voz húmeda o gorgoteante después de tragar, hace muchos esfuerzos para tragar, se le queda comida en la boca, babea más de lo habitual, o tarda mucho tiempo en comer. Si observas alguna de estas señales, comunícalo a la enfermera.
+
+Para registrar la alimentación en Resiplus, indica para cada comida el porcentaje aproximado que tomó: cero por ciento si no comió absolutamente nada. Veinticinco por ciento si tomó muy poco, dos o tres cucharadas o un sorbo. Cincuenta por ciento si comió aproximadamente la mitad. Setenta y cinco por ciento si comió casi todo. Cien por ciento si terminó el plato.
+
+La hidratación es igual de importante que la comida. Los mayores tienen muy disminuida la sensación de sed y pueden deshidratarse sin darte cuenta. Si ves que el residente bebe muy poco, ofécele agua o infusiones regularmente durante el turno, en pequeñas cantidades y con frecuencia, y anótalo en las observaciones.
+
+En observaciones escribe siempre lo que observaste: si le costó tragar, si rechazó algún alimento concreto, si pidió más de algo, si tosió durante la comida.
+
+Una señal de alarma importante: si un residente come menos del cincuenta por ciento durante dos o más días seguidos, comunícalo a la enfermera. La desnutrición en personas mayores empeora cualquier enfermedad y ralentiza la recuperación.`
+  },
+  constantes:{
+    ic:'💓', tit:'Constantes Vitales',
+    sub:'Tensión, pulso, temperatura, saturación — cómo tomarlas y cuándo avisar',
+    txt:`Guía de constantes vitales. Aprende a tomarlas correctamente y a interpretar los valores.
+
+Lo primero y siempre: anota la hora exacta de la toma. Los valores cambian a lo largo del día, y la hora es información clínica muy importante.
+
+Tensión arterial. Para tomarla correctamente, el residente debe estar sentado y tranquilo durante al menos cinco minutos, con el brazo apoyado y a la altura del corazón. No tomes la tensión si acaba de comer, de moverse o de tener una discusión. Eso da valores incorrectos. El primer número que ves es la tensión sistólica, el número de arriba. El segundo es la diastólica, el número de abajo. En personas mayores, hasta 140 de sistólica es normal. Por encima de 160, avisa a la enfermera. Si está por debajo de 90 de sistólica, también avisa inmediatamente: puede ser una bajada de tensión peligrosa.
+
+Frecuencia cardíaca o pulso. Lo puedes tomar en la muñeca con los dedos índice y corazón, durante 30 segundos y multiplicando por dos. O directamente con el pulsioxímetro. Lo normal es entre 60 y 100 pulsaciones por minuto. Por debajo de 50 o por encima de 120, comunícalo siempre. Fíjate también en el ritmo: si el pulso va a golpes irregulares, anótalo aunque el número sea normal.
+
+Temperatura. La más habitual en residencias es la axilar. Pon el termómetro en la axila bien seca y espera el tiempo que indique el aparato. Lo normal axilar es entre 36 y 37 grados. De 37 con 1 a 37 con 9 es febrícula: el residente tiene algo de calor pero no llega a fiebre. Desde 38 grados en adelante es fiebre: avisa siempre a la enfermera aunque el residente parezca estar bien, porque en personas mayores la fiebre puede descompensarse rápidamente.
+
+Saturación de oxígeno. Usa el pulsioxímetro. Ponlo en el dedo índice con la uña limpia y sin esmalte. Espera 30 segundos a que se estabilice. El valor normal es 95 por ciento o más. Si baja de 92 por ciento, es urgente: avisa enseguida. En residentes con enfermedad pulmonar crónica como el EPOC, el valor habitual puede ser algo más bajo. Mira lo que tienen anotado en su ficha para saber cuál es su valor basal normal.
+
+Si no puedes tomar alguna constante porque el residente no colabora, escríbelo en observaciones. No dejes el campo en blanco sin explicación: eso puede confundir al personal siguiente.`
+  },
+  upp:{
+    ic:'🩹', tit:'Úlceras por Presión (UPP)',
+    sub:'Cómo detectar, clasificar y registrar las UPP en el sacro, talones y caderas',
+    txt:`Guía de úlceras por presión. Este es uno de los registros más importantes de la residencia.
+
+Una úlcera por presión es una herida en la piel causada por la presión continua sobre una zona del cuerpo. Se forman cuando el residente está mucho tiempo en la misma posición sin moverse.
+
+Las zonas que debes revisar en cada turno son: el sacro, que es el hueso al final de la espalda, los talones, las caderas, los codos, los omóplatos y las orejas en los encamados.
+
+Las úlceras tienen cuatro grados. Grado uno: la piel está enrojecida pero intacta. El enrojecimiento no blanquea al presionar con el dedo. Es la fase inicial y si se actúa a tiempo se puede curar completamente. Grado dos: hay pérdida superficial de la piel, como una ampolla o una erosión. Grado tres: la herida es más profunda y llega hasta el tejido graso debajo de la piel. Grado cuatro: la herida es muy profunda y puede llegar al músculo o al hueso.
+
+Cómo registrarlo en Resiplus: ve a la sección de Higiene. En estado de la piel, marca la casilla de úlcera por presión. Aparecerá un campo de texto donde debes describir: la localización exacta, por ejemplo sacro o talón derecho. El grado de la úlcera si lo conoces. El tamaño aproximado en centímetros. El aspecto del lecho de la herida: si está limpia, si hay tejido negro que es tejido muerto, si hay exudado y cuánto, si huele.
+
+Cualquier cambio en una úlcera existente debe comunicarse a la enfermera ese mismo turno: si ha crecido, si ha aparecido exudado, si hay mal olor, si se ve tejido negro nuevo.
+
+Si encuentras un enrojecimiento nuevo que no estaba ayer, comunícalo inmediatamente. Una úlcera en grado uno se puede curar en pocos días con los cuidados correctos. Una úlcera en grado cuatro puede tardar meses o años. La prevención es tu herramienta más importante.`
+  },
+};
+
+/* ─── Estado del audio ─── */
+let _habla = null;
+let _hablaId = null;
+
+function _getVoicesES(){
+  const vs = window.speechSynthesis.getVoices();
+  return vs.find(v=>v.lang==='es-ES'&&/female|mujer|elena|mónica|lucia|paulina/i.test(v.name)) ||
+         vs.find(v=>v.lang==='es-ES') ||
+         vs.find(v=>v.lang.startsWith('es')) || null;
+}
+
+function hablarTexto(id, titulo, texto){
+  if(!('speechSynthesis' in window)){
+    alert('Tu navegador no soporta lectura de voz. Prueba con Chrome, Edge o Safari.'); return;
+  }
+  stopAudio();
+  _hablaId = id;
+  _habla = new SpeechSynthesisUtterance(texto);
+  _habla.lang = 'es-ES';
+  _habla.rate = 0.88;
+  _habla.pitch = 1.05;
+  const v = _getVoicesES();
+  if(v) _habla.voice = v;
+
+  _habla.onstart = ()=>{ _updateAudioUI(id,'playing'); };
+  _habla.onend   = ()=>{ _updateAudioUI(id,'stopped'); _hablaId=null; };
+  _habla.onerror = ()=>{ _updateAudioUI(id,'stopped'); _hablaId=null; };
+  window.speechSynthesis.speak(_habla);
+}
+
+function toggleAudio(id){
+  if(!_hablaId){ hablarTexto(id, VOCE_GUIAS[id].tit, VOCE_GUIAS[id].txt); return; }
+  if(window.speechSynthesis.paused){
+    window.speechSynthesis.resume();
+    _updateAudioUI(id,'playing');
+  } else {
+    window.speechSynthesis.pause();
+    _updateAudioUI(id,'paused');
+  }
+}
+
+function stopAudio(){
+  window.speechSynthesis.cancel();
+  if(_hablaId) _updateAudioUI(_hablaId,'stopped');
+  _hablaId = null; _habla = null;
+}
+
+function _updateAudioUI(id, estado){
+  const wrap = document.getElementById('aw-'+id);
+  const btn  = document.getElementById('awBtn-'+id);
+  const sub  = document.getElementById('awSub-'+id);
+  if(!wrap) return;
+  wrap.className = 'audio-wrap ' + (estado==='playing'?'playing':estado==='paused'?'':'');
+  if(estado==='playing'){
+    if(btn){ btn.textContent='⏸ Pausar'; btn.className='aw-btn aw-play'; }
+    if(sub) sub.textContent='Reproduciendo... escucha con atención 🎧';
+  } else if(estado==='paused'){
+    if(btn){ btn.textContent='▶ Reanudar'; }
+    if(sub) sub.textContent='En pausa — pulsa Reanudar para continuar';
+  } else {
+    if(btn){ btn.textContent='🔊 Escuchar'; btn.className='aw-btn aw-play'; }
+    if(sub) sub.textContent = VOCE_GUIAS[id] ? VOCE_GUIAS[id].sub : 'Pulsa para escuchar';
+  }
+  // Actualizar también el botón del panel de guía de voz si está visible
+  const panelBtn = document.getElementById('vpBtn-'+id);
+  if(panelBtn){
+    if(estado==='playing'){ panelBtn.textContent='⏸ Pausar'; panelBtn.className='voz-play-btn jugando'; }
+    else if(estado==='paused'){ panelBtn.textContent='▶ Reanudar'; panelBtn.className='voz-play-btn pausado'; }
+    else { panelBtn.textContent='🔊 Escuchar'; panelBtn.className='voz-play-btn'; }
+  }
+}
+
+function audioBtnHtml(secId){
+  const g = VOCE_GUIAS[secId]; if(!g) return '';
+  return `<div class="audio-wrap" id="aw-${secId}">
+    <div class="aw-ic">🔊</div>
+    <div class="aw-info">
+      <div class="aw-title">Guía de voz: ${g.tit}</div>
+      <div class="aw-sub" id="awSub-${secId}">${g.sub}</div>
+    </div>
+    <div class="aw-btns">
+      <button class="aw-btn aw-play" id="awBtn-${secId}" onclick="toggleAudio('${secId}')">🔊 Escuchar</button>
+      <button class="aw-btn aw-stop" onclick="stopAudio()">⏹</button>
+    </div>
+  </div>`;
+}
+
+/* ─── Panel Guía de Voz ─── */
+function verGuiaVoz(){
+  stopAudio();
+  const main = document.getElementById('mainPanel');
+  resActivo = null; renderSidebar();
+  const orden = ['higiene','sabanas','caidas','incidencias','medicacion','alim','constantes','upp'];
+  main.innerHTML = `
+  <div style="padding:20px;overflow-y:auto;flex:1;">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
+      <div style="font-size:36px">🔊</div>
+      <div>
+        <div style="font-size:17px;font-weight:800;color:var(--azul);">Guía de Voz Paso a Paso</div>
+        <div style="font-size:12px;color:var(--txt2);margin-top:2px;">Pulsa Escuchar en cualquier tema para oír la explicación en voz alta</div>
+      </div>
+    </div>
+    <div style="background:var(--azul-cl);border:1px solid var(--azul3);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--azul2);line-height:1.6;">
+      📱 Funciona en Chrome, Edge y Safari · Puedes pausar y reanudar cuando quieras · Ideal para escuchar mientras practicas
+    </div>
+    ${orden.map(id=>{ const g=VOCE_GUIAS[id]; if(!g) return ''; return `
+    <div class="voz-card">
+      <div class="voz-card-ic">${g.ic}</div>
+      <div class="voz-card-info">
+        <div class="voz-card-tit">${g.tit}</div>
+        <div class="voz-card-sub">${g.sub}</div>
+      </div>
+      <button class="voz-play-btn" id="vpBtn-${id}"
+        onclick="(_hablaId==='${id}')?toggleAudio('${id}'):hablarTexto('${id}',VOCE_GUIAS['${id}'].tit,VOCE_GUIAS['${id}'].txt)">
+        🔊 Escuchar
+      </button>
+    </div>`;}).join('')}
+    <div style="margin-top:20px;background:#f9fafb;border:1px solid var(--borde2);border-radius:10px;padding:14px;font-size:11px;color:var(--txt2);line-height:1.8;">
+      <strong style="color:var(--txt3);">💡 Consejo de uso:</strong> Escucha una guía completa, luego selecciona un residente y practica ese mismo apartado. Así conectas la teoría con la práctica de forma inmediata.
+    </div>
+  </div>`;
+  // Cargar voces si aún no están (Chrome las carga de forma asíncrona)
+  if(window.speechSynthesis) window.speechSynthesis.getVoices();
+}
+
+/* Asegurarse de que las secciones incluyen el botón de voz */
+const _secHigiene = secHigiene;
+secHigiene = function(sec){ _secHigiene(sec); if(sec.firstChild) sec.insertAdjacentHTML('afterbegin', audioBtnHtml('higiene')); };
+const _secAlim = secAlim;
+secAlim = function(sec){ _secAlim(sec); if(sec.firstChild) sec.insertAdjacentHTML('afterbegin', audioBtnHtml('alim')); };
+const _secConst = secConst;
+secConst = function(sec){ _secConst(sec); if(sec.firstChild) sec.insertAdjacentHTML('afterbegin', audioBtnHtml('constantes')); };
+const _secIncid = secIncid;
+secIncid = function(sec){ _secIncid(sec); if(sec.firstChild) sec.insertAdjacentHTML('afterbegin', audioBtnHtml('incidencias')); };
+/* Diario: no tiene guía de voz específica, se usa sin audio button */
+
+// Cargar voces del navegador al arrancar
+if(window.speechSynthesis){ window.speechSynthesis.onvoiceschanged = ()=>{}; window.speechSynthesis.getVoices(); }
 
 /* ═══════════════════════════════════════════════════════
    INIT
