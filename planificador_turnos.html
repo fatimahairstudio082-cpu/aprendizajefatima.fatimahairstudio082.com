@@ -229,20 +229,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </div>
   </div>
   <div class="simp-body">
-    <!-- Nombre + Clave -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-      <div>
-        <label style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;">Tu nombre en el horario</label>
-        <input type="text" id="nombreEmpleado" placeholder="Ej: EDDEILIS" oninput="guardarNombre()"
-          style="width:100%;background:rgba(255,255,255,.06);border:1px solid var(--oro);border-radius:8px;
-          color:var(--oro2);font-size:15px;font-weight:800;padding:9px 12px;font-family:inherit;letter-spacing:1px;"/>
-      </div>
-      <div>
-        <label style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;">Clave Claude (una sola vez)</label>
-        <input type="password" id="claudeKey" placeholder="sk-ant-…" oninput="guardarClave()" autocomplete="off"
-          style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--linea);border-radius:8px;
-          color:var(--txt);font-family:monospace;font-size:11px;padding:9px 12px;"/>
-      </div>
+    <!-- Nombre -->
+    <div style="margin-bottom:16px;">
+      <label style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;">Tu nombre exacto en el horario</label>
+      <input type="text" id="nombreEmpleado" placeholder="Ej: EDDEILIS" oninput="guardarNombre()"
+        style="width:100%;background:rgba(255,255,255,.06);border:1px solid var(--oro);border-radius:8px;
+        color:var(--oro2);font-size:15px;font-weight:800;padding:9px 12px;font-family:inherit;letter-spacing:1px;"/>
     </div>
     <!-- Zona de foto -->
     <div class="drop-zone" id="dzImg" onclick="document.getElementById('imgInput').click()">
@@ -250,7 +242,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <div class="dz-ic">📷</div>
       <div class="dz-t">
         <b>Toca aquí para subir la foto del horario del mes</b><br>
-        La IA busca tu nombre y extrae todos tus turnos automáticamente
+        El sistema lee la imagen automáticamente y detecta tus turnos — sin clave, sin internet extra
       </div>
     </div>
     <div class="ai-status" id="aiStatus"></div>
@@ -446,13 +438,6 @@ function cargarNombre(){
   try{ const v=localStorage.getItem('fp_nombre_empleado'); document.getElementById('nombreEmpleado').value=v||'EDDEILIS'; }catch(_){ document.getElementById('nombreEmpleado').value='EDDEILIS'; }
 }
 
-function guardarClave(){
-  const v=document.getElementById('claudeKey').value.trim();
-  try{ if(v) localStorage.setItem('fp_claude_key',v); else localStorage.removeItem('fp_claude_key'); }catch(_){}
-}
-function cargarClave(){
-  try{ const v=localStorage.getItem('fp_claude_key'); if(v) document.getElementById('claudeKey').value=v; }catch(_){}
-}
 
 function mapTurno(s){
   if(!s) return null;
@@ -521,67 +506,74 @@ function parsearTexto(){
 async function escanearHorario(input){
   const file=input.files[0]; if(!file) return;
   const nombre=(document.getElementById('nombreEmpleado').value.trim()||'EDDEILIS').toUpperCase();
-  const clave=document.getElementById('claudeKey').value.trim();
-  if(!clave){ toast('❌ Pega tu clave de Claude (sk-ant-…) primero',true); return; }
   const st=document.getElementById('aiStatus');
-  st.className='ai-status wait'; st.textContent='⏳ Buscando '+nombre+' en el horario…';
   const mes=parseInt(document.getElementById('impMes').value);
   const ano=parseInt(document.getElementById('impAno').value);
   const diasMes=new Date(ano,mes+1,0).getDate();
-  try{
-    const b64=await fileToBase64(file);
-    const payload={
-      model:'claude-haiku-4-5-20251001',max_tokens:900,
-      messages:[{role:'user',content:[
-        {type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:b64}},
-        {type:'text',text:
-`Esta imagen es una tabla de horario laboral mensual para ${MESES[mes].charAt(0).toUpperCase()+MESES[mes].slice(1)} ${ano}.
-La tabla tiene nombres de empleados en la primera columna y los días del mes (1 al ${diasMes}) en las columnas siguientes.
-Cada celda contiene una letra de turno:
-- M = turno de mañana (manana)
-- T = turno de tarde (tarde)
-- N = turno de noche (noche)
-- L o celda vacía o celda roja (domingos) = libre
 
-TAREA: Encuentra la fila del empleado llamado exactamente "${nombre}" y extrae su turno para cada día del 1 al ${diasMes}.
-Responde ÚNICAMENTE en formato CSV, sin texto adicional, sin cabeceras:
-día,turno
-Usa SOLO estos valores: manana, tarde, noche, libre
-Incluye todos los días del 1 al ${diasMes}, uno por línea.`
-        }
-      ]}]
-    };
-    const resp=await fetch('/.netlify/functions/aiproxy',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+clave,'x-ai-url':'https://api.anthropic.com/v1/messages'},
-      body:JSON.stringify(payload)
+  st.className='ai-status wait'; st.textContent='⏳ Leyendo imagen… (puede tardar 10-20 segundos)';
+
+  try{
+    if(typeof Tesseract==='undefined') throw new Error('Librería de lectura no cargó. Revisa tu conexión y recarga la página.');
+
+    const resultado=await Tesseract.recognize(file,'spa+eng',{
+      logger: m=>{ if(m.status==='recognizing text') st.textContent='⏳ Leyendo… '+Math.round((m.progress||0)*100)+'%'; }
     });
-    if(!resp.ok) throw new Error('HTTP '+resp.status+': '+(await resp.text()).substring(0,200));
-    const json=await resp.json();
-    const text=json.content?.[0]?.text||'';
-    const resultado={};
-    text.split('\n').forEach(l=>{
-      const parts=l.trim().split(',');
-      if(parts.length<2) return;
-      const d=parseInt(parts[0]),turno=mapTurno(parts[1].trim());
-      if(d>=1&&d<=31&&turno){ const f=new Date(ano,mes,d); if(f.getMonth()===mes) resultado[k(f)]=turno; }
-    });
-    if(!Object.keys(resultado).length){
-      st.className='ai-status err';
-      st.textContent='⚠️ No encontré a '+nombre+' en el horario. Comprueba que el nombre esté escrito igual que en la tabla.';
-      return;
+
+    const textoCompleto=resultado.data.text;
+    const lineas=textoCompleto.split('\n').map(l=>l.trim()).filter(Boolean);
+
+    // Buscar la fila del empleado (coincidencia parcial tolerante a OCR)
+    const nombreNorm=nombre.replace(/\s+/g,'');
+    let lineaEmpleado=null;
+    for(const l of lineas){
+      const lNorm=l.toUpperCase().replace(/\s+/g,'');
+      // Coincidencia directa o al menos 4 caracteres del nombre presentes en orden
+      if(lNorm.includes(nombreNorm) || nombreNorm.split('').filter(c=>lNorm.includes(c)).length >= Math.min(4,nombreNorm.length)){
+        // Verificar que la línea contiene códigos de turno (M/T/N/L)
+        const codesEnLinea=(l.toUpperCase().match(/[MTNL]/g)||[]).length;
+        if(codesEnLinea>=3){ lineaEmpleado=l; break; }
+      }
     }
+
+    if(!lineaEmpleado){
+      st.className='ai-status err';
+      st.textContent='⚠️ No encontré "'+nombre+'" en el horario. Prueba con una foto más clara o más cerca de tu fila.';
+      input.value=''; return;
+    }
+
+    // Extraer solo la parte después del nombre para no confundir letras del nombre con turnos
+    const posNombre=lineaEmpleado.toUpperCase().indexOf(nombreNorm.substring(0,4));
+    const despues=posNombre>=0 ? lineaEmpleado.substring(posNombre+nombreNorm.length) : lineaEmpleado;
+
+    // Extraer códigos de turno en orden
+    const codigos=(despues.toUpperCase().match(/[MTNL]/g)||[]);
+
+    if(codigos.length<3){
+      st.className='ai-status err';
+      st.textContent='⚠️ Se detectó la fila pero no se leyeron bien los turnos. Intenta con la foto más nítida.';
+      input.value=''; return;
+    }
+
+    const mapaT={M:'manana',T:'tarde',N:'noche',L:'libre'};
+    const resultado2={};
+    codigos.forEach((c,i)=>{
+      const dia=i+1; if(dia>diasMes) return;
+      const turno=mapaT[c]; if(!turno) return;
+      const f=new Date(ano,mes,dia); if(f.getMonth()===mes) resultado2[k(f)]=turno;
+    });
+
+    if(!Object.keys(resultado2).length){
+      st.className='ai-status err'; st.textContent='⚠️ No se pudieron mapear turnos. Revisa la foto.'; input.value=''; return;
+    }
+
     const cnt={manana:0,tarde:0,noche:0,libre:0};
-    Object.values(resultado).forEach(t=>{ if(cnt[t]!==undefined) cnt[t]++; });
+    Object.values(resultado2).forEach(t=>{ if(cnt[t]!==undefined) cnt[t]++; });
     st.className='ai-status ok';
     st.textContent='✅ '+nombre+': ☀️ '+cnt.manana+' mañanas · 🌤️ '+cnt.tarde+' tardes · 🌙 '+cnt.noche+' noches · 🟢 '+cnt.libre+' libres';
-    mostrarPreview(resultado, nombre);
-  }catch(e){ st.className='ai-status err'; st.textContent='❌ Error: '+e.message; }
+    mostrarPreview(resultado2, nombre);
+  }catch(e){ st.className='ai-status err'; st.textContent='❌ '+e.message; }
   input.value='';
-}
-
-function fileToBase64(file){
-  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
 }
 
 function colorTurno(t,a){
@@ -659,7 +651,8 @@ calAno = hoy.getFullYear(); calMes = hoy.getMonth();
 document.getElementById('btnPrev').onclick = ()=>{ calMes--; if(calMes<0){calMes=11;calAno--;} renderCal(); };
 document.getElementById('btnNext').onclick = ()=>{ calMes++; if(calMes>11){calMes=0;calAno++;} renderCal(); };
 renderHero(); renderStrip(); renderCal();
-initImpSelects(); cargarClave(); cargarNombre(); initDropZones();
+initImpSelects(); cargarNombre(); initDropZones();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </body>
 </html>
