@@ -218,65 +218,65 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
 </div>
 
-<!-- Importar horario inteligente -->
+<!-- Escáner de horario -->
 <div class="simp" style="margin-top:18px;">
   <div class="simp-hdr">
-    <h3>🧠 Importar horario inteligente</h3>
+    <h3>📷 Escáner de horario</h3>
     <div class="simp-mes">
       <span>Mes:</span>
       <select id="impMes"></select>
       <select id="impAno"></select>
     </div>
   </div>
-  <div class="simp-tabs">
-    <div class="stab act" onclick="sTab('txt',this)">📝 Texto</div>
-    <div class="stab" onclick="sTab('file',this)">📂 Archivo</div>
-    <div class="stab" onclick="sTab('img',this)">🤖 Foto IA</div>
-  </div>
   <div class="simp-body">
-    <!-- Texto -->
-    <div class="simp-panel act" id="sp-txt">
-      <div style="font-size:10px;color:var(--txt2);margin-bottom:8px;line-height:1.7;">
-        Cualquier formato:
-        <code style="color:var(--oro2);background:rgba(201,168,76,.1);padding:1px 4px;border-radius:3px;">MTLNMTL…</code>
-        · <code style="color:var(--oro2);background:rgba(201,168,76,.1);padding:1px 4px;border-radius:3px;">15/07 mañana</code>
-        · <code style="color:var(--oro2);background:rgba(201,168,76,.1);padding:1px 4px;border-radius:3px;">15 m</code>
-        · <code style="color:var(--oro2);background:rgba(201,168,76,.1);padding:1px 4px;border-radius:3px;">día 1: tarde</code>
+    <!-- Nombre + Clave -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div>
+        <label style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;">Tu nombre en el horario</label>
+        <input type="text" id="nombreEmpleado" placeholder="Ej: EDDEILIS" oninput="guardarNombre()"
+          style="width:100%;background:rgba(255,255,255,.06);border:1px solid var(--oro);border-radius:8px;
+          color:var(--oro2);font-size:15px;font-weight:800;padding:9px 12px;font-family:inherit;letter-spacing:1px;"/>
       </div>
-      <textarea id="impTxt" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--linea);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12px;padding:10px;resize:vertical;min-height:80px;" placeholder="Pega aquí tu horario en cualquier formato…"></textarea>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
-        <button class="btn-g" onclick="parsearTexto()">🔍 Escanear</button>
-        <button class="btn-s" onclick="borrarTodo()">🗑️ Borrar todo</button>
-        <button class="btn-s" onclick="exportarTexto()">📋 Ver todo</button>
-      </div>
-    </div>
-    <!-- Archivo -->
-    <div class="simp-panel" id="sp-file">
-      <div class="drop-zone" id="dzFile" onclick="document.getElementById('fileInput').click()">
-        <input type="file" id="fileInput" accept=".txt,.csv" onchange="cargarArchivo(this)"/>
-        <div class="dz-ic">📂</div>
-        <div class="dz-t"><b>Toca para seleccionar un archivo .txt</b><br>o arrastra aquí el horario</div>
+      <div>
+        <label style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;">Clave Claude (una sola vez)</label>
+        <input type="password" id="claudeKey" placeholder="sk-ant-…" oninput="guardarClave()" autocomplete="off"
+          style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--linea);border-radius:8px;
+          color:var(--txt);font-family:monospace;font-size:11px;padding:9px 12px;"/>
       </div>
     </div>
-    <!-- Foto IA -->
-    <div class="simp-panel" id="sp-img">
-      <div class="key-row">
-        <label>CLAVE CLAUDE (sk-ant-…)</label>
-        <input type="password" id="claudeKey" placeholder="sk-ant-…" oninput="guardarClave()" autocomplete="off"/>
+    <!-- Zona de foto -->
+    <div class="drop-zone" id="dzImg" onclick="document.getElementById('imgInput').click()">
+      <input type="file" id="imgInput" accept="image/*" onchange="escanearHorario(this)"/>
+      <div class="dz-ic">📷</div>
+      <div class="dz-t">
+        <b>Toca aquí para subir la foto del horario del mes</b><br>
+        La IA busca tu nombre y extrae todos tus turnos automáticamente
       </div>
-      <div class="drop-zone" id="dzImg" onclick="document.getElementById('imgInput').click()">
-        <input type="file" id="imgInput" accept="image/*" onchange="analizarImagen(this)"/>
-        <div class="dz-ic">📷</div>
-        <div class="dz-t"><b>Toca para subir la foto del horario</b><br>La IA leerá los turnos automáticamente · JPG · PNG · WEBP</div>
-      </div>
-      <div class="ai-status" id="aiStatus"></div>
     </div>
+    <div class="ai-status" id="aiStatus"></div>
+
+    <!-- Alternativa manual -->
+    <details style="margin-top:16px;">
+      <summary style="font-size:10px;color:var(--txt2);letter-spacing:1px;cursor:pointer;text-transform:uppercase;padding:6px 0;user-select:none;">▸ Escribir el horario a mano</summary>
+      <div style="margin-top:10px;">
+        <div style="font-size:10px;color:var(--txt2);margin-bottom:6px;line-height:1.7;">
+          Un día por línea: <code style="color:var(--oro2)">1 tarde</code> · <code style="color:var(--oro2)">2 noche</code> · <code style="color:var(--oro2)">3 libre</code>
+        </div>
+        <textarea id="impTxt" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--linea);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12px;padding:10px;resize:vertical;min-height:70px;" placeholder="1 tarde&#10;2 tarde&#10;3 noche&#10;4 libre..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn-g" onclick="parsearTexto()">✅ Cargar</button>
+          <button class="btn-s" onclick="exportarTexto()">📋 Ver todo</button>
+          <button class="btn-s" onclick="borrarTodo()">🗑️ Borrar todo</button>
+        </div>
+      </div>
+    </details>
+
     <!-- Preview -->
     <div class="prev-wrap" id="prevWrap" style="display:none;">
-      <div class="prev-lbl">Vista previa · <span id="prevCount">0</span> turnos detectados</div>
+      <div class="prev-lbl"><span id="prevNom"></span><span id="prevCount">0</span> turnos detectados</div>
       <div class="prev-grid" id="prevGrid"></div>
       <div style="display:flex;gap:8px;">
-        <button class="btn-g" onclick="aplicarPreview()">✅ Aplicar</button>
+        <button class="btn-g" onclick="aplicarPreview()">✅ Aplicar al calendario</button>
         <button class="btn-s" onclick="cancelarPreview()">✕ Cancelar</button>
       </div>
     </div>
@@ -438,12 +438,12 @@ function initImpSelects(){
   }
 }
 
-function sTab(id, btn){
-  document.querySelectorAll('.stab').forEach(b=>b.classList.remove('act'));
-  btn.classList.add('act');
-  document.querySelectorAll('.simp-panel').forEach(p=>p.classList.remove('act'));
-  document.getElementById('sp-'+id).classList.add('act');
-  document.getElementById('prevWrap').style.display='none';
+function guardarNombre(){
+  const v=document.getElementById('nombreEmpleado').value.trim().toUpperCase();
+  try{ if(v) localStorage.setItem('fp_nombre_empleado',v); }catch(_){}
+}
+function cargarNombre(){
+  try{ const v=localStorage.getItem('fp_nombre_empleado'); document.getElementById('nombreEmpleado').value=v||'EDDEILIS'; }catch(_){ document.getElementById('nombreEmpleado').value='EDDEILIS'; }
 }
 
 function guardarClave(){
@@ -518,35 +518,37 @@ function parsearTexto(){
   mostrarPreview(resultado);
 }
 
-function cargarArchivo(input){
+async function escanearHorario(input){
   const file=input.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const mes=parseInt(document.getElementById('impMes').value);
-    const ano=parseInt(document.getElementById('impAno').value);
-    const resultado=parsearHorario(e.target.result,mes,ano);
-    if(!Object.keys(resultado).length){ toast('❌ No se detectaron turnos en el archivo',true); return; }
-    mostrarPreview(resultado);
-  };
-  reader.readAsText(file,'UTF-8');
-  input.value='';
-}
-
-async function analizarImagen(input){
-  const file=input.files[0]; if(!file) return;
+  const nombre=(document.getElementById('nombreEmpleado').value.trim()||'EDDEILIS').toUpperCase();
   const clave=document.getElementById('claudeKey').value.trim();
-  if(!clave){ toast('❌ Pega tu clave de Claude primero',true); return; }
+  if(!clave){ toast('❌ Pega tu clave de Claude (sk-ant-…) primero',true); return; }
   const st=document.getElementById('aiStatus');
-  st.className='ai-status wait'; st.textContent='⏳ Analizando imagen con IA…';
+  st.className='ai-status wait'; st.textContent='⏳ Buscando '+nombre+' en el horario…';
   const mes=parseInt(document.getElementById('impMes').value);
   const ano=parseInt(document.getElementById('impAno').value);
+  const diasMes=new Date(ano,mes+1,0).getDate();
   try{
     const b64=await fileToBase64(file);
     const payload={
-      model:'claude-haiku-4-5-20251001',max_tokens:600,
+      model:'claude-haiku-4-5-20251001',max_tokens:900,
       messages:[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:b64}},
-        {type:'text',text:'Esta imagen es un horario laboral del mes de '+MESES[mes]+' '+ano+'. Extrae todos los turnos visibles. Responde SOLO en CSV sin cabeceras, formato: día,turno\nValores válidos para turno: manana, tarde, noche, libre, festivo\nEjemplo:\n1,manana\n2,libre\nNo incluyas ningún texto adicional.'}
+        {type:'text',text:
+`Esta imagen es una tabla de horario laboral mensual para ${MESES[mes].charAt(0).toUpperCase()+MESES[mes].slice(1)} ${ano}.
+La tabla tiene nombres de empleados en la primera columna y los días del mes (1 al ${diasMes}) en las columnas siguientes.
+Cada celda contiene una letra de turno:
+- M = turno de mañana (manana)
+- T = turno de tarde (tarde)
+- N = turno de noche (noche)
+- L o celda vacía o celda roja (domingos) = libre
+
+TAREA: Encuentra la fila del empleado llamado exactamente "${nombre}" y extrae su turno para cada día del 1 al ${diasMes}.
+Responde ÚNICAMENTE en formato CSV, sin texto adicional, sin cabeceras:
+día,turno
+Usa SOLO estos valores: manana, tarde, noche, libre
+Incluye todos los días del 1 al ${diasMes}, uno por línea.`
+        }
       ]}]
     };
     const resp=await fetch('/.netlify/functions/aiproxy',{
@@ -564,10 +566,17 @@ async function analizarImagen(input){
       const d=parseInt(parts[0]),turno=mapTurno(parts[1].trim());
       if(d>=1&&d<=31&&turno){ const f=new Date(ano,mes,d); if(f.getMonth()===mes) resultado[k(f)]=turno; }
     });
-    if(!Object.keys(resultado).length){ st.className='ai-status err'; st.textContent='⚠️ IA no detectó turnos claros — prueba con texto'; return; }
-    st.className='ai-status ok'; st.textContent='✅ IA detectó '+Object.keys(resultado).length+' turnos';
-    mostrarPreview(resultado);
-  }catch(e){ st.className='ai-status err'; st.textContent='❌ '+e.message; }
+    if(!Object.keys(resultado).length){
+      st.className='ai-status err';
+      st.textContent='⚠️ No encontré a '+nombre+' en el horario. Comprueba que el nombre esté escrito igual que en la tabla.';
+      return;
+    }
+    const cnt={manana:0,tarde:0,noche:0,libre:0};
+    Object.values(resultado).forEach(t=>{ if(cnt[t]!==undefined) cnt[t]++; });
+    st.className='ai-status ok';
+    st.textContent='✅ '+nombre+': ☀️ '+cnt.manana+' mañanas · 🌤️ '+cnt.tarde+' tardes · 🌙 '+cnt.noche+' noches · 🟢 '+cnt.libre+' libres';
+    mostrarPreview(resultado, nombre);
+  }catch(e){ st.className='ai-status err'; st.textContent='❌ Error: '+e.message; }
   input.value='';
 }
 
@@ -580,10 +589,11 @@ function colorTurno(t,a){
   return c[t]||`rgba(138,144,160,${a})`;
 }
 
-function mostrarPreview(resultado){
+function mostrarPreview(resultado, nombre){
   previewDatos=resultado;
   const grid=document.getElementById('prevGrid'); grid.innerHTML='';
   document.getElementById('prevCount').textContent=Object.keys(resultado).length;
+  try{ const n=document.getElementById('prevNom'); if(n) n.textContent=nombre?nombre+' — ':''; }catch(_){}
   Object.keys(resultado).sort().forEach(kk=>{
     const [,,d]=kk.split('-'); const t=resultado[kk]; const inf=TURNOS[t]||{ic:'?'};
     const el=document.createElement('div'); el.className='pday';
@@ -609,17 +619,15 @@ function cancelarPreview(){
 }
 
 function initDropZones(){
-  [['dzFile','fileInput',cargarArchivo],['dzImg','imgInput',analizarImagen]].forEach(([dzId,inpId,fn])=>{
-    const dz=document.getElementById(dzId), inp=document.getElementById(inpId);
-    if(!dz||!inp) return;
-    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
-    dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
-    dz.addEventListener('drop',e=>{
-      e.preventDefault(); dz.classList.remove('over');
-      const f=e.dataTransfer.files[0]; if(!f) return;
-      try{ const dt=new DataTransfer(); dt.items.add(f); inp.files=dt.files; }catch(_){}
-      fn(inp);
-    });
+  const dz=document.getElementById('dzImg'), inp=document.getElementById('imgInput');
+  if(!dz||!inp) return;
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault(); dz.classList.remove('over');
+    const f=e.dataTransfer.files[0]; if(!f) return;
+    try{ const dt=new DataTransfer(); dt.items.add(f); inp.files=dt.files; }catch(_){}
+    escanearHorario(inp);
   });
 }
 
@@ -651,7 +659,7 @@ calAno = hoy.getFullYear(); calMes = hoy.getMonth();
 document.getElementById('btnPrev').onclick = ()=>{ calMes--; if(calMes<0){calMes=11;calAno--;} renderCal(); };
 document.getElementById('btnNext').onclick = ()=>{ calMes++; if(calMes>11){calMes=0;calAno++;} renderCal(); };
 renderHero(); renderStrip(); renderCal();
-initImpSelects(); cargarClave(); initDropZones();
+initImpSelects(); cargarClave(); cargarNombre(); initDropZones();
 </script>
 </body>
 </html>
