@@ -208,10 +208,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
 </div>
 
-<!-- Cargar horario del mes -->
+<!-- Escanear horario -->
 <div class="simp" style="margin-top:18px;">
   <div class="simp-hdr">
-    <h3>✏️ Cargar horario del mes</h3>
+    <h3>📷 Escanear mi horario</h3>
     <div class="simp-mes">
       <span>Mes:</span>
       <select id="impMes"></select>
@@ -220,33 +220,64 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
   <div class="simp-body">
 
-    <!-- Patrón semanal visual -->
-    <div>
-      <div style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;margin-bottom:8px;text-transform:uppercase;">⚡ Patrón semanal — toca cada día y elige turno</div>
-      <div id="patronWidget" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px;"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn-g" onclick="aplicarPatronSemanal()">📅 Aplicar al mes</button>
-        <button class="btn-s" onclick="limpiarPatron()">↺ Limpiar</button>
-      </div>
-      <div style="margin-top:8px;font-size:10px;color:var(--txt2);line-height:1.6;">
-        Asigna un turno a cada día de la semana → rellena todos los días de ese tipo en el mes elegido.
-      </div>
+    <!-- Nombre -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;">Tu nombre tal como aparece en el horario</label>
+      <input type="text" id="nombreEmpleado" placeholder="Ej: FÁTIMA" oninput="guardarNombre()"
+        style="width:100%;background:rgba(255,255,255,.06);border:1px solid var(--oro);border-radius:8px;
+        color:var(--oro2);font-size:16px;font-weight:800;padding:10px 12px;font-family:inherit;letter-spacing:1px;"/>
     </div>
 
-    <!-- Entrada de texto -->
-    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--linea);">
-      <div style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;margin-bottom:6px;text-transform:uppercase;">✍️ O escribe el horario a mano</div>
-      <div style="font-size:10px;color:var(--txt2);margin-bottom:8px;line-height:1.8;">
-        Por nombre de día: <code style="color:var(--oro2)">Lunes tarde, Martes libre, Miércoles noche</code><br>
-        Por número: <code style="color:var(--oro2)">1 tarde</code> · <code style="color:var(--oro2)">2 noche</code> · <code style="color:var(--oro2)">3 libre</code>
-      </div>
-      <textarea id="impTxt" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--linea);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12px;padding:10px;resize:vertical;min-height:70px;" placeholder="Lunes tarde&#10;Martes noche&#10;Miércoles libre&#10;— o —&#10;1 tarde&#10;2 noche&#10;3 libre..."></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-        <button class="btn-g" onclick="parsearTexto()">✅ Cargar</button>
-        <button class="btn-s" onclick="exportarTexto()">📋 Ver todo</button>
-        <button class="btn-s" onclick="borrarTodo()">🗑️ Borrar todo</button>
+    <!-- Zona foto -->
+    <div class="drop-zone" id="dzImg" onclick="document.getElementById('imgInput').click()">
+      <input type="file" id="imgInput" accept="image/*" onchange="escanearHorario(this)"/>
+      <div class="dz-ic">📷</div>
+      <div class="dz-t">
+        <b>Toca aquí para subir la foto del horario</b><br>
+        El sistema encuentra tu nombre solo y lee tus turnos automáticamente.<br>
+        <span style="color:var(--l);">Gratis · funciona sin internet una vez cargada la página</span>
       </div>
     </div>
+    <div class="ai-status" id="aiStatus"></div>
+
+    <!-- Botón de voz (aparece tras escanear) -->
+    <div id="vozWrap" style="display:none;margin-top:12px;text-align:center;">
+      <button class="btn-g" onclick="leerHorarioEnVoz()" style="font-size:14px;padding:12px 24px;">
+        🔊 Escuchar mi horario
+      </button>
+      <div style="font-size:10px;color:var(--txt2);margin-top:6px;">Usa la voz del teléfono para leerte los turnos y días libres</div>
+    </div>
+
+    <!-- Alternativas -->
+    <details style="margin-top:18px;">
+      <summary style="font-size:10px;color:var(--txt2);letter-spacing:1px;cursor:pointer;text-transform:uppercase;padding:6px 0;user-select:none;">▸ Otras formas de cargar (patrón semanal / texto)</summary>
+      <div style="margin-top:12px;">
+
+        <!-- Patrón semanal -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;margin-bottom:8px;text-transform:uppercase;">⚡ Patrón semanal</div>
+          <div id="patronWidget" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px;"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-g" onclick="aplicarPatronSemanal()">📅 Aplicar al mes</button>
+            <button class="btn-s" onclick="limpiarPatron()">↺ Limpiar</button>
+          </div>
+        </div>
+
+        <!-- Texto manual -->
+        <div style="padding-top:14px;border-top:1px solid var(--linea);">
+          <div style="font-size:10px;color:var(--txt2);letter-spacing:.8px;font-weight:700;margin-bottom:6px;text-transform:uppercase;">✍️ Escribir a mano</div>
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:6px;line-height:1.7;">
+            <code style="color:var(--oro2)">Lunes tarde, Martes libre</code> · <code style="color:var(--oro2)">1 tarde</code> · <code style="color:var(--oro2)">2 libre</code>
+          </div>
+          <textarea id="impTxt" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--linea);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12px;padding:10px;resize:vertical;min-height:60px;" placeholder="1 tarde&#10;2 noche&#10;3 libre..."></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-g" onclick="parsearTexto()">✅ Cargar</button>
+            <button class="btn-s" onclick="exportarTexto()">📋 Ver todo</button>
+            <button class="btn-s" onclick="borrarTodo()">🗑️ Borrar todo</button>
+          </div>
+        </div>
+      </div>
+    </details>
 
     <!-- Preview -->
     <div class="prev-wrap" id="prevWrap" style="display:none;">
@@ -420,6 +451,14 @@ function initImpSelects(){
   }
 }
 
+function guardarNombre(){
+  const v=document.getElementById('nombreEmpleado').value.trim().toUpperCase();
+  try{ if(v) localStorage.setItem('fp_nombre_empleado',v); }catch(_){}
+}
+function cargarNombre(){
+  try{ const v=localStorage.getItem('fp_nombre_empleado')||''; document.getElementById('nombreEmpleado').value=v; }catch(_){}
+}
+
 function mapTurno(s){
   if(!s) return null;
   s=s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
@@ -507,6 +546,94 @@ function parsearTexto(){
   const resultado=parsearHorario(txt,mes,ano);
   if(!Object.keys(resultado).length){ toast('❌ No se detectaron turnos — prueba otro formato',true); return; }
   mostrarPreview(resultado);
+}
+
+/* ── ESCÁNER DE FOTO ── */
+let ultimoResultadoEscaner = null;
+
+async function escanearHorario(input){
+  const file=input.files[0]; if(!file) return;
+  const nombre=document.getElementById('nombreEmpleado').value.trim().toUpperCase();
+  if(!nombre){ toast('⚠️ Escribe tu nombre primero', true); input.value=''; return; }
+  const st=document.getElementById('aiStatus');
+  document.getElementById('vozWrap').style.display='none';
+  ultimoResultadoEscaner=null;
+  const mes=parseInt(document.getElementById('impMes').value);
+  const ano=parseInt(document.getElementById('impAno').value);
+  const diasMes=new Date(ano,mes+1,0).getDate();
+  st.className='ai-status wait'; st.textContent='⏳ Leyendo imagen… (10-20 segundos)';
+  try{
+    if(typeof Tesseract==='undefined') throw new Error('Cargando lector… recarga la página con internet y vuelve a intentarlo.');
+    const res=await Tesseract.recognize(file,'spa+eng',{
+      logger:m=>{ if(m.status==='recognizing text') st.textContent='⏳ Leyendo… '+Math.round((m.progress||0)*100)+'%'; }
+    });
+    const lineas=res.data.text.split('\n').map(l=>l.trim()).filter(Boolean);
+    const nomNorm=nombre.replace(/\s+/g,'');
+    let fila=null;
+    for(const l of lineas){
+      const lN=l.toUpperCase().replace(/\s+/g,'');
+      const coincide=lN.includes(nomNorm)||(nomNorm.length>=4 && nomNorm.split('').filter(c=>lN.includes(c)).length>=Math.floor(nomNorm.length*.75));
+      if(coincide&&(l.toUpperCase().match(/[MTNLF]/g)||[]).length>=3){ fila=l; break; }
+    }
+    if(!fila){ st.className='ai-status err'; st.textContent='⚠️ No encontré "'+nombre+'" en la imagen. Prueba una foto más clara o más cerca de tu fila.'; input.value=''; return; }
+    const pos=fila.toUpperCase().indexOf(nomNorm.substring(0,Math.min(4,nomNorm.length)));
+    const despues=pos>=0?fila.substring(pos+nomNorm.length):fila;
+    const codigos=(despues.toUpperCase().match(/[MTNLF]/g)||[]);
+    if(codigos.length<3){ st.className='ai-status err'; st.textContent='⚠️ Vi tu fila pero los turnos no se leen bien. Intenta con la foto más nítida.'; input.value=''; return; }
+    const mapaT={M:'manana',T:'tarde',N:'noche',L:'libre',F:'festivo'};
+    const resultado2={};
+    codigos.forEach((c,i)=>{ const d=i+1; if(d>diasMes) return; const t=mapaT[c]; if(!t) return; const f=new Date(ano,mes,d); if(f.getMonth()===mes) resultado2[k(f)]=t; });
+    if(!Object.keys(resultado2).length){ st.className='ai-status err'; st.textContent='⚠️ No se pudieron leer los turnos. Revisa la foto.'; input.value=''; return; }
+    const cnt={manana:0,tarde:0,noche:0,libre:0,festivo:0};
+    Object.values(resultado2).forEach(t=>{ if(cnt[t]!==undefined) cnt[t]++; });
+    st.className='ai-status ok';
+    st.textContent='✅ '+nombre+' — ☀️ '+cnt.manana+' mañanas · 🌤️ '+cnt.tarde+' tardes · 🌙 '+cnt.noche+' noches · 🟢 '+(cnt.libre+cnt.festivo)+' libres';
+    ultimoResultadoEscaner={resultado:resultado2, nombre, mes, ano};
+    document.getElementById('vozWrap').style.display='block';
+    mostrarPreview(resultado2, nombre);
+    leerHorarioEnVoz();
+  }catch(e){ st.className='ai-status err'; st.textContent='❌ '+e.message; }
+  input.value='';
+}
+
+function leerHorarioEnVoz(){
+  if(!ultimoResultadoEscaner){ toast('Escanea el horario primero', true); return; }
+  if(!window.speechSynthesis){ toast('Tu dispositivo no tiene voz disponible', true); return; }
+  window.speechSynthesis.cancel();
+  const {resultado, nombre, mes} = ultimoResultadoEscaner;
+  const libres=[], mananas=[], tardes=[], noches=[], festivos=[];
+  Object.keys(resultado).sort().forEach(kk=>{
+    const d=parseInt(kk.split('-')[2]); const t=resultado[kk];
+    if(t==='libre') libres.push(d);
+    else if(t==='manana') mananas.push(d);
+    else if(t==='tarde') tardes.push(d);
+    else if(t==='noche') noches.push(d);
+    else if(t==='festivo') festivos.push(d);
+  });
+  const MESES_VOZ=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  let txt=`Hola ${nombre}. Tu horario de ${MESES_VOZ[mes]} es el siguiente. `;
+  if(mananas.length) txt+=`Turno de mañana los días ${mananas.join(', ')}. `;
+  if(tardes.length)  txt+=`Turno de tarde los días ${tardes.join(', ')}. `;
+  if(noches.length)  txt+=`Turno de noche los días ${noches.join(', ')}. `;
+  const todosLibres=[...libres,...festivos].sort((a,b)=>a-b);
+  if(todosLibres.length) txt+=`Tus días libres son: ${todosLibres.join(', ')}. `;
+  txt+=`En total ${mananas.length+tardes.length+noches.length} días de trabajo y ${todosLibres.length} días libres. ¡Que te vaya bien!`;
+  const utt=new SpeechSynthesisUtterance(txt);
+  utt.lang='es-ES'; utt.rate=0.88; utt.pitch=1.05;
+  window.speechSynthesis.speak(utt);
+}
+
+function initDropZones(){
+  const dz=document.getElementById('dzImg'), inp=document.getElementById('imgInput');
+  if(!dz||!inp) return;
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault(); dz.classList.remove('over');
+    const f=e.dataTransfer.files[0]; if(!f) return;
+    try{ const dt=new DataTransfer(); dt.items.add(f); inp.files=dt.files; }catch(_){}
+    escanearHorario(inp);
+  });
 }
 
 function colorTurno(t,a){
@@ -612,7 +739,8 @@ calAno = hoy.getFullYear(); calMes = hoy.getMonth();
 document.getElementById('btnPrev').onclick = ()=>{ calMes--; if(calMes<0){calMes=11;calAno--;} renderCal(); };
 document.getElementById('btnNext').onclick = ()=>{ calMes++; if(calMes>11){calMes=0;calAno++;} renderCal(); };
 renderHero(); renderStrip(); renderCal();
-initImpSelects(); renderPatronWidget();
+initImpSelects(); cargarNombre(); initDropZones(); renderPatronWidget();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </body>
 </html>
