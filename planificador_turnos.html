@@ -112,15 +112,36 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .ri-l2{color:var(--l);border-color:rgba(46,204,113,.3);background:rgba(46,204,113,.08);}
 .ri-f{color:var(--f);border-color:rgba(231,76,60,.3);background:rgba(231,76,60,.08);}
 
-/* ── Importar ── */
-.imp{margin:0 18px;background:var(--pan);border:1px solid var(--linea);border-radius:14px;padding:18px;}
-.imp h3{font-size:12px;color:var(--oro2);letter-spacing:1px;margin-bottom:6px;}
-.imp-info{font-size:11px;color:var(--txt2);line-height:1.7;margin-bottom:12px;}
-.imp-info code{color:var(--oro2);background:rgba(201,168,76,.1);padding:1px 5px;border-radius:4px;}
-.imp textarea{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--linea);border-radius:8px;
-  color:var(--txt);font-family:inherit;font-size:12px;padding:10px;resize:vertical;min-height:80px;}
-.imp textarea:focus{outline:none;border-color:var(--oro);}
-.imp-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+/* ── Smart Import ── */
+.simp{margin:0 18px;background:var(--pan);border:1px solid var(--linea);border-radius:14px;overflow:hidden;}
+.simp-hdr{padding:14px 18px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.simp-hdr h3{font-size:12px;color:var(--oro2);letter-spacing:1px;}
+.simp-mes{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);}
+.simp-mes select{background:#1a1e2e;border:1px solid var(--linea);color:var(--txt);border-radius:6px;padding:4px 8px;font-size:11px;font-family:inherit;}
+.simp-tabs{display:flex;border-bottom:1px solid var(--linea);margin:10px 0 0;}
+.stab{padding:9px 16px;font-size:11px;font-weight:600;color:var(--txt2);cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.4px;transition:all .12s;}
+.stab.act{color:var(--oro2);border-bottom-color:var(--oro);}
+.stab:hover:not(.act){color:var(--txt);}
+.simp-body{padding:14px 18px 18px;}
+.simp-panel{display:none;}
+.simp-panel.act{display:block;}
+.drop-zone{border:2px dashed var(--linea);border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
+.drop-zone:hover,.drop-zone.over{border-color:var(--oro);background:rgba(201,168,76,.04);}
+.drop-zone input{display:none;}
+.dz-ic{font-size:32px;margin-bottom:8px;}
+.dz-t{font-size:12px;color:var(--txt2);line-height:1.6;}
+.dz-t b{color:var(--oro2);}
+.key-row{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;}
+.key-row label{font-size:10px;color:var(--txt2);letter-spacing:.5px;white-space:nowrap;}
+.key-row input[type=password]{flex:1;min-width:160px;background:rgba(255,255,255,.04);border:1px solid var(--linea);border-radius:6px;color:var(--txt);font-family:monospace;font-size:11px;padding:7px 10px;}
+.key-row input[type=password]:focus{outline:none;border-color:var(--oro);}
+.ai-status{font-size:11px;color:var(--txt2);margin-top:10px;min-height:20px;text-align:center;}
+.ai-status.ok{color:#2ecc71;}.ai-status.err{color:#e74c3c;}.ai-status.wait{color:var(--oro2);}
+.prev-wrap{margin-top:14px;padding-top:14px;border-top:1px solid var(--linea);}
+.prev-lbl{font-size:10px;color:var(--txt2);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+.prev-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:12px;}
+.pday{padding:5px 2px;border-radius:6px;text-align:center;border:1px solid var(--linea);font-size:10px;}
+.pday .pd-n{font-size:11px;font-weight:700;line-height:1.2;}.pday .pd-i{font-size:13px;}
 .btn-g{background:linear-gradient(135deg,var(--oro),var(--oro2));color:#0a0c12;border:none;
   border-radius:8px;padding:10px 18px;font-size:12px;font-weight:800;cursor:pointer;letter-spacing:.5px;font-family:inherit;}
 .btn-g:hover{filter:brightness(1.08);}
@@ -197,20 +218,68 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
 </div>
 
-<!-- Importar horario -->
-<div class="imp" style="margin-top:18px;">
-  <h3>📤 Importar horario de texto</h3>
-  <div class="imp-info">
-    Escribe o pega tu horario, una línea por día:<br>
-    <code>15/07 mañana</code> · <code>16/07 libre</code> · <code>17/07 tarde</code> · <code>18/07 noche</code> · <code>19/07 festivo</code><br>
-    También acepta: <code>m</code> (mañana) · <code>t</code> (tarde) · <code>n</code> (noche) · <code>l</code> (libre) · <code>f</code> (festivo)<br>
-    Con año: <code>15/07/2026 mañana</code> — sin año usa el año actual.
+<!-- Importar horario inteligente -->
+<div class="simp" style="margin-top:18px;">
+  <div class="simp-hdr">
+    <h3>🧠 Importar horario inteligente</h3>
+    <div class="simp-mes">
+      <span>Mes:</span>
+      <select id="impMes"></select>
+      <select id="impAno"></select>
+    </div>
   </div>
-  <textarea id="impTxt" placeholder="15/07 mañana&#10;16/07 libre&#10;17/07 tarde&#10;18/07 noche&#10;19/07 festivo&#10;..."></textarea>
-  <div class="imp-row">
-    <button class="btn-g" onclick="importarTexto()">✅ Cargar horario</button>
-    <button class="btn-s" onclick="borrarTodo()">🗑️ Borrar todo</button>
-    <button class="btn-s" onclick="exportarTexto()">📋 Exportar / Ver todo</button>
+  <div class="simp-tabs">
+    <div class="stab act" onclick="sTab('txt',this)">📝 Texto</div>
+    <div class="stab" onclick="sTab('file',this)">📂 Archivo</div>
+    <div class="stab" onclick="sTab('img',this)">🤖 Foto IA</div>
+  </div>
+  <div class="simp-body">
+    <!-- Texto -->
+    <div class="simp-panel act" id="sp-txt">
+      <div style="font-size:10px;color:var(--txt2);margin-bottom:8px;line-height:1.7;">
+        Cualquier formato:
+        <code style="color:var(--oro2);background:rgba(201,168,76,.1);padding:1px 4px;border-radius:3px;">MTLNMTL…</code>
+        · <code style="color:var(--oro2);background:rgba(201,168,76,.1);padding:1px 4px;border-radius:3px;">15/07 mañana</code>
+        · <code style="color:var(--oro2);background:rgba(201,168,76,.1);padding:1px 4px;border-radius:3px;">15 m</code>
+        · <code style="color:var(--oro2);background:rgba(201,168,76,.1);padding:1px 4px;border-radius:3px;">día 1: tarde</code>
+      </div>
+      <textarea id="impTxt" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--linea);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12px;padding:10px;resize:vertical;min-height:80px;" placeholder="Pega aquí tu horario en cualquier formato…"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <button class="btn-g" onclick="parsearTexto()">🔍 Escanear</button>
+        <button class="btn-s" onclick="borrarTodo()">🗑️ Borrar todo</button>
+        <button class="btn-s" onclick="exportarTexto()">📋 Ver todo</button>
+      </div>
+    </div>
+    <!-- Archivo -->
+    <div class="simp-panel" id="sp-file">
+      <div class="drop-zone" id="dzFile" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" accept=".txt,.csv" onchange="cargarArchivo(this)"/>
+        <div class="dz-ic">📂</div>
+        <div class="dz-t"><b>Toca para seleccionar un archivo .txt</b><br>o arrastra aquí el horario</div>
+      </div>
+    </div>
+    <!-- Foto IA -->
+    <div class="simp-panel" id="sp-img">
+      <div class="key-row">
+        <label>CLAVE CLAUDE (sk-ant-…)</label>
+        <input type="password" id="claudeKey" placeholder="sk-ant-…" oninput="guardarClave()" autocomplete="off"/>
+      </div>
+      <div class="drop-zone" id="dzImg" onclick="document.getElementById('imgInput').click()">
+        <input type="file" id="imgInput" accept="image/*" onchange="analizarImagen(this)"/>
+        <div class="dz-ic">📷</div>
+        <div class="dz-t"><b>Toca para subir la foto del horario</b><br>La IA leerá los turnos automáticamente · JPG · PNG · WEBP</div>
+      </div>
+      <div class="ai-status" id="aiStatus"></div>
+    </div>
+    <!-- Preview -->
+    <div class="prev-wrap" id="prevWrap" style="display:none;">
+      <div class="prev-lbl">Vista previa · <span id="prevCount">0</span> turnos detectados</div>
+      <div class="prev-grid" id="prevGrid"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-g" onclick="aplicarPreview()">✅ Aplicar</button>
+        <button class="btn-s" onclick="cancelarPreview()">✕ Cancelar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -352,35 +421,206 @@ function asignar(t){
   save(); cerrarPicker(); renderHero(); renderStrip(); renderCal();
 }
 
-/* ── IMPORTAR ── */
-const MAP = {
-  'mañana':'manana','manana':'manana','m':'manana',
-  'tarde':'tarde','t':'tarde',
-  'noche':'noche','n':'noche',
-  'libre':'libre','l':'libre','free':'libre','descanso':'libre',
-  'festivo':'festivo','f':'festivo','vacaciones':'festivo','v':'festivo','vacacion':'festivo',
-};
-function importarTexto(){
-  const txt = document.getElementById('impTxt').value.trim();
-  if(!txt){ toast('❌ Escribe el horario primero',true); return; }
-  let ok=0, err=0;
-  txt.split('\n').forEach(linea=>{
-    linea = linea.trim(); if(!linea) return;
-    const p = linea.toLowerCase().split(/\s+/);
-    if(p.length<2){ err++; return; }
-    const m = p[0].match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?$/);
-    if(!m){ err++; return; }
-    const turno = MAP[p[1]];
-    if(!turno){ err++; return; }
-    const dia=parseInt(m[1]), mes=parseInt(m[2])-1, ano=m[3]?parseInt(m[3]):new Date().getFullYear();
-    const fecha = new Date(ano,mes,dia);
-    if(isNaN(fecha.getTime())){ err++; return; }
-    datos[k(fecha)] = turno; ok++;
+/* ══ SMART IMPORT ═══════════════════════════════════════════════════ */
+let previewDatos = null;
+
+function initImpSelects(){
+  const ms=document.getElementById('impMes'), as=document.getElementById('impAno');
+  MESES.forEach((m,i)=>{
+    const o=document.createElement('option'); o.value=i;
+    o.textContent=m.charAt(0).toUpperCase()+m.slice(1);
+    if(i===calMes) o.selected=true; ms.appendChild(o);
   });
-  save();
-  document.getElementById('impTxt').value='';
-  toast('✅ '+ok+' turnos cargados'+(err?' ('+err+' líneas ignoradas)':''));
-  renderHero(); renderStrip(); renderCal();
+  const ay=new Date().getFullYear();
+  for(let y=ay-1;y<=ay+2;y++){
+    const o=document.createElement('option'); o.value=y; o.textContent=y;
+    if(y===ay) o.selected=true; as.appendChild(o);
+  }
+}
+
+function sTab(id, btn){
+  document.querySelectorAll('.stab').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  document.querySelectorAll('.simp-panel').forEach(p=>p.classList.remove('act'));
+  document.getElementById('sp-'+id).classList.add('act');
+  document.getElementById('prevWrap').style.display='none';
+}
+
+function guardarClave(){
+  const v=document.getElementById('claudeKey').value.trim();
+  try{ if(v) localStorage.setItem('fp_claude_key',v); else localStorage.removeItem('fp_claude_key'); }catch(_){}
+}
+function cargarClave(){
+  try{ const v=localStorage.getItem('fp_claude_key'); if(v) document.getElementById('claudeKey').value=v; }catch(_){}
+}
+
+function mapTurno(s){
+  if(!s) return null;
+  s=s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+  const M={
+    'manana':'manana','manan':'manana','m':'manana',
+    'tarde':'tarde','t':'tarde',
+    'noche':'noche','n':'noche',
+    'libre':'libre','l':'libre','descanso':'libre','free':'libre',
+    'festivo':'festivo','f':'festivo','vacaciones':'festivo','vacacion':'festivo','v':'festivo',
+  };
+  return M[s]||null;
+}
+
+function parsearHorario(txt, mes, ano){
+  const resultado={};
+  const lines=txt.split(/[\n;]+/).map(l=>l.trim()).filter(Boolean);
+  let hitCount=0;
+  for(const linea of lines){
+    const norm=linea.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    // dd/mm o dd/mm/yyyy + turno
+    let m=norm.match(/^(\d{1,2})[\/\-\.](\d{1,2})(?:[\/\-\.](\d{4}))?\s+(.+)/);
+    if(m){
+      const d=parseInt(m[1]),mo=parseInt(m[2])-1,ay=m[3]?parseInt(m[3]):ano;
+      const turno=mapTurno(m[4].trim());
+      if(turno){ const f=new Date(ay,mo,d); if(!isNaN(f.getTime())){ resultado[k(f)]=turno; hitCount++; } }
+      continue;
+    }
+    // "día 15: m" o "15: m" o "15 m"
+    m=norm.match(/^(?:dia\s+)?(\d{1,2})\s*[:\- ]\s*([a-z]+)$/);
+    if(m){
+      const d=parseInt(m[1]),turno=mapTurno(m[2]);
+      if(d>=1&&d<=31&&turno){ const f=new Date(ano,mes,d); if(f.getMonth()===mes){ resultado[k(f)]=turno; hitCount++; } }
+      continue;
+    }
+    // texto natural: extraer primer número + turno keyword de la línea
+    const nums=norm.match(/\b(\d{1,2})\b/);
+    const words=norm.match(/\b(manana|manan|tarde|noche|libre|festivo|vacacion|descanso)\b/);
+    if(nums&&words){
+      const d=parseInt(nums[1]),turno=mapTurno(words[1]);
+      if(d>=1&&d<=31&&turno){ const f=new Date(ano,mes,d); if(f.getMonth()===mes){ resultado[k(f)]=turno; hitCount++; } }
+    }
+  }
+  if(hitCount>0) return resultado;
+  // Estrategia de secuencia MTNLF — toda la cadena sin espacios
+  const seq=txt.toUpperCase().replace(/\s+/g,'').replace(/[^MTNLF]/g,'');
+  if(seq.length>=4){
+    for(let i=0;i<seq.length;i++){
+      const t2={M:'manana',T:'tarde',N:'noche',L:'libre',F:'festivo'}[seq[i]];
+      if(t2){ const f=new Date(ano,mes,i+1); if(f.getMonth()===mes) resultado[k(f)]=t2; }
+    }
+  }
+  return resultado;
+}
+
+function parsearTexto(){
+  const txt=document.getElementById('impTxt').value.trim();
+  if(!txt){ toast('❌ Escribe o pega el horario primero',true); return; }
+  const mes=parseInt(document.getElementById('impMes').value);
+  const ano=parseInt(document.getElementById('impAno').value);
+  const resultado=parsearHorario(txt,mes,ano);
+  if(!Object.keys(resultado).length){ toast('❌ No se detectaron turnos — prueba otro formato',true); return; }
+  mostrarPreview(resultado);
+}
+
+function cargarArchivo(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const mes=parseInt(document.getElementById('impMes').value);
+    const ano=parseInt(document.getElementById('impAno').value);
+    const resultado=parsearHorario(e.target.result,mes,ano);
+    if(!Object.keys(resultado).length){ toast('❌ No se detectaron turnos en el archivo',true); return; }
+    mostrarPreview(resultado);
+  };
+  reader.readAsText(file,'UTF-8');
+  input.value='';
+}
+
+async function analizarImagen(input){
+  const file=input.files[0]; if(!file) return;
+  const clave=document.getElementById('claudeKey').value.trim();
+  if(!clave){ toast('❌ Pega tu clave de Claude primero',true); return; }
+  const st=document.getElementById('aiStatus');
+  st.className='ai-status wait'; st.textContent='⏳ Analizando imagen con IA…';
+  const mes=parseInt(document.getElementById('impMes').value);
+  const ano=parseInt(document.getElementById('impAno').value);
+  try{
+    const b64=await fileToBase64(file);
+    const payload={
+      model:'claude-haiku-4-5-20251001',max_tokens:600,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:b64}},
+        {type:'text',text:'Esta imagen es un horario laboral del mes de '+MESES[mes]+' '+ano+'. Extrae todos los turnos visibles. Responde SOLO en CSV sin cabeceras, formato: día,turno\nValores válidos para turno: manana, tarde, noche, libre, festivo\nEjemplo:\n1,manana\n2,libre\nNo incluyas ningún texto adicional.'}
+      ]}]
+    };
+    const resp=await fetch('/.netlify/functions/aiproxy',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+clave,'x-ai-url':'https://api.anthropic.com/v1/messages'},
+      body:JSON.stringify(payload)
+    });
+    if(!resp.ok) throw new Error('HTTP '+resp.status+': '+(await resp.text()).substring(0,200));
+    const json=await resp.json();
+    const text=json.content?.[0]?.text||'';
+    const resultado={};
+    text.split('\n').forEach(l=>{
+      const parts=l.trim().split(',');
+      if(parts.length<2) return;
+      const d=parseInt(parts[0]),turno=mapTurno(parts[1].trim());
+      if(d>=1&&d<=31&&turno){ const f=new Date(ano,mes,d); if(f.getMonth()===mes) resultado[k(f)]=turno; }
+    });
+    if(!Object.keys(resultado).length){ st.className='ai-status err'; st.textContent='⚠️ IA no detectó turnos claros — prueba con texto'; return; }
+    st.className='ai-status ok'; st.textContent='✅ IA detectó '+Object.keys(resultado).length+' turnos';
+    mostrarPreview(resultado);
+  }catch(e){ st.className='ai-status err'; st.textContent='❌ '+e.message; }
+  input.value='';
+}
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
+}
+
+function colorTurno(t,a){
+  const c={manana:`rgba(255,149,0,${a})`,tarde:`rgba(74,158,255,${a})`,noche:`rgba(155,89,182,${a})`,libre:`rgba(46,204,113,${a})`,festivo:`rgba(231,76,60,${a})`};
+  return c[t]||`rgba(138,144,160,${a})`;
+}
+
+function mostrarPreview(resultado){
+  previewDatos=resultado;
+  const grid=document.getElementById('prevGrid'); grid.innerHTML='';
+  document.getElementById('prevCount').textContent=Object.keys(resultado).length;
+  Object.keys(resultado).sort().forEach(kk=>{
+    const [,,d]=kk.split('-'); const t=resultado[kk]; const inf=TURNOS[t]||{ic:'?'};
+    const el=document.createElement('div'); el.className='pday';
+    el.style.background=colorTurno(t,.1); el.style.borderColor=colorTurno(t,.45);
+    el.innerHTML=`<div class="pd-n" style="color:${colorTurno(t,1)}">${parseInt(d)}</div><div class="pd-i">${inf.ic}</div>`;
+    grid.appendChild(el);
+  });
+  const w=document.getElementById('prevWrap'); w.style.display='block';
+  w.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function aplicarPreview(){
+  if(!previewDatos) return;
+  const cnt=Object.keys(previewDatos).length;
+  Object.assign(datos,previewDatos); save(); previewDatos=null;
+  document.getElementById('prevWrap').style.display='none';
+  try{ document.getElementById('impTxt').value=''; }catch(_){}
+  toast('✅ '+cnt+' turnos cargados'); renderHero(); renderStrip(); renderCal();
+}
+
+function cancelarPreview(){
+  previewDatos=null; document.getElementById('prevWrap').style.display='none';
+}
+
+function initDropZones(){
+  [['dzFile','fileInput',cargarArchivo],['dzImg','imgInput',analizarImagen]].forEach(([dzId,inpId,fn])=>{
+    const dz=document.getElementById(dzId), inp=document.getElementById(inpId);
+    if(!dz||!inp) return;
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+    dz.addEventListener('drop',e=>{
+      e.preventDefault(); dz.classList.remove('over');
+      const f=e.dataTransfer.files[0]; if(!f) return;
+      try{ const dt=new DataTransfer(); dt.items.add(f); inp.files=dt.files; }catch(_){}
+      fn(inp);
+    });
+  });
 }
 
 /* ── EXPORTAR ── */
@@ -411,6 +651,7 @@ calAno = hoy.getFullYear(); calMes = hoy.getMonth();
 document.getElementById('btnPrev').onclick = ()=>{ calMes--; if(calMes<0){calMes=11;calAno--;} renderCal(); };
 document.getElementById('btnNext').onclick = ()=>{ calMes++; if(calMes>11){calMes=0;calAno++;} renderCal(); };
 renderHero(); renderStrip(); renderCal();
+initImpSelects(); cargarClave(); initDropZones();
 </script>
 </body>
 </html>

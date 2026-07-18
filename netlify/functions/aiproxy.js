@@ -43,7 +43,8 @@ const HOSTS_PERMITIDOS = [
   'api.runwayml.com',
   'api.dev.runwayml.com',
   'api.minimaxi.chat',
-  'api.minimax.io'
+  'api.minimax.io',
+  'api.anthropic.com',   // Claude — análisis de imágenes y texto (planificador de turnos, etc.)
 ];
 
 exports.handler = async (event) => {
@@ -81,6 +82,11 @@ exports.handler = async (event) => {
   if (body && event.isBase64Encoded) body = Buffer.from(body, 'base64').toString('utf8');
 
   const init = { method: event.httpMethod, headers: { Authorization: auth, 'Content-Type': 'application/json' } };
+  // Anthropic exige x-api-key en lugar de Authorization + cabecera de versión
+  if (host === 'api.anthropic.com') {
+    const apiKey = auth.replace(/^Bearer\s+/i, '');
+    init.headers = { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' };
+  }
   if (h['accept'] || h['Accept']) init.headers['Accept'] = h['accept'] || h['Accept'];
   if (event.httpMethod !== 'GET' && event.httpMethod !== 'HEAD' && body) init.body = body;
 
