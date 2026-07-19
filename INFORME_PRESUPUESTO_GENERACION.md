@@ -106,9 +106,14 @@ TÚ abres la herramienta en tu navegador e inicias sesión con tu correo de admi
    versiones objetivo de fitness, y clips promedio por clase de Academia.
 4. Pulsa "🔄 Recalcular presupuesto" y lee el desglose por categoría y el total en USD
    al final.
-5. Los números de "falta" deben coincidir con los que ya ves en
-   `escaner_faltantes_total.html` — si no coinciden, algo cambió entre un escaneo y otro
-   (por ejemplo, generaste algo entre medio).
+5. Para **Academia, Hub y Corte** los números de "falta" deben coincidir con los que ya
+   ves en `escaner_faltantes_total.html` (mismo criterio de link vacío/corrupto) — si no
+   coinciden, algo cambió entre un escaneo y otro. **Para Fitness la comparación no es
+   1 a 1**: el Escáner Total nunca calculó un total real de fitness (solo resume lo que
+   ya existe y marca links corruptos, porque el catálogo diario es combinatorio); esta
+   herramienta nueva es la primera que compara contra el universo fijo de 81 combos, así
+   que su conteo de fitness no tiene un equivalente exacto para contrastar en el otro
+   escáner.
 
 ## 8. Archivos tocados/creados
 

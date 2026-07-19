@@ -185,9 +185,12 @@
   }
 
   /* ── Índice de video de fitness: "base_NN" -> clave real ──
-     El slug del ejercicio va después de _NN_ y puede tener guiones bajos,
-     así que se busca el ÚLTIMO segmento "_NN_" (justo antes del slug),
-     igual que hace el agrupamiento de escaner_faltantes_total.html. */
+     OJO: NO es el mismo regex que usa el agrupamiento de
+     escaner_faltantes_total.html (ese corta en el PRIMER "_NN_", lo que
+     recortaría mal el "_12" cuando nej=12). Aquí se necesita el base exacto
+     (claveImgBase = grupo_motor_equipo_nej), así que se toma el ÚLTIMO
+     segmento "_NN_" antes del slug del ejercicio — funciona mientras ningún
+     nombre de ejercicio contenga un número de 2 cifras. */
   function indexarFitVideos(){
     const idx = {};
     Object.keys(FIT_V).forEach(k=>{
