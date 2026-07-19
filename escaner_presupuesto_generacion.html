@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presupuesto IA · ¿Cuánto cuesta generar lo que falta?</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Inter:wght@400;600&display=swap');
+  *{box-sizing:border-box;}
+  body{background:#020617;color:#fff;font-family:'Inter',sans-serif;margin:0 auto;padding:24px;max-width:960px;}
+  h1{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px;}
+  .sub{color:#94a3b8;font-size:13px;margin-bottom:20px;line-height:1.6;}
+  .box{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:18px;margin-bottom:16px;}
+  label{display:block;font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+  input,select{width:100%;padding:10px 12px;background:#020617;border:1px solid #1e293b;border-radius:8px;color:#fff;font-size:13px;margin-bottom:10px;font-family:inherit;}
+  button{padding:12px 20px;background:#1d4ed8;color:#fff;border:0;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  button.mini{padding:7px 12px;font-size:11px;background:#0e7490;}
+  .estado{font-size:12px;margin-top:10px;min-height:16px;}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
+  .chip{flex:1;min-width:130px;background:#0b1120;border:1px solid #1e293b;border-radius:10px;padding:12px;text-align:center;}
+  .chip .num{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;}
+  .chip .lbl{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+  .chip.ok .num{color:#22c55e;} .chip.miss .num{color:#f87171;} .chip.warn .num{color:#facc15;}
+  .row{display:flex;gap:10px;align-items:center;padding:9px 12px;background:#0b1120;border:1px solid #1e293b;border-radius:8px;margin-bottom:6px;font-size:12px;flex-wrap:wrap;}
+  .row.total{border-color:#1d4ed8;background:#0b1230;font-weight:700;}
+  .row .nom{flex:1;min-width:150px;}
+  .row .cuenta{color:#94a3b8;font-family:monospace;font-size:11px;}
+  .row .sub{color:#fff;font-weight:700;margin:0;min-width:90px;text-align:right;}
+  .badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.5px;flex:none;}
+  .b-have{background:#065f46;color:#6ee7b7;}
+  .b-miss{background:#7f1d1d;color:#fca5a5;}
+  h3{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:#60a5fa;margin:24px 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .nota{font-size:11px;color:#64748b;line-height:1.6;margin-top:8px;}
+  .aviso{font-size:12px;color:#fcd34d;background:#78350f22;border:1px solid #78350f;border-radius:8px;padding:12px;line-height:1.6;margin-bottom:14px;}
+  a{color:#60a5fa;}
+  .cols{display:flex;gap:12px;flex-wrap:wrap;}
+  .cols > div{flex:1;min-width:220px;}
+</style>
+</head>
+<body>
+
+<h1>💰 Presupuesto IA · ¿Cuánto cuesta generar lo que falta?</h1>
+<div class="sub">
+  Calcula, sobre lo que YA existe en Firebase hoy, cuántas piezas de media faltan por generar
+  (Academia, Fitness, Hub, Corte) y una <b>estimación de gasto en USD</b> según el precio por
+  llamada que tú ajustes. Solo LEE Firebase, no escribe nada. Para el detalle completo de
+  qué falta usa <a href="escaner_faltantes_total.html">🛰️ el Escáner Total</a>.
+</div>
+
+<div class="aviso">
+  ⚠️ <b>Los precios de abajo son estimados por el asistente</b>, no vienen guardados en ningún
+  lugar del sistema — este repositorio no tiene ningún precio real de Replicate/OpenAI/etc.
+  guardado. Verifica el precio actual de <code>flux-dev</code> y <code>wan-2.2-t2v-fast</code>
+  en <a href="https://replicate.com/pricing" target="_blank" rel="noopener">replicate.com/pricing</a>
+  (u otro proveedor si usas otra clave) y ajusta los campos antes de confiar en el total.
+</div>
+
+<div class="box" id="paso1">
+  <label>Correo administradora</label>
+  <input type="email" id="email" placeholder="fatimahairstudio082@gmail.com">
+  <label>Contraseña</label>
+  <input type="password" id="pass" placeholder="••••••••">
+  <button id="btnLogin">🔑 Iniciar sesión y escanear todo</button>
+  <div class="estado" id="loginEstado"></div>
+</div>
+
+<div id="panel" style="display:none;">
+  <div class="chips" id="chips"></div>
+
+  <h3>⚙️ Parámetros del presupuesto (editables)</h3>
+  <div class="box">
+    <div class="cols">
+      <div>
+        <label>Precio estimado por imagen (flux-dev) USD</label>
+        <input type="number" id="precImg" value="0.03" step="0.001" min="0">
+      </div>
+      <div>
+        <label>Precio estimado por clip de video (wan-2.2-t2v-fast) USD</label>
+        <input type="number" id="precVid" value="0.05" step="0.001" min="0">
+      </div>
+    </div>
+    <div class="cols">
+      <div>
+        <label>Versiones objetivo por lámina de fitness (máx 12)</label>
+        <input type="number" id="metaVer" value="3" min="1" max="12">
+      </div>
+      <div>
+        <label>Clips promedio de video por clase de Academia</label>
+        <input type="number" id="metaClips" value="1" min="1">
+      </div>
+    </div>
+    <button id="btnRecalcular">🔄 Recalcular presupuesto</button>
+    <div class="nota">
+      Estos 4 valores son tuyos: cámbialos las veces que quieras, el recálculo es instantáneo
+      y no vuelve a leer Firebase (usa los datos ya escaneados).
+    </div>
+  </div>
+
+  <h3>📊 Desglose de piezas faltantes y costo estimado</h3>
+  <div id="desglose"></div>
+
+  <div class="nota" style="margin-top:14px;">
+    "Falta" usa el mismo criterio que <a href="escaner_faltantes_total.html">🛰️ el Escáner Total</a>:
+    sin link o con link corrupto cuenta como pendiente. Fitness se calcula sobre los 81 combos
+    únicos de lámina (grupo · objetivo · equipo · nº de ejercicios), igual que los usa
+    <code>motor_auto.html</code> — no sobre el calendario diario completo (365 días), porque
+    la imagen y el video de fitness no dependen del día.
+  </div>
+</div>
+
+<!-- Catálogo del motor (299 clases reales — el comentario "360" de versiones viejas está desactualizado) -->
+<script src="motor_p1_bioseg_balayage.js"></script>
+<script src="motor_p2_queratina_elevaciones.js"></script>
+<script src="motor_p3_morfologia_alertas.js"></script>
+<script src="motor_helper.js"></script>
+<script src="motor_prompts.js"></script>
+
+<script type="module">
+  import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const CFG = {
+    apiKey:"AIzaSyCcvwC7NYFgXl74YTF8ouzu32SFwB559dw",
+    authDomain:"aprendisajefatima.firebaseapp.com",
+    projectId:"aprendisajefatima",
+    storageBucket:"aprendisajefatima.firebasestorage.app",
+    messagingSenderId:"744176967394",
+    appId:"1:744176967394:web:1db2edfd2498ddbaa7c8bb"
+  };
+  const app = getApps().length ? getApp() : initializeApp(CFG);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const linkOk = u => /^https?:\/\//i.test(String(u||'').trim());
+  const pad2 = n => String(n).padStart(2,'0');
+
+  let CLASES_IMGS = {}, CORTE = {}, HUB = {}, FIT_V = {}, FIT_I = {};
+
+  async function leerColeccion(nombre){
+    const out = {};
+    const snap = await getDocs(collection(db, nombre));
+    snap.forEach(d => out[d.id] = d.data() || {});
+    return out;
+  }
+
+  $('btnLogin').onclick = async function(){
+    const em = $('email').value.trim(), pw = $('pass').value;
+    if(!em || !pw){ $('loginEstado').textContent='Completa correo y contraseña.'; $('loginEstado').style.color='#fca5a5'; return; }
+    $('btnLogin').disabled = true; $('loginEstado').textContent='⏳ Entrando…'; $('loginEstado').style.color='#fcd34d';
+    try{
+      await signInWithEmailAndPassword(auth, em, pw);
+      $('loginEstado').textContent='⏳ Leyendo Firebase (5 colecciones)…';
+      [CLASES_IMGS, CORTE, HUB, FIT_V, FIT_I] = await Promise.all([
+        leerColeccion('clases_imgs'),
+        leerColeccion('corte_modulos'),
+        leerColeccion('hub_tarjetas'),
+        leerColeccion('fitness_videos'),
+        leerColeccion('fitness_imgs')
+      ]);
+      $('loginEstado').textContent='✅ Sesión iniciada · escaneo completo';
+      $('loginEstado').style.color='#22c55e';
+      $('panel').style.display='block';
+      recalcular();
+    }catch(e){
+      // Igual que las páginas nuevas: el motivo EXACTO en rojo, nunca en silencio.
+      $('loginEstado').textContent='❌ '+(e.code||e.message);
+      $('loginEstado').style.color='#fca5a5';
+      $('btnLogin').disabled = false;
+    }
+  };
+
+  /* ── ACADEMIA · igual criterio que escaner_faltantes_total.html:
+        imagen = url_jpg || url · video = url_video ── */
+  function estadoClase(id){
+    const u = CLASES_IMGS[id] || {};
+    const imgUrl = u.url_jpg || u.url || '';
+    const vidUrl = u.url_video || '';
+    return {
+      img: imgUrl && linkOk(imgUrl) ? 'have' : 'miss',
+      vid: vidUrl && linkOk(vidUrl) ? 'have' : 'miss'
+    };
+  }
+
+  /* ── Índice de video de fitness: "base_NN" -> clave real ──
+     OJO: NO es el mismo regex que usa el agrupamiento de
+     escaner_faltantes_total.html (ese corta en el PRIMER "_NN_", lo que
+     recortaría mal el "_12" cuando nej=12). Aquí se necesita el base exacto
+     (claveImgBase = grupo_motor_equipo_nej), así que se toma el ÚLTIMO
+     segmento "_NN_" antes del slug del ejercicio — funciona mientras ningún
+     nombre de ejercicio contenga un número de 2 cifras. */
+  function indexarFitVideos(){
+    const idx = {};
+    Object.keys(FIT_V).forEach(k=>{
+      const m = k.match(/^(.+)_(\d{2})_.+$/);
+      if(m) idx[m[1]+'_'+m[2]] = k;
+    });
+    return idx;
+  }
+
+  function presupuestoFitness(metaVer, idxVid){
+    const combos = (window.MOTOR_PROMPTS && window.MOTOR_PROMPTS.fitnessCombos) ? window.MOTOR_PROMPTS.fitnessCombos() : [];
+    let laminaFaltan = 0, panelesFaltantes = 0, clipsFaltantes = 0;
+    for(const c of combos){
+      const nej = (c.ejercicios && c.ejercicios.length) ? c.ejercicios.length : (c.nej || 0);
+      for(let v=1; v<=metaVer; v++){
+        const key = c.claveImgBase+'_v'+v;
+        const it = FIT_I[key];
+        const ok = it && linkOk(it.url);
+        if(!ok){ laminaFaltan++; panelesFaltantes += nej; }
+      }
+      for(let i=1; i<=nej; i++){
+        const prefix = c.claveImgBase+'_'+pad2(i);
+        const real = idxVid[prefix];
+        const ok = real && linkOk((FIT_V[real]||{}).url_video);
+        if(!ok) clipsFaltantes++;
+      }
+    }
+    return { totalCombos: combos.length, laminaFaltan, panelesFaltantes, clipsFaltantes };
+  }
+
+  function chip(num,lbl,cls){ return '<div class="chip '+cls+'"><div class="num">'+num+'</div><div class="lbl">'+lbl+'</div></div>'; }
+
+  function pintarChips(acaImgFalta, acaVidFalta, corteFalta, hubFalta, fit){
+    const totalAca = (window.MOTOR_FLAT||[]).length;
+    $('chips').innerHTML =
+      chip((totalAca-acaImgFalta)+' / '+totalAca,'Academia · imágenes', acaImgFalta?'miss':'ok')
+      + chip((totalAca-acaVidFalta)+' / '+totalAca,'Academia · videos', acaVidFalta?'miss':'ok')
+      + chip((7-corteFalta)+' / 7','Corte M1–M7', corteFalta?'miss':'ok')
+      + chip(hubFalta+' faltan','Hub · tarjetas', hubFalta?'miss':'ok')
+      + chip(fit.panelesFaltantes+' paneles','Fitness · imagen pendiente', fit.panelesFaltantes?'miss':'ok')
+      + chip(fit.clipsFaltantes+' clips','Fitness · video pendiente', fit.clipsFaltantes?'miss':'ok');
+  }
+
+  function fila(nombre, cuentaTxt, subtotal, esTotal){
+    return '<div class="row'+(esTotal?' total':'')+'"><span class="nom">'+esc(nombre)+'</span>'
+      + '<span class="cuenta">'+esc(cuentaTxt)+'</span>'
+      + '<span class="sub">$'+subtotal.toFixed(2)+'</span></div>';
+  }
+
+  function recalcular(){
+    const precImg = parseFloat($('precImg').value) || 0;
+    const precVid = parseFloat($('precVid').value) || 0;
+    const metaVer = Math.min(12, Math.max(1, parseInt($('metaVer').value) || 3));
+    const metaClips = Math.max(1, parseInt($('metaClips').value) || 1);
+
+    const flat = window.MOTOR_FLAT || [];
+    const acaImgFalta = flat.filter(c=>estadoClase(c.id).img!=='have').length;
+    const acaVidFalta = flat.filter(c=>estadoClase(c.id).vid!=='have').length;
+
+    let corteFalta = 0;
+    for(let i=1;i<=7;i++){ if(!linkOk((CORTE['M'+i]||{}).imgUrl)) corteFalta++; }
+
+    const hubIds = Object.keys(HUB);
+    const hubFalta = hubIds.filter(id=>!linkOk((HUB[id]||{}).imgUrl)).length;
+
+    const idxVid = indexarFitVideos();
+    const fit = presupuestoFitness(metaVer, idxVid);
+
+    pintarChips(acaImgFalta, acaVidFalta, corteFalta, hubFalta, fit);
+
+    const subAcaImg = acaImgFalta * precImg;
+    const subAcaVid = acaVidFalta * metaClips * precVid;
+    const subFitImg = fit.panelesFaltantes * precImg;
+    const subFitVid = fit.clipsFaltantes * precVid;
+    const subHub = hubFalta * precImg;
+    const subCorte = corteFalta * precImg;
+    const total = subAcaImg + subAcaVid + subFitImg + subFitVid + subHub + subCorte;
+
+    $('desglose').innerHTML =
+      fila('🎓 Academia · imagen', acaImgFalta+' faltantes × $'+precImg.toFixed(3), subAcaImg)
+      + fila('🎓 Academia · video', acaVidFalta+' faltantes × '+metaClips+' clip(s) × $'+precVid.toFixed(3), subAcaVid)
+      + fila('🏋️ Fitness · imagen (láminas)', fit.laminaFaltan+' lámina(s) faltantes → '+fit.panelesFaltantes+' panel(es) × $'+precImg.toFixed(3), subFitImg)
+      + fila('🏋️ Fitness · video (clips)', fit.clipsFaltantes+' clip(s) faltantes × $'+precVid.toFixed(3), subFitVid)
+      + fila('🎴 Hub', hubFalta+' tarjeta(s) faltante(s) × $'+precImg.toFixed(3), subHub)
+      + fila('✂️ Corte M1–M7', corteFalta+' módulo(s) faltante(s) × $'+precImg.toFixed(3), subCorte)
+      + fila('💰 TOTAL ESTIMADO PARA COMPLETAR', 'suma de las categorías de arriba', total, true);
+  }
+
+  $('btnRecalcular').onclick = recalcular;
+</script>
+
+</body>
+</html>
