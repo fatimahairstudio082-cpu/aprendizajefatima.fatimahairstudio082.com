@@ -210,6 +210,37 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   .cday .cn{font-size:9px;}
   .cday .ci{font-size:13px;}
 }
+
+/* ── Chips de día con fecha (desglose) ── */
+.dia-chip{flex-direction:column;gap:0;line-height:1;}
+.dia-chip .dc-wd{font-size:8px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.3px;}
+.dia-chip .dc-n{font-size:15px;font-weight:800;}
+
+/* ── Escáner: lienzo para tocar la fila ── */
+#scanCanvasWrap{margin-top:12px;display:none;}
+#scanCanvasWrap p{font-size:11px;color:var(--oro2);margin-bottom:6px;text-align:center;font-weight:700;}
+#scanCanvas{width:100%;height:auto;border:1px solid var(--oro);border-radius:8px;cursor:crosshair;display:block;}
+
+/* ── Botón imprimir ── */
+.print-bar{margin:16px 16px 0;display:flex;gap:8px;flex-wrap:wrap;}
+.btn-print{flex:1;min-width:140px;background:var(--oro);color:#0a0a0a;border:none;border-radius:10px;
+  padding:13px;font-family:inherit;font-size:13px;font-weight:800;letter-spacing:.5px;cursor:pointer;}
+.btn-print.sec{background:transparent;color:var(--oro);border:1px solid var(--oro);}
+
+/* ── Impresión ── */
+@media print{
+  @page{margin:12mm;}
+  body{background:#fff !important;color:#111 !important;padding:0 !important;}
+  .hdr,.strip-lbl,.strip,.simp,.leg,.print-bar,.nav,.overlay,.picker,.toast{display:none !important;}
+  #imprimibleTit{display:block !important;}
+  .cal,.desglose,.resumen{margin:6mm 0 !important;}
+  .desg-bloque,.resumen,.cday,.dia-chip,.turno-card{
+    border-color:#999 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .desg-nombre,.desg-letra,.desg-total,.res-letra,.ri-n{color:#111 !important;}
+  .cal-hdr h2,.resumen h3{color:#111 !important;}
+  .cday{background:#fff !important;}
+}
+#imprimibleTit{display:none;margin:16px 16px 4px;font-size:18px;font-weight:900;color:var(--oro2);}
 </style>
 </head>
 <body>
@@ -257,9 +288,18 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="li"><div class="ld ld-f">F</div> Festivo</div>
 </div>
 
+<!-- Título solo para impresión -->
+<div id="imprimibleTit">—</div>
+
 <!-- Desglose por turno -->
 <div style="margin:16px 16px 4px;font-size:10px;color:var(--txt2);letter-spacing:2px;text-transform:uppercase;">Mis días por turno</div>
 <div class="desglose" id="desglose"></div>
+
+<!-- Imprimir / guardar -->
+<div class="print-bar">
+  <button class="btn-print" onclick="imprimirHorario()">🖨️ Imprimir / Guardar PDF</button>
+  <button class="btn-print sec" onclick="leerHorarioEnVoz()">🔊 Escuchar</button>
+</div>
 
 <!-- Resumen del mes -->
 <div class="resumen" id="resumen">
@@ -304,6 +344,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       </div>
     </div>
     <div class="ai-status" id="aiStatus"></div>
+
+    <!-- Lienzo para tocar tu fila (respaldo si no te encuentra solo) -->
+    <div id="scanCanvasWrap">
+      <p>👆 Toca tu fila (la de tu nombre) en la imagen</p>
+      <canvas id="scanCanvas"></canvas>
+    </div>
 
     <!-- Botón de voz (aparece tras escanear) -->
     <div id="vozWrap" style="display:none;margin-top:12px;text-align:center;">
@@ -451,6 +497,12 @@ function renderCal(){
     grid.appendChild(div);
   }
   renderResumen();
+  // Título para impresión (nombre + mes)
+  const tit=document.getElementById('imprimibleTit');
+  if(tit){
+    let nom=''; try{ nom=(localStorage.getItem('fp_nombre_empleado')||'').trim(); }catch(_){}
+    tit.textContent=(nom?nom+' · ':'')+'Horario '+MESES[calMes].charAt(0).toUpperCase()+MESES[calMes].slice(1)+' '+calAno;
+  }
 }
 
 /* ── RESUMEN ── */
@@ -492,7 +544,10 @@ function renderDesglose(){
     const blk = document.createElement('div');
     blk.className = 'desg-bloque '+cls;
     const diasHtml = dias.length
-      ? `<div class="desg-dias">${dias.map(d=>`<div class="dia-chip">${d}</div>`).join('')}</div>`
+      ? `<div class="desg-dias">${dias.map(d=>{
+          const wd=DIAS[new Date(calAno,calMes,d).getDay()].substring(0,3);
+          return `<div class="dia-chip"><span class="dc-wd">${wd}</span><span class="dc-n">${d}</span></div>`;
+        }).join('')}</div>`
       : `<div class="desg-vacio">Sin días asignados este mes</div>`;
     blk.innerHTML = `
       <div class="desg-hdr">
@@ -558,7 +613,11 @@ function guardarNombre(){
   try{ if(v) localStorage.setItem('fp_nombre_empleado',v); }catch(_){}
 }
 function cargarNombre(){
-  try{ const v=localStorage.getItem('fp_nombre_empleado')||''; document.getElementById('nombreEmpleado').value=v; }catch(_){}
+  try{
+    let v=localStorage.getItem('fp_nombre_empleado');
+    if(v==null||v===''){ v='EDDEILIS'; localStorage.setItem('fp_nombre_empleado',v); }  // preajuste
+    document.getElementById('nombreEmpleado').value=v;
+  }catch(_){}
 }
 
 function mapTurno(s){
@@ -650,59 +709,245 @@ function parsearTexto(){
   mostrarPreview(resultado);
 }
 
-/* ── ESCÁNER DE FOTO ── */
+/* ════════════════════════════════════════════════════════════════
+   ESCÁNER DE FOTO — lectura por COLOR en rejilla (no por letras)
+   El cuadrante codifica el turno por el COLOR de cada celda:
+     amarillo=mañana · azul=tarde · naranja=noche · verde=libre · rojo=vacaciones
+   Los días libres/vacaciones NO llevan letra, así que leer letras es
+   imposible: hay que leer color, alineado a las columnas de cada día.
+   ════════════════════════════════════════════════════════════════ */
 let ultimoResultadoEscaner = null;
+let _scanMeta = null;   // {data,W,H,cols,hlines,cellH,mes,ano,diasMes}
+
+// Clasifica un color RGB en turno por su TONO (matiz HSV). Devuelve clave de TURNOS o null.
+function clasificarColor(r,g,b){
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), df=mx-mn;
+  const v=mx/255, s=mx===0?0:df/mx;
+  if(v<0.22 || s<0.18) return null;            // texto negro o blanco/gris sin color
+  let h;
+  if(df===0) h=0;
+  else if(mx===r) h=60*((((g-b)/df)%6)+6)%360;
+  else if(mx===g) h=60*(((b-r)/df)+2);
+  else h=60*(((r-g)/df)+4);
+  if(h<0) h+=360;
+  if(h<20 || h>=345) return 'festivo';   // rojo   -> vacaciones
+  if(h<52)  return 'noche';              // naranja/ámbar -> noche  (medido ~45°)
+  if(h<70)  return 'manana';             // amarillo -> mañana      (medido ~60°)
+  if(h<170) return 'libre';              // verde  -> libre         (medido ~89°)
+  if(h>=175 && h<260) return 'tarde';    // azul   -> tarde         (medido ~196°)
+  return null;
+}
+
+// Color dominante (saturado) de una celda alrededor de (cx,cy). Ignora texto y bordes.
+function colorCelda(data,W,H,cx,cy,hw,hh){
+  let br=0,bg=0,bb=0,n=0;
+  const sx=Math.max(1,Math.floor(hw/4)), sy=Math.max(1,Math.floor(hh/4));
+  for(let y=cy-hh;y<=cy+hh;y+=sy){
+    for(let x=cx-hw;x<=cx+hw;x+=sx){
+      if(x<0||y<0||x>=W||y>=H) continue;
+      const i=(y*W+x)*4, r=data[i],g=data[i+1],b=data[i+2];
+      const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+      const s=mx===0?0:(mx-mn)/mx, v=mx/255;
+      if(v<0.22||s<0.18) continue;
+      br+=r; bg+=g; bb+=b; n++;
+    }
+  }
+  if(!n) return null;
+  return {r:br/n|0, g:bg/n|0, b:bb/n|0};
+}
+
+// Líneas verticales de la rejilla (columnas): columnas de píxeles oscuros de alto a bajo.
+function detectarColumnas(data,W,H){
+  const y0=Math.floor(H*0.08), y1=Math.floor(H*0.95), tot=(y1-y0)/2;
+  const thr=tot*0.5, lines=[]; let run=[];
+  for(let x=0;x<W;x++){
+    let c=0;
+    for(let y=y0;y<y1;y+=2){ const i=(y*W+x)*4; if((data[i]+data[i+1]+data[i+2])/3 < 110) c++; }
+    if(c>=thr) run.push(x);
+    else if(run.length){ lines.push(Math.round(run.reduce((a,b)=>a+b,0)/run.length)); run=[]; }
+  }
+  if(run.length) lines.push(Math.round(run.reduce((a,b)=>a+b,0)/run.length));
+  return lines;
+}
+
+// Líneas horizontales de la rejilla (filas).
+function detectarFilas(data,W,H){
+  const x0=Math.floor(W*0.02), x1=Math.floor(W*0.98), thr=((x1-x0)/2)*0.5;
+  const lines=[]; let run=[];
+  for(let y=0;y<H;y++){
+    let c=0;
+    for(let x=x0;x<x1;x+=2){ const i=(y*W+x)*4; if((data[i]+data[i+1]+data[i+2])/3 < 110) c++; }
+    if(c>=thr) run.push(y);
+    else if(run.length){ lines.push(Math.round(run.reduce((a,b)=>a+b,0)/run.length)); run=[]; }
+  }
+  if(run.length) lines.push(Math.round(run.reduce((a,b)=>a+b,0)/run.length));
+  return lines;
+}
+
+// Centros X de las columnas de DÍA (excluye la columna ancha del nombre).
+function centrosDia(lines,diasMes){
+  if(lines.length<Math.min(diasMes,8)) return null;
+  const celdas=[];
+  for(let i=0;i<lines.length-1;i++) celdas.push({x0:lines[i],x1:lines[i+1],w:lines[i+1]-lines[i]});
+  const ws=celdas.map(c=>c.w).slice().sort((a,b)=>a-b);
+  const medW=ws[Math.floor(ws.length/2)];
+  const dias=celdas.filter(c=>c.w>medW*0.6 && c.w<medW*1.8);
+  if(dias.length<diasMes-3) return null;
+  return dias.slice(-diasMes).map(c=>Math.round((c.x0+c.x1)/2));
+}
+
+function medianaGap(lines){
+  const g=[]; for(let i=1;i<lines.length;i++) g.push(lines[i]-lines[i-1]);
+  g.sort((a,b)=>a-b); return g[Math.floor(g.length/2)]||20;
+}
+
+// Ajusta y al centro de la fila que contiene 'yc' usando las líneas horizontales.
+function snapFila(yc){
+  const m=_scanMeta; if(!m||!m.hlines||m.hlines.length<2) return {yc, cellH:m?m.cellH:20};
+  for(let i=0;i<m.hlines.length-1;i++)
+    if(yc>=m.hlines[i] && yc<=m.hlines[i+1]) return {yc:Math.round((m.hlines[i]+m.hlines[i+1])/2), cellH:m.hlines[i+1]-m.hlines[i]};
+  return {yc, cellH:m.cellH};
+}
+
+// Lee la fila (centro y=yc) muestreando el color de cada columna de día.
+function leerFila(yc){
+  const m=_scanMeta; const res={};
+  const s=snapFila(yc); yc=s.yc; const cellH=s.cellH;
+  const pitch = m.cols.length>1 ? (m.cols[1]-m.cols[0]) : 20;
+  const hw=Math.max(4,Math.round(pitch*0.32)), hh=Math.max(4,Math.round(cellH*0.32));
+  for(let d=0; d<Math.min(m.cols.length,m.diasMes); d++){
+    const c=colorCelda(m.data,m.W,m.H,m.cols[d],yc,hw,hh);
+    const t = c ? clasificarColor(c.r,c.g,c.b) : null;
+    if(!t) continue;
+    const f=new Date(m.ano,m.mes,d+1);
+    if(f.getMonth()===m.mes) res[k(f)]=t;
+  }
+  return res;
+}
+
+function cargarImagen(file){
+  return new Promise((ok,err)=>{
+    const img=new Image();
+    img.onload=()=>ok(img); img.onerror=()=>err(new Error('No pude abrir la imagen.'));
+    img.src=URL.createObjectURL(file);
+  });
+}
+function dibujarCanvas(img){
+  const MAXW=1600, scale=Math.min(1,MAXW/img.naturalWidth);
+  const W=Math.round(img.naturalWidth*scale), H=Math.round(img.naturalHeight*scale);
+  const canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true}); ctx.drawImage(img,0,0,W,H);
+  return {canvas,ctx,W,H};
+}
+
+function normNombre(s){ return (s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Z]/g,''); }
+function distancia(a,b){ // Levenshtein
+  const m=a.length,n=b.length, dp=Array.from({length:m+1},()=>new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) dp[i][0]=i;
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return dp[m][n];
+}
+// Localiza la fila por el nombre con Tesseract. Devuelve y-centro o null si no hay confianza.
+async function localizarFilaPorNombre(canvas,nombre){
+  try{
+    if(typeof Tesseract==='undefined') return null;
+    const res=await Tesseract.recognize(canvas,'spa+eng',{});
+    const words=(res.data&&res.data.words)||[];
+    const obj=normNombre(nombre); if(obj.length<3) return null;
+    let mejor=null, mejorD=1;
+    for(const w of words){
+      const t=normNombre(w.text||''); if(t.length<3) continue;
+      const d=distancia(t,obj)/Math.max(t.length,obj.length);
+      if(d<mejorD){ mejorD=d; mejor=w; }
+    }
+    if(mejor && mejorD<=0.34 && mejor.bbox) return Math.round((mejor.bbox.y0+mejor.bbox.y1)/2);
+  }catch(_){}
+  return null;
+}
+
+function finalizarLectura(nombre,yc){
+  const m=_scanMeta; if(!m) return;
+  const res=leerFila(yc);
+  const st=document.getElementById('aiStatus');
+  const total=Object.keys(res).length;
+  const cnt={manana:0,tarde:0,noche:0,libre:0,festivo:0};
+  Object.values(res).forEach(t=>{ if(cnt[t]!==undefined) cnt[t]++; });
+  if(total < m.diasMes-3){
+    st.className='ai-status err';
+    st.textContent='⚠️ Solo leí '+total+' de '+m.diasMes+' días. Sube la foto más recta y completa, o toca de nuevo tu fila.';
+  } else {
+    st.className='ai-status ok';
+    st.textContent='✅ '+(nombre||'Tu horario')+' — M:'+cnt.manana+' · T:'+cnt.tarde+' · N:'+cnt.noche+' · L:'+cnt.libre+' · Vac:'+cnt.festivo;
+  }
+  ultimoResultadoEscaner={resultado:res, nombre:(nombre||'Tu horario'), mes:m.mes, ano:m.ano};
+  document.getElementById('vozWrap').style.display='block';
+  mostrarPreview(res, nombre);
+}
+
+function mostrarLienzoParaTocar(canvas,W,H){
+  const wrap=document.getElementById('scanCanvasWrap'), c=document.getElementById('scanCanvas');
+  c.width=W; c.height=H; c.getContext('2d').drawImage(canvas,0,0);
+  wrap.style.display='block';
+  c.onclick=(e)=>{
+    const r=c.getBoundingClientRect();
+    const yc=Math.round((e.clientY-r.top)*(H/r.height));
+    const nombre=(document.getElementById('nombreEmpleado').value.trim()||'').toUpperCase();
+    finalizarLectura(nombre,yc);
+  };
+}
 
 async function escanearHorario(input){
   const file=input.files[0]; if(!file) return;
-  const nombre=document.getElementById('nombreEmpleado').value.trim().toUpperCase();
-  if(!nombre){ toast('⚠️ Escribe tu nombre primero', true); input.value=''; return; }
   const st=document.getElementById('aiStatus');
-  document.getElementById('vozWrap').style.display='none';
-  ultimoResultadoEscaner=null;
   const mes=parseInt(document.getElementById('impMes').value);
   const ano=parseInt(document.getElementById('impAno').value);
   const diasMes=new Date(ano,mes+1,0).getDate();
-  st.className='ai-status wait'; st.textContent='⏳ Leyendo imagen… (10-20 segundos)';
+  document.getElementById('vozWrap').style.display='none';
+  document.getElementById('scanCanvasWrap').style.display='none';
+  ultimoResultadoEscaner=null; _scanMeta=null;
+  st.className='ai-status wait'; st.textContent='⏳ Procesando la imagen…';
   try{
-    if(typeof Tesseract==='undefined') throw new Error('Cargando lector… recarga la página con internet y vuelve a intentarlo.');
-    const res=await Tesseract.recognize(file,'spa+eng',{
-      logger:m=>{ if(m.status==='recognizing text') st.textContent='⏳ Leyendo… '+Math.round((m.progress||0)*100)+'%'; }
-    });
-    const lineas=res.data.text.split('\n').map(l=>l.trim()).filter(Boolean);
-    const nomNorm=nombre.replace(/\s+/g,'');
-    let fila=null;
-    for(const l of lineas){
-      const lN=l.toUpperCase().replace(/\s+/g,'');
-      const coincide=lN.includes(nomNorm)||(nomNorm.length>=4 && nomNorm.split('').filter(c=>lN.includes(c)).length>=Math.floor(nomNorm.length*.75));
-      if(coincide&&(l.toUpperCase().match(/[MTNLF]/g)||[]).length>=3){ fila=l; break; }
+    const img=await cargarImagen(file);
+    const {canvas,ctx,W,H}=dibujarCanvas(img);
+    const data=ctx.getImageData(0,0,W,H).data;
+    const cols=centrosDia(detectarColumnas(data,W,H),diasMes);
+    if(!cols) throw new Error('No distingo la rejilla del horario. Sube una foto más recta y completa (que se vean todos los días).');
+    const hlines=detectarFilas(data,W,H);
+    const cellH = hlines.length>1 ? Math.round(medianaGap(hlines)) : Math.round(H/20);
+    _scanMeta={data,W,H,cols,hlines,cellH,mes,ano,diasMes};
+    mostrarLienzoParaTocar(canvas,W,H);   // siempre visible para tocar/corregir la fila
+    const nombre=(document.getElementById('nombreEmpleado').value.trim()||'').toUpperCase();
+    let yc=null;
+    if(nombre){ st.textContent='⏳ Buscando tu fila ('+nombre+')…'; yc=await localizarFilaPorNombre(canvas,nombre); }
+    if(yc!=null){
+      finalizarLectura(nombre,yc);
+      const st2=document.getElementById('aiStatus');
+      st2.textContent += '  ·  ¿No es tu fila? Tócala en la imagen.';
+    } else {
+      st.className='ai-status'; st.textContent = nombre
+        ? '👇 No te encontré automáticamente. Toca tu fila en la imagen de abajo.'
+        : '👇 Toca tu fila en la imagen de abajo.';
     }
-    if(!fila){ st.className='ai-status err'; st.textContent='⚠️ No encontré "'+nombre+'" en la imagen. Prueba una foto más clara o más cerca de tu fila.'; input.value=''; return; }
-    const pos=fila.toUpperCase().indexOf(nomNorm.substring(0,Math.min(4,nomNorm.length)));
-    const despues=pos>=0?fila.substring(pos+nomNorm.length):fila;
-    const codigos=(despues.toUpperCase().match(/[MTNLF]/g)||[]);
-    if(codigos.length<3){ st.className='ai-status err'; st.textContent='⚠️ Vi tu fila pero los turnos no se leen bien. Intenta con la foto más nítida.'; input.value=''; return; }
-    const mapaT={M:'manana',T:'tarde',N:'noche',L:'libre',F:'festivo'};
-    const resultado2={};
-    codigos.forEach((c,i)=>{ const d=i+1; if(d>diasMes) return; const t=mapaT[c]; if(!t) return; const f=new Date(ano,mes,d); if(f.getMonth()===mes) resultado2[k(f)]=t; });
-    if(!Object.keys(resultado2).length){ st.className='ai-status err'; st.textContent='⚠️ No se pudieron leer los turnos. Revisa la foto.'; input.value=''; return; }
-    const cnt={manana:0,tarde:0,noche:0,libre:0,festivo:0};
-    Object.values(resultado2).forEach(t=>{ if(cnt[t]!==undefined) cnt[t]++; });
-    st.className='ai-status ok';
-    st.textContent='✅ '+nombre+' — M:'+cnt.manana+' · T:'+cnt.tarde+' · N:'+cnt.noche+' · L:'+(cnt.libre+cnt.festivo);
-    ultimoResultadoEscaner={resultado:resultado2, nombre, mes, ano};
-    document.getElementById('vozWrap').style.display='block';
-    mostrarPreview(resultado2, nombre);
-    leerHorarioEnVoz();
   }catch(e){ st.className='ai-status err'; st.textContent='❌ '+e.message; }
   input.value='';
 }
 
 function leerHorarioEnVoz(){
-  if(!ultimoResultadoEscaner){ toast('Escanea el horario primero', true); return; }
   if(!window.speechSynthesis){ toast('Tu dispositivo no tiene voz disponible', true); return; }
   window.speechSynthesis.cancel();
-  const {resultado, nombre, mes} = ultimoResultadoEscaner;
+  let resultado, nombre, mes;
+  if(ultimoResultadoEscaner){
+    ({resultado, nombre, mes} = ultimoResultadoEscaner);
+  } else {
+    // Sin escaneo reciente: leer el mes visible del calendario
+    resultado={}; mes=calMes;
+    const dm=new Date(calAno,calMes+1,0).getDate();
+    for(let d=1; d<=dm; d++){ const kk=k(new Date(calAno,calMes,d)); if(datos[kk]) resultado[kk]=datos[kk]; }
+    try{ nombre=(localStorage.getItem('fp_nombre_empleado')||'').trim(); }catch(_){ nombre=''; }
+    if(!Object.keys(resultado).length){ toast('No hay turnos en este mes para leer', true); return; }
+  }
   const libres=[], mananas=[], tardes=[], noches=[], festivos=[];
   Object.keys(resultado).sort().forEach(kk=>{
     const d=parseInt(kk.split('-')[2]); const t=resultado[kk];
@@ -764,9 +1009,14 @@ function aplicarPreview(){
   const cnt=Object.keys(previewDatos).length;
   Object.assign(datos,previewDatos); save(); previewDatos=null;
   document.getElementById('prevWrap').style.display='none';
+  const cw=document.getElementById('scanCanvasWrap'); if(cw) cw.style.display='none';
   try{ document.getElementById('impTxt').value=''; }catch(_){}
+  // Saltar el calendario al mes escaneado para que se vea el resultado
+  if(ultimoResultadoEscaner){ calMes=ultimoResultadoEscaner.mes; calAno=ultimoResultadoEscaner.ano; }
   toast('✅ '+cnt+' turnos cargados'); renderHero(); renderStrip(); renderCal();
 }
+
+function imprimirHorario(){ window.print(); }
 
 function cancelarPreview(){
   previewDatos=null; document.getElementById('prevWrap').style.display='none';
