@@ -276,6 +276,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .aux-dia-compas{font-size:12px;font-weight:700;flex:1;line-height:1.6;}
 .aux-tag{cursor:pointer;padding:1px 4px;border-radius:4px;transition:opacity .1s;display:inline;}
 .aux-tag:hover{opacity:.65;text-decoration:underline;}
+/* ── Estadísticas de coincidencia ── */
+.stats-bloque{margin:0 16px 16px;background:var(--pan);border:1.5px solid var(--linea);border-radius:14px;overflow:hidden;}
+.stats-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--linea);}
+.stats-ic{font-size:20px;}
+.stats-tit{font-size:12px;font-weight:800;color:var(--oro2);letter-spacing:.5px;flex:1;}
+.stats-sub{font-size:10px;color:var(--txt2);}
+.stats-lista{padding:8px 14px 12px;display:flex;flex-direction:column;gap:2px;}
+.stats-row{display:flex;align-items:center;gap:8px;padding:5px 2px;}
+.stats-pos{font-size:10px;font-weight:700;color:var(--txt2);min-width:18px;text-align:right;font-variant-numeric:tabular-nums;}
+.stats-nom{font-size:12px;font-weight:800;color:var(--txt);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stats-bar-bg{flex:2;background:rgba(255,255,255,.05);border-radius:3px;height:5px;overflow:hidden;}
+.stats-bar-fill{height:100%;border-radius:3px;background:var(--oro);}
+.stats-cnt{font-size:11px;font-weight:700;color:var(--txt2);min-width:30px;text-align:right;font-variant-numeric:tabular-nums;}
 .aux-hoy-banner{margin-top:14px;padding:9px 16px;border-radius:11px;
   display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
 .aux-hoy-lbl{font-size:10px;color:var(--txt2);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
@@ -358,6 +371,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <!-- Auxiliares por turno (se llena al escanear el cuadrante) -->
 <div id="auxTitWrap" style="display:none;margin:18px 16px 8px;font-size:10px;color:var(--txt2);letter-spacing:2px;text-transform:uppercase;">👥 Auxiliares en mis turnos</div>
 <div id="auxSec"></div>
+<div id="statsSec"></div>
 
 <!-- Escanear horario -->
 <div class="simp" style="margin-top:18px;">
@@ -1250,6 +1264,7 @@ function renderAuxiliares(){
   if(!md||!md.equipo||!md.equipo.length){
     if(tit) tit.style.display='none';
     if(sec) sec.innerHTML='';
+    const ss=document.getElementById('statsSec'); if(ss) ss.innerHTML='';
     renderAuxHoy(); return;
   }
   if(tit) tit.style.display='';
@@ -1307,7 +1322,51 @@ function renderAuxiliares(){
   });
   sec.innerHTML=html||'<div style="margin:0 16px 16px;font-size:11px;color:var(--txt2);font-style:italic;">No hay coincidencias de turno registradas para este mes.</div>';
   renderAuxHoy();
+  renderEstadisticasEquipo();
 }
+
+// Estadísticas: ranking de compañeras por días de coincidencia
+function renderEstadisticasEquipo(){
+  const sec=document.getElementById('statsSec');
+  if(!sec) return;
+  const mesKey=calAno+'-'+pad(calMes+1);
+  const ed=loadEquipo();
+  const md=ed[mesKey];
+  if(!md||!md.equipo||!md.equipo.length){sec.innerHTML='';return;}
+  const {mes,ano,equipo}=md;
+  const diasMes=new Date(ano,mes+1,0).getDate();
+  const userH={};
+  for(let d=1;d<=diasMes;d++){
+    const kk=k(new Date(ano,mes,d));
+    if(datos[kk]) userH[kk]=datos[kk];
+  }
+  const conteo={};
+  for(const kk of Object.keys(userH)){
+    const turno=userH[kk];
+    if(turno==='libre'||turno==='festivo') continue;
+    for(const comp of equipo){
+      if(comp.horario[kk]===turno){
+        conteo[comp.nombre]=(conteo[comp.nombre]||0)+1;
+      }
+    }
+  }
+  const ranking=Object.entries(conteo).sort((a,b)=>b[1]-a[1]);
+  if(!ranking.length){sec.innerHTML='';return;}
+  const maxDias=ranking[0][1];
+  const rows=ranking.map(([nombre,dias],i)=>{
+    const pct=Math.round(dias/maxDias*100);
+    return `<div class="stats-row">
+      <span class="stats-pos">${i+1}</span>
+      <span class="stats-nom">${nombre}</span>
+      <div class="stats-bar-bg"><div class="stats-bar-fill" style="width:${pct}%"></div></div>
+      <span class="stats-cnt">${dias}d</span>
+    </div>`;
+  }).join('');
+  sec.innerHTML=`<div class="stats-bloque">
+    <div class="stats-hdr"><span class="stats-ic">📊</span><span class="stats-tit">Con quién coincides más este mes</span><span class="stats-sub">${ranking.length} personas</span></div>
+    <div class="stats-lista">${rows}</div>
+  </div>`
+;}
 
 // Banner "Hoy vas con…" dentro del hero
 function renderAuxHoy(){
