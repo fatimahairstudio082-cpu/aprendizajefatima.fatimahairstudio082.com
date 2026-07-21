@@ -241,6 +241,49 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   .cday{background:#fff !important;}
 }
 #imprimibleTit{display:none;margin:16px 16px 4px;font-size:18px;font-weight:900;color:var(--oro2);}
+
+/* ── Auxiliares por turno ── */
+.aux-bloque{margin:0 16px 10px;background:var(--pan);border:1.5px solid var(--linea);border-radius:14px;overflow:hidden;}
+.aux-m{border-color:rgba(255,140,0,.35);}
+.aux-m .aux-blq-hdr{background:rgba(255,140,0,.05);}
+.aux-m .aux-turno-letra,.aux-m .aux-turno-nom{color:var(--m);}
+.aux-m .aux-comp-nombre{color:var(--m);border-color:rgba(255,140,0,.35);}
+.aux-m .aux-chip{color:var(--m);border-color:rgba(255,140,0,.4);background:rgba(255,140,0,.09);}
+.aux-t{border-color:rgba(46,134,255,.35);}
+.aux-t .aux-blq-hdr{background:rgba(46,134,255,.05);}
+.aux-t .aux-turno-letra,.aux-t .aux-turno-nom{color:var(--t);}
+.aux-t .aux-comp-nombre{color:var(--t);border-color:rgba(46,134,255,.35);}
+.aux-t .aux-chip{color:var(--t);border-color:rgba(46,134,255,.4);background:rgba(46,134,255,.09);}
+.aux-n{border-color:rgba(139,63,200,.35);}
+.aux-n .aux-blq-hdr{background:rgba(139,63,200,.05);}
+.aux-n .aux-turno-letra,.aux-n .aux-turno-nom{color:var(--n);}
+.aux-n .aux-comp-nombre{color:var(--n);border-color:rgba(139,63,200,.35);}
+.aux-n .aux-chip{color:var(--n);border-color:rgba(139,63,200,.4);background:rgba(139,63,200,.09);}
+.aux-blq-hdr{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--linea);}
+.aux-turno-letra{font-size:36px;font-weight:900;line-height:1;letter-spacing:-2px;width:38px;text-align:center;}
+.aux-turno-info{flex:1;}
+.aux-turno-nom{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+.aux-turno-h{font-size:10px;opacity:.5;margin-top:1px;line-height:1.5;}
+.aux-turno-total{text-align:right;}
+.aux-turno-total-n{font-size:11px;font-weight:700;color:var(--txt2);}
+.aux-turno-total-l{font-size:9px;opacity:.5;letter-spacing:.4px;}
+.aux-comp-lista{padding:10px 14px 12px;display:flex;flex-direction:column;gap:10px;}
+.aux-comp-row{display:flex;align-items:flex-start;gap:10px;}
+.aux-comp-nombre{font-size:11px;font-weight:800;letter-spacing:.8px;min-width:76px;padding:5px 10px;
+  border-radius:20px;border:1px solid;cursor:pointer;background:rgba(255,255,255,.04);
+  transition:filter .12s;user-select:none;white-space:nowrap;text-align:center;}
+.aux-comp-nombre:hover{filter:brightness(1.3);}
+.aux-comp-dias{display:flex;flex-wrap:wrap;gap:4px;flex:1;}
+.aux-chip{width:30px;height:34px;border-radius:8px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;border:1.5px solid;font-variant-numeric:tabular-nums;}
+.aux-chip .ac-wd{font-size:7px;font-weight:700;opacity:.65;text-transform:uppercase;letter-spacing:.3px;}
+.aux-chip .ac-n{font-size:13px;font-weight:800;line-height:1.1;}
+.aux-hoy-banner{margin-top:14px;padding:9px 16px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
+.aux-hoy-lbl{font-size:10px;color:var(--txt2);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
+.aux-hoy-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.aux-hoy-chip{display:flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;
+  border:1.5px solid;font-size:12px;font-weight:800;}
 </style>
 </head>
 <body>
@@ -263,6 +306,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="turno-nombre" id="heroNombre">SIN TURNO ASIGNADO</div>
     <div class="turno-hora" id="heroHora"></div>
   </div>
+  <div id="auxHoy" style="display:none;"></div>
 </div>
 
 <!-- Próximos 7 días -->
@@ -312,6 +356,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="res-item ri-f"><div class="res-letra">F</div><div class="ri-n" id="rf">0</div><div class="ri-l">FESTIVOS</div></div>
   </div>
 </div>
+
+<!-- Auxiliares por turno (se llena al escanear el cuadrante) -->
+<div id="auxTitWrap" style="display:none;margin:18px 16px 8px;font-size:10px;color:var(--txt2);letter-spacing:2px;text-transform:uppercase;">👥 Auxiliares en mis turnos</div>
+<div id="auxSec"></div>
 
 <!-- Escanear horario -->
 <div class="simp" style="margin-top:18px;">
@@ -455,6 +503,7 @@ function renderHero(){
   document.getElementById('heroLetra').textContent  = inf ? inf.letra : '—';
   document.getElementById('heroNombre').textContent = inf ? inf.lbl   : 'SIN TURNO ASIGNADO';
   document.getElementById('heroHora').textContent   = inf ? inf.h     : '';
+  renderAuxHoy();
 }
 
 /* ── STRIP 7 DÍAS ── */
@@ -919,8 +968,13 @@ async function escanearHorario(input){
     _scanMeta={data,W,H,cols,hlines,cellH,mes,ano,diasMes};
     mostrarLienzoParaTocar(canvas,W,H);   // siempre visible para tocar/corregir la fila
     const nombre=(document.getElementById('nombreEmpleado').value.trim()||'').toUpperCase();
-    let yc=null;
-    if(nombre){ st.textContent='⏳ Buscando tu fila ('+nombre+')…'; yc=await localizarFilaPorNombre(canvas,nombre); }
+    let yc=null, allFilas=[];
+    if(nombre){
+      st.textContent='⏳ Buscando fichas del equipo ('+nombre+')…';
+      const lr=await localizarTodasLasFilas(canvas,nombre);
+      yc=lr.userYc; allFilas=lr.allFilas;
+    }
+    if(allFilas.length>0) escanearEquipo(allFilas,nombre);
     if(yc!=null){
       finalizarLectura(nombre,yc);
       const st2=document.getElementById('aiStatus');
@@ -1014,6 +1068,7 @@ function aplicarPreview(){
   // Saltar el calendario al mes escaneado para que se vea el resultado
   if(ultimoResultadoEscaner){ calMes=ultimoResultadoEscaner.mes; calAno=ultimoResultadoEscaner.ano; }
   toast('✅ '+cnt+' turnos cargados'); renderHero(); renderStrip(); renderCal();
+  renderAuxiliares();
 }
 
 function imprimirHorario(){ window.print(); }
@@ -1084,14 +1139,195 @@ function aplicarPatronSemanal(){
 
 function limpiarPatron(){ psData = {}; renderPatronWidget(); toast('Patrón limpiado'); }
 
+/* ══ AUXILIARES POR TURNO ════════════════════════════════════════════
+   Al escanear el cuadrante se leen TODAS las filas y se cruzan con el
+   horario de Eddeilis para mostrar con quién coincide en cada turno.
+   Datos: localStorage['fp_turnos_equipo'] = {"YYYY-MM":{mes,ano,equipo:[{nombre,horario}]}}
+   ═══════════════════════════════════════════════════════════════════ */
+
+function loadEquipo(){
+  try{ return JSON.parse(localStorage.getItem('fp_turnos_equipo')||'{}'); }catch(_){ return {}; }
+}
+function saveEquipo(obj){
+  try{ localStorage.setItem('fp_turnos_equipo',JSON.stringify(obj)); }catch(_){}
+}
+
+// Corre Tesseract UNA SOLA VEZ sobre el canvas completo.
+// Devuelve {userYc, allFilas:[{nombre,yc}]} — una entrada por banda de fila detectada.
+async function localizarTodasLasFilas(canvas, nombreUsuario){
+  let words=[];
+  try{
+    if(typeof Tesseract!=='undefined'){
+      const res=await Tesseract.recognize(canvas,'spa+eng',{});
+      words=(res.data&&res.data.words)||[];
+    }
+  }catch(_){}
+  const meta=_scanMeta;
+  // Límite X entre la columna de nombres y la primera columna de día
+  const pitch=meta.cols.length>1?(meta.cols[1]-meta.cols[0]):20;
+  const nameColX=meta.cols[0]-Math.round(pitch*0.4);
+  const objNombre=normNombre(nombreUsuario);
+  const allFilas=[]; let userYc=null, mejorD=1;
+  for(let i=0;i<meta.hlines.length-1;i++){
+    const yTop=meta.hlines[i], yBot=meta.hlines[i+1];
+    const yc=Math.round((yTop+yBot)/2);
+    // Palabras cuyo centro cae dentro de esta banda Y de la columna de nombres
+    const rowWords=words.filter(w=>{
+      if(!w.bbox) return false;
+      const wy=(w.bbox.y0+w.bbox.y1)/2, wx=(w.bbox.x0+w.bbox.x1)/2;
+      return wy>=yTop&&wy<=yBot&&wx<nameColX;
+    });
+    const nombre=rowWords
+      .slice().sort((a,b)=>a.bbox.x0-b.bbox.x0)
+      .map(w=>(w.text||'').trim()).filter(Boolean)
+      .join(' ').toUpperCase().trim()||null;
+    allFilas.push({nombre,yc});
+    // Buscar la fila del usuario por distancia Levenshtein
+    if(nombre&&objNombre&&objNombre.length>=3){
+      const normN=normNombre(nombre);
+      if(normN.length>=3){
+        const d=distancia(normN,objNombre)/Math.max(normN.length,objNombre.length);
+        if(d<mejorD){mejorD=d; if(d<=0.34) userYc=yc;}
+      }
+    }
+  }
+  return {userYc,allFilas};
+}
+
+// Lee el color de cada fila (excepto la propia usuaria) y guarda el equipo en localStorage
+function escanearEquipo(allFilas, nombreUsuario){
+  const meta=_scanMeta;
+  const mesKey=meta.ano+'-'+pad(meta.mes+1);
+  const objNombre=normNombre(nombreUsuario);
+  const equipo=[]; let auxN=0;
+  for(const {nombre,yc} of allFilas){
+    // Saltar la fila de la propia usuaria
+    if(nombre&&objNombre&&objNombre.length>=3){
+      const normN=normNombre(nombre);
+      if(normN.length>=3&&distancia(normN,objNombre)/Math.max(normN.length,objNombre.length)<=0.34) continue;
+    }
+    const horario=leerFila(yc);
+    const nDias=Object.keys(horario).length;
+    if(nDias<5) continue;  // filtrar cabeceras (números de día, letras semana)
+    const trabajadas=Object.values(horario).filter(t=>t==='manana'||t==='tarde'||t==='noche').length;
+    if(trabajadas<3) continue;  // filtrar filas casi vacías o mal leídas
+    const nombreFinal=(nombre&&nombre.length>=2)?nombre:('Auxiliar '+(++auxN));
+    equipo.push({nombre:nombreFinal,horario});
+  }
+  const ed=loadEquipo();
+  ed[mesKey]={mes:meta.mes,ano:meta.ano,equipo};
+  saveEquipo(ed);
+  renderAuxiliares();
+}
+
+// Renderiza los tres bloques M/T/N con las compañeras que coinciden
+function renderAuxiliares(){
+  const mesKey=calAno+'-'+pad(calMes+1);
+  const ed=loadEquipo();
+  const md=ed[mesKey];
+  const tit=document.getElementById('auxTitWrap');
+  const sec=document.getElementById('auxSec');
+  if(!md||!md.equipo||!md.equipo.length){
+    if(tit) tit.style.display='none';
+    if(sec) sec.innerHTML='';
+    renderAuxHoy(); return;
+  }
+  if(tit) tit.style.display='';
+  if(!sec) return;
+  const {mes,ano,equipo}=md;
+  const diasMes=new Date(ano,mes+1,0).getDate();
+  // Horario personal de la usuaria para este mes
+  const userH={};
+  for(let d=1;d<=diasMes;d++){
+    const kk=k(new Date(ano,mes,d));
+    if(datos[kk]) userH[kk]=datos[kk];
+  }
+  const ORDER=[
+    {key:'manana',cls:'aux-m',letra:'M',nombre:'Mañana',hora:'6:00 – 14:00'},
+    {key:'tarde', cls:'aux-t',letra:'T',nombre:'Tarde', hora:'14:00 – 22:00'},
+    {key:'noche', cls:'aux-n',letra:'N',nombre:'Noche', hora:'22:00 – 6:00'},
+  ];
+  let html='';
+  ORDER.forEach(({key,cls,letra,nombre:nT,hora})=>{
+    const misDias=Object.keys(userH).filter(kk=>userH[kk]===key);
+    if(!misDias.length) return;
+    const comps=[];
+    equipo.forEach((comp,idx)=>{
+      const dias=misDias.filter(kk=>comp.horario[kk]===key);
+      if(!dias.length) return;
+      comps.push({idx,nombre:comp.nombre,dias});
+    });
+    if(!comps.length) return;
+    const chipsComp=comps.map(({idx,nombre:nComp,dias})=>{
+      const chips=dias.map(kk=>{
+        const d=parseInt(kk.split('-')[2]);
+        const wd=DIAS[new Date(ano,mes,d).getDay()].substring(0,3).toUpperCase();
+        return `<div class="aux-chip"><span class="ac-wd">${wd}</span><span class="ac-n">${d}</span></div>`;
+      }).join('');
+      const nSafe=nComp.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return `<div class="aux-comp-row"><div class="aux-comp-nombre" onclick="renombrarAux('${mesKey}',${idx},'${nSafe}')" title="Toca para cambiar el nombre">${nComp}</div><div class="aux-comp-dias">${chips}</div></div>`;
+    }).join('');
+    const misDiasNum=misDias.map(kk=>parseInt(kk.split('-')[2])).join(', ');
+    html+=`<div class="aux-bloque ${cls}"><div class="aux-blq-hdr">
+      <div class="aux-turno-letra">${letra}</div>
+      <div class="aux-turno-info">
+        <div class="aux-turno-nom">${nT}</div>
+        <div class="aux-turno-h">${hora}<br>Tus días: ${misDiasNum}</div>
+      </div>
+      <div class="aux-turno-total">
+        <div class="aux-turno-total-n">${comps.length} auxiliar${comps.length!==1?'es':''}</div>
+        <div class="aux-turno-total-l">coinciden contigo</div>
+      </div>
+    </div><div class="aux-comp-lista">${chipsComp}</div></div>`;
+  });
+  sec.innerHTML=html||'<div style="margin:0 16px 16px;font-size:11px;color:var(--txt2);font-style:italic;">No hay coincidencias de turno registradas para este mes.</div>';
+  renderAuxHoy();
+}
+
+// Banner "Hoy vas con…" dentro del hero
+function renderAuxHoy(){
+  const el=document.getElementById('auxHoy');
+  if(!el) return;
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  const kk=k(hoy);
+  const turnoHoy=datos[kk];
+  if(!turnoHoy||turnoHoy==='libre'||turnoHoy==='festivo'){el.style.display='none';return;}
+  const mesKey=hoy.getFullYear()+'-'+pad(hoy.getMonth()+1);
+  const md=loadEquipo()[mesKey];
+  if(!md||!md.equipo){el.style.display='none';return;}
+  const conmigo=md.equipo.filter(c=>c.horario[kk]===turnoHoy);
+  if(!conmigo.length){el.style.display='none';return;}
+  const inf=TURNOS[turnoHoy];
+  const CC={manana:'rgba(255,140,0,',tarde:'rgba(46,134,255,',noche:'rgba(139,63,200,'}[turnoHoy]||'rgba(138,144,160,';
+  const chips=conmigo.map(c=>`<div class="aux-hoy-chip" style="color:${CC+'1)'};border-color:${CC+'.45)'};background:${CC+'.1)'};">${inf.ic} ${c.nombre}</div>`).join('');
+  el.innerHTML=`<div class="aux-hoy-banner" style="background:${CC+'.07)'};border:1px solid ${CC+'.3)'};">
+    <div class="aux-hoy-lbl">Hoy vas con</div>
+    <div class="aux-hoy-chips">${chips}</div></div>`;
+  el.style.display='';
+}
+
+// Renombrar una auxiliar (toca su nombre en pantalla)
+function renombrarAux(mesKey,idx,nombreActual){
+  const nuevo=prompt('¿Cómo se llama esta compañera?',nombreActual);
+  if(!nuevo||!nuevo.trim()) return;
+  const ed=loadEquipo();
+  if(ed[mesKey]&&ed[mesKey].equipo[idx]){
+    ed[mesKey].equipo[idx].nombre=nuevo.trim().toUpperCase();
+    saveEquipo(ed);
+    renderAuxiliares();
+    toast('✅ Nombre actualizado');
+  }
+}
+
 /* ── INIT ── */
 load();
 const hoy = new Date();
 calAno = hoy.getFullYear(); calMes = hoy.getMonth();
-document.getElementById('btnPrev').onclick = ()=>{ calMes--; if(calMes<0){calMes=11;calAno--;} renderCal(); };
-document.getElementById('btnNext').onclick = ()=>{ calMes++; if(calMes>11){calMes=0;calAno++;} renderCal(); };
+document.getElementById('btnPrev').onclick = ()=>{ calMes--; if(calMes<0){calMes=11;calAno--;} renderCal(); renderAuxiliares(); };
+document.getElementById('btnNext').onclick = ()=>{ calMes++; if(calMes>11){calMes=0;calAno++;} renderCal(); renderAuxiliares(); };
 renderHero(); renderStrip(); renderCal();
 initImpSelects(); cargarNombre(); initDropZones(); renderPatronWidget();
+renderAuxiliares();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </body>
