@@ -241,6 +241,60 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   .cday{background:#fff !important;}
 }
 #imprimibleTit{display:none;margin:16px 16px 4px;font-size:18px;font-weight:900;color:var(--oro2);}
+
+/* ── Auxiliares por turno ── */
+.aux-bloque{margin:0 16px 10px;background:var(--pan);border:1.5px solid var(--linea);border-radius:14px;overflow:hidden;}
+.aux-m{border-color:rgba(255,140,0,.35);}
+.aux-m .aux-blq-hdr{background:rgba(255,140,0,.05);}
+.aux-m .aux-turno-letra,.aux-m .aux-turno-nom{color:var(--m);}
+.aux-m .aux-dia-num{color:var(--m);}
+.aux-m .aux-tag{color:var(--m);}
+.aux-t{border-color:rgba(46,134,255,.35);}
+.aux-t .aux-blq-hdr{background:rgba(46,134,255,.05);}
+.aux-t .aux-turno-letra,.aux-t .aux-turno-nom{color:var(--t);}
+.aux-t .aux-dia-num{color:var(--t);}
+.aux-t .aux-tag{color:var(--t);}
+.aux-n{border-color:rgba(139,63,200,.35);}
+.aux-n .aux-blq-hdr{background:rgba(139,63,200,.05);}
+.aux-n .aux-turno-letra,.aux-n .aux-turno-nom{color:var(--n);}
+.aux-n .aux-dia-num{color:var(--n);}
+.aux-n .aux-tag{color:var(--n);}
+.aux-blq-hdr{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--linea);}
+.aux-turno-letra{font-size:36px;font-weight:900;line-height:1;letter-spacing:-2px;width:38px;text-align:center;}
+.aux-turno-info{flex:1;}
+.aux-turno-nom{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+.aux-turno-h{font-size:10px;opacity:.5;margin-top:1px;line-height:1.5;}
+.aux-turno-total{text-align:right;}
+.aux-turno-total-n{font-size:11px;font-weight:700;color:var(--txt2);}
+.aux-turno-total-l{font-size:9px;opacity:.5;letter-spacing:.4px;}
+.aux-dia-lista{padding:6px 14px 12px;display:flex;flex-direction:column;}
+.aux-dia-row{display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--linea);}
+.aux-dia-row:last-child{border-bottom:none;}
+.aux-dia-lbl{display:flex;flex-direction:column;align-items:center;min-width:34px;flex-shrink:0;}
+.aux-dia-wd{font-size:7px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.3px;}
+.aux-dia-num{font-size:17px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;}
+.aux-dia-compas{font-size:12px;font-weight:700;flex:1;line-height:1.6;}
+.aux-tag{cursor:pointer;padding:1px 4px;border-radius:4px;transition:opacity .1s;display:inline;}
+.aux-tag:hover{opacity:.65;text-decoration:underline;}
+/* ── Estadísticas de coincidencia ── */
+.stats-bloque{margin:0 16px 16px;background:var(--pan);border:1.5px solid var(--linea);border-radius:14px;overflow:hidden;}
+.stats-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--linea);}
+.stats-ic{font-size:20px;}
+.stats-tit{font-size:12px;font-weight:800;color:var(--oro2);letter-spacing:.5px;flex:1;}
+.stats-sub{font-size:10px;color:var(--txt2);}
+.stats-lista{padding:8px 14px 12px;display:flex;flex-direction:column;gap:2px;}
+.stats-row{display:flex;align-items:center;gap:8px;padding:5px 2px;}
+.stats-pos{font-size:10px;font-weight:700;color:var(--txt2);min-width:18px;text-align:right;font-variant-numeric:tabular-nums;}
+.stats-nom{font-size:12px;font-weight:800;color:var(--txt);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stats-bar-bg{flex:2;background:rgba(255,255,255,.05);border-radius:3px;height:5px;overflow:hidden;}
+.stats-bar-fill{height:100%;border-radius:3px;background:var(--oro);}
+.stats-cnt{font-size:11px;font-weight:700;color:var(--txt2);min-width:30px;text-align:right;font-variant-numeric:tabular-nums;}
+.aux-hoy-banner{margin-top:14px;padding:9px 16px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
+.aux-hoy-lbl{font-size:10px;color:var(--txt2);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
+.aux-hoy-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.aux-hoy-chip{display:flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;
+  border:1.5px solid;font-size:12px;font-weight:800;}
 </style>
 </head>
 <body>
@@ -263,6 +317,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="turno-nombre" id="heroNombre">SIN TURNO ASIGNADO</div>
     <div class="turno-hora" id="heroHora"></div>
   </div>
+  <div id="auxHoy" style="display:none;"></div>
 </div>
 
 <!-- Próximos 7 días -->
@@ -312,6 +367,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="res-item ri-f"><div class="res-letra">F</div><div class="ri-n" id="rf">0</div><div class="ri-l">FESTIVOS</div></div>
   </div>
 </div>
+
+<!-- Auxiliares por turno (se llena al escanear el cuadrante) -->
+<div id="auxTitWrap" style="display:none;margin:18px 16px 8px;font-size:10px;color:var(--txt2);letter-spacing:2px;text-transform:uppercase;">👥 Auxiliares en mis turnos</div>
+<div id="auxSec"></div>
+<div id="statsSec"></div>
 
 <!-- Escanear horario -->
 <div class="simp" style="margin-top:18px;">
@@ -455,6 +515,7 @@ function renderHero(){
   document.getElementById('heroLetra').textContent  = inf ? inf.letra : '—';
   document.getElementById('heroNombre').textContent = inf ? inf.lbl   : 'SIN TURNO ASIGNADO';
   document.getElementById('heroHora').textContent   = inf ? inf.h     : '';
+  renderAuxHoy();
 }
 
 /* ── STRIP 7 DÍAS ── */
@@ -919,8 +980,13 @@ async function escanearHorario(input){
     _scanMeta={data,W,H,cols,hlines,cellH,mes,ano,diasMes};
     mostrarLienzoParaTocar(canvas,W,H);   // siempre visible para tocar/corregir la fila
     const nombre=(document.getElementById('nombreEmpleado').value.trim()||'').toUpperCase();
-    let yc=null;
-    if(nombre){ st.textContent='⏳ Buscando tu fila ('+nombre+')…'; yc=await localizarFilaPorNombre(canvas,nombre); }
+    let yc=null, allFilas=[];
+    if(nombre){
+      st.textContent='⏳ Buscando fichas del equipo ('+nombre+')…';
+      const lr=await localizarTodasLasFilas(canvas,nombre);
+      yc=lr.userYc; allFilas=lr.allFilas;
+    }
+    if(allFilas.length>0) escanearEquipo(allFilas,nombre);
     if(yc!=null){
       finalizarLectura(nombre,yc);
       const st2=document.getElementById('aiStatus');
@@ -1014,6 +1080,7 @@ function aplicarPreview(){
   // Saltar el calendario al mes escaneado para que se vea el resultado
   if(ultimoResultadoEscaner){ calMes=ultimoResultadoEscaner.mes; calAno=ultimoResultadoEscaner.ano; }
   toast('✅ '+cnt+' turnos cargados'); renderHero(); renderStrip(); renderCal();
+  renderAuxiliares();
 }
 
 function imprimirHorario(){ window.print(); }
@@ -1084,14 +1151,269 @@ function aplicarPatronSemanal(){
 
 function limpiarPatron(){ psData = {}; renderPatronWidget(); toast('Patrón limpiado'); }
 
+/* ══ AUXILIARES POR TURNO ════════════════════════════════════════════
+   Al escanear el cuadrante se leen TODAS las filas y se cruzan con el
+   horario de Eddeilis para mostrar con quién coincide en cada turno.
+   Datos: localStorage['fp_turnos_equipo'] = {"YYYY-MM":{mes,ano,equipo:[{nombre,horario}]}}
+   ═══════════════════════════════════════════════════════════════════ */
+
+function loadEquipo(){
+  try{ return JSON.parse(localStorage.getItem('fp_turnos_equipo')||'{}'); }catch(_){ return {}; }
+}
+function saveEquipo(obj){
+  try{ localStorage.setItem('fp_turnos_equipo',JSON.stringify(obj)); }catch(_){}
+}
+
+// Corre Tesseract sobre la columna de nombres aislada y ampliada 3×.
+// Devuelve {userYc, allFilas:[{nombre,yc}]} — una entrada por banda de fila detectada.
+async function localizarTodasLasFilas(canvas, nombreUsuario){
+  const meta=_scanMeta;
+  const pitch=meta.cols.length>1?(meta.cols[1]-meta.cols[0]):20;
+  const nameColX=meta.cols[0]-Math.round(pitch*0.4);
+
+  // Crear canvas auxiliar con SOLO la columna de nombres, escalada 3×, en escala de grises
+  const SCALE=3;
+  const ncW=Math.max(1,Math.round(nameColX));
+  const ncH=canvas.height;
+  const nc=document.createElement('canvas');
+  nc.width=ncW*SCALE; nc.height=ncH*SCALE;
+  const nctx=nc.getContext('2d');
+  nctx.filter='grayscale(1) contrast(2)';
+  nctx.drawImage(canvas,0,0,ncW,ncH,0,0,nc.width,nc.height);
+  nctx.filter='none';
+
+  let words=[];
+  try{
+    if(typeof Tesseract!=='undefined'){
+      const res=await Tesseract.recognize(nc,'spa+eng',{});
+      words=((res.data&&res.data.words)||[]).map(w=>({
+        ...w,
+        bbox:w.bbox?{
+          x0:Math.round(w.bbox.x0/SCALE), y0:Math.round(w.bbox.y0/SCALE),
+          x1:Math.round(w.bbox.x1/SCALE), y1:Math.round(w.bbox.y1/SCALE)
+        }:w.bbox
+      }));
+    }
+  }catch(_){}
+
+  const objNombre=normNombre(nombreUsuario);
+  const allFilas=[]; let userYc=null, mejorD=1;
+  for(let i=0;i<meta.hlines.length-1;i++){
+    const yTop=meta.hlines[i], yBot=meta.hlines[i+1];
+    const yc=Math.round((yTop+yBot)/2);
+    const rowWords=words.filter(w=>{
+      if(!w.bbox) return false;
+      const wy=(w.bbox.y0+w.bbox.y1)/2;
+      return wy>=yTop&&wy<=yBot
+        &&(w.confidence||0)>=50
+        &&/[A-Za-záéíóúñÁÉÍÓÚÑ]{2,}/.test(w.text);
+    });
+    const nombre=rowWords
+      .slice().sort((a,b)=>a.bbox.x0-b.bbox.x0)
+      .map(w=>(w.text||'').replace(/[^A-Za-záéíóúñÁÉÍÓÚÑ\s]/g,'').trim()).filter(Boolean)
+      .join(' ').toUpperCase().trim()||null;
+    allFilas.push({nombre,yc});
+    if(nombre&&objNombre&&objNombre.length>=3){
+      const normN=normNombre(nombre);
+      if(normN.length>=3){
+        const d=distancia(normN,objNombre)/Math.max(normN.length,objNombre.length);
+        if(d<mejorD){mejorD=d; if(d<=0.34) userYc=yc;}
+      }
+    }
+  }
+  return {userYc,allFilas};
+}
+
+// Lee el color de cada fila (excepto la propia usuaria) y guarda el equipo en localStorage
+function escanearEquipo(allFilas, nombreUsuario){
+  const meta=_scanMeta;
+  const mesKey=meta.ano+'-'+pad(meta.mes+1);
+  const objNombre=normNombre(nombreUsuario);
+  const equipo=[]; let auxN=0, lastYc=-9999;
+  for(const {nombre,yc} of allFilas){
+    // Saltar bandas duplicadas (bordes dobles del cuadrante)
+    if(yc-lastYc<meta.cellH*0.55) continue;
+    lastYc=yc;
+    // Saltar la fila de la propia usuaria
+    if(nombre&&objNombre&&objNombre.length>=3){
+      const normN=normNombre(nombre);
+      if(normN.length>=3&&distancia(normN,objNombre)/Math.max(normN.length,objNombre.length)<=0.34) continue;
+    }
+    const horario=leerFila(yc);
+    const nDias=Object.keys(horario).length;
+    if(nDias<5) continue;  // filtrar cabeceras (números de día, letras semana)
+    const trabajadas=Object.values(horario).filter(t=>t==='manana'||t==='tarde'||t==='noche').length;
+    if(trabajadas<8) continue;  // filtrar filas casi vacías o mal leídas
+    const pos=equipo.length;
+    const nombreFinal=(nombre&&nombre.length>=2)?nombre:('Auxiliar '+(++auxN));
+    equipo.push({nombre:nombreFinal,horario});
+  }
+  const ed=loadEquipo();
+  ed[mesKey]={mes:meta.mes,ano:meta.ano,equipo};
+  saveEquipo(ed);
+  renderAuxiliares();
+}
+
+// Renderiza los tres bloques M/T/N con las compañeras que coinciden
+function renderAuxiliares(){
+  const mesKey=calAno+'-'+pad(calMes+1);
+  const ed=loadEquipo();
+  const md=ed[mesKey];
+  const tit=document.getElementById('auxTitWrap');
+  const sec=document.getElementById('auxSec');
+  if(!md||!md.equipo||!md.equipo.length){
+    if(tit) tit.style.display='none';
+    if(sec) sec.innerHTML='';
+    const ss=document.getElementById('statsSec'); if(ss) ss.innerHTML='';
+    renderAuxHoy(); return;
+  }
+  if(tit) tit.style.display='';
+  if(!sec) return;
+  const {mes,ano,equipo}=md;
+  const diasMes=new Date(ano,mes+1,0).getDate();
+  // Horario personal de la usuaria para este mes
+  const userH={};
+  for(let d=1;d<=diasMes;d++){
+    const kk=k(new Date(ano,mes,d));
+    if(datos[kk]) userH[kk]=datos[kk];
+  }
+  const ORDER=[
+    {key:'manana',cls:'aux-m',letra:'M',nombre:'Mañana',hora:'6:00 – 14:00'},
+    {key:'tarde', cls:'aux-t',letra:'T',nombre:'Tarde', hora:'14:00 – 22:00'},
+    {key:'noche', cls:'aux-n',letra:'N',nombre:'Noche', hora:'22:00 – 6:00'},
+  ];
+  let html='';
+  ORDER.forEach(({key,cls,letra,nombre:nT,hora})=>{
+    const misDias=Object.keys(userH).filter(kk=>userH[kk]===key);
+    if(!misDias.length) return;
+    // Para cada día que Eddeilis trabaja este turno, buscar qué compañeras coinciden
+    const filasDia=[];
+    misDias.forEach(kk=>{
+      const d=parseInt(kk.split('-')[2]);
+      const wd=DIAS[new Date(ano,mes,d).getDay()].substring(0,3).toUpperCase();
+      const conmigo=equipo
+        .map((comp,idx)=>({idx,nombre:comp.nombre,match:comp.horario[kk]===key}))
+        .filter(x=>x.match);
+      if(!conmigo.length) return;
+      filasDia.push({d,wd,conmigo});
+    });
+    if(!filasDia.length) return;
+    // Número único de compañeras que aparecen en este turno
+    const compSet=new Set(filasDia.flatMap(f=>f.conmigo.map(c=>c.idx)));
+    const rowsDia=filasDia.map(({d,wd,conmigo})=>{
+      const tags=conmigo.map(({idx,nombre:nComp})=>{
+        const nSafe=nComp.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        return `<span class="aux-tag" onclick="renombrarAux('${mesKey}',${idx},'${nSafe}')" title="Toca para cambiar el nombre">${nComp}</span>`;
+      }).join('<span style="opacity:.3;margin:0 2px;">·</span>');
+      return `<div class="aux-dia-row"><div class="aux-dia-lbl"><div class="aux-dia-wd">${wd}</div><div class="aux-dia-num">${d}</div></div><div class="aux-dia-compas">${tags}</div></div>`;
+    }).join('');
+    const misDiasNum=misDias.map(kk=>parseInt(kk.split('-')[2])).join(', ');
+    html+=`<div class="aux-bloque ${cls}"><div class="aux-blq-hdr">
+      <div class="aux-turno-letra">${letra}</div>
+      <div class="aux-turno-info">
+        <div class="aux-turno-nom">${nT}</div>
+        <div class="aux-turno-h">${hora}<br>Tus días: ${misDiasNum}</div>
+      </div>
+      <div class="aux-turno-total">
+        <div class="aux-turno-total-n">${compSet.size} auxiliar${compSet.size!==1?'es':''}</div>
+        <div class="aux-turno-total-l">en tus turnos</div>
+      </div>
+    </div><div class="aux-dia-lista">${rowsDia}</div></div>`;
+  });
+  sec.innerHTML=html||'<div style="margin:0 16px 16px;font-size:11px;color:var(--txt2);font-style:italic;">No hay coincidencias de turno registradas para este mes.</div>';
+  renderAuxHoy();
+  renderEstadisticasEquipo();
+}
+
+// Estadísticas: ranking de compañeras por días de coincidencia
+function renderEstadisticasEquipo(){
+  const sec=document.getElementById('statsSec');
+  if(!sec) return;
+  const mesKey=calAno+'-'+pad(calMes+1);
+  const ed=loadEquipo();
+  const md=ed[mesKey];
+  if(!md||!md.equipo||!md.equipo.length){sec.innerHTML='';return;}
+  const {mes,ano,equipo}=md;
+  const diasMes=new Date(ano,mes+1,0).getDate();
+  const userH={};
+  for(let d=1;d<=diasMes;d++){
+    const kk=k(new Date(ano,mes,d));
+    if(datos[kk]) userH[kk]=datos[kk];
+  }
+  const conteo={};
+  for(const kk of Object.keys(userH)){
+    const turno=userH[kk];
+    if(turno==='libre'||turno==='festivo') continue;
+    for(const comp of equipo){
+      if(comp.horario[kk]===turno){
+        conteo[comp.nombre]=(conteo[comp.nombre]||0)+1;
+      }
+    }
+  }
+  const ranking=Object.entries(conteo).sort((a,b)=>b[1]-a[1]);
+  if(!ranking.length){sec.innerHTML='';return;}
+  const maxDias=ranking[0][1];
+  const rows=ranking.map(([nombre,dias],i)=>{
+    const pct=Math.round(dias/maxDias*100);
+    return `<div class="stats-row">
+      <span class="stats-pos">${i+1}</span>
+      <span class="stats-nom">${nombre}</span>
+      <div class="stats-bar-bg"><div class="stats-bar-fill" style="width:${pct}%"></div></div>
+      <span class="stats-cnt">${dias}d</span>
+    </div>`;
+  }).join('');
+  sec.innerHTML=`<div class="stats-bloque">
+    <div class="stats-hdr"><span class="stats-ic">📊</span><span class="stats-tit">Con quién coincides más este mes</span><span class="stats-sub">${ranking.length} personas</span></div>
+    <div class="stats-lista">${rows}</div>
+  </div>`
+;}
+
+// Banner "Hoy vas con…" dentro del hero
+function renderAuxHoy(){
+  const el=document.getElementById('auxHoy');
+  if(!el) return;
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  const kk=k(hoy);
+  const turnoHoy=datos[kk];
+  if(!turnoHoy||turnoHoy==='libre'||turnoHoy==='festivo'){el.style.display='none';return;}
+  const mesKey=hoy.getFullYear()+'-'+pad(hoy.getMonth()+1);
+  const md=loadEquipo()[mesKey];
+  if(!md||!md.equipo){el.style.display='none';return;}
+  const conmigo=md.equipo.filter(c=>c.horario[kk]===turnoHoy);
+  if(!conmigo.length){el.style.display='none';return;}
+  const inf=TURNOS[turnoHoy];
+  const CC={manana:'rgba(255,140,0,',tarde:'rgba(46,134,255,',noche:'rgba(139,63,200,'}[turnoHoy]||'rgba(138,144,160,';
+  const chips=conmigo.map(c=>`<div class="aux-hoy-chip" style="color:${CC+'1)'};border-color:${CC+'.45)'};background:${CC+'.1)'};">${inf.ic} ${c.nombre}</div>`).join('');
+  el.innerHTML=`<div class="aux-hoy-banner" style="background:${CC+'.07)'};border:1px solid ${CC+'.3)'};">
+    <div class="aux-hoy-lbl">Hoy vas con</div>
+    <div class="aux-hoy-chips">${chips}</div></div>`;
+  el.style.display='';
+}
+
+// Renombrar una auxiliar (toca su nombre en pantalla)
+function renombrarAux(mesKey,idx,nombreActual){
+  const nuevo=prompt('¿Cómo se llama esta compañera?',nombreActual);
+  if(!nuevo||!nuevo.trim()) return;
+  const nombre=nuevo.trim().toUpperCase();
+  const ed=loadEquipo();
+  if(ed[mesKey]&&ed[mesKey].equipo[idx]){
+    ed[mesKey].equipo[idx].nombre=nombre;
+    saveEquipo(ed);
+    renderAuxiliares();
+    toast('✅ Nombre actualizado');
+  }
+}
+
+
 /* ── INIT ── */
 load();
 const hoy = new Date();
 calAno = hoy.getFullYear(); calMes = hoy.getMonth();
-document.getElementById('btnPrev').onclick = ()=>{ calMes--; if(calMes<0){calMes=11;calAno--;} renderCal(); };
-document.getElementById('btnNext').onclick = ()=>{ calMes++; if(calMes>11){calMes=0;calAno++;} renderCal(); };
+document.getElementById('btnPrev').onclick = ()=>{ calMes--; if(calMes<0){calMes=11;calAno--;} renderCal(); renderAuxiliares(); };
+document.getElementById('btnNext').onclick = ()=>{ calMes++; if(calMes>11){calMes=0;calAno++;} renderCal(); renderAuxiliares(); };
 renderHero(); renderStrip(); renderCal();
 initImpSelects(); cargarNombre(); initDropZones(); renderPatronWidget();
+renderAuxiliares();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </body>
