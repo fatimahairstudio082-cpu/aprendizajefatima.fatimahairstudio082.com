@@ -276,6 +276,27 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .aux-dia-compas{font-size:12px;font-weight:700;flex:1;line-height:1.6;}
 .aux-tag{cursor:pointer;padding:1px 4px;border-radius:4px;transition:opacity .1s;display:inline;}
 .aux-tag:hover{opacity:.65;text-decoration:underline;}
+/* ── Configurar equipo ── */
+.equipo-cfg-bar{display:flex;align-items:center;justify-content:space-between;margin:10px 16px;padding:10px 14px;background:var(--pan);border:1.5px solid var(--linea);border-radius:12px;}
+.equipo-cfg-info{font-size:11px;color:var(--txt2);}
+.equipo-cfg-btn{font-size:11px;font-weight:800;color:var(--oro2);background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);border-radius:8px;padding:5px 12px;cursor:pointer;}
+.equipo-panel{background:var(--pan);border:1.5px solid var(--linea);border-radius:14px;margin:0 16px 14px;overflow:hidden;}
+.equipo-panel-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--linea);}
+.equipo-panel-tit{font-size:13px;font-weight:800;color:var(--oro2);}
+.equipo-panel-x{font-size:16px;background:none;border:none;color:var(--txt2);cursor:pointer;padding:0 4px;}
+.equipo-hint{font-size:11px;color:var(--txt2);padding:10px 16px 6px;line-height:1.6;}
+.equipo-lista{padding:0 16px;}
+.equipo-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(201,168,76,.1);}
+.equipo-item:last-child{border-bottom:none;}
+.equipo-item-n{font-size:10px;color:var(--txt2);min-width:16px;text-align:right;}
+.equipo-item-inp{flex:1;background:var(--bg);border:1px solid var(--linea);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--txt);font-weight:700;font-family:inherit;outline:none;}
+.equipo-item-inp:focus{border-color:var(--oro);}
+.equipo-car-btn{font-size:14px;background:none;border:1px solid var(--linea);border-radius:8px;padding:4px 8px;cursor:pointer;transition:background .15s;}
+.equipo-car-btn.on{background:rgba(29,185,84,.15);border-color:rgba(29,185,84,.4);}
+.equipo-del-btn{font-size:12px;background:none;border:none;color:var(--txt2);cursor:pointer;opacity:.5;padding:4px;}
+.equipo-panel-btns{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--linea);}
+.equipo-add-btn{flex:1;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);color:var(--oro2);border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;}
+.equipo-save-btn{flex:1;background:rgba(29,185,84,.1);border:1.5px solid rgba(29,185,84,.4);color:#1db954;border-radius:10px;padding:9px;font-size:12px;font-weight:800;cursor:pointer;}
 .aux-hoy-banner{margin-top:14px;padding:9px 16px;border-radius:11px;
   display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
 .aux-hoy-lbl{font-size:10px;color:var(--txt2);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
@@ -358,6 +379,23 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <!-- Auxiliares por turno (se llena al escanear el cuadrante) -->
 <div id="auxTitWrap" style="display:none;margin:18px 16px 8px;font-size:10px;color:var(--txt2);letter-spacing:2px;text-transform:uppercase;">👥 Auxiliares en mis turnos</div>
 <div id="auxSec"></div>
+<!-- Barra y panel: Configurar mi equipo -->
+<div id="equipoCfgBar" class="equipo-cfg-bar">
+  <span id="equipoCfgInfo" class="equipo-cfg-info">👥 Sin equipo configurado</span>
+  <button class="equipo-cfg-btn" onclick="abrirConfigEquipo()">⚙️ Configurar</button>
+</div>
+<div id="equipoPanel" class="equipo-panel" style="display:none;">
+  <div class="equipo-panel-hdr">
+    <span class="equipo-panel-tit">👥 Mi equipo</span>
+    <button class="equipo-panel-x" onclick="cerrarConfigEquipo()">✕</button>
+  </div>
+  <p class="equipo-hint">Escribe los nombres en el mismo orden que aparecen en el cuadrante de arriba a abajo. No te incluyas a ti misma. Activa 🚗 en quienes tienen coche.</p>
+  <div id="equipoLista" class="equipo-lista"></div>
+  <div class="equipo-panel-btns">
+    <button class="equipo-add-btn" onclick="agregarMiembroConfig()">+ Añadir</button>
+    <button class="equipo-save-btn" onclick="guardarPanelEquipo()">✅ Guardar</button>
+  </div>
+</div>
 
 <!-- Escanear horario -->
 <div class="simp" style="margin-top:18px;">
@@ -1199,6 +1237,8 @@ function escanearEquipo(allFilas, nombreUsuario){
   const meta=_scanMeta;
   const mesKey=meta.ano+'-'+pad(meta.mes+1);
   const objNombre=normNombre(nombreUsuario);
+  const cfg=cargarCfgEquipo();
+  const cfgNombres=cfg.nombres||[];
   const equipo=[]; let auxN=0, lastYc=-9999;
   for(const {nombre,yc} of allFilas){
     // Saltar bandas duplicadas (bordes dobles del cuadrante)
@@ -1214,7 +1254,8 @@ function escanearEquipo(allFilas, nombreUsuario){
     if(nDias<5) continue;  // filtrar cabeceras (números de día, letras semana)
     const trabajadas=Object.values(horario).filter(t=>t==='manana'||t==='tarde'||t==='noche').length;
     if(trabajadas<8) continue;  // filtrar filas casi vacías o mal leídas
-    const nombreFinal=(nombre&&nombre.length>=2)?nombre:('Auxiliar '+(++auxN));
+    const pos=equipo.length;
+    const nombreFinal=cfgNombres[pos]||((nombre&&nombre.length>=2)?nombre:('Auxiliar '+(++auxN)));
     equipo.push({nombre:nombreFinal,horario});
   }
   const ed=loadEquipo();
@@ -1251,6 +1292,7 @@ function renderAuxiliares(){
     {key:'noche', cls:'aux-n',letra:'N',nombre:'Noche', hora:'22:00 – 6:00'},
   ];
   let html='';
+  const cfgAux=cargarCfgEquipo();
   ORDER.forEach(({key,cls,letra,nombre:nT,hora})=>{
     const misDias=Object.keys(userH).filter(kk=>userH[kk]===key);
     if(!misDias.length) return;
@@ -1271,7 +1313,9 @@ function renderAuxiliares(){
     const rowsDia=filasDia.map(({d,wd,conmigo})=>{
       const tags=conmigo.map(({idx,nombre:nComp})=>{
         const nSafe=nComp.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-        return `<span class="aux-tag" onclick="renombrarAux('${mesKey}',${idx},'${nSafe}')" title="Toca para cambiar el nombre">${nComp}</span>`;
+        const tieneCoche=cfgAux.coches&&cfgAux.coches[idx]===true;
+        const carIc=tieneCoche?' <span style="font-size:9px;">🚗</span>':'';
+        return `<span class="aux-tag" onclick="renombrarAux('${mesKey}',${idx},'${nSafe}')" title="Toca para cambiar el nombre">${nComp}${carIc}</span>`;
       }).join('<span style="opacity:.3;margin:0 2px;">·</span>');
       return `<div class="aux-dia-row"><div class="aux-dia-lbl"><div class="aux-dia-wd">${wd}</div><div class="aux-dia-num">${d}</div></div><div class="aux-dia-compas">${tags}</div></div>`;
     }).join('');
@@ -1307,7 +1351,12 @@ function renderAuxHoy(){
   if(!conmigo.length){el.style.display='none';return;}
   const inf=TURNOS[turnoHoy];
   const CC={manana:'rgba(255,140,0,',tarde:'rgba(46,134,255,',noche:'rgba(139,63,200,'}[turnoHoy]||'rgba(138,144,160,';
-  const chips=conmigo.map(c=>`<div class="aux-hoy-chip" style="color:${CC+'1)'};border-color:${CC+'.45)'};background:${CC+'.1)'};">${inf.ic} ${c.nombre}</div>`).join('');
+  const cfgHoy=cargarCfgEquipo();
+  const chips=conmigo.map(c=>{
+    const ci=md.equipo.indexOf(c);
+    const coche=ci>=0&&cfgHoy.coches&&cfgHoy.coches[ci]===true;
+    return `<div class="aux-hoy-chip" style="color:${CC+'1)'};border-color:${CC+'.45)'};background:${CC+'.1)'};">${inf.ic} ${c.nombre}${coche?' 🚗':''}</div>`;
+  }).join('');
   el.innerHTML=`<div class="aux-hoy-banner" style="background:${CC+'.07)'};border:1px solid ${CC+'.3)'};">
     <div class="aux-hoy-lbl">Hoy vas con</div>
     <div class="aux-hoy-chips">${chips}</div></div>`;
@@ -1318,13 +1367,115 @@ function renderAuxHoy(){
 function renombrarAux(mesKey,idx,nombreActual){
   const nuevo=prompt('¿Cómo se llama esta compañera?',nombreActual);
   if(!nuevo||!nuevo.trim()) return;
+  const nombre=nuevo.trim().toUpperCase();
   const ed=loadEquipo();
   if(ed[mesKey]&&ed[mesKey].equipo[idx]){
-    ed[mesKey].equipo[idx].nombre=nuevo.trim().toUpperCase();
+    ed[mesKey].equipo[idx].nombre=nombre;
     saveEquipo(ed);
     renderAuxiliares();
-    toast('✅ Nombre actualizado');
+    const cfg=cargarCfgEquipo();
+    if(idx<cfg.nombres.length){
+      cfg.nombres[idx]=nombre;
+      guardarCfgEquipo(cfg);
+      actualizarBarraEquipo();
+    }
+    toast('✅ Nombre guardado');
   }
+}
+
+/* ── CONFIGURAR EQUIPO ──────────────────────────────────────────────────
+   Permite introducir los nombres del equipo una sola vez, en el mismo
+   orden que aparecen en el cuadrante. Todos los escaneos futuros asignan
+   nombres por posición, eliminando la dependencia del OCR para nombres.
+   localStorage: fp_equipo_config = {nombres:string[], coches:boolean[]}
+   ─────────────────────────────────────────────────────────────────────── */
+const EQUIPO_CFG_KEY='fp_equipo_config';
+function cargarCfgEquipo(){
+  try{return JSON.parse(localStorage.getItem(EQUIPO_CFG_KEY)||'null')||{nombres:[],coches:[]};}
+  catch(_){return{nombres:[],coches:[]};}
+}
+function guardarCfgEquipo(cfg){
+  try{localStorage.setItem(EQUIPO_CFG_KEY,JSON.stringify(cfg));}catch(_){}
+}
+function actualizarBarraEquipo(){
+  const cfg=cargarCfgEquipo();
+  const el=document.getElementById('equipoCfgInfo');
+  if(!el) return;
+  el.textContent=cfg.nombres.length
+    ?`👥 ${cfg.nombres.length} personas · ${cfg.coches.filter(Boolean).length} con 🚗`
+    :'👥 Sin equipo configurado';
+}
+function abrirConfigEquipo(){
+  renderListaEquipo(cargarCfgEquipo());
+  document.getElementById('equipoPanel').style.display='';
+  document.getElementById('equipoCfgBar').style.display='none';
+}
+function cerrarConfigEquipo(){
+  document.getElementById('equipoPanel').style.display='none';
+  document.getElementById('equipoCfgBar').style.display='';
+}
+function renderListaEquipo(cfg){
+  const lista=document.getElementById('equipoLista');
+  if(!lista) return;
+  lista.innerHTML=cfg.nombres.length
+    ? cfg.nombres.map((n,i)=>`<div class="equipo-item">
+        <span class="equipo-item-n">${i+1}</span>
+        <input class="equipo-item-inp" id="eqn${i}" value="${n.replace(/"/g,'&quot;')}" placeholder="Nombre...">
+        <button class="equipo-car-btn ${cfg.coches[i]?'on':''}" id="eqc${i}" onclick="toggleCocheItem(${i})">${cfg.coches[i]?'🚗':'🚶'}</button>
+        <button class="equipo-del-btn" onclick="eliminarMiembroConfig(${i})">✕</button>
+      </div>`).join('')
+    : '<div style="padding:10px 0;font-size:11px;color:var(--txt2);text-align:center;">Toca + Añadir para empezar.</div>';
+}
+function toggleCocheItem(i){
+  const btn=document.getElementById('eqc'+i);
+  if(!btn) return;
+  const on=btn.classList.toggle('on');
+  btn.textContent=on?'🚗':'🚶';
+}
+function agregarMiembroConfig(){
+  const lista=document.getElementById('equipoLista');
+  const n=lista.querySelectorAll('.equipo-item').length;
+  if(!n){lista.innerHTML='';}
+  const div=document.createElement('div');
+  div.className='equipo-item';
+  div.innerHTML=`<span class="equipo-item-n">${n+1}</span>
+    <input class="equipo-item-inp" id="eqn${n}" placeholder="Nombre...">
+    <button class="equipo-car-btn" id="eqc${n}" onclick="toggleCocheItem(${n})">🚶</button>
+    <button class="equipo-del-btn" onclick="eliminarMiembroConfig(${n})">✕</button>`;
+  lista.appendChild(div);
+}
+function eliminarMiembroConfig(i){
+  const cfg=leerFormEquipo();
+  cfg.nombres.splice(i,1); cfg.coches.splice(i,1);
+  renderListaEquipo(cfg);
+}
+function leerFormEquipo(){
+  const items=document.getElementById('equipoLista').querySelectorAll('.equipo-item');
+  const nombres=[],coches=[];
+  items.forEach((_,j)=>{
+    const v=(document.getElementById('eqn'+j)?.value||'').trim().toUpperCase();
+    const c=document.getElementById('eqc'+j)?.classList.contains('on')||false;
+    if(v){nombres.push(v);coches.push(c);}
+  });
+  return{nombres,coches};
+}
+function guardarPanelEquipo(){
+  const cfg=leerFormEquipo();
+  guardarCfgEquipo(cfg);
+  cerrarConfigEquipo();
+  actualizarBarraEquipo();
+  aplicarConfigAlMesActual(cfg);
+  toast('✅ Equipo guardado — '+cfg.nombres.length+' personas');
+}
+function aplicarConfigAlMesActual(cfg){
+  if(!cfg.nombres.length) return;
+  const mesKey=calAno+'-'+pad(calMes+1);
+  const ed=loadEquipo();
+  const md=ed[mesKey];
+  if(!md||!md.equipo||!md.equipo.length) return;
+  md.equipo.forEach((c,i)=>{ if(i<cfg.nombres.length) c.nombre=cfg.nombres[i]; });
+  saveEquipo(ed);
+  renderAuxiliares();
 }
 
 /* ── INIT ── */
@@ -1335,7 +1486,7 @@ document.getElementById('btnPrev').onclick = ()=>{ calMes--; if(calMes<0){calMes
 document.getElementById('btnNext').onclick = ()=>{ calMes++; if(calMes>11){calMes=0;calAno++;} renderCal(); renderAuxiliares(); };
 renderHero(); renderStrip(); renderCal();
 initImpSelects(); cargarNombre(); initDropZones(); renderPatronWidget();
-renderAuxiliares();
+renderAuxiliares(); actualizarBarraEquipo();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </body>
