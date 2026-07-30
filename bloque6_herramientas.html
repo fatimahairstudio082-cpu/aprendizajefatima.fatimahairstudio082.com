@@ -405,7 +405,7 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
           <option value="cv">Currículum Vitae</option>
         </select>
         <h4>🌍 País destino</h4>
-        <select id="cvPais" onchange="cvRender()">
+        <select id="cvPais" onchange="cvChangePais()">
           <option value="">— Sin especificar —</option>
           <option value="ve">🇻🇪 Venezuela</option>
           <option value="es">🇪🇸 España</option>
@@ -438,9 +438,16 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
         </select>
         <h4>Datos</h4>
         <input type="text" id="cvNombre" value="Fátima Caldea" placeholder="Tu nombre completo" oninput="cvRender()">
+        <input type="tel" id="cvTelefono" placeholder="📱 Teléfono" oninput="cvRender()">
+        <input type="email" id="cvCorreo" placeholder="✉️ Correo electrónico" oninput="cvRender()">
+        <input type="text" id="cvCedula" placeholder="🪪 Cédula (C.I.)" oninput="cvRender()">
+        <input type="text" id="cvCiudad" placeholder="📍 Ciudad / Dirección (opcional)" oninput="cvRender()">
+        <input type="text" id="cvNacimiento" placeholder="🎂 Edad o fecha de nacimiento (opcional)" oninput="cvRender()">
+        <input type="text" id="cvCivil" placeholder="💍 Estado civil (opcional)" oninput="cvRender()">
         <input type="file" id="cvFoto" accept="image/*" onchange="loadCvFoto(event)" style="font-size:10px;padding:4px;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;color:var(--tx);width:100%;margin-bottom:8px">
-        <h4>Categoría (50)</h4>
+        <h4>Categoría <span id="cvCatCount" style="font-size:8px;color:var(--tx2);font-weight:400"></span></h4>
         <select id="cvCat" onchange="cvChangeCat()"></select>
+        <button id="cvDelCat" onclick="cvBorrarOficio()" style="display:none;margin-top:5px;font-size:9px;padding:4px 8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:5px;color:var(--err);cursor:pointer;width:100%">🗑️ Quitar este oficio mío</button>
         <h4>Variante</h4>
         <select id="cvVar" onchange="cvRender()"></select>
         <h4>Empresa (para cartas)</h4>
@@ -1120,18 +1127,113 @@ const CV_VARIADORES={
   renuncia:["Por motivos de índole profesional y crecimiento de carrera, comunico mi decisión irrevocable de cesar en mis funciones.","Agradezco profundamente la confianza depositada y notifico formalmente el término de nuestra relación laboral.","Ha sido una decisión largamente evaluada con el fin de emprender nuevos horizontes y proyectos personales.","Hago de su conocimiento mi renuncia al puesto que desempeño, garantizando una transición ordenada y pulcra.","Presento esta notificación de baja voluntaria, manifestando mi más sincera gratitud por el aprendizaje recibido.","Por razones personales que requieren mi completa atención, me veo en la necesidad de finalizar mis actividades.","Informo mi desvinculación voluntaria. Ha sido un honor sumar esfuerzos con este gran equipo.","Comunico formalmente mi dimisión al cargo con respeto absoluto hacia la dirección y mis mejores deseos.","Con fecha de hoy presento mi renuncia formal, comprometiéndome a colaborar en la capacitación de mi relevo.","Cierro este ciclo de manera sumamente agradecida y radico mi renuncia formal e irrevocable."]
 };
 const CV_CATS={"Peluquería":["Colorimetría","Corte","Marcado","Tratamientos","Estilismo"],"Enfermería":["Cuidados","Medicación","Triaje","Urgencias","Clínica"],"Albañilería":["Obra","Alicatado","Planos","Estructuras","Reformas"],"Empleada Hogar":["Limpieza","Cocina","Organización","Plancha","Logística"],"Camarero":["Protocolo","Servicio","Barra","Manejo TPV","Comandas"],"Recepcionista":["Atención","Ofimática","Gestión","Llamadas","Agendas"],"Barbero":["Barba","Degradado","Afeitado","Visajismo","Estilo"],"Dependienta":["Venta directa","Atención al cliente","Escaparatismo","Reposición","Cierre de caja"],"Cajera":["Cuadre de caja","Agilidad cobros","Fidelización","Sistemas POS","Atención al cliente"],"Cocinero":["Gestión de cocina","APPCC","Emplatado","Costes de menú","Alta cocina"],"Conductora":["Seguridad vial","Mantenimiento","Puntualidad","Rutas","Logística"],"Administrativa":["Facturación","Base de datos","Gestión archivos","Contabilidad","Excel avanzado"],"Contable":["Balances","Liquidación impuestos","Auditoría","ERP","Análisis financiero"],"Marketing Digital":["SEO/SEM","Google Analytics","Campañas Paid","Estrategia digital","Growth Hacking"],"Programadora":["JavaScript/Python","Git","Bases de datos","APIs Rest","Clean Code"],"Diseñadora Gráfica":["Adobe Photoshop","Illustrator","Branding","Identidad visual","UI Design"],"Esteticista":["Tratamientos faciales","Manicura","Aparatología","Depilación","Cosmética"],"Fisioterapeuta":["Rehabilitación","Terapia manual","Anatomía","Ergonomía","Vendaje"],"Agente Ventas":["Prospección","Cierre ventas","Negociación","CRM","Fidelización"],"Profesora":["Metodología","Pedagogía","Planificación","Evaluación","Motivación"],"Monitor Gimnasio":["Rutinas","Fitness","Nutrición deportiva","Clases dirigidas","Primeros auxilios"],"Community Manager":["Estrategia contenidos","Gestión comunidades","Copywriting","Métricas","Atención online"],"Traductora":["Traducción simultánea","Localización","Corrección estilo","Glosarios","Idiomas"],"Recursos Humanos":["Reclutamiento","Nóminas","Clima laboral","Evaluación","Onboarding"],"Pastelera":["Repostería fina","Masas fermentadas","Decoración","Higiene alimentaria","Costes"],"Sastre":["Toma de medidas","Patronaje","Confección","Arreglos ropa","Textil"],"Electricista":["Instalaciones BT","Esquemas","Cuadros eléctricos","Mantenimiento","Seguridad"],"Fontanera":["Tuberías","Fugas","Calefacción","Saneamiento","Soldadura"],"Jardinera":["Paisajismo","Sistemas de riego","Poda","Fitosanitarios","Maquinaria"],"Médica":["Diagnóstico","Tratamientos","Urgencias","Cirugía","Historia clínica"],"Agricultor":["Cultivo y siembra","Riego y abono","Maquinaria agrícola","Control de plagas","Cosecha y logística"]};
+// ── Oficios típicos POR PAÍS (aditivo: se suman al set base CV_CATS) ──
+// Al elegir un país destino, la lista de categorías "escanea" los oficios propios de ese país.
+const CV_CATS_PAIS={
+  ve:{
+    "Motorizado / Delivery":["Manejo de moto","Rutas y GPS","Entregas puntuales","Atención al cliente","Mantenimiento básico"],
+    "Mesonero":["Atención en mesa","Manejo de bandeja","Toma de pedidos","Montaje de salón","Cobro y propinas"],
+    "Obrero de Construcción":["Vaciado de concreto","Frisado","Armado de cabillas","Encofrado","Manejo de herramientas"],
+    "Vigilante / Seguridad":["Control de acceso","Rondas de vigilancia","Uso de radio","Reportes de novedad","Primeros auxilios"],
+    "Doméstica / Servicio del Hogar":["Limpieza profunda","Cocina criolla","Planchado","Organización","Cuidado de niños"],
+    "Comerciante / Buhonero":["Ventas directas","Manejo de inventario","Atención al cliente","Cuadre de caja","Negociación"],
+    "Manicurista":["Manicure","Pedicure","Uñas acrílicas","Esmaltado semipermanente","Diseño de uñas"],
+    "Chofer / Conductor":["Manejo defensivo","Conocimiento de rutas","Mantenimiento del vehículo","Puntualidad","Atención al pasajero"],
+    "Costurera":["Toma de medidas","Corte y costura","Arreglos de ropa","Manejo de máquina","Confección"],
+    "Panadero":["Amasado","Horneado","Pastelería criolla","Higiene alimentaria","Control de insumos"],
+    "Mecánico Automotriz":["Diagnóstico de fallas","Reparación de motor","Frenos y suspensión","Electricidad automotriz","Mantenimiento preventivo"],
+    "Niñera / Cuidadora":["Cuidado infantil","Preparación de alimentos","Apoyo escolar","Recreación","Primeros auxilios"]
+  }
+};
+// Categorías propias del usuario, guardadas en el teléfono. {"<pais|global>":{"Oficio":[habs]}}
+function leerCatsCustom(){try{return JSON.parse(localStorage.getItem('fp_cv_cats_custom')||'{}')||{};}catch(_){return {};}}
+function guardarCatsCustom(obj){try{localStorage.setItem('fp_cv_cats_custom',JSON.stringify(obj||{}));}catch(_){}}
+let CV_CATS_ACT={};   // mapa fusionado vigente (base + país + propias)
+
 const ACCENTMAP={azul:'#2563eb',verde:'#10b981',violeta:'#7c3aed',oro:'#c9a84c'};
 let cvSkills=[];let cvFotoB64='';
 function loadCvFoto(ev){const r=new FileReader();r.onload=e=>{cvFotoB64=e.target.result;cvRender();};r.readAsDataURL(ev.target.files[0]);}
 function cvInit(){
   const cs=document.getElementById('cvCat');if(!cs)return;
-  cs.innerHTML=Object.keys(CV_CATS).map(k=>`<option value="${k}">${k}</option>`).join('');
+  cvPoblarCategorias();
   const vs=document.getElementById('cvVar');vs.innerHTML=Array.from({length:10},(_,i)=>`<option value="${i}">Variante ${i+1}</option>`).join('');
   cvChangeCat();
   const initVoices=()=>{const all=speechSynthesis.getVoices();const es=all.filter(v=>v.lang.toLowerCase().startsWith('es'));const sel=document.getElementById('ttsVoice');if(!sel)return;sel.innerHTML=(es.length?es:all).map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');};
   initVoices();speechSynthesis.onvoiceschanged=initVoices;
 }
-function cvChangeCat(){const cat=document.getElementById('cvCat')?.value;cvSkills=cat&&CV_CATS[cat]?[...CV_CATS[cat]]:['Comunicación','Organización','Puntualidad'];cvRender();}
+function cvEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+// Rellena el <select> de categoría según el PAÍS actual: base + oficios del país + oficios propios.
+function cvPoblarCategorias(){
+  const cs=document.getElementById('cvCat');if(!cs)return;
+  const prev=cs.value;
+  const pais=document.getElementById('cvPais')?.value||'';
+  const custom=leerCatsCustom();
+  CV_CATS_ACT={...CV_CATS};
+  if(pais&&CV_CATS_PAIS[pais]) Object.assign(CV_CATS_ACT,CV_CATS_PAIS[pais]);
+  if(custom.global) Object.assign(CV_CATS_ACT,custom.global);
+  if(pais&&custom[pais]) Object.assign(CV_CATS_ACT,custom[pais]);
+  const claves=Object.keys(CV_CATS_ACT).sort((a,b)=>a.localeCompare(b,'es'));
+  cs.innerHTML=claves.map(k=>`<option value="${cvEsc(k)}">${cvEsc(k)}</option>`).join('')
+    +`<option value="__nuevo__">➕ Otro oficio…</option>`;
+  if(prev&&prev!=='__nuevo__'&&claves.includes(prev)) cs.value=prev;
+  const lbl=document.getElementById('cvCatCount');if(lbl)lbl.textContent='('+claves.length+')';
+  cvActualizarBtnBorrar();
+}
+// Aplica las habilidades del oficio seleccionado y re-renderiza.
+function cvAplicarSkills(cat){
+  cvSkills=cat&&CV_CATS_ACT[cat]?[...CV_CATS_ACT[cat]]:['Comunicación','Organización','Puntualidad'];
+  cvActualizarBtnBorrar();cvRender();
+}
+function cvChangeCat(){
+  const cs=document.getElementById('cvCat');const cat=cs?.value;
+  if(cat==='__nuevo__'){cvNuevoOficio();return;}
+  cvAplicarSkills(cat);
+}
+// Al cambiar el país, la lista de oficios se adapta a ese país.
+function cvChangePais(){
+  cvPoblarCategorias();
+  const cs=document.getElementById('cvCat');
+  if(cs&&cs.value==='__nuevo__')cs.selectedIndex=0;
+  cvAplicarSkills(document.getElementById('cvCat')?.value);
+}
+// Crear un oficio propio (nombre + habilidades). Se guarda en el teléfono.
+function cvNuevoOficio(){
+  const cs=document.getElementById('cvCat');
+  const nombre=(prompt('Nombre del nuevo oficio / categoría:')||'').trim();
+  if(!nombre){cvPoblarCategorias();if(cs&&cs.value==='__nuevo__')cs.selectedIndex=0;cvAplicarSkills(cs?.value);return;}
+  const habsRaw=(prompt('Habilidades separadas por comas\n(ej: Ventas, Manejo de caja, Atención al cliente):')||'').trim();
+  const habs=habsRaw?habsRaw.split(',').map(s=>s.trim()).filter(Boolean):['Comunicación','Organización','Puntualidad'];
+  const pais=document.getElementById('cvPais')?.value||'';
+  const clave=pais||'global';
+  const custom=leerCatsCustom();
+  if(!custom[clave])custom[clave]={};
+  custom[clave][nombre]=habs;
+  guardarCatsCustom(custom);
+  cvPoblarCategorias();
+  if(cs)cs.value=nombre;
+  cvAplicarSkills(nombre);
+}
+// Muestra/oculta el botón de borrar según si el oficio actual es propio del usuario.
+function cvActualizarBtnBorrar(){
+  const cs=document.getElementById('cvCat');const btn=document.getElementById('cvDelCat');if(!cs||!btn)return;
+  const cat=cs.value;const pais=document.getElementById('cvPais')?.value||'';const custom=leerCatsCustom();
+  const esMio=!!((pais&&custom[pais]&&custom[pais][cat])||(custom.global&&custom.global[cat]));
+  btn.style.display=esMio?'block':'none';
+}
+// Borra un oficio propio del usuario.
+function cvBorrarOficio(){
+  const cs=document.getElementById('cvCat');if(!cs)return;
+  const cat=cs.value;const pais=document.getElementById('cvPais')?.value||'';
+  const custom=leerCatsCustom();let borrado=false;
+  if(pais&&custom[pais]&&custom[pais][cat]){delete custom[pais][cat];borrado=true;}
+  else if(custom.global&&custom.global[cat]){delete custom.global[cat];borrado=true;}
+  if(!borrado)return;
+  guardarCatsCustom(custom);
+  cvPoblarCategorias();
+  const cs2=document.getElementById('cvCat');
+  if(cs2&&cs2.value==='__nuevo__')cs2.selectedIndex=0;
+  cvAplicarSkills(document.getElementById('cvCat')?.value);
+}
 function addSkill(){const v=document.getElementById('newSkill')?.value.trim();if(v){cvSkills.push(v);document.getElementById('newSkill').value='';cvRender();}}
 function cvRender(){
   const tipo=document.getElementById('tipoDoc')?.value||'carta';const paleta=document.getElementById('paleta')?.value||'azul';
@@ -1215,7 +1317,7 @@ function ttsStop(){speechSynthesis.cancel();}
 const CV_PAISES = {
   ve: { nombre:'Venezuela', bandera:'🇻🇪', foto:true,  edad:true,  civil:true,  cedula:true,  objetivo:true,  referencias:'opcional', carta:true,
     reglas:'Foto obligatoria · Cédula de Identidad · Objetivo profesional al inicio · 2-3 páginas aceptable',
-    consejo:'Formato cálido y completo. Incluye datos que en Europa serían opcionales. Tono formal pero cercano.',
+    consejo:'En Venezuela el CV puede ser cálido y completo: incluye tu foto, tu cédula y un objetivo profesional al inicio. Tono formal pero cercano.',
     variadores:{
       carta:['Con profundo respeto y genuino entusiasmo me dirijo a usted, confiando en que mi experiencia en Venezuela y en el exterior sea de gran valor para su organización.',
              'Motivada por el crecimiento de su empresa y mi trayectoria comprobada, presento mi candidatura con la certeza de poder aportar resultados inmediatos.',
@@ -1385,25 +1487,37 @@ const CV_PLANTILLAS = {
   clasico: (d) => {
     const {nombre,cargo,ac,cat,empresa,hoy,fotoHTML,skills,varText,tipo} = d;
     const header = `<div style="display:flex;gap:18px;align-items:center;border-bottom:3px solid ${ac};padding-bottom:16px;margin-bottom:18px">${fotoHTML}<div><h1 style="font-size:24px;color:#111;margin:0;font-family:Georgia,serif">${nombre}</h1><div style="color:${ac};font-size:13px;margin-top:4px;font-style:italic">${cargo||cat}</div></div></div>`;
-    return header + cvCuerpo(d,'clasico');
+    return header + cvContactoHTML(d) + cvCuerpo(d,'clasico');
   },
   moderno: (d) => {
     const {nombre,cargo,ac,cat,fotoHTML} = d;
     const header = `<div style="background:${ac};margin:-24px -24px 20px;padding:22px 24px;display:flex;gap:16px;align-items:center">${fotoHTML?fotoHTML.replace('border-radius:50%','border-radius:8px'):''}<div><h1 style="font-size:22px;color:#fff;margin:0;letter-spacing:-0.5px">${nombre}</h1><div style="color:rgba(255,255,255,.8);font-size:12px;margin-top:4px;letter-spacing:1px;text-transform:uppercase">${cargo||cat}</div></div></div>`;
-    return header + cvCuerpo(d,'moderno');
+    return header + cvContactoHTML(d) + cvCuerpo(d,'moderno');
   },
   creativo: (d) => {
     const {nombre,cargo,ac,cat,fotoHTML} = d;
     const header = `<div style="display:grid;grid-template-columns:90px 1fr;gap:0;margin:-24px -24px 20px"><div style="background:${ac};padding:20px;display:flex;align-items:center;justify-content:center">${fotoHTML||`<div style="width:55px;height:55px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:white">👤</div>`}</div><div style="padding:20px;background:${ac}15;border-bottom:3px solid ${ac}"><h1 style="font-size:20px;color:#111;margin:0">${nombre}</h1><div style="color:${ac};font-size:11px;margin-top:5px;font-weight:700;letter-spacing:2px;text-transform:uppercase">${cargo||cat}</div></div></div>`;
-    return header + cvCuerpo(d,'creativo');
+    return header + cvContactoHTML(d) + cvCuerpo(d,'creativo');
   },
   minimalista: (d) => {
     const {nombre,cargo,ac,cat} = d;
     const header = `<div style="border-left:4px solid ${ac};padding-left:16px;margin-bottom:22px"><h1 style="font-size:26px;color:#111;margin:0;font-weight:300;letter-spacing:-1px">${nombre}</h1><div style="color:#888;font-size:12px;margin-top:4px;letter-spacing:2px;text-transform:uppercase">${cargo||cat}</div></div>`;
-    return header + cvCuerpo(d,'minimalista');
+    return header + cvContactoHTML(d) + cvCuerpo(d,'minimalista');
   }
 };
 
+// Línea de contacto bajo el nombre: solo muestra los datos que el usuario haya llenado.
+function cvContactoHTML(d){
+  const items=[];
+  if(d.telefono)   items.push('📱 '+cvEsc(d.telefono));
+  if(d.correo)     items.push('✉️ '+cvEsc(d.correo));
+  if(d.cedula)     items.push('🪪 C.I. '+cvEsc(d.cedula));
+  if(d.ciudad)     items.push('📍 '+cvEsc(d.ciudad));
+  if(d.nacimiento) items.push('🎂 '+cvEsc(d.nacimiento));
+  if(d.civil)      items.push('💍 '+cvEsc(d.civil));
+  if(!items.length) return '';
+  return `<div style="font-size:11px;color:#555;margin:-6px 0 16px;line-height:1.8" contenteditable="true">${items.join(' &nbsp;·&nbsp; ')}</div>`;
+}
 function cvCuerpo(d, estilo) {
   const {nombre,cargo,ac,cat,empresa,hoy,skills,varText,tipo,paisData} = d;
   const secStyle = estilo==='minimalista'
@@ -1441,22 +1555,20 @@ function cvCuerpo(d, estilo) {
     <p contenteditable="true">Expreso mi más sincero agradecimiento por la oportunidad de haber formado parte de este equipo.</p>
     <p style="margin-top:20px">Respetuosamente,<br><strong>${nombre}</strong></p>`;
   }
-  // CV
-  const paisInfo = paisData ? `<div style="background:${ac}12;border-left:3px solid ${ac};padding:8px 12px;margin-bottom:14px;font-size:11px;color:#555;border-radius:0 6px 6px 0">
-    ${paisData.bandera} <strong>${paisData.nombre}:</strong> ${paisData.reglas}</div>` : '';
-  return `${paisInfo}
+  // CV — texto humanizado en primera persona. La guía de país NO va aquí (solo en el panel lateral).
+  const oficio = cargo || cat;
+  return `
     <h3 style="${secStyle}">Perfil Profesional</h3>
-    <p contenteditable="true">Profesional especializado/a en <strong>${cat}</strong>. Alta capacitación técnica, orientación a resultados y compromiso con la excelencia.</p>
+    <p contenteditable="true">Soy <strong>${oficio}</strong>, una persona responsable y con muchas ganas de trabajar. Me gusta hacer bien mi labor, aprender cada día y llevarme bien con el equipo. Soy puntual, honesta y me esfuerzo por dar siempre lo mejor de mí.</p>
     <h3 style="${secStyle}">Experiencia Laboral</h3>
     <div style="margin-bottom:12px" contenteditable="true">
       <div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px">
-        <span>${cat} — ${empresa}</span><span style="color:#999;font-weight:400;font-size:12px">2020 – Presente</span>
+        <span>${oficio} — ${empresa}</span><span style="color:#999;font-weight:400;font-size:12px">2020 – Presente</span>
       </div>
-      <div style="font-size:12px;margin-top:4px;color:#555">Responsabilidades y logros clave en el área de ${cat}.</div>
+      <div style="font-size:12px;margin-top:4px;color:#555">Me encargaba de las labores de ${cat} en el día a día, trabajando con dedicación, orden y buen trato con mis compañeros y con los clientes. (Aquí puedes contar con tus palabras qué hacías y de qué te sientes orgulloso/a.)</div>
     </div>
     <h3 style="${secStyle}">Habilidades</h3>
-    <ul class="tag-list">${skills.map((h,i)=>`<li style="background:${ac}22;color:${ac}">${h} <span class="del-btn" onclick="cvSkills.splice(${i},1);cvRender()">×</span></li>`).join('')}</ul>
-    ${paisData&&paisData.consejo?`<div style="margin-top:16px;background:#f8f8f8;border:1px solid #eee;border-radius:6px;padding:10px;font-size:11px;color:#666"><strong>💡 Consejo para ${paisData.nombre}:</strong> ${paisData.consejo}</div>`:''}`;
+    <ul class="tag-list">${skills.map((h,i)=>`<li style="background:${ac}22;color:${ac}">${h} <span class="del-btn" onclick="cvSkills.splice(${i},1);cvRender()">×</span></li>`).join('')}</ul>`;
 }
 
 // ── Indicador visual de país en el sidebar ──
@@ -1475,6 +1587,7 @@ function cvActualizarBadgePais() {
       ${p.edad?'<span style="background:rgba(16,185,129,.15);color:#10b981;padding:2px 7px;border-radius:10px;font-size:9px">🎂 Edad</span>':''}
       ${p.civil?'<span style="background:rgba(16,185,129,.15);color:#10b981;padding:2px 7px;border-radius:10px;font-size:9px">💍 Civil</span>':''}
     </div>
+    ${p.consejo?`<div style="margin-top:7px;padding-top:6px;border-top:1px solid var(--bd);color:var(--tx2);line-height:1.5"><strong style="color:var(--ac3)">💡 Consejo:</strong> ${p.consejo}</div>`:''}
   </div>`;
 }
 
@@ -1490,6 +1603,12 @@ cvRender = function() {
   const empresa  = document.getElementById('cvEmpresa')?.value || 'la empresa';
   const cargo    = document.getElementById('cvCargo')?.value || '';
   const cat      = document.getElementById('cvCat')?.value || 'Peluquería';
+  const telefono = document.getElementById('cvTelefono')?.value || '';
+  const correo   = document.getElementById('cvCorreo')?.value || '';
+  const cedula   = document.getElementById('cvCedula')?.value || '';
+  const ciudad   = document.getElementById('cvCiudad')?.value || '';
+  const nacimiento=document.getElementById('cvNacimiento')?.value || '';
+  const civil    = document.getElementById('cvCivil')?.value || '';
   const varIdx   = parseInt(document.getElementById('cvVar')?.value || 0);
   const ac       = ACCENTMAP[paleta] || '#2563eb';
 
@@ -1514,7 +1633,7 @@ cvRender = function() {
     : '';
   const hoy = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
 
-  const datos = { nombre, cargo, ac, cat, empresa, hoy, fotoHTML, skills: cvSkills, varText, tipo, paisData };
+  const datos = { nombre, cargo, ac, cat, empresa, hoy, fotoHTML, skills: cvSkills, varText, tipo, paisData, telefono, correo, cedula, ciudad, nacimiento, civil };
 
   const tplFn = CV_PLANTILLAS[plantilla] || CV_PLANTILLAS.clasico;
   const html  = tplFn(datos);
