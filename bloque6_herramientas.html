@@ -438,6 +438,12 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
         </select>
         <h4>Datos</h4>
         <input type="text" id="cvNombre" value="Fátima Caldea" placeholder="Tu nombre completo" oninput="cvRender()">
+        <input type="tel" id="cvTelefono" placeholder="📱 Teléfono" oninput="cvRender()">
+        <input type="email" id="cvCorreo" placeholder="✉️ Correo electrónico" oninput="cvRender()">
+        <input type="text" id="cvCedula" placeholder="🪪 Cédula (C.I.)" oninput="cvRender()">
+        <input type="text" id="cvCiudad" placeholder="📍 Ciudad / Dirección (opcional)" oninput="cvRender()">
+        <input type="text" id="cvNacimiento" placeholder="🎂 Edad o fecha de nacimiento (opcional)" oninput="cvRender()">
+        <input type="text" id="cvCivil" placeholder="💍 Estado civil (opcional)" oninput="cvRender()">
         <input type="file" id="cvFoto" accept="image/*" onchange="loadCvFoto(event)" style="font-size:10px;padding:4px;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;color:var(--tx);width:100%;margin-bottom:8px">
         <h4>Categoría <span id="cvCatCount" style="font-size:8px;color:var(--tx2);font-weight:400"></span></h4>
         <select id="cvCat" onchange="cvChangeCat()"></select>
@@ -1311,7 +1317,7 @@ function ttsStop(){speechSynthesis.cancel();}
 const CV_PAISES = {
   ve: { nombre:'Venezuela', bandera:'🇻🇪', foto:true,  edad:true,  civil:true,  cedula:true,  objetivo:true,  referencias:'opcional', carta:true,
     reglas:'Foto obligatoria · Cédula de Identidad · Objetivo profesional al inicio · 2-3 páginas aceptable',
-    consejo:'Formato cálido y completo. Incluye datos que en Europa serían opcionales. Tono formal pero cercano.',
+    consejo:'En Venezuela el CV puede ser cálido y completo: incluye tu foto, tu cédula y un objetivo profesional al inicio. Tono formal pero cercano.',
     variadores:{
       carta:['Con profundo respeto y genuino entusiasmo me dirijo a usted, confiando en que mi experiencia en Venezuela y en el exterior sea de gran valor para su organización.',
              'Motivada por el crecimiento de su empresa y mi trayectoria comprobada, presento mi candidatura con la certeza de poder aportar resultados inmediatos.',
@@ -1481,25 +1487,37 @@ const CV_PLANTILLAS = {
   clasico: (d) => {
     const {nombre,cargo,ac,cat,empresa,hoy,fotoHTML,skills,varText,tipo} = d;
     const header = `<div style="display:flex;gap:18px;align-items:center;border-bottom:3px solid ${ac};padding-bottom:16px;margin-bottom:18px">${fotoHTML}<div><h1 style="font-size:24px;color:#111;margin:0;font-family:Georgia,serif">${nombre}</h1><div style="color:${ac};font-size:13px;margin-top:4px;font-style:italic">${cargo||cat}</div></div></div>`;
-    return header + cvCuerpo(d,'clasico');
+    return header + cvContactoHTML(d) + cvCuerpo(d,'clasico');
   },
   moderno: (d) => {
     const {nombre,cargo,ac,cat,fotoHTML} = d;
     const header = `<div style="background:${ac};margin:-24px -24px 20px;padding:22px 24px;display:flex;gap:16px;align-items:center">${fotoHTML?fotoHTML.replace('border-radius:50%','border-radius:8px'):''}<div><h1 style="font-size:22px;color:#fff;margin:0;letter-spacing:-0.5px">${nombre}</h1><div style="color:rgba(255,255,255,.8);font-size:12px;margin-top:4px;letter-spacing:1px;text-transform:uppercase">${cargo||cat}</div></div></div>`;
-    return header + cvCuerpo(d,'moderno');
+    return header + cvContactoHTML(d) + cvCuerpo(d,'moderno');
   },
   creativo: (d) => {
     const {nombre,cargo,ac,cat,fotoHTML} = d;
     const header = `<div style="display:grid;grid-template-columns:90px 1fr;gap:0;margin:-24px -24px 20px"><div style="background:${ac};padding:20px;display:flex;align-items:center;justify-content:center">${fotoHTML||`<div style="width:55px;height:55px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:white">👤</div>`}</div><div style="padding:20px;background:${ac}15;border-bottom:3px solid ${ac}"><h1 style="font-size:20px;color:#111;margin:0">${nombre}</h1><div style="color:${ac};font-size:11px;margin-top:5px;font-weight:700;letter-spacing:2px;text-transform:uppercase">${cargo||cat}</div></div></div>`;
-    return header + cvCuerpo(d,'creativo');
+    return header + cvContactoHTML(d) + cvCuerpo(d,'creativo');
   },
   minimalista: (d) => {
     const {nombre,cargo,ac,cat} = d;
     const header = `<div style="border-left:4px solid ${ac};padding-left:16px;margin-bottom:22px"><h1 style="font-size:26px;color:#111;margin:0;font-weight:300;letter-spacing:-1px">${nombre}</h1><div style="color:#888;font-size:12px;margin-top:4px;letter-spacing:2px;text-transform:uppercase">${cargo||cat}</div></div>`;
-    return header + cvCuerpo(d,'minimalista');
+    return header + cvContactoHTML(d) + cvCuerpo(d,'minimalista');
   }
 };
 
+// Línea de contacto bajo el nombre: solo muestra los datos que el usuario haya llenado.
+function cvContactoHTML(d){
+  const items=[];
+  if(d.telefono)   items.push('📱 '+cvEsc(d.telefono));
+  if(d.correo)     items.push('✉️ '+cvEsc(d.correo));
+  if(d.cedula)     items.push('🪪 C.I. '+cvEsc(d.cedula));
+  if(d.ciudad)     items.push('📍 '+cvEsc(d.ciudad));
+  if(d.nacimiento) items.push('🎂 '+cvEsc(d.nacimiento));
+  if(d.civil)      items.push('💍 '+cvEsc(d.civil));
+  if(!items.length) return '';
+  return `<div style="font-size:11px;color:#555;margin:-6px 0 16px;line-height:1.8" contenteditable="true">${items.join(' &nbsp;·&nbsp; ')}</div>`;
+}
 function cvCuerpo(d, estilo) {
   const {nombre,cargo,ac,cat,empresa,hoy,skills,varText,tipo,paisData} = d;
   const secStyle = estilo==='minimalista'
@@ -1537,22 +1555,20 @@ function cvCuerpo(d, estilo) {
     <p contenteditable="true">Expreso mi más sincero agradecimiento por la oportunidad de haber formado parte de este equipo.</p>
     <p style="margin-top:20px">Respetuosamente,<br><strong>${nombre}</strong></p>`;
   }
-  // CV
-  const paisInfo = paisData ? `<div style="background:${ac}12;border-left:3px solid ${ac};padding:8px 12px;margin-bottom:14px;font-size:11px;color:#555;border-radius:0 6px 6px 0">
-    ${paisData.bandera} <strong>${paisData.nombre}:</strong> ${paisData.reglas}</div>` : '';
-  return `${paisInfo}
+  // CV — texto humanizado en primera persona. La guía de país NO va aquí (solo en el panel lateral).
+  const oficio = cargo || cat;
+  return `
     <h3 style="${secStyle}">Perfil Profesional</h3>
-    <p contenteditable="true">Profesional especializado/a en <strong>${cat}</strong>. Alta capacitación técnica, orientación a resultados y compromiso con la excelencia.</p>
+    <p contenteditable="true">Soy <strong>${oficio}</strong>, una persona responsable y con muchas ganas de trabajar. Me gusta hacer bien mi labor, aprender cada día y llevarme bien con el equipo. Soy puntual, honesta y me esfuerzo por dar siempre lo mejor de mí.</p>
     <h3 style="${secStyle}">Experiencia Laboral</h3>
     <div style="margin-bottom:12px" contenteditable="true">
       <div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px">
-        <span>${cat} — ${empresa}</span><span style="color:#999;font-weight:400;font-size:12px">2020 – Presente</span>
+        <span>${oficio} — ${empresa}</span><span style="color:#999;font-weight:400;font-size:12px">2020 – Presente</span>
       </div>
-      <div style="font-size:12px;margin-top:4px;color:#555">Responsabilidades y logros clave en el área de ${cat}.</div>
+      <div style="font-size:12px;margin-top:4px;color:#555">Me encargaba de las labores de ${cat} en el día a día, trabajando con dedicación, orden y buen trato con mis compañeros y con los clientes. (Aquí puedes contar con tus palabras qué hacías y de qué te sientes orgulloso/a.)</div>
     </div>
     <h3 style="${secStyle}">Habilidades</h3>
-    <ul class="tag-list">${skills.map((h,i)=>`<li style="background:${ac}22;color:${ac}">${h} <span class="del-btn" onclick="cvSkills.splice(${i},1);cvRender()">×</span></li>`).join('')}</ul>
-    ${paisData&&paisData.consejo?`<div style="margin-top:16px;background:#f8f8f8;border:1px solid #eee;border-radius:6px;padding:10px;font-size:11px;color:#666"><strong>💡 Consejo para ${paisData.nombre}:</strong> ${paisData.consejo}</div>`:''}`;
+    <ul class="tag-list">${skills.map((h,i)=>`<li style="background:${ac}22;color:${ac}">${h} <span class="del-btn" onclick="cvSkills.splice(${i},1);cvRender()">×</span></li>`).join('')}</ul>`;
 }
 
 // ── Indicador visual de país en el sidebar ──
@@ -1571,6 +1587,7 @@ function cvActualizarBadgePais() {
       ${p.edad?'<span style="background:rgba(16,185,129,.15);color:#10b981;padding:2px 7px;border-radius:10px;font-size:9px">🎂 Edad</span>':''}
       ${p.civil?'<span style="background:rgba(16,185,129,.15);color:#10b981;padding:2px 7px;border-radius:10px;font-size:9px">💍 Civil</span>':''}
     </div>
+    ${p.consejo?`<div style="margin-top:7px;padding-top:6px;border-top:1px solid var(--bd);color:var(--tx2);line-height:1.5"><strong style="color:var(--ac3)">💡 Consejo:</strong> ${p.consejo}</div>`:''}
   </div>`;
 }
 
@@ -1586,6 +1603,12 @@ cvRender = function() {
   const empresa  = document.getElementById('cvEmpresa')?.value || 'la empresa';
   const cargo    = document.getElementById('cvCargo')?.value || '';
   const cat      = document.getElementById('cvCat')?.value || 'Peluquería';
+  const telefono = document.getElementById('cvTelefono')?.value || '';
+  const correo   = document.getElementById('cvCorreo')?.value || '';
+  const cedula   = document.getElementById('cvCedula')?.value || '';
+  const ciudad   = document.getElementById('cvCiudad')?.value || '';
+  const nacimiento=document.getElementById('cvNacimiento')?.value || '';
+  const civil    = document.getElementById('cvCivil')?.value || '';
   const varIdx   = parseInt(document.getElementById('cvVar')?.value || 0);
   const ac       = ACCENTMAP[paleta] || '#2563eb';
 
@@ -1610,7 +1633,7 @@ cvRender = function() {
     : '';
   const hoy = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
 
-  const datos = { nombre, cargo, ac, cat, empresa, hoy, fotoHTML, skills: cvSkills, varText, tipo, paisData };
+  const datos = { nombre, cargo, ac, cat, empresa, hoy, fotoHTML, skills: cvSkills, varText, tipo, paisData, telefono, correo, cedula, ciudad, nacimiento, civil };
 
   const tplFn = CV_PLANTILLAS[plantilla] || CV_PLANTILLAS.clasico;
   const html  = tplFn(datos);
