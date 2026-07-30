@@ -444,6 +444,7 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
         <input type="text" id="cvCiudad" placeholder="📍 Ciudad / Dirección (opcional)" oninput="cvRender()">
         <input type="text" id="cvNacimiento" placeholder="🎂 Edad o fecha de nacimiento (opcional)" oninput="cvRender()">
         <input type="text" id="cvCivil" placeholder="💍 Estado civil (opcional)" oninput="cvRender()">
+        <input type="text" id="cvEstudios" placeholder="🎓 Estudios (ej: Bachiller)" oninput="cvRender()">
         <input type="file" id="cvFoto" accept="image/*" onchange="loadCvFoto(event)" style="font-size:10px;padding:4px;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;color:var(--tx);width:100%;margin-bottom:8px">
         <h4>Categoría <span id="cvCatCount" style="font-size:8px;color:var(--tx2);font-weight:400"></span></h4>
         <select id="cvCat" onchange="cvChangeCat()"></select>
@@ -1268,22 +1269,28 @@ function printCV(){
       // JPG
       const jpgData=canvas.toDataURL('image/jpeg',0.92);
       const aJpg=document.createElement('a');aJpg.href=jpgData;aJpg.download=base+'.jpg';document.body.appendChild(aJpg);aJpg.click();document.body.removeChild(aJpg);
-      // PDF via jsPDF
+      // PDF via jsPDF — la hoja se ajusta al alto del contenido (sin espacio en blanco abajo)
       if(typeof window.jspdf!=='undefined'||typeof jsPDF!=='undefined'){
         const JsPDF=window.jspdf?.jsPDF||jsPDF;
-        const pdf=new JsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-        const pW=pdf.internal.pageSize.getWidth();
-        const pH=pdf.internal.pageSize.getHeight();
-        const cW=canvas.width,cH=canvas.height;
-        const ratio=pW/cW;
-        const imgH=cH*ratio;
-        let posY=0;
-        while(posY<imgH){
-          if(posY>0)pdf.addPage();
-          pdf.addImage(jpgData,'JPEG',0,-(posY),pW,imgH,undefined,'FAST');
-          posY+=pH;
+        const pW=210, a4H=297;                 // A4 vertical en mm
+        const cW=canvas.width, cH=canvas.height;
+        const imgH=cH*(pW/cW);                 // alto del contenido a ancho de página
+        if(imgH<=a4H+1){
+          // Cabe en una página: hoja del tamaño exacto del contenido
+          const pdf=new JsPDF({orientation:'portrait',unit:'mm',format:[pW,imgH]});
+          pdf.addImage(jpgData,'JPEG',0,0,pW,imgH,undefined,'FAST');
+          pdf.save(base+'.pdf');
+        } else {
+          // Contenido largo: A4 multipágina
+          const pdf=new JsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+          let posY=0;
+          while(posY<imgH){
+            if(posY>0)pdf.addPage();
+            pdf.addImage(jpgData,'JPEG',0,-(posY),pW,imgH,undefined,'FAST');
+            posY+=a4H;
+          }
+          pdf.save(base+'.pdf');
         }
-        pdf.save(base+'.pdf');
       }
       if(btn){btn.textContent='📥 Exportar JPG + PDF';btn.disabled=false;}
       const st=document.querySelector('#tab-cv .cv-btn-sec');
@@ -1519,7 +1526,7 @@ function cvContactoHTML(d){
   return `<div style="font-size:11px;color:#555;margin:-6px 0 16px;line-height:1.8" contenteditable="true">${items.join(' &nbsp;·&nbsp; ')}</div>`;
 }
 function cvCuerpo(d, estilo) {
-  const {nombre,cargo,ac,cat,empresa,hoy,skills,varText,tipo,paisData} = d;
+  const {nombre,cargo,ac,cat,empresa,hoy,skills,varText,tipo,paisData,estudios} = d;
   const secStyle = estilo==='minimalista'
     ? `font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#aaa;margin:18px 0 8px;font-family:monospace`
     : `font-size:13px;border-bottom:1px solid ${ac};padding-bottom:3px;margin:16px 0 8px;text-transform:uppercase;color:${ac};font-weight:700`;
@@ -1567,6 +1574,8 @@ function cvCuerpo(d, estilo) {
       </div>
       <div style="font-size:12px;margin-top:4px;color:#555">Me encargaba de las labores de ${cat} en el día a día, trabajando con dedicación, orden y buen trato con mis compañeros y con los clientes. (Aquí puedes contar con tus palabras qué hacías y de qué te sientes orgulloso/a.)</div>
     </div>
+    <h3 style="${secStyle}">Estudios</h3>
+    <p contenteditable="true">${estudios ? cvEsc(estudios) : 'Bachiller'}</p>
     <h3 style="${secStyle}">Habilidades</h3>
     <ul class="tag-list">${skills.map((h,i)=>`<li style="background:${ac}22;color:${ac}">${h} <span class="del-btn" onclick="cvSkills.splice(${i},1);cvRender()">×</span></li>`).join('')}</ul>`;
 }
@@ -1609,6 +1618,7 @@ cvRender = function() {
   const ciudad   = document.getElementById('cvCiudad')?.value || '';
   const nacimiento=document.getElementById('cvNacimiento')?.value || '';
   const civil    = document.getElementById('cvCivil')?.value || '';
+  const estudios = document.getElementById('cvEstudios')?.value || '';
   const varIdx   = parseInt(document.getElementById('cvVar')?.value || 0);
   const ac       = ACCENTMAP[paleta] || '#2563eb';
 
@@ -1633,7 +1643,7 @@ cvRender = function() {
     : '';
   const hoy = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
 
-  const datos = { nombre, cargo, ac, cat, empresa, hoy, fotoHTML, skills: cvSkills, varText, tipo, paisData, telefono, correo, cedula, ciudad, nacimiento, civil };
+  const datos = { nombre, cargo, ac, cat, empresa, hoy, fotoHTML, skills: cvSkills, varText, tipo, paisData, telefono, correo, cedula, ciudad, nacimiento, civil, estudios };
 
   const tplFn = CV_PLANTILLAS[plantilla] || CV_PLANTILLAS.clasico;
   const html  = tplFn(datos);
