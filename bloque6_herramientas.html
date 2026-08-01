@@ -237,6 +237,7 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
   <button class="main-tab" onclick="switchMain('media',this)">🎬 Vídeo &amp; Audio</button>
   <button class="main-tab" onclick="switchMain('tarjeta',this)">💳 Tarjeta Segura</button>
   <button class="main-tab" onclick="switchMain('cv',this)">📄 CV &amp; Cartas</button>
+  <button class="main-tab" onclick="switchMain('presentacion',this)">💼 Mi Tarjeta</button>
 </div>
 
 <!-- ══ TAB: PROTECCIÓN DIGITAL ══ -->
@@ -388,6 +389,53 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
         <button class="btn" onclick="downloadCard('png')">⬇ Descargar PNG</button>
       </div>
       <div id="cardSt"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB: MI TARJETA (PRESENTACIÓN + QR) ══ -->
+<div class="tab-content" id="tab-presentacion">
+  <div style="max-width:860px;margin:0 auto">
+    <div class="panel">
+      <div class="p-title">💼 Mi Tarjeta de Presentación</div>
+      <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:8px;padding:10px;margin-bottom:12px;font-size:10px;color:var(--ac3)">
+        Crea tu tarjeta profesional con <strong>código QR</strong> a tu WhatsApp o Instagram — perfecta para conseguir clientes. 🔒 Se genera en tu dispositivo; nada se sube a internet.
+      </div>
+      <div class="row"><span class="lbl">Nombre</span><input type="text" id="tpNombre" placeholder="Tu nombre completo" oninput="tpRender()"></div>
+      <div class="row"><span class="lbl">Oficio / Profesión</span><input type="text" id="tpOficio" placeholder="Ej: Estilista · Manicurista · Chofer" oninput="tpRender()"></div>
+      <div class="row"><span class="lbl">WhatsApp</span><input type="text" id="tpTel" placeholder="Ej: +58 412 1234567" oninput="tpRender()"></div>
+      <div class="row"><span class="lbl">Instagram</span><input type="text" id="tpIg" placeholder="tu_usuario (sin @)" oninput="tpRender()"></div>
+      <div class="row"><span class="lbl">Correo</span><input type="text" id="tpEmail" placeholder="opcional" oninput="tpRender()"></div>
+      <div class="row"><span class="lbl">Ciudad</span><input type="text" id="tpCiudad" placeholder="opcional" oninput="tpRender()"></div>
+      <div class="row"><span class="lbl">Frase / eslogan</span><input type="text" id="tpEslogan" placeholder="opcional · ej: Belleza a tu alcance" oninput="tpRender()"></div>
+      <div class="sep"></div>
+      <div class="row"><span class="lbl">Diseño</span>
+        <select id="tpPlantilla" onchange="tpRender()">
+          <option value="belleza">✨ Elegante (belleza)</option>
+          <option value="oficios">🔧 Fuerte (oficios)</option>
+          <option value="comercio">🛍️ Limpio (comercio)</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">El QR abre</span>
+        <select id="tpQrModo" onchange="tpRender()">
+          <option value="wa">📱 Mi WhatsApp</option>
+          <option value="ig">📷 Mi Instagram</option>
+          <option value="vcard">👤 Guardar mi contacto</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">Color de marca</span><input type="color" id="tpColor" value="#7c3aed" oninput="tpRender()" style="width:40px;height:28px;border:none;cursor:pointer;background:none"></div>
+      <div class="row"><span class="lbl">Logo / foto</span><input type="file" id="tpLogoFile" accept="image/*" onchange="tpLogo(event)" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px"></div>
+      <div class="sep"></div>
+      <div style="overflow-x:auto;text-align:center">
+        <canvas id="tpCanvas" width="920" height="560" style="max-width:100%;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.5)"></canvas>
+      </div>
+      <div class="row" style="margin-top:12px;justify-content:center;gap:10px">
+        <button class="btn btn-ok" onclick="tpDownload('jpg')">⬇ Descargar JPG + PDF</button>
+        <button class="btn" onclick="tpDownload('png')">⬇ PNG</button>
+      </div>
+      <div style="font-size:9px;color:var(--tx2);text-align:center;margin-top:4px">La descarga cuesta 2 créditos · imprime en tamaño tarjeta (9×5,5 cm)</div>
+      <div id="tpSt"></div>
+      <div id="tpQrHolder" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -613,6 +661,7 @@ function switchMain(tab,el){
   const guias={digital:'Protección Digital: sube tu archivo, elige la herramienta del panel izquierdo y descarga protegido.',tarjeta:'Tarjeta Segura: introduce tus datos, desliza el dedo sobre la tarjeta para ocultar zonas sensibles, luego descarga.',cv:'CV y Cartas: elige el tipo de documento, la categoría, rellena tus datos y exporta en PDF.',media:'Vídeo y Audio: sube tu archivo, elige calidad y resolución, y descarga optimizado sin perder calidad importante.'};
   if(guias[tab])ttsGuia(tab);
   if(tab==='tarjeta')setTimeout(()=>{initDigitSel();renderCardCanvas();},100);
+  if(tab==='presentacion')setTimeout(tpOpen,80);
 }
 
 // ══ TTS GUÍA ══
@@ -1922,6 +1971,155 @@ function cvChequearOferta(){
   const modalP = document.querySelector('#credModal .modal p');
   if(modalP) modalP.innerHTML = 'Tienes <strong id="crModalNum">0</strong> créditos.<br><strong>Pack: 50 créditos por €6</strong><br>2 créditos por acción. Contáctanos por WhatsApp:';
 })();
+
+// ══════════ MI TARJETA DE PRESENTACIÓN + QR (Fase 2) ══════════
+let tpLogoImg=null, tpQRCanvas=null, tpQRLast='', tpReady=false;
+function tpVal(id){return (document.getElementById(id)?.value||'').trim();}
+function tpSet(id,v){const e=document.getElementById(id);if(e&&v!=null&&v!=='')e.value=v;}
+function tpLeerNegocio(){try{return JSON.parse(localStorage.getItem('fp_negocio')||'{}');}catch(e){return{};}}
+function tpGuardarNegocio(){
+  const prev=tpLeerNegocio();
+  const d={nombre:tpVal('tpNombre'),oficio:tpVal('tpOficio'),tel:tpVal('tpTel'),ig:tpVal('tpIg'),email:tpVal('tpEmail'),ciudad:tpVal('tpCiudad'),eslogan:tpVal('tpEslogan'),color:tpVal('tpColor')};
+  if(tpLogoImg&&tpLogoImg._src)d.logo=tpLogoImg._src;
+  try{localStorage.setItem('fp_negocio',JSON.stringify(Object.assign(prev,d)));}catch(e){}
+}
+function tpLogo(ev){
+  const f=ev.target.files&&ev.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{const img=new Image();img.onload=()=>{img._src=e.target.result;tpLogoImg=img;tpGuardarNegocio();tpDraw();};img.src=e.target.result;};
+  r.readAsDataURL(f);
+}
+function tpMix(a,b,t){
+  a=a.replace('#','');b=b.replace('#','');
+  if(a.length===3)a=a.split('').map(c=>c+c).join('');
+  if(b.length===3)b=b.split('').map(c=>c+c).join('');
+  const ar=parseInt(a.slice(0,2),16),ag=parseInt(a.slice(2,4),16),ab=parseInt(a.slice(4,6),16);
+  const br=parseInt(b.slice(0,2),16),bg=parseInt(b.slice(2,4),16),bb=parseInt(b.slice(4,6),16);
+  return 'rgb('+Math.round(ar+(br-ar)*t)+','+Math.round(ag+(bg-ag)*t)+','+Math.round(ab+(bb-ab)*t)+')';
+}
+function tpRound(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function tpQRTarget(){
+  const modo=tpVal('tpQrModo');
+  const tel=tpVal('tpTel').replace(/[^\d]/g,'');
+  const ig=tpVal('tpIg').replace(/^@/,'').replace(/\s+/g,'');
+  if(modo==='ig')return ig?'https://instagram.com/'+ig:'';
+  if(modo==='vcard'){
+    if(!tpVal('tpNombre'))return '';
+    return 'BEGIN:VCARD\nVERSION:3.0\nFN:'+tpVal('tpNombre')+'\nTITLE:'+tpVal('tpOficio')+'\nTEL:'+tpVal('tpTel')+'\nEMAIL:'+tpVal('tpEmail')+'\nEND:VCARD';
+  }
+  return tel?'https://wa.me/'+tel:'';
+}
+function tpContacts(ctx,x,y,txtColor){
+  const lines=[];
+  const tel=tpVal('tpTel'),ig=tpVal('tpIg'),email=tpVal('tpEmail'),ciudad=tpVal('tpCiudad');
+  if(tel)lines.push('📱  '+tel);
+  if(ig)lines.push('📷  @'+ig.replace(/^@/,''));
+  if(email)lines.push('✉️  '+email);
+  if(ciudad)lines.push('📍  '+ciudad);
+  ctx.textAlign='left';ctx.font='400 26px Segoe UI,Arial';ctx.fillStyle=txtColor;
+  lines.forEach((l,i)=>ctx.fillText(l,x,y+i*44));
+}
+function tpDrawQR(ctx,x,y,size,label,labelColor){
+  if(!tpQRCanvas)return;
+  const pad=14;
+  ctx.fillStyle='#fff';tpRound(ctx,x-pad,y-pad,size+pad*2,size+pad*2,14);ctx.fill();
+  try{ctx.drawImage(tpQRCanvas,x,y,size,size);}catch(e){}
+  if(label){ctx.fillStyle=labelColor;ctx.textAlign='center';ctx.font='700 19px Segoe UI,Arial';ctx.fillText(label,x+size/2,y+size+32);}
+}
+function tpDraw(){
+  const cv=document.getElementById('tpCanvas');if(!cv)return;
+  const ctx=cv.getContext('2d');const W=cv.width,H=cv.height;
+  const color=tpVal('tpColor')||'#7c3aed';
+  const plant=tpVal('tpPlantilla')||'belleza';
+  const nombre=tpVal('tpNombre')||'Tu Nombre';
+  const oficio=tpVal('tpOficio')||'Tu oficio o profesión';
+  const eslogan=tpVal('tpEslogan');
+  const modo=tpVal('tpQrModo');
+  const qrLabel=modo==='ig'?'Escanea mi Instagram':modo==='vcard'?'Guarda mi contacto':'Escanea mi WhatsApp';
+  ctx.clearRect(0,0,W,H);ctx.lineJoin='round';
+  const qs=190, qx=W-qs-58, qy=H-qs-72;
+  if(plant==='comercio'){
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
+    const bh=180,g=ctx.createLinearGradient(0,0,W,bh);g.addColorStop(0,color);g.addColorStop(1,tpMix(color,'#000',0.35));
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,bh);
+    if(tpLogoImg){const R=60,cxL=W-100,cyL=90;ctx.save();ctx.beginPath();ctx.arc(cxL,cyL,R,0,7);ctx.clip();ctx.drawImage(tpLogoImg,cxL-R,cyL-R,R*2,R*2);ctx.restore();ctx.lineWidth=4;ctx.strokeStyle='#fff';ctx.beginPath();ctx.arc(cxL,cyL,R,0,7);ctx.stroke();}
+    ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='700 50px Georgia,serif';ctx.fillText(nombre,58,92);
+    ctx.fillStyle=tpMix(color,'#fff',0.85);ctx.font='400 28px Segoe UI,Arial';ctx.fillText(oficio,60,138);
+    if(eslogan){ctx.fillStyle='#666';ctx.font='italic 24px Georgia,serif';ctx.fillText('“'+eslogan+'”',60,240);}
+    tpContacts(ctx,60,eslogan?300:270,'#333');
+    tpDrawQR(ctx,qx,qy,qs,qrLabel,color);
+    ctx.fillStyle=color;ctx.fillRect(0,H-14,W,14);
+  } else if(plant==='oficios'){
+    ctx.fillStyle='#141426';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=color;ctx.fillRect(0,0,18,H);
+    ctx.save();ctx.globalAlpha=.06;ctx.fillStyle=color;ctx.beginPath();ctx.arc(W-120,H-100,260,0,7);ctx.fill();ctx.restore();
+    if(tpLogoImg){const R=58,cxL=W-110,cyL=112;ctx.save();ctx.beginPath();ctx.arc(cxL,cyL,R,0,7);ctx.clip();ctx.drawImage(tpLogoImg,cxL-R,cyL-R,R*2,R*2);ctx.restore();ctx.lineWidth=3;ctx.strokeStyle=color;ctx.beginPath();ctx.arc(cxL,cyL,R,0,7);ctx.stroke();}
+    ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='700 54px Segoe UI,Arial';ctx.fillText(nombre,58,150);
+    ctx.fillStyle=tpMix(color,'#fff',0.4);ctx.font='600 30px Segoe UI,Arial';ctx.fillText(oficio.toUpperCase(),60,196);
+    if(eslogan){ctx.fillStyle='#99a';ctx.font='italic 24px Georgia,serif';ctx.fillText('“'+eslogan+'”',60,242);}
+    tpContacts(ctx,60,eslogan?314:288,'#cfd3e0');
+    tpDrawQR(ctx,qx,qy,qs,qrLabel,'#fff');
+  } else {
+    const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,tpMix(color,'#fff',0.12));g.addColorStop(1,tpMix(color,'#000',0.5));
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.save();ctx.globalAlpha=.10;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(W-90,110,240,0,7);ctx.fill();ctx.restore();
+    let nameY=170;
+    if(tpLogoImg){const R=64,cxL=120,cyL=120;ctx.save();ctx.beginPath();ctx.arc(cxL,cyL,R,0,7);ctx.clip();ctx.drawImage(tpLogoImg,cxL-R,cyL-R,R*2,R*2);ctx.restore();ctx.lineWidth=4;ctx.strokeStyle='rgba(255,255,255,.85)';ctx.beginPath();ctx.arc(cxL,cyL,R,0,7);ctx.stroke();nameY=250;}
+    ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='700 56px Georgia,serif';ctx.fillText(nombre,58,nameY);
+    ctx.fillStyle='rgba(255,255,255,.92)';ctx.font='400 30px Segoe UI,Arial';ctx.fillText(oficio,60,nameY+46);
+    ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(60,nameY+70);ctx.lineTo(320,nameY+70);ctx.stroke();
+    if(eslogan){ctx.fillStyle='rgba(255,255,255,.88)';ctx.font='italic 24px Georgia,serif';ctx.fillText('“'+eslogan+'”',60,nameY+110);}
+    tpContacts(ctx,60,nameY+(eslogan?156:118),'#fff');
+    tpDrawQR(ctx,qx,qy,qs,qrLabel,'#fff');
+  }
+}
+function tpRender(){
+  const target=tpQRTarget();
+  if(target && target!==tpQRLast){
+    tpQRLast=target;
+    const holder=document.getElementById('tpQrHolder');
+    if(holder && typeof QRCode!=='undefined'){
+      holder.innerHTML='';
+      try{
+        new QRCode(holder,{text:target,width:240,height:240,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+        setTimeout(()=>{tpQRCanvas=holder.querySelector('canvas')||holder.querySelector('img');tpDraw();},280);
+      }catch(e){}
+    }
+  } else if(!target){ tpQRCanvas=null; tpQRLast=''; }
+  tpGuardarNegocio();
+  tpDraw();
+}
+function tpInit(){
+  const n=tpLeerNegocio();
+  tpSet('tpNombre',n.nombre);tpSet('tpOficio',n.oficio);tpSet('tpTel',n.tel);tpSet('tpIg',n.ig);
+  tpSet('tpEmail',n.email);tpSet('tpCiudad',n.ciudad);tpSet('tpEslogan',n.eslogan);tpSet('tpColor',n.color);
+  if(n.logo){const img=new Image();img.onload=()=>{img._src=n.logo;tpLogoImg=img;tpDraw();};img.src=n.logo;}
+  tpRender();
+}
+function tpOpen(){if(!tpReady){tpReady=true;tpInit();}else{tpRender();}}
+function tpDownload(fmt){
+  if(!document.getElementById('tpCanvas'))return;
+  if(!tpVal('tpNombre')){alert('Escribe al menos tu nombre.');return;}
+  if(!gastar(2))return;
+  tpDraw();
+  const canvas=document.getElementById('tpCanvas');
+  const nm=(tpVal('tpNombre')||'tarjeta').replace(/\s+/g,'_').toLowerCase().slice(0,24);
+  const fecha=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const base='mi_tarjeta_'+nm+'_'+fecha;
+  const hd=document.createElement('canvas');hd.width=canvas.width*2;hd.height=canvas.height*2;
+  const ctx=hd.getContext('2d');ctx.scale(2,2);ctx.drawImage(canvas,0,0);
+  const mime=fmt==='png'?'image/png':'image/jpeg';
+  const dataUrl=hd.toDataURL(mime,fmt==='png'?1:0.95);
+  const a=document.createElement('a');a.download=base+'.'+fmt;a.href=dataUrl;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  if(fmt==='jpg'&&(typeof window.jspdf!=='undefined'||typeof jsPDF!=='undefined')){
+    const JsPDF=window.jspdf?.jsPDF||jsPDF;
+    const pdf=new JsPDF({orientation:'landscape',unit:'mm',format:[91,55.6]});
+    pdf.addImage(dataUrl,'JPEG',0,0,91,55.6);
+    pdf.save(base+'.pdf');
+  }
+  const st=document.getElementById('tpSt');
+  if(st){st.innerHTML='<div class="st done">✅ Tarjeta descargada · '+fmt.toUpperCase()+(fmt==='jpg'?' + PDF':'')+'</div>';setTimeout(()=>st.innerHTML='',4000);}
+}
 
 // ══ INIT ══
 saveCr();
