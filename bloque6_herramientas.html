@@ -658,7 +658,7 @@ function switchMain(tab,el){
   document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('act'));
   document.getElementById('tab-'+tab).classList.add('act');
   el.classList.add('act');
-  const guias={digital:'Protección Digital: sube tu archivo, elige la herramienta del panel izquierdo y descarga protegido.',tarjeta:'Tarjeta Segura: introduce tus datos, desliza el dedo sobre la tarjeta para ocultar zonas sensibles, luego descarga.',cv:'CV y Cartas: elige el tipo de documento, la categoría, rellena tus datos y exporta en PDF.',media:'Vídeo y Audio: sube tu archivo, elige calidad y resolución, y descarga optimizado sin perder calidad importante.'};
+  const guias={digital:'Protección Digital: sube tu archivo, elige la herramienta del panel izquierdo y descarga protegido.',tarjeta:'Tarjeta Segura: introduce tus datos, desliza el dedo sobre la tarjeta para ocultar zonas sensibles, luego descarga.',cv:'CV y Cartas: elige el tipo de documento, la categoría, rellena tus datos y exporta en PDF.',media:'Vídeo y Audio: sube tu archivo, elige calidad y resolución, y descarga optimizado sin perder calidad importante.',presentacion:'Mi Tarjeta: rellena tu nombre, oficio y WhatsApp, elige un diseño y un color, y descarga tu tarjeta de presentación con código QR para compartir con tus clientes.'};
   if(guias[tab])ttsGuia(tab);
   if(tab==='tarjeta')setTimeout(()=>{initDigitSel();renderCardCanvas();},100);
   if(tab==='presentacion')setTimeout(tpOpen,80);
@@ -666,6 +666,7 @@ function switchMain(tab,el){
 
 // ══ TTS GUÍA ══
 const TTS_GUIAS = {
+  presentacion:'Mi Tarjeta: rellena tu nombre, oficio y WhatsApp, elige un diseño y un color de marca, y descarga tu tarjeta de presentación profesional con código QR para compartir con tus clientes por WhatsApp o Instagram.',
   bienvenida:'Bienvenida a Herramientas de Utilidad Pro. Tienes 4 secciones: Protección Digital para documentos e imágenes, Vídeo y Audio para optimizar archivos multimedia, Tarjeta Segura para ocultar datos bancarios, y CV y Cartas para generar documentos profesionales.',
   digital:'Protección Digital: sube cualquier imagen o PDF, elige la herramienta del panel izquierdo y aplica marca de agua, compresión, cambio de fondo o codificación.',
   media:'Vídeo y Audio: sube tu archivo MP4, MOV, MP3 o WAV. Elige la calidad deseada. El sistema optimizará el peso inteligentemente en tu propio dispositivo, sin subir nada a internet.',
@@ -2005,7 +2006,8 @@ function tpQRTarget(){
   if(modo==='ig')return ig?'https://instagram.com/'+ig:'';
   if(modo==='vcard'){
     if(!tpVal('tpNombre'))return '';
-    return 'BEGIN:VCARD\nVERSION:3.0\nFN:'+tpVal('tpNombre')+'\nTITLE:'+tpVal('tpOficio')+'\nTEL:'+tpVal('tpTel')+'\nEMAIL:'+tpVal('tpEmail')+'\nEND:VCARD';
+    const esc=s=>String(s||'').replace(/([\\,;])/g,'\\$1').replace(/\n/g,'\\n');
+    return 'BEGIN:VCARD\nVERSION:3.0\nFN:'+esc(tpVal('tpNombre'))+'\nTITLE:'+esc(tpVal('tpOficio'))+'\nTEL:'+esc(tpVal('tpTel'))+'\nEMAIL:'+esc(tpVal('tpEmail'))+'\nEND:VCARD';
   }
   return tel?'https://wa.me/'+tel:'';
 }
@@ -2100,6 +2102,8 @@ function tpOpen(){if(!tpReady){tpReady=true;tpInit();}else{tpRender();}}
 function tpDownload(fmt){
   if(!document.getElementById('tpCanvas'))return;
   if(!tpVal('tpNombre')){alert('Escribe al menos tu nombre.');return;}
+  const _tgt=tpQRTarget();
+  if(_tgt && !tpQRCanvas){tpRender();alert('El código QR se está generando. Espera un segundo y vuelve a pulsar Descargar.');return;}
   if(!gastar(2))return;
   tpDraw();
   const canvas=document.getElementById('tpCanvas');
