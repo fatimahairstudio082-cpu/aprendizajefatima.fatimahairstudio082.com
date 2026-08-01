@@ -455,6 +455,13 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
           <option value="brillo">💫 Brillo deslizante</option>
         </select>
       </div>
+      <div class="row"><span class="lbl">Transición</span>
+        <select id="tpTrans">
+          <option value="none">— Ninguna —</option>
+          <option value="iris">⭕ Círculo (abre y cierra)</option>
+          <option value="fade">🎞️ Fundido negro</option>
+        </select>
+      </div>
       <div class="row"><span class="lbl">Melodía</span>
         <select id="tpAudioSrc">
           <option value="none">Sin sonido</option>
@@ -620,6 +627,15 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
           <option value="brillo">💫 Brillo deslizante</option>
           <option value="neon">🌟 Neón (resplandor)</option>
           <option value="rebote">🎈 Rebote</option>
+          <option value="desliza">➡️ Deslizar entrada</option>
+          <option value="onda">🌊 Onda (ola)</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">Transición</span>
+        <select id="flTrans">
+          <option value="none">— Ninguna —</option>
+          <option value="iris">⭕ Círculo (abre y cierra)</option>
+          <option value="fade">🎞️ Fundido negro</option>
         </select>
       </div>
       <div class="row"><span class="lbl">Movimiento</span>
@@ -2426,6 +2442,7 @@ function tpDrawFrame(ctx,W,H,bg,elapsed,dur,mv){
   ctx.restore();
   const sw=(elapsed/2.2)%1, gx=-W*0.5+sw*1.9*W, inten=(mv==='brillo')?0.28:0.10;
   const g=ctx.createLinearGradient(gx,0,gx+W*0.4,H);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(0.5,'rgba(255,255,255,'+inten+')');g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  fpTransition(ctx,W,H,elapsed,dur,tpVal('tpTrans'),true);
 }
 async function tpStartVideo(){
   const cv=document.getElementById('tpCanvas'); if(!cv)return;
@@ -2755,11 +2772,12 @@ function flBand(ctx,W,H,color,titulo,sub,precio,tel,cta,opts){
   let ty=H-H*0.27;
   ctx.save();
   if(opts.alpha!=null)ctx.globalAlpha=opts.alpha;
-  if(opts.dy)ctx.translate(0,opts.dy);
+  if(opts.dx||opts.dy)ctx.translate(opts.dx||0,opts.dy||0);
   ctx.fillStyle='#fff';ctx.font='800 '+(W*0.072)+'px Georgia,serif';
   if(opts.glow){ctx.shadowColor=opts.glowColor||'#fff';ctx.shadowBlur=W*0.03*opts.glow;}
   const tLines=flWrapLines(ctx,titulo,W*0.86);
   if(opts.reveal!=null)flDrawReveal(ctx,tLines,W*0.07,ty,tLineH,opts.reveal,opts.cursor);
+  else if(opts.wave!=null)flDrawWave(ctx,tLines,W*0.07,ty,tLineH,W*0.02,opts.wave);
   else tLines.forEach((l,i)=>ctx.fillText(l,W*0.07,ty+i*tLineH));
   ctx.restore();
   ty=ty+tLines.length*tLineH;
@@ -2830,6 +2848,30 @@ function flStickers(ctx,W,H){
   ctx.fillText(s,x,y);
   ctx.restore();
   ctx.textBaseline='alphabetic';ctx.textAlign='left';
+}
+// Dibuja el título letra a letra con una onda vertical viajera
+function flDrawWave(ctx,lines,x,y,lineH,amp,phase){
+  for(let li=0;li<lines.length;li++){
+    let cx=x; const line=lines[li];
+    for(let i=0;i<line.length;i++){
+      const ch=line[i], dy=Math.sin(phase+cx*0.02)*amp;
+      ctx.fillText(ch,cx,y+li*lineH+dy);
+      cx+=ctx.measureText(ch).width;
+    }
+  }
+  return y+lines.length*lineH;
+}
+// Transición de entrada/salida: iris circular o fundido negro
+function fpTransition(ctx,W,H,el,dur,type,allowClose){
+  if(!type||type==='none')return;
+  const inD=0.7, outD=0.7;
+  let cover=0;
+  if(el<inD)cover=1-(el/inD);
+  else if(allowClose!==false&&el>dur-outD)cover=Math.min(1,(el-(dur-outD))/outD);
+  else return;
+  if(type==='fade'){ctx.save();ctx.globalAlpha=cover;ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);ctx.restore();return;}
+  const maxR=Math.sqrt(W*W+H*H)/2, r=Math.max(0.001,maxR*(1-cover));
+  ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.arc(W/2,H/2,r,0,Math.PI*2,true);ctx.fillStyle='#000';ctx.fill('evenodd');ctx.restore();
 }
 function flDraw(){
   const cv=document.getElementById('flCanvas'); if(!cv)return;
@@ -2962,9 +3004,12 @@ function flDrawFrame(ctx,W,H,bg,elapsed,dur){
   else if(fx==='brillo')flBand(...args,{alpha:app,glow:0.35+0.35*Math.abs(Math.sin(elapsed*2.2)),glowColor:'#ffffff'});
   else if(fx==='neon')flBand(...args,{alpha:app,glow:0.7+0.6*Math.abs(Math.sin(elapsed*2.6)),glowColor:col});
   else if(fx==='rebote'){const b=Math.exp(-elapsed*3)*Math.cos(elapsed*11)*(-H*0.045);flBand(...args,{alpha:app,dy:b});}
+  else if(fx==='desliza')flBand(...args,{alpha:app,dx:(1-app)*(-W*0.25)});
+  else if(fx==='onda')flBand(...args,{alpha:app,wave:elapsed*4});
   else{const dy=(1-app)*H*0.03;ctx.save();ctx.globalAlpha=app;ctx.translate(0,dy);flBand(...args);ctx.restore();}
   flStickers(ctx,W,H);
   flGrain(ctx,W,H,0.05);
+  fpTransition(ctx,W,H,elapsed,dur,flVal('flTrans'),flVal('flAudioSrc')!=='mic');
 }
 function flStopVideo(){if(flRec&&flRec.state!=='inactive'){try{flRec.stop();}catch(e){}}}
 async function flStartVideo(){
