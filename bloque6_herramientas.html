@@ -239,6 +239,7 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
   <button class="main-tab" onclick="switchMain('cv',this)">📄 CV &amp; Cartas</button>
   <button class="main-tab" onclick="switchMain('presentacion',this)">💼 Mi Tarjeta</button>
   <button class="main-tab" onclick="switchMain('recibos',this)">🧾 Recibos</button>
+  <button class="main-tab" onclick="switchMain('flyers',this)">📣 Flyers</button>
 </div>
 
 <!-- ══ TAB: PROTECCIÓN DIGITAL ══ -->
@@ -443,6 +444,44 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
       </div>
       <div style="font-size:9px;color:var(--tx2);text-align:center;margin-top:4px">La descarga cuesta 2 créditos · imprime en tamaño tarjeta (9×5,5 cm)</div>
       <div id="tpSt"></div>
+      <div class="sep"></div>
+      <div style="font-size:10px;color:var(--ac2);font-weight:700;margin-bottom:6px">🎬 Tarjeta animada (video con música)</div>
+      <div style="font-size:9px;color:var(--tx2);margin-bottom:8px">Convierte tu tarjeta en un video con movimiento y melodía, ideal para tu estado de WhatsApp o Instagram.</div>
+      <div class="row"><span class="lbl">Movimiento</span>
+        <select id="tpMove">
+          <option value="desliza">➡️ Deslizar y entrar</option>
+          <option value="zoom">🔍 Acercar (zoom)</option>
+          <option value="flotar">🎈 Flotar suave</option>
+          <option value="brillo">💫 Brillo deslizante</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">Transición</span>
+        <select id="tpTrans">
+          <option value="none">— Ninguna —</option>
+          <option value="iris">⭕ Círculo (abre y cierra)</option>
+          <option value="fade">🎞️ Fundido negro</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">Melodía</span>
+        <select id="tpAudioSrc">
+          <option value="none">Sin sonido</option>
+          <optgroup label="🎼 Melodías sin copyright">
+            <option value="mel_energia">⚡ Energía (motivador)</option>
+            <option value="mel_elegante">💎 Elegante (suave)</option>
+            <option value="mel_alegre">🎉 Alegre (pop)</option>
+            <option value="mel_epico">🎬 Épico (cine)</option>
+            <option value="mel_lofi">🌙 Lo-fi (relajado)</option>
+            <option value="mel_corporativo">💼 Corporativo (pro)</option>
+            <option value="mel_romantico">💗 Romántico (suave)</option>
+            <option value="mel_dramatico">🎭 Dramático (intenso)</option>
+          </optgroup>
+        </select>
+        <button class="btn btn-g" id="tpPrevBtn" onclick="tpPreviewAudio()" style="font-size:10px;padding:2px 10px">▶ Escuchar</button>
+      </div>
+      <div class="row"><span class="lbl">Duración (seg)</span><input type="number" id="tpDur" value="6" min="2" max="20" step="1" style="max-width:90px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:5px;padding:4px 8px;font-size:11px"></div>
+      <div class="row" style="justify-content:center"><button class="btn" id="tpVidBtn" onclick="tpStartVideo()">🎬 Grabar video</button></div>
+      <div style="font-size:9px;color:var(--tx2);text-align:center;margin-top:2px">El video cuesta 2 créditos · sale en WebM (va bien en Android; en iPhone puede no reproducirse en algunas apps)</div>
+      <div id="tpVidSt"></div>
       <div id="tpQrHolder" style="display:none"></div>
     </div>
   </div>
@@ -487,6 +526,7 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
       <div id="rcItems"></div>
       <div class="row" style="margin-top:4px"><button class="btn btn-g" onclick="rcAddItem()" style="font-size:10px">➕ Añadir fila</button></div>
       <div class="row"><span class="lbl">Impuesto %</span><input type="number" id="rcIva" value="0" min="0" max="100" step="0.1" oninput="rcRender()" style="max-width:90px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:5px;padding:4px 8px;font-size:11px"><span style="font-size:9px;color:var(--tx2)">0 = sin impuesto</span></div>
+      <div class="row" id="rcPagoRow" style="display:none"><span class="lbl">Monto pagado</span><input type="number" id="rcPagado" value="0" min="0" step="0.01" oninput="rcRender()" style="max-width:110px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:5px;padding:4px 8px;font-size:11px"><span style="font-size:9px;color:var(--tx2)">abono del cliente · 0 = usar el total</span></div>
       <div id="rcReciboExtra" style="display:none">
         <div class="row"><span class="lbl">Concepto</span><input type="text" id="rcConcepto" placeholder="por concepto de…" oninput="rcRender()"></div>
         <div class="row"><span class="lbl">Método de pago</span>
@@ -509,6 +549,128 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
       </div>
       <div style="font-size:9px;color:var(--tx2);text-align:center;margin-top:4px">La descarga cuesta 2 créditos · PDF de texto seleccionable</div>
       <div id="rcSt"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB: FLYERS PARA REDES ══ -->
+<div class="tab-content" id="tab-flyers">
+  <div style="max-width:900px;margin:0 auto">
+    <div class="panel">
+      <div class="p-title">📣 Flyers para redes</div>
+      <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:8px;padding:10px;margin-bottom:12px;font-size:10px;color:var(--ac3)">
+        Crea anuncios listos para <strong>Instagram, Estados de WhatsApp y Facebook</strong>. Sube tu foto, escribe tu oferta y descarga en el <strong>tamaño exacto</strong> de cada red. 🔒 Todo se genera en tu dispositivo.
+      </div>
+      <div class="row"><span class="lbl">Formato</span>
+        <select id="flFormato" onchange="flUpd()">
+          <option value="cuadrado">⬛ Cuadrado 1080×1080 (Instagram)</option>
+          <option value="historia">📱 Historia 1080×1920 (Estado / Story)</option>
+          <option value="horizontal">🖥️ Horizontal 1200×628 (Facebook)</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">Plantilla</span>
+        <select id="flPlantilla" onchange="flUpd()">
+          <option value="promo">✨ Promoción de servicio</option>
+          <option value="oferta">🏷️ Oferta / descuento</option>
+          <option value="antesdespues">🔀 Antes y después (2 fotos)</option>
+          <option value="clase">🎓 Anuncio de clase</option>
+          <option value="cine">🎬 Cinematográfico</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">Título</span><input type="text" id="flTitulo" placeholder="Ej: Peinados de novia" oninput="flDraw()"></div>
+      <div class="row"><span class="lbl">Subtítulo</span><input type="text" id="flSubtitulo" placeholder="Ej: Reserva tu cita esta semana" oninput="flDraw()"></div>
+      <div class="row"><span class="lbl">Precio / Oferta</span><input type="text" id="flPrecio" placeholder="Ej: -20% · $15" oninput="flDraw()"></div>
+      <div class="row"><span class="lbl">CTA (botón)</span><input type="text" id="flCta" value="Reserva por WhatsApp" oninput="flDraw()"></div>
+      <div class="row"><span class="lbl">Teléfono</span><input type="text" id="flTel" placeholder="WhatsApp / teléfono" oninput="flDraw()"></div>
+      <div class="row"><span class="lbl">Color de marca</span><input type="color" id="flColor" value="#7c3aed" oninput="flDraw()" style="width:40px;height:28px;border:none;cursor:pointer;background:none"></div>
+      <div class="row"><span class="lbl">Foto</span><input type="file" id="flFoto1" accept="image/*" onchange="flPhoto(event,1)" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px"></div>
+      <div class="row" id="flFoto2Row" style="display:none"><span class="lbl">Foto 2 (después)</span><input type="file" id="flFoto2" accept="image/*" onchange="flPhoto(event,2)" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px"></div>
+      <div class="row"><span class="lbl">Sticker</span>
+        <select id="flSticker" onchange="flDraw()">
+          <option value="">— Ninguno —</option>
+          <option value="✨">✨ Destellos</option>
+          <option value="💇‍♀️">💇‍♀️ Peinado</option>
+          <option value="💅">💅 Uñas</option>
+          <option value="💄">💄 Maquillaje</option>
+          <option value="💈">💈 Barbería</option>
+          <option value="✂️">✂️ Tijeras</option>
+          <option value="💖">💖 Corazón</option>
+          <option value="⭐">⭐ Estrella</option>
+          <option value="🔥">🔥 Fuego</option>
+          <option value="👑">👑 Corona</option>
+          <option value="🌸">🌸 Flor</option>
+          <option value="🎀">🎀 Lazo</option>
+          <option value="💎">💎 Diamante</option>
+          <option value="🏷️">🏷️ Etiqueta</option>
+          <option value="📅">📅 Cita</option>
+          <option value="🎉">🎉 Fiesta</option>
+        </select>
+        <select id="flStickerPos" onchange="flDraw()" style="max-width:130px">
+          <option value="tl">↖ Arriba izq.</option>
+          <option value="tr" selected>↗ Arriba der.</option>
+          <option value="bl">↙ Abajo izq.</option>
+          <option value="br">↘ Abajo der.</option>
+        </select>
+      </div>
+      <div class="sep"></div>
+      <div style="overflow:auto;text-align:center;max-height:70vh">
+        <canvas id="flCanvas" width="1080" height="1080" style="max-width:100%;max-height:66vh;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5)"></canvas>
+      </div>
+      <div class="row" style="margin-top:12px;justify-content:center"><button class="btn btn-ok" onclick="flDownload()">⬇ Descargar JPG</button></div>
+      <div style="font-size:9px;color:var(--tx2);text-align:center;margin-top:4px">La imagen cuesta 2 créditos · tamaño exacto para cada red</div>
+      <div class="sep"></div>
+      <div style="font-size:10px;color:var(--ac2);font-weight:700;margin-bottom:6px">🎬 Video animado (con sonido)</div>
+      <div class="row"><span class="lbl">Efecto de letras</span>
+        <select id="flTextFx" onchange="flDraw()">
+          <option value="aparecer">✨ Aparecer (suave)</option>
+          <option value="maquina">⌨️ Máquina de escribir</option>
+          <option value="brillo">💫 Brillo deslizante</option>
+          <option value="neon">🌟 Neón (resplandor)</option>
+          <option value="rebote">🎈 Rebote</option>
+          <option value="desliza">➡️ Deslizar entrada</option>
+          <option value="onda">🌊 Onda (ola)</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">Transición</span>
+        <select id="flTrans">
+          <option value="none">— Ninguna —</option>
+          <option value="iris">⭕ Círculo (abre y cierra)</option>
+          <option value="fade">🎞️ Fundido negro</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">Movimiento</span>
+        <select id="flMove">
+          <option value="zoom">🔍 Acercar (zoom)</option>
+          <option value="pan_der">➡️ Paneo a la derecha</option>
+          <option value="pan_izq">⬅️ Paneo a la izquierda</option>
+          <option value="pan_arriba">⬆️ Paneo hacia arriba</option>
+          <option value="deriva">🌀 Deriva (flotante)</option>
+          <option value="fijo">⏸️ Fijo (sin movimiento)</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">Audio</span>
+        <select id="flAudioSrc" onchange="flAudioUpd()">
+          <option value="none">Sin sonido</option>
+          <optgroup label="🎼 Melodías sin copyright">
+            <option value="mel_energia">⚡ Energía (motivador)</option>
+            <option value="mel_elegante">💎 Elegante (suave)</option>
+            <option value="mel_alegre">🎉 Alegre (pop)</option>
+            <option value="mel_epico">🎬 Épico (cine)</option>
+            <option value="mel_lofi">🌙 Lo-fi (relajado)</option>
+            <option value="mel_corporativo">💼 Corporativo (pro)</option>
+            <option value="mel_romantico">💗 Romántico (suave)</option>
+            <option value="mel_dramatico">🎭 Dramático (intenso)</option>
+          </optgroup>
+          <option value="upload">🎵 Subir música / voz</option>
+          <option value="mic">🎤 Grabar voz (micrófono)</option>
+        </select>
+        <button class="btn btn-g" id="flPrevBtn" onclick="flPreviewAudio()" style="font-size:10px;padding:2px 10px">▶ Escuchar</button>
+      </div>
+      <div class="row" id="flAudioRow" style="display:none"><span class="lbl">Archivo audio</span><input type="file" id="flAudio" accept="audio/*" onchange="flAudioFile(event)" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px"></div>
+      <div class="row"><span class="lbl">Duración (seg)</span><input type="number" id="flDur" value="6" min="2" max="20" step="1" style="max-width:90px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:5px;padding:4px 8px;font-size:11px"><span style="font-size:9px;color:var(--tx2)">música/sin sonido · el micrófono graba hasta pulsar Detener</span></div>
+      <div class="row" style="justify-content:center"><button class="btn" id="flVidBtn" onclick="flStartVideo()">🎬 Grabar video</button></div>
+      <div style="font-size:9px;color:var(--tx2);text-align:center;margin-top:2px">El video cuesta 2 créditos · sale en WebM (va bien en Android; en iPhone puede no reproducirse en algunas apps)</div>
+      <div id="flSt"></div>
     </div>
   </div>
 </div>
@@ -731,16 +893,17 @@ function switchMain(tab,el){
   document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('act'));
   document.getElementById('tab-'+tab).classList.add('act');
   el.classList.add('act');
-  const guias={digital:'Protección Digital: sube tu archivo, elige la herramienta del panel izquierdo y descarga protegido.',tarjeta:'Tarjeta Segura: introduce tus datos, desliza el dedo sobre la tarjeta para ocultar zonas sensibles, luego descarga.',cv:'CV y Cartas: elige el tipo de documento, la categoría, rellena tus datos y exporta en PDF.',media:'Vídeo y Audio: sube tu archivo, elige calidad y resolución, y descarga optimizado sin perder calidad importante.',presentacion:'Mi Tarjeta: rellena tu nombre, oficio y WhatsApp, elige un diseño y un color, y descarga tu tarjeta de presentación con código QR para compartir con tus clientes.',recibos:'Recibos: elige si quieres un presupuesto, un recibo de pago o una factura; pon tus datos y los del cliente, añade las filas del detalle y descarga en PDF.'};
+  const guias={digital:'Protección Digital: sube tu archivo, elige la herramienta del panel izquierdo y descarga protegido.',tarjeta:'Tarjeta Segura: introduce tus datos, desliza el dedo sobre la tarjeta para ocultar zonas sensibles, luego descarga.',cv:'CV y Cartas: elige el tipo de documento, la categoría, rellena tus datos y exporta en PDF.',media:'Vídeo y Audio: sube tu archivo, elige calidad y resolución, y descarga optimizado sin perder calidad importante.',presentacion:'Mi Tarjeta: rellena tu nombre, oficio y WhatsApp, elige un diseño y un color, y descarga tu tarjeta de presentación con código QR para compartir con tus clientes.',recibos:'Recibos: elige si quieres un presupuesto, un recibo de pago o una factura; pon tus datos y los del cliente, añade las filas del detalle y descarga en PDF.',flyers:'Flyers: elige el formato de la red, una plantilla, escribe tu título y oferta y sube una foto. Puedes descargar la imagen, o crear un video animado eligiendo un efecto para las letras y una melodía sin derechos de autor.'};
   if(guias[tab])ttsGuia(tab);
   if(tab==='tarjeta')setTimeout(()=>{initDigitSel();renderCardCanvas();},100);
   if(tab==='presentacion')setTimeout(tpOpen,80);
   if(tab==='recibos')setTimeout(rcOpen,80);
+  if(tab==='flyers')setTimeout(flOpen,80);
 }
 
 // ══ TTS GUÍA ══
 const TTS_GUIAS = {
-  presentacion:'Mi Tarjeta: rellena tu nombre, oficio y WhatsApp, elige un diseño y un color de marca, y descarga tu tarjeta de presentación profesional con código QR para compartir con tus clientes por WhatsApp o Instagram.',
+  presentacion:'Mi Tarjeta: rellena tu nombre, oficio y WhatsApp, elige un diseño y un color de marca, y descarga tu tarjeta con código QR. También puedes convertirla en un video animado con movimiento y una melodía sin derechos de autor para tu estado de WhatsApp o Instagram.',
   bienvenida:'Bienvenida a Herramientas de Utilidad Pro. Tienes 4 secciones: Protección Digital para documentos e imágenes, Vídeo y Audio para optimizar archivos multimedia, Tarjeta Segura para ocultar datos bancarios, y CV y Cartas para generar documentos profesionales.',
   digital:'Protección Digital: sube cualquier imagen o PDF, elige la herramienta del panel izquierdo y aplica marca de agua, compresión, cambio de fondo o codificación.',
   media:'Vídeo y Audio: sube tu archivo MP4, MOV, MP3 o WAV. Elige la calidad deseada. El sistema optimizará el peso inteligentemente en tu propio dispositivo, sin subir nada a internet.',
@@ -2248,6 +2411,98 @@ function tpDownload(fmt){
   if(st){st.innerHTML='<div class="st done">✅ Tarjeta descargada · '+fmt.toUpperCase()+(fmt==='jpg'?' + PDF':'')+(_forcedPng?' · fondo transparente (PNG)':'')+'</div>';setTimeout(()=>st.innerHTML='',4500);}
 }
 
+// ── Mi Tarjeta: video animado con movimiento y melodía ──
+let tpRec=null, tpRecording=false, tpAudioCtx=null, tpAnimReq=null, tpMelodyPlayer=null, tpPrevStop=null;
+function tpStopPreview(){const b=document.getElementById('tpPrevBtn');if(b)b.textContent='▶ Escuchar';if(tpPrevStop){try{tpPrevStop();}catch(e){}}tpPrevStop=null;}
+function tpPreviewAudio(){
+  const mode=tpVal('tpAudioSrc')||'none';
+  if(tpPrevStop){tpStopPreview();return;}
+  if(mode.indexOf('mel_')!==0){alert('Elige una melodía para escuchar.');return;}
+  const b=document.getElementById('tpPrevBtn');
+  try{
+    const ac=new (window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==='suspended')ac.resume();
+    const m=flPlayMelody(ac,null,mode,5);
+    if(b)b.textContent='■ Parar';
+    tpPrevStop=()=>{try{m.stop();ac.close();}catch(e){}};
+    setTimeout(()=>{if(tpPrevStop)tpStopPreview();},5400);
+  }catch(e){alert('No se pudo reproducir: '+(e.message||e));}
+}
+function tpDrawFrame(ctx,W,H,bg,elapsed,dur,mv){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0b0b12';ctx.fillRect(0,0,W,H);
+  const app=Math.max(0,Math.min(1,elapsed/0.9));
+  let z=1.06, tx=0, ty=0, alpha=1;
+  if(mv==='desliza'){tx=(1-app)*(-W*0.18);alpha=app;}
+  else if(mv==='zoom'){z=1.12-0.06*Math.min(1,elapsed/3.0);}
+  else if(mv==='flotar'){ty=Math.sin(elapsed*1.6)*H*0.02;}
+  const dw=W*z, dh=H*z, sx=(dw-W)/2, sy=(dh-H)/2;
+  ctx.save();ctx.globalAlpha=alpha;
+  ctx.drawImage(bg,tx-sx,ty-sy,dw,dh);
+  ctx.restore();
+  const sw=(elapsed/2.2)%1, gx=-W*0.5+sw*1.9*W, inten=(mv==='brillo')?0.28:0.10;
+  const g=ctx.createLinearGradient(gx,0,gx+W*0.4,H);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(0.5,'rgba(255,255,255,'+inten+')');g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  fpTransition(ctx,W,H,elapsed,dur,tpVal('tpTrans'),true);
+}
+async function tpStartVideo(){
+  const cv=document.getElementById('tpCanvas'); if(!cv)return;
+  if(tpRecording){if(tpRec&&tpRec.state!=='inactive'){try{tpRec.stop();}catch(e){}}return;}
+  if(!tpVal('tpNombre')){alert('Escribe al menos tu nombre.');return;}
+  if(typeof MediaRecorder==='undefined'||!cv.captureStream){alert('Tu navegador no soporta grabar video. Prueba en Chrome/Edge (Android o PC).');return;}
+  const _tgt=tpQRTarget(); if(_tgt&&!tpQRCanvas){tpRender();alert('El código QR se está generando. Espera un segundo y vuelve a pulsar Grabar.');return;}
+  const st=document.getElementById('tpVidSt'), btn=document.getElementById('tpVidBtn');
+  const mode=tpVal('tpAudioSrc')||'none', mv=tpVal('tpMove')||'desliza';
+  const cleanup=[];
+  tpRecording=true; if(btn){btn.classList.add('btn-warn');btn.textContent='■ Detener';}
+  const abort=(msg)=>{cleanup.forEach(f=>{try{f();}catch(e){}});tpRecording=false;if(btn){btn.classList.remove('btn-warn');btn.textContent='🎬 Grabar video';}if(msg)alert(msg);};
+  let audioTrack=null, dur=parseFloat(tpVal('tpDur'))||6; dur=Math.max(2,Math.min(20,dur));
+  try{
+    if(mode.indexOf('mel_')===0){
+      tpAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      try{if(tpAudioCtx.state==='suspended')await tpAudioCtx.resume();}catch(e){}
+      const dest=tpAudioCtx.createMediaStreamDestination();
+      tpMelodyPlayer=flPlayMelody(tpAudioCtx,dest,mode,dur);
+      audioTrack=dest.stream.getAudioTracks()[0];
+      cleanup.push(()=>{try{tpMelodyPlayer&&tpMelodyPlayer.stop();tpAudioCtx.close();}catch(e){}});
+    }
+  }catch(e){abort('No se pudo iniciar el audio: '+(e.message||e));return;}
+  tpDraw();
+  const W=cv.width,H=cv.height;
+  const bg=document.createElement('canvas');bg.width=W;bg.height=H;bg.getContext('2d').drawImage(cv,0,0);
+  const ctx=cv.getContext('2d');
+  const vstream=cv.captureStream(30), combined=new MediaStream();
+  vstream.getVideoTracks().forEach(t=>combined.addTrack(t));
+  if(audioTrack)combined.addTrack(audioTrack);
+  let mime='video/webm;codecs=vp9,opus'; if(!MediaRecorder.isTypeSupported(mime))mime='video/webm;codecs=vp8,opus'; if(!MediaRecorder.isTypeSupported(mime))mime='video/webm';
+  let recorder;
+  try{recorder=new MediaRecorder(combined,{mimeType:mime,videoBitsPerSecond:5000000});}
+  catch(e){abort('No se pudo iniciar la grabación: '+(e.message||e));return;}
+  if(!gastar(2)){abort();return;}
+  tpRec=recorder;
+  const chunks=[];
+  tpRec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+  tpRec.onstop=()=>{
+    if(tpAnimReq)cancelAnimationFrame(tpAnimReq); tpAnimReq=null; tpRecording=false;
+    cleanup.forEach(f=>f());
+    const blob=new Blob(chunks,{type:'video/webm'}), url=URL.createObjectURL(blob);
+    const nm=(tpVal('tpNombre')||'tarjeta').replace(/\s+/g,'_').toLowerCase().slice(0,24);
+    const a=document.createElement('a');a.download='mi_tarjeta_'+nm+'_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.webm';a.href=url;document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+    if(btn){btn.textContent='🎬 Grabar video';btn.classList.remove('btn-warn');}
+    if(st)st.innerHTML='<div class="st done">✅ Video descargado · WebM ('+fmt(blob.size)+')</div>';
+    tpDraw();
+  };
+  if(st)st.innerHTML='<div class="st proc">🎬 Grabando video…</div>';
+  const t0=performance.now();
+  tpRec.start();
+  (function loop(){
+    const el=(performance.now()-t0)/1000;
+    tpDrawFrame(ctx,W,H,bg,el,dur,mv);
+    if(el>=dur){if(tpRec&&tpRec.state!=='inactive'){try{tpRec.stop();}catch(e){}}return;}
+    tpAnimReq=requestAnimationFrame(loop);
+  })();
+}
+
 // ══════════ RECIBOS · FACTURAS · PRESUPUESTOS (Fase 3) ══════════
 let rcReady=false;
 const RC_INP='background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:5px;padding:4px 6px;font-size:11px;outline:none';
@@ -2301,12 +2556,28 @@ function rcCalc(){
   rows.forEach((r,i)=>{const s=r.querySelector('.rc-sub');if(s)s.textContent=rcMoney(items[i].sub);});
   return {items,subtotal,iva,ivaPct,total:subtotal+iva};
 }
+// Resumen de importes según el tipo de documento.
+// Recibo sin detalle: el importe del recibo ES el monto pagado (sin necesidad de filas).
+// Con detalle: total = líneas; el monto pagado es el abono y se calcula el saldo.
+function rcResumen(c,tipo){
+  const raw=parseFloat(rcVal('rcPagado'))||0;
+  const hayItems=c.items.some(it=>it.desc||it.price>0);
+  if(tipo==='recibo'&&!hayItems){
+    return {subtotal:raw,iva:0,ivaPct:0,total:raw,pagado:raw,saldo:0,hayItems:false,simple:true,mostrarPago:false,saldoPendiente:false};
+  }
+  const pagado=raw>0?raw:(tipo==='recibo'?c.total:0);
+  const saldo=Math.max(0,c.total-pagado);
+  return {subtotal:c.subtotal,iva:c.iva,ivaPct:c.ivaPct,total:c.total,pagado,saldo,hayItems,simple:false,
+    mostrarPago:(tipo==='factura'||tipo==='recibo')&&pagado>0,saldoPendiente:saldo>0.005};
+}
 function rcRender(){
   rcGuardarNegocio();
   const ex=document.getElementById('rcReciboExtra'); if(ex)ex.style.display=(rcVal('rcTipo')==='recibo')?'block':'none';
+  const pr=document.getElementById('rcPagoRow'); if(pr)pr.style.display=(rcVal('rcTipo')==='factura'||rcVal('rcTipo')==='recibo')?'flex':'none';
   const doc=document.getElementById('rcDoc'); if(!doc)return;
   const c=rcCalc();
   const tipo=rcVal('rcTipo');
+  const r=rcResumen(c,tipo);
   const titulo=tipo==='recibo'?'RECIBO DE PAGO':tipo==='factura'?'FACTURA':'PRESUPUESTO';
   const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const neg=rcNegocio();
@@ -2329,7 +2600,7 @@ function rcRender(){
       +'</div>'
     +'</div>'
     +'<div style="margin:12px 0;font-size:12px"><strong>Cliente:</strong> '+(esc(rcVal('rcCliNombre'))||'—')+(rcVal('rcCliDoc')?' · '+esc(rcVal('rcCliDoc')):'')+'</div>'
-    +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    +(r.simple?'':'<table style="width:100%;border-collapse:collapse;font-size:12px">'
       +'<thead><tr style="background:'+col+';color:#fff">'
         +'<th style="text-align:left;padding:6px 4px">Descripción</th>'
         +'<th style="text-align:center;padding:6px 4px;width:50px">Cant.</th>'
@@ -2337,13 +2608,15 @@ function rcRender(){
         +'<th style="text-align:right;padding:6px 4px;width:90px">Total</th>'
       +'</tr></thead>'
       +'<tbody>'+(rows||'<tr><td colspan="4" style="padding:12px;color:#999;text-align:center">Añade filas al detalle…</td></tr>')+'</tbody>'
-    +'</table>'
+    +'</table>')
     +'<div style="margin-top:10px;display:flex;justify-content:flex-end"><table style="font-size:12px">'
-      +'<tr><td style="padding:2px 10px;text-align:right;color:#666">Subtotal:</td><td style="padding:2px 0;text-align:right;min-width:110px">'+rcMoney(c.subtotal)+'</td></tr>'
-      +(c.ivaPct>0?'<tr><td style="padding:2px 10px;text-align:right;color:#666">Impuesto '+c.ivaPct+'%:</td><td style="padding:2px 0;text-align:right">'+rcMoney(c.iva)+'</td></tr>':'')
-      +'<tr><td style="padding:6px 10px;text-align:right;font-weight:800;font-size:14px">TOTAL:</td><td style="padding:6px 0;text-align:right;font-weight:800;font-size:14px;color:'+col+'">'+rcMoney(c.total)+'</td></tr>'
+      +(r.simple?'':'<tr><td style="padding:2px 10px;text-align:right;color:#666">Subtotal:</td><td style="padding:2px 0;text-align:right;min-width:110px">'+rcMoney(r.subtotal)+'</td></tr>')
+      +(!r.simple&&r.ivaPct>0?'<tr><td style="padding:2px 10px;text-align:right;color:#666">Impuesto '+r.ivaPct+'%:</td><td style="padding:2px 0;text-align:right">'+rcMoney(r.iva)+'</td></tr>':'')
+      +'<tr><td style="padding:6px 10px;text-align:right;font-weight:800;font-size:14px">TOTAL:</td><td style="padding:6px 0;text-align:right;min-width:110px;font-weight:800;font-size:14px;color:'+col+'">'+rcMoney(r.total)+'</td></tr>'
+      +(r.mostrarPago?'<tr><td style="padding:2px 10px;text-align:right;color:#666">Pagado:</td><td style="padding:2px 0;text-align:right;color:#1f8f4e;font-weight:700">'+rcMoney(r.pagado)+'</td></tr>'
+        +(r.saldoPendiente?'<tr><td style="padding:4px 10px;text-align:right;color:#666;font-weight:700">Saldo pendiente:</td><td style="padding:4px 0;text-align:right;color:#c0392b;font-weight:800">'+rcMoney(r.saldo)+'</td></tr>':'<tr><td colspan="2" style="padding:4px 10px;text-align:right;color:#1f8f4e;font-weight:800;font-size:11px">✔ PAGADO EN SU TOTALIDAD</td></tr>'):'')
     +'</table></div>'
-    +(tipo==='recibo'?'<div style="margin-top:10px;font-size:12px;background:#f7f7fb;border-radius:8px;padding:10px">Recibí de <strong>'+(esc(rcVal('rcCliNombre'))||'—')+'</strong> la cantidad de <strong>'+rcMoney(c.total)+'</strong>'+(rcVal('rcConcepto')?' por concepto de <strong>'+esc(rcVal('rcConcepto'))+'</strong>':'')+'. Método de pago: '+esc(rcVal('rcMetodo')||'Efectivo')+'.</div>':'')
+    +(tipo==='recibo'?'<div style="margin-top:10px;font-size:12px;background:#f7f7fb;border-radius:8px;padding:10px">Recibí de <strong>'+(esc(rcVal('rcCliNombre'))||'—')+'</strong> la cantidad de <strong>'+rcMoney(r.pagado)+'</strong>'+(rcVal('rcConcepto')?' por concepto de <strong>'+esc(rcVal('rcConcepto'))+'</strong>':'')+'. Método de pago: '+esc(rcVal('rcMetodo')||'Efectivo')+'.'+(r.saldoPendiente?' Queda un saldo pendiente de <strong>'+rcMoney(r.saldo)+'</strong>.':'')+'</div>':'')
     +(rcVal('rcNotas')?'<div style="margin-top:10px;font-size:11px;color:#666"><strong>Notas:</strong> '+esc(rcVal('rcNotas'))+'</div>':'')
     +'<div style="margin-top:26px;display:flex;justify-content:space-between;font-size:11px;color:#444"><div style="border-top:1px solid #999;padding-top:4px;width:180px;text-align:center">Firma</div><div style="text-align:right;color:#999">Generado con Fátima Pro</div></div>';
   doc.innerHTML=html;
@@ -2369,10 +2642,12 @@ function rcDownloadPDF(){
   if(!JsPDF){alert('No se pudo cargar el generador de PDF. Reintenta en el sitio publicado.');return;}
   if(!rcVal('rcNegNombre')){alert('Escribe al menos el nombre de tu negocio.');return;}
   const items=rcGetItems().filter(it=>it.desc||it.price>0);
-  if(!items.length){alert('Añade al menos una fila al detalle.');return;}
+  const tipo=rcVal('rcTipo');
+  const rawPagado=parseFloat(rcVal('rcPagado'))||0;
+  if(!items.length&&!(tipo==='recibo'&&rawPagado>0)){alert('Añade al menos una fila al detalle (o, en un recibo, escribe el monto pagado).');return;}
   if(!gastar(2))return;
   const c=rcCalc();
-  const tipo=rcVal('rcTipo');
+  const r=rcResumen(c,tipo);
   const titulo=tipo==='recibo'?'RECIBO DE PAGO':tipo==='factura'?'FACTURA':'PRESUPUESTO';
   const neg=rcNegocio();
   const col=rcHex(neg.color||'#7c3aed');
@@ -2393,28 +2668,39 @@ function rcDownloadPDF(){
   pdf.setTextColor(20,20,20);pdf.setFont('helvetica','bold');pdf.setFontSize(11);pdf.text('Cliente:',M,y);
   pdf.setFont('helvetica','normal');pdf.text((rcVal('rcCliNombre')||'—')+(rcVal('rcCliDoc')?'   ·   '+rcVal('rcCliDoc'):''),M+52,y);
   y+=22;
-  pdf.setFillColor(col[0],col[1],col[2]);pdf.rect(M,y-13,W,20,'F');
-  pdf.setTextColor(255,255,255);pdf.setFont('helvetica','bold');pdf.setFontSize(10);
-  pdf.text('Descripción',M+6,y+1);pdf.text('Cant.',cQ,y+1,{align:'right'});pdf.text('P. Unit',cP,y+1,{align:'right'});pdf.text('Total',cT-4,y+1,{align:'right'});
-  y+=24;pdf.setTextColor(30,30,30);pdf.setFont('helvetica','normal');pdf.setFontSize(10);
-  items.forEach(it=>{
-    const dl=pdf.splitTextToSize(it.desc||'—',cQ-(M+6)-46);
-    const rowH=Math.max(14,dl.length*13);
-    if(y+rowH>BOT){pdf.addPage();y=56;}
-    dl.forEach((d,i)=>pdf.text(d,M+6,y+i*13));
-    pdf.text(String(it.qty),cQ,y,{align:'right'});
-    pdf.text(money(it.price),cP,y,{align:'right'});
-    pdf.text(money(it.sub),cT-4,y,{align:'right'});
-    y+=rowH+5;pdf.setDrawColor(230,230,230);pdf.setLineWidth(.5);pdf.line(M,y-7,cT,y-7);
-  });
+  if(!r.simple){
+    pdf.setFillColor(col[0],col[1],col[2]);pdf.rect(M,y-13,W,20,'F');
+    pdf.setTextColor(255,255,255);pdf.setFont('helvetica','bold');pdf.setFontSize(10);
+    pdf.text('Descripción',M+6,y+1);pdf.text('Cant.',cQ,y+1,{align:'right'});pdf.text('P. Unit',cP,y+1,{align:'right'});pdf.text('Total',cT-4,y+1,{align:'right'});
+    y+=24;pdf.setTextColor(30,30,30);pdf.setFont('helvetica','normal');pdf.setFontSize(10);
+    items.forEach(it=>{
+      const dl=pdf.splitTextToSize(it.desc||'—',cQ-(M+6)-46);
+      const rowH=Math.max(14,dl.length*13);
+      if(y+rowH>BOT){pdf.addPage();y=56;}
+      dl.forEach((d,i)=>pdf.text(d,M+6,y+i*13));
+      pdf.text(String(it.qty),cQ,y,{align:'right'});
+      pdf.text(money(it.price),cP,y,{align:'right'});
+      pdf.text(money(it.sub),cT-4,y,{align:'right'});
+      y+=rowH+5;pdf.setDrawColor(230,230,230);pdf.setLineWidth(.5);pdf.line(M,y-7,cT,y-7);
+    });
+  }
   y+=8;const tl=cT-150;
-  pdf.setFontSize(10);pdf.setTextColor(90,90,90);pdf.text('Subtotal:',tl,y,{align:'right'});pdf.setTextColor(30,30,30);pdf.text(money(c.subtotal),cT-4,y,{align:'right'});y+=16;
-  if(c.ivaPct>0){pdf.setTextColor(90,90,90);pdf.text('Impuesto '+c.ivaPct+'%:',tl,y,{align:'right'});pdf.setTextColor(30,30,30);pdf.text(money(c.iva),cT-4,y,{align:'right'});y+=16;}
+  if(!r.simple){
+    pdf.setFontSize(10);pdf.setTextColor(90,90,90);pdf.text('Subtotal:',tl,y,{align:'right'});pdf.setTextColor(30,30,30);pdf.text(money(r.subtotal),cT-4,y,{align:'right'});y+=16;
+    if(r.ivaPct>0){pdf.setTextColor(90,90,90);pdf.text('Impuesto '+r.ivaPct+'%:',tl,y,{align:'right'});pdf.setTextColor(30,30,30);pdf.text(money(r.iva),cT-4,y,{align:'right'});y+=16;}
+  }
   pdf.setFont('helvetica','bold');pdf.setFontSize(13);pdf.setTextColor(col[0],col[1],col[2]);
-  pdf.text('TOTAL:',tl,y+2,{align:'right'});pdf.text(money(c.total),cT-4,y+2,{align:'right'});y+=30;
+  pdf.text('TOTAL:',tl,y+2,{align:'right'});pdf.text(money(r.total),cT-4,y+2,{align:'right'});y+=22;
+  if(r.mostrarPago){
+    pdf.setFont('helvetica','normal');pdf.setFontSize(10);pdf.setTextColor(31,143,78);
+    pdf.text('Pagado:',tl,y,{align:'right'});pdf.text(money(r.pagado),cT-4,y,{align:'right'});y+=16;
+    if(r.saldoPendiente){pdf.setFont('helvetica','bold');pdf.setTextColor(192,57,43);pdf.text('Saldo pendiente:',tl,y,{align:'right'});pdf.text(money(r.saldo),cT-4,y,{align:'right'});y+=16;}
+    else{pdf.setFont('helvetica','bold');pdf.setTextColor(31,143,78);pdf.text('PAGADO EN SU TOTALIDAD',cT-4,y,{align:'right'});y+=16;}
+  }
+  y+=8;
   pdf.setFont('helvetica','normal');pdf.setFontSize(10);pdf.setTextColor(40,40,40);
   if(tipo==='recibo'){
-    const txt='Recibí de '+(rcVal('rcCliNombre')||'—')+' la cantidad de '+money(c.total)+(rcVal('rcConcepto')?' por concepto de '+rcVal('rcConcepto'):'')+'. Método de pago: '+(rcVal('rcMetodo')||'Efectivo')+'.';
+    const txt='Recibí de '+(rcVal('rcCliNombre')||'—')+' la cantidad de '+money(r.pagado)+(rcVal('rcConcepto')?' por concepto de '+rcVal('rcConcepto'):'')+'. Método de pago: '+(rcVal('rcMetodo')||'Efectivo')+'.'+(r.saldoPendiente?' Queda un saldo pendiente de '+money(r.saldo)+'.':'');
     pdf.splitTextToSize(txt,W).forEach(l=>{if(y>BOT){pdf.addPage();y=56;}pdf.text(l,M,y);y+=14;});
     y+=6;
   }
@@ -2427,6 +2713,380 @@ function rcDownloadPDF(){
   rcNextNum();
   const st=document.getElementById('rcSt');
   if(st){st.innerHTML='<div class="st done">✅ '+titulo+' descargado en PDF (texto seleccionable)</div>';setTimeout(()=>st.innerHTML='',4500);}
+}
+
+// ══════════ FLYERS PARA REDES (Fase 4) ══════════
+let flImg1=null, flImg2=null, flReady=false;
+function flVal(id){return (document.getElementById(id)?.value||'').trim();}
+function flSet(id,v){const e=document.getElementById(id);if(e&&v)e.value=v;}
+function flNeg(){try{return JSON.parse(localStorage.getItem('fp_negocio')||'{}');}catch(e){return{};}}
+function flFmt(){const m={cuadrado:[1080,1080],historia:[1080,1920],horizontal:[1200,628]};return m[flVal('flFormato')]||m.cuadrado;}
+function flPhoto(ev,which){
+  const f=ev.target.files&&ev.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{const img=new Image();img.onload=()=>{if(which===2)flImg2=img;else flImg1=img;flDraw();};img.src=e.target.result;};
+  r.readAsDataURL(f);
+}
+function flCover(ctx,img,x,y,w,h){
+  const ir=img.width/img.height, rr=w/h; let sw,sh,sx,sy;
+  if(ir>rr){sh=img.height;sw=sh*rr;sx=(img.width-sw)/2;sy=0;}
+  else{sw=img.width;sh=sw/rr;sx=0;sy=(img.height-sh)/2;}
+  ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
+}
+function flShade(ctx,x,y,w,h,from,to){const g=ctx.createLinearGradient(x,y,x,y+h);g.addColorStop(0,from);g.addColorStop(1,to);ctx.fillStyle=g;ctx.fillRect(x,y,w,h);}
+function flWrapLines(ctx,text,maxW){
+  const words=String(text||'').split(/\s+/); let line='',lines=[];
+  words.forEach(w=>{const t=line?line+' '+w:w; if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=w;}else line=t;});
+  if(line)lines.push(line);
+  return lines;
+}
+function flWrap(ctx,text,x,y,maxW,lineH,align){
+  ctx.textAlign=align||'left';
+  const lines=flWrapLines(ctx,text,maxW);
+  lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lineH));
+  return y+lines.length*lineH;
+}
+// Revela el texto letra a letra (frac 0..1) pero conserva la altura total del bloque
+function flDrawReveal(ctx,lines,x,y,lineH,frac,cursor){
+  const total=lines.reduce((a,l)=>a+l.length,0);
+  const maxCh=Math.floor(total*Math.max(0,Math.min(1,frac))); let shown=0;
+  for(let i=0;i<lines.length;i++){
+    if(shown>=maxCh)break;
+    let l=lines[i];
+    if(shown+l.length>maxCh)l=l.slice(0,maxCh-shown)+(cursor?'▏':'');
+    ctx.fillText(l,x,y+i*lineH);
+    shown+=lines[i].length;
+  }
+  return y+lines.length*lineH;
+}
+function flPill(ctx,text,x,y,bg,W){
+  ctx.font='700 '+(W*0.034)+'px Segoe UI,Arial';ctx.textAlign='left';
+  const padX=W*0.03,h=W*0.075,tw=ctx.measureText(text).width;
+  tpRound(ctx,x,y-h*0.72,tw+padX*2,h,h/2);ctx.fillStyle=bg;ctx.fill();
+  ctx.fillStyle='#fff';ctx.fillText(text,x+padX,y-h*0.72+h*0.66);
+}
+function flBand(ctx,W,H,color,titulo,sub,precio,tel,cta,opts){
+  opts=opts||{};
+  ctx.textAlign='left';
+  const tLineH=W*0.078;
+  let ty=H-H*0.27;
+  ctx.save();
+  if(opts.alpha!=null)ctx.globalAlpha=opts.alpha;
+  if(opts.dx||opts.dy)ctx.translate(opts.dx||0,opts.dy||0);
+  ctx.fillStyle='#fff';ctx.font='800 '+(W*0.072)+'px Georgia,serif';
+  if(opts.glow){ctx.shadowColor=opts.glowColor||'#fff';ctx.shadowBlur=W*0.03*opts.glow;}
+  const tLines=flWrapLines(ctx,titulo,W*0.86);
+  if(opts.reveal!=null)flDrawReveal(ctx,tLines,W*0.07,ty,tLineH,opts.reveal,opts.cursor);
+  else if(opts.wave!=null)flDrawWave(ctx,tLines,W*0.07,ty,tLineH,W*0.02,opts.wave);
+  else tLines.forEach((l,i)=>ctx.fillText(l,W*0.07,ty+i*tLineH));
+  ctx.restore();
+  ty=ty+tLines.length*tLineH;
+  if(sub){ctx.fillStyle='rgba(255,255,255,.92)';ctx.font='400 '+(W*0.038)+'px Segoe UI,Arial';ty=flWrap(ctx,sub,W*0.07,ty+W*0.012,W*0.86,W*0.046,'left');}
+  if(precio){ctx.fillStyle=color;ctx.font='800 '+(W*0.058)+'px Segoe UI,Arial';ctx.textAlign='left';ctx.fillText(precio,W*0.07,ty+W*0.058);}
+  flPill(ctx,cta,W*0.07,H-H*0.05,color,W);
+  if(tel){ctx.fillStyle='#fff';ctx.font='700 '+(W*0.034)+'px Segoe UI,Arial';ctx.textAlign='right';ctx.fillText('📱 '+tel,W*0.93,H-H*0.045);}
+}
+function flVignette(ctx,W,H){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.28,W/2,H/2,Math.max(W,H)*0.72);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.6)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+function flGrain(ctx,W,H,amt){const n=Math.floor(W*H*0.0006);for(let i=0;i<n;i++){const x=Math.random()*W,y=Math.random()*H,a=0.03+Math.random()*(amt||0.06);ctx.fillStyle=(Math.random()<0.5?'rgba(255,255,255,':'rgba(0,0,0,')+a+')';ctx.fillRect(x,y,1.6,1.6);}}
+function flLetterbox(ctx,W,H,frac){const b=H*(frac||0.08);ctx.fillStyle='#000';ctx.fillRect(0,0,W,b);ctx.fillRect(0,H-b,W,b);}
+function flRenderBg(ctx,W,H){
+  const color=flVal('flColor')||'#7c3aed';
+  const plant=flVal('flPlantilla')||'promo';
+  const neg=flNeg();
+  ctx.clearRect(0,0,W,H);ctx.lineJoin='round';ctx.textBaseline='alphabetic';
+  if(plant==='antesdespues'){
+    const vertical=(H/W)>1.3;
+    const halves=vertical?[[0,0,W,H/2],[0,H/2,W,H/2]]:[[0,0,W/2,H],[W/2,0,W/2,H]];
+    [flImg1,flImg2].forEach((img,i)=>{
+      const q=halves[i],x=q[0],y=q[1],w=q[2],h=q[3];
+      if(img)flCover(ctx,img,x,y,w,h);
+      else{ctx.fillStyle=i?tpMix(color,'#000',0.35):tpMix(color,'#fff',0.12);ctx.fillRect(x,y,w,h);}
+      const lh=W*0.075;
+      ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(x,y,w,lh);
+      ctx.fillStyle='#fff';ctx.font='800 '+(W*0.04)+'px Segoe UI,Arial';ctx.textAlign='center';
+      ctx.fillText(i?'DESPUÉS':'ANTES',x+w/2,y+lh*0.68);
+    });
+    ctx.strokeStyle='#fff';ctx.lineWidth=W*0.006;ctx.beginPath();
+    if(vertical){ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);}else{ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);}
+    ctx.stroke();
+    flShade(ctx,0,H*0.62,W,H*0.38,'rgba(0,0,0,0)','rgba(0,0,0,.85)');
+    return;
+  }
+  if(flImg1){flCover(ctx,flImg1,0,0,W,H);}
+  else{const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,tpMix(color,'#fff',0.12));g.addColorStop(1,tpMix(color,'#000',0.55));ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+  if(plant==='cine'){flShade(ctx,0,0,W,H,'rgba(8,10,18,.25)','rgba(0,0,0,.55)');flVignette(ctx,W,H);flGrain(ctx,W,H,0.06);flLetterbox(ctx,W,H,0.09);}
+  ctx.textAlign='left';
+  if(neg.nombre){ctx.fillStyle='rgba(255,255,255,.92)';ctx.font='700 '+(W*0.032)+'px Segoe UI,Arial';
+    ctx.shadowColor='rgba(0,0,0,.5)';ctx.shadowBlur=8;ctx.fillText(String(neg.nombre).toUpperCase(),W*0.07,(plant==='cine'?H*0.155:H*0.08));ctx.shadowColor='transparent';ctx.shadowBlur=0;}
+  const precio=flVal('flPrecio');
+  if(plant==='oferta'&&precio){
+    const r=W*0.15,cx=W-r-W*0.09,cy=H*0.20;
+    ctx.fillStyle=color;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fill();
+    ctx.fillStyle='#fff';ctx.textAlign='center';
+    ctx.font='700 '+(W*0.026)+'px Segoe UI,Arial';ctx.fillText('OFERTA',cx,cy-W*0.045);
+    ctx.font='800 '+(W*0.055)+'px Segoe UI,Arial';ctx.fillText(precio,cx,cy+W*0.025);
+  } else if(plant==='clase'){
+    const bh=W*0.058;ctx.fillStyle=color;tpRound(ctx,W*0.07,H*0.12,W*0.32,bh,bh/2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.textAlign='left';ctx.font='800 '+(W*0.028)+'px Segoe UI,Arial';ctx.fillText('CLASE / CURSO',W*0.10,H*0.12+bh*0.68);
+  }
+  if(plant==='cine')flShade(ctx,0,H*0.55,W,H*0.45,'rgba(0,0,0,0)','rgba(0,0,0,.82)');
+  else flShade(ctx,0,H*0.48,W,H*0.52,'rgba(0,0,0,0)','rgba(0,0,0,.86)');
+}
+function flStickers(ctx,W,H){
+  const s=flVal('flSticker'); if(!s)return;
+  const pos=flVal('flStickerPos')||'tr';
+  const size=W*0.14, m=W*0.055, bandGap=H*0.30;
+  let x,y;
+  if(pos==='tl'){x=m;y=m;}
+  else if(pos==='tr'){x=W-m-size;y=m;}
+  else if(pos==='bl'){x=m;y=H-m-size-bandGap;}
+  else {x=W-m-size;y=H-m-size-bandGap;}
+  ctx.save();
+  ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.font=size+'px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",Arial';
+  ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=size*0.14;ctx.shadowOffsetY=size*0.03;
+  ctx.fillText(s,x,y);
+  ctx.restore();
+  ctx.textBaseline='alphabetic';ctx.textAlign='left';
+}
+// Dibuja el título letra a letra con una onda vertical viajera
+function flDrawWave(ctx,lines,x,y,lineH,amp,phase){
+  for(let li=0;li<lines.length;li++){
+    let cx=x; const line=lines[li];
+    for(let i=0;i<line.length;i++){
+      const ch=line[i], dy=Math.sin(phase+cx*0.02)*amp;
+      ctx.fillText(ch,cx,y+li*lineH+dy);
+      cx+=ctx.measureText(ch).width;
+    }
+  }
+  return y+lines.length*lineH;
+}
+// Transición de entrada/salida: iris circular o fundido negro
+function fpTransition(ctx,W,H,el,dur,type,allowClose){
+  if(!type||type==='none')return;
+  const inD=0.7, outD=0.7;
+  let cover=0;
+  if(el<inD)cover=1-(el/inD);
+  else if(allowClose!==false&&el>dur-outD)cover=Math.min(1,(el-(dur-outD))/outD);
+  else return;
+  if(type==='fade'){ctx.save();ctx.globalAlpha=cover;ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);ctx.restore();return;}
+  const maxR=Math.sqrt(W*W+H*H)/2, r=Math.max(0.001,maxR*(1-cover));
+  ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.arc(W/2,H/2,r,0,Math.PI*2,true);ctx.fillStyle='#000';ctx.fill('evenodd');ctx.restore();
+}
+function flDraw(){
+  const cv=document.getElementById('flCanvas'); if(!cv)return;
+  const dim=flFmt(),W=dim[0],H=dim[1];
+  if(cv.width!==W)cv.width=W; if(cv.height!==H)cv.height=H;
+  const ctx=cv.getContext('2d');
+  const color=flVal('flColor')||'#7c3aed';
+  const plant=flVal('flPlantilla')||'promo';
+  flRenderBg(ctx,W,H);
+  const fx=flVal('flTextFx')||'aparecer';
+  const opts=(fx==='neon')?{glow:1.1,glowColor:color}:(fx==='brillo')?{glow:0.8,glowColor:'#ffffff'}:null;
+  flBand(ctx,W,H,color,flVal('flTitulo')||'Tu título aquí',flVal('flSubtitulo'),(plant==='oferta'?'':flVal('flPrecio')),flVal('flTel'),flVal('flCta')||'Reserva por WhatsApp',opts);
+  flStickers(ctx,W,H);
+}
+function flUpd(){
+  const ad=flVal('flPlantilla')==='antesdespues';
+  const f2=document.getElementById('flFoto2Row'); if(f2)f2.style.display=ad?'flex':'none';
+  flDraw();
+}
+function flInit(){
+  const n=flNeg();
+  if(n.color)flSet('flColor',n.color);
+  if(n.tel)flSet('flTel',n.tel);
+  flUpd();
+}
+function flOpen(){if(!flReady){flReady=true;flInit();}else{flDraw();}}
+function flDownload(){
+  const cv=document.getElementById('flCanvas'); if(!cv)return;
+  if(!flVal('flTitulo')){alert('Escribe al menos el título del flyer.');return;}
+  if(!gastar(2))return;
+  flDraw();
+  const fmt=flVal('flFormato')||'cuadrado';
+  const fecha=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const url=cv.toDataURL('image/jpeg',0.95);
+  const a=document.createElement('a');a.download='flyer_'+fmt+'_'+fecha+'.jpg';a.href=url;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  const dims={cuadrado:'1080×1080',historia:'1080×1920',horizontal:'1200×628'};
+  const st=document.getElementById('flSt');
+  if(st){st.innerHTML='<div class="st done">✅ Flyer descargado · JPG '+(dims[fmt]||'')+'</div>';setTimeout(()=>st.innerHTML='',4500);}
+}
+
+// ── Flyers: video animado con sonido (Fase 4.1) ──
+let flRec=null, flRecording=false, flAudioEl=null, flAudioCtx=null, flMicStream=null, flAnimReq=null, flAudioUrl=null, flMelodyPlayer=null;
+function flAudioFile(ev){const f=ev.target.files&&ev.target.files[0];if(!f)return;if(flAudioUrl)URL.revokeObjectURL(flAudioUrl);flAudioUrl=URL.createObjectURL(f);}
+function flAudioUpd(){const ar=document.getElementById('flAudioRow');if(ar)ar.style.display=(flVal('flAudioSrc')==='upload')?'flex':'none';flStopPreview();}
+
+// ── Melodías sin derecho de autor (sintetizadas 100% en el dispositivo) ──
+const FL_NOTE={C3:130.81,D3:146.83,E3:164.81,F3:174.61,G3:196.00,A3:220.00,B3:246.94,C4:261.63,D4:293.66,E4:329.63,F4:349.23,G4:392.00,A4:440.00,B4:493.88,C5:523.25,D5:587.33,E5:659.25,F5:698.46,G5:783.99,A5:880.00};
+const FL_MELODIES={
+  mel_energia:{tempo:132,wave:'triangle',gain:0.5,seq:['C4','E4','G4','C5','G4','E4','A4','C5','E5','C5','G4','E4','F4','A4','C5','F5'],bass:['C3','C3','A3','A3','F3','F3','G3','G3']},
+  mel_elegante:{tempo:84,wave:'sine',gain:0.5,seq:['E4','G4','B4','E5','B4','G4','A4','C5','E5','A4','G4','E4'],bass:['E3','E3','A3','A3','C4','C4','G3','G3']},
+  mel_alegre:{tempo:120,wave:'square',gain:0.34,seq:['G4','G4','A4','G4','C5','B4','G4','E4','F4','G4','A4','G4'],bass:['C3','G3','F3','G3']},
+  mel_epico:{tempo:76,wave:'triangle',gain:0.5,seq:['A3','C4','E4','A4','G4','E4','F4','A4','C5','A4','E4','C4'],bass:['A3','A3','F3','F3','C3','C3','G3','G3']},
+  mel_lofi:{tempo:78,wave:'sine',gain:0.5,seq:['E4','G4','A4','B4','A4','G4','D4','F4','A4','G4','E4','D4'],bass:['A3','A3','F3','F3','C3','C3','G3','G3']},
+  mel_corporativo:{tempo:112,wave:'triangle',gain:0.5,seq:['C4','E4','G4','B4','C5','B4','G4','E4','D4','F4','A4','C5'],bass:['C3','C3','G3','G3','A3','A3','F3','F3']},
+  mel_romantico:{tempo:72,wave:'sine',gain:0.5,seq:['A4','C5','B4','A4','G4','E4','F4','A4','G4','E4','D4','C4'],bass:['F3','F3','C3','C3','D3','D3','G3','G3']},
+  mel_dramatico:{tempo:88,wave:'triangle',gain:0.5,seq:['D4','F4','A4','D5','C5','A4','B4','G4','A4','F4','D4','A3'],bass:['D3','D3','B3','B3','G3','G3','A3','A3']}
+};
+function flPlayMelody(ac,dest,name,dur){
+  const def=FL_MELODIES[name]; if(!def)return {stop(){}};
+  const master=ac.createGain(); master.gain.value=def.gain;
+  const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3400; lp.Q.value=0.5;
+  master.connect(lp); if(dest)lp.connect(dest); try{lp.connect(ac.destination);}catch(e){}
+  const beat=60/def.tempo, step=beat*0.5, bstep=beat*2;
+  const t0=ac.currentTime+0.2, end=t0+dur, oscs=[];
+  const note=(freq,t,d,peak,wave)=>{
+    if(t>=end)return;
+    const o=ac.createOscillator(); o.type=wave; o.frequency.value=freq;
+    const ge=ac.createGain(); ge.gain.setValueAtTime(0.0001,t);
+    ge.gain.linearRampToValueAtTime(peak,t+0.02);
+    ge.gain.exponentialRampToValueAtTime(0.0008,t+d);
+    o.connect(ge); ge.connect(master);
+    o.start(t); o.stop(Math.min(end+0.1,t+d+0.05)); oscs.push(o);
+  };
+  let i=0; for(let t=t0;t<end;t+=step){ note(FL_NOTE[def.seq[i%def.seq.length]]||440,t,step*1.1,0.6,def.wave); i++; }
+  let j=0; for(let t=t0;t<end;t+=bstep){ note(FL_NOTE[def.bass[j%def.bass.length]]||130,t,bstep*0.95,0.4,'sine'); j++; }
+  master.gain.setValueAtTime(def.gain,Math.max(t0,end-0.6));
+  master.gain.linearRampToValueAtTime(0.0001,end);
+  return {stop(){try{oscs.forEach(o=>{try{o.stop();}catch(e){}});master.disconnect();lp.disconnect();}catch(e){}}};
+}
+let flPrevAc=null, flPrevAudioEl=null, flPrevStop=null;
+function flStopPreview(){const btn=document.getElementById('flPrevBtn');if(btn)btn.textContent='▶ Escuchar';if(flPrevStop){try{flPrevStop();}catch(e){}}flPrevStop=null;flPrevAudioEl=null;flPrevAc=null;}
+function flPreviewAudio(){
+  const mode=flVal('flAudioSrc')||'none';
+  if(flPrevStop){flStopPreview();return;}
+  const btn=document.getElementById('flPrevBtn');
+  if(mode==='none'){alert('Elige una melodía o un archivo para escuchar.');return;}
+  if(mode==='mic'){alert('El micrófono se graba mientras haces el video; no tiene pre-escucha.');return;}
+  if(mode==='upload'){
+    if(!flAudioUrl){alert('Sube un archivo de música o voz primero.');return;}
+    flPrevAudioEl=new Audio(flAudioUrl); flPrevAudioEl.play().catch(()=>{});
+    flPrevAudioEl.onended=flStopPreview;
+    if(btn)btn.textContent='■ Parar';
+    flPrevStop=()=>{try{flPrevAudioEl.pause();}catch(e){}};
+    return;
+  }
+  try{
+    flPrevAc=new (window.AudioContext||window.webkitAudioContext)();
+    if(flPrevAc.state==='suspended')flPrevAc.resume();
+    const m=flPlayMelody(flPrevAc,null,mode,5);
+    if(btn)btn.textContent='■ Parar';
+    flPrevStop=()=>{try{m.stop();flPrevAc.close();}catch(e){}};
+    setTimeout(()=>{if(flPrevStop)flStopPreview();},5400);
+  }catch(e){alert('No se pudo reproducir: '+(e.message||e));}
+}
+function flMoveDraw(ctx,W,H,bg,elapsed,dur){
+  const mv=flVal('flMove')||'zoom';
+  const s=Math.min(1,elapsed/(dur||6));
+  let z=1.12;
+  if(mv==='zoom'){z=1.16-0.06*Math.min(1,elapsed/3.0);}
+  else if(mv==='fijo'){z=1.0;}
+  const dw=W*z, dh=H*z, ex=dw-W, ey=dh-H;
+  let sx=ex/2, sy=ey/2;
+  if(mv==='pan_der'){sx=ex*(0.15+0.7*s);}
+  else if(mv==='pan_izq'){sx=ex*(0.85-0.7*s);}
+  else if(mv==='pan_arriba'){sy=ey*(0.85-0.7*s);}
+  else if(mv==='deriva'){sx=ex*(0.5+0.4*Math.sin(elapsed*0.6));sy=ey*(0.5+0.4*Math.cos(elapsed*0.5));}
+  ctx.drawImage(bg,-sx,-sy,dw,dh);
+}
+function flDrawFrame(ctx,W,H,bg,elapsed,dur){
+  ctx.clearRect(0,0,W,H);
+  flMoveDraw(ctx,W,H,bg,elapsed,dur);
+  const fx=flVal('flTextFx')||'aparecer';
+  const sw=(elapsed/2.4)%1, sx=-W*0.6+sw*1.9*W, shine=(fx==='brillo')?0.22:0.10;
+  const g=ctx.createLinearGradient(sx,0,sx+W*0.5,H);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(0.5,'rgba(255,255,255,'+shine+')');g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  flLetterbox(ctx,W,H,0.07);
+  const col=flVal('flColor')||'#7c3aed';
+  const args=[ctx,W,H,col,flVal('flTitulo')||'Tu título',flVal('flSubtitulo'),(flVal('flPlantilla')==='oferta'?'':flVal('flPrecio')),flVal('flTel'),flVal('flCta')||'Reserva por WhatsApp'];
+  const app=Math.max(0,Math.min(1,(elapsed-0.25)/1.1));
+  if(fx==='maquina')flBand(...args,{reveal:Math.max(0,Math.min(1,(elapsed-0.2)/1.7)),cursor:true});
+  else if(fx==='brillo')flBand(...args,{alpha:app,glow:0.35+0.35*Math.abs(Math.sin(elapsed*2.2)),glowColor:'#ffffff'});
+  else if(fx==='neon')flBand(...args,{alpha:app,glow:0.7+0.6*Math.abs(Math.sin(elapsed*2.6)),glowColor:col});
+  else if(fx==='rebote'){const b=Math.exp(-elapsed*3)*Math.cos(elapsed*11)*(-H*0.045);flBand(...args,{alpha:app,dy:b});}
+  else if(fx==='desliza')flBand(...args,{alpha:app,dx:(1-app)*(-W*0.25)});
+  else if(fx==='onda')flBand(...args,{alpha:app,wave:elapsed*4});
+  else{const dy=(1-app)*H*0.03;ctx.save();ctx.globalAlpha=app;ctx.translate(0,dy);flBand(...args);ctx.restore();}
+  flStickers(ctx,W,H);
+  flGrain(ctx,W,H,0.05);
+  fpTransition(ctx,W,H,elapsed,dur,flVal('flTrans'),flVal('flAudioSrc')!=='mic');
+}
+function flStopVideo(){if(flRec&&flRec.state!=='inactive'){try{flRec.stop();}catch(e){}}}
+async function flStartVideo(){
+  const cv=document.getElementById('flCanvas'); if(!cv)return;
+  if(flRecording){flStopVideo();return;}
+  if(!flVal('flTitulo')){alert('Escribe al menos el título del flyer.');return;}
+  if(typeof MediaRecorder==='undefined'||!cv.captureStream){alert('Tu navegador no soporta grabar video. Prueba en Chrome/Edge (Android o PC).');return;}
+  const st=document.getElementById('flSt'), btn=document.getElementById('flVidBtn');
+  const mode=flVal('flAudioSrc')||'none';
+  const cleanup=[];
+  // marcar ocupado YA para bloquear doble-clic durante el setup asíncrono
+  flRecording=true; if(btn){btn.classList.add('btn-warn');btn.textContent='■ Detener';}
+  const abort=(msg)=>{cleanup.forEach(f=>{try{f();}catch(e){}});flRecording=false;if(btn){btn.classList.remove('btn-warn');btn.textContent='🎬 Grabar video';}if(msg)alert(msg);};
+  let audioTrack=null;
+  try{
+    if(mode==='mic'){
+      flMicStream=await navigator.mediaDevices.getUserMedia({audio:true});
+      audioTrack=flMicStream.getAudioTracks()[0];
+      cleanup.push(()=>{try{flMicStream.getTracks().forEach(t=>t.stop());}catch(e){}});
+    } else if(mode==='upload'){
+      if(!flAudioUrl){abort('Sube un archivo de música o voz primero.');return;}
+      flAudioEl=new Audio(flAudioUrl);
+      flAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      try{if(flAudioCtx.state==='suspended')await flAudioCtx.resume();}catch(e){}
+      const src=flAudioCtx.createMediaElementSource(flAudioEl), dest=flAudioCtx.createMediaStreamDestination();
+      src.connect(dest);src.connect(flAudioCtx.destination);
+      audioTrack=dest.stream.getAudioTracks()[0];
+      cleanup.push(()=>{try{flAudioEl.pause();flAudioCtx.close();}catch(e){}});
+    } else if(mode.indexOf('mel_')===0){
+      flAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      try{if(flAudioCtx.state==='suspended')await flAudioCtx.resume();}catch(e){}
+      const dest=flAudioCtx.createMediaStreamDestination();
+      let dm=parseFloat(flVal('flDur'))||6; dm=Math.max(2,Math.min(20,dm));
+      flMelodyPlayer=flPlayMelody(flAudioCtx,dest,mode,dm);
+      audioTrack=dest.stream.getAudioTracks()[0];
+      cleanup.push(()=>{try{flMelodyPlayer&&flMelodyPlayer.stop();flAudioCtx.close();}catch(e){}});
+    }
+  }catch(e){abort('No se pudo acceder al audio: '+(e.message||e));return;}
+  const dim=flFmt(),W=dim[0],H=dim[1];
+  if(cv.width!==W)cv.width=W; if(cv.height!==H)cv.height=H;
+  const bg=document.createElement('canvas');bg.width=W;bg.height=H;flRenderBg(bg.getContext('2d'),W,H);
+  const ctx=cv.getContext('2d');
+  const vstream=cv.captureStream(30), combined=new MediaStream();
+  vstream.getVideoTracks().forEach(t=>combined.addTrack(t));
+  if(audioTrack)combined.addTrack(audioTrack);
+  let mime='video/webm;codecs=vp9,opus'; if(!MediaRecorder.isTypeSupported(mime))mime='video/webm;codecs=vp8,opus'; if(!MediaRecorder.isTypeSupported(mime))mime='video/webm';
+  let recorder;
+  try{recorder=new MediaRecorder(combined,{mimeType:mime,videoBitsPerSecond:6000000});}
+  catch(e){abort('No se pudo iniciar la grabación: '+(e.message||e));return;}
+  // cobrar SOLO cuando el grabador ya está construido con éxito
+  if(!gastar(2)){abort();return;}
+  flRec=recorder;
+  const chunks=[];
+  flRec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+  flRec.onstop=()=>{
+    if(flAnimReq)cancelAnimationFrame(flAnimReq); flAnimReq=null; flRecording=false;
+    cleanup.forEach(f=>f());
+    const blob=new Blob(chunks,{type:'video/webm'}), url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.download='flyer_'+(flVal('flFormato')||'cuadrado')+'_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.webm';a.href=url;document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+    if(btn){btn.textContent='🎬 Grabar video';btn.classList.remove('btn-warn');}
+    if(st)st.innerHTML='<div class="st done">✅ Video descargado · WebM ('+fmt(blob.size)+')</div>';
+    flDraw();
+  };
+  let dur=parseFloat(flVal('flDur'))||6; dur=Math.max(2,Math.min(20,dur));
+  if(mode==='upload'&&flAudioEl){try{await flAudioEl.play();}catch(e){} if(flAudioEl.duration&&isFinite(flAudioEl.duration))dur=Math.min(20,flAudioEl.duration+0.3);}
+  if(st)st.innerHTML='<div class="st proc">'+(mode==='mic'?'● Grabando con micrófono… habla ahora y pulsa Detener al terminar.':'🎬 Grabando video…')+'</div>';
+  const t0=performance.now();
+  flRec.start();
+  (function loop(){
+    const el=(performance.now()-t0)/1000;
+    flDrawFrame(ctx,W,H,bg,el,dur);
+    if(mode!=='mic'&&el>=dur){flStopVideo();return;}
+    if(mode==='mic'&&el>=30){flStopVideo();return;}
+    if(mode==='upload'&&flAudioEl&&flAudioEl.ended){flStopVideo();return;}
+    flAnimReq=requestAnimationFrame(loop);
+  })();
 }
 
 // ══ INIT ══
