@@ -238,6 +238,7 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
   <button class="main-tab" onclick="switchMain('tarjeta',this)">💳 Tarjeta Segura</button>
   <button class="main-tab" onclick="switchMain('cv',this)">📄 CV &amp; Cartas</button>
   <button class="main-tab" onclick="switchMain('presentacion',this)">💼 Mi Tarjeta</button>
+  <button class="main-tab" onclick="switchMain('recibos',this)">🧾 Recibos</button>
 </div>
 
 <!-- ══ TAB: PROTECCIÓN DIGITAL ══ -->
@@ -443,6 +444,71 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
       <div style="font-size:9px;color:var(--tx2);text-align:center;margin-top:4px">La descarga cuesta 2 créditos · imprime en tamaño tarjeta (9×5,5 cm)</div>
       <div id="tpSt"></div>
       <div id="tpQrHolder" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB: RECIBOS / FACTURAS / PRESUPUESTOS ══ -->
+<div class="tab-content" id="tab-recibos">
+  <div style="max-width:900px;margin:0 auto">
+    <div class="panel">
+      <div class="p-title">🧾 Recibos, Facturas y Presupuestos</div>
+      <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:8px;padding:10px;margin-bottom:12px;font-size:10px;color:var(--ac3)">
+        Genera <strong>presupuestos, recibos de pago y facturas simples</strong> con tu logo y numeración. Se descargan en <strong>PDF de texto</strong> (nítido para imprimir). 🔒 Todo se genera en tu dispositivo.
+      </div>
+      <div class="row"><span class="lbl">Documento</span>
+        <select id="rcTipo" onchange="rcRender()">
+          <option value="presupuesto">🧮 Presupuesto / Cotización</option>
+          <option value="recibo">🧾 Recibo de pago</option>
+          <option value="factura">📄 Factura simple</option>
+        </select>
+        <select id="rcMoneda" onchange="rcRender()" style="max-width:130px">
+          <option value="Bs">Bs (Bolívar)</option>
+          <option value="S/">S/ (Sol)</option>
+          <option value="$">$ (Dólar)</option>
+          <option value="€">€ (Euro)</option>
+          <option value="COP">COP (Peso col.)</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">Nº</span><input type="text" id="rcNum" style="max-width:100px" oninput="rcRender()"><span class="lbl" style="min-width:auto;margin-left:10px">Fecha</span><input type="date" id="rcFecha" oninput="rcRender()" style="background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:5px;padding:4px 8px;font-size:11px"></div>
+      <div class="sep"></div>
+      <div style="font-size:10px;color:var(--ac2);font-weight:700;margin-bottom:6px">🏢 Tus datos (se guardan y se comparten con “Mi Tarjeta”)</div>
+      <div class="row"><span class="lbl">Negocio / Nombre</span><input type="text" id="rcNegNombre" placeholder="Tu nombre o negocio" oninput="rcRender()"></div>
+      <div class="row"><span class="lbl">Oficio</span><input type="text" id="rcNegOficio" placeholder="Ej: Peluquería · Fontanería" oninput="rcRender()"></div>
+      <div class="row"><span class="lbl">Teléfono</span><input type="text" id="rcNegTel" placeholder="WhatsApp / teléfono" oninput="rcRender()"></div>
+      <div class="row"><span class="lbl">RIF / RUC / CI</span><input type="text" id="rcNegRif" placeholder="opcional" oninput="rcRender()"></div>
+      <div class="row"><span class="lbl">Dirección</span><input type="text" id="rcNegDir" placeholder="opcional" oninput="rcRender()"></div>
+      <div class="sep"></div>
+      <div style="font-size:10px;color:var(--ac2);font-weight:700;margin-bottom:6px">👤 Cliente</div>
+      <div class="row"><span class="lbl">Cliente</span><input type="text" id="rcCliNombre" placeholder="Nombre del cliente" oninput="rcRender()"></div>
+      <div class="row"><span class="lbl">Documento / Tel</span><input type="text" id="rcCliDoc" placeholder="opcional" oninput="rcRender()"></div>
+      <div class="sep"></div>
+      <div style="font-size:10px;color:var(--ac2);font-weight:700;margin-bottom:6px">📋 Detalle</div>
+      <div id="rcItems"></div>
+      <div class="row" style="margin-top:4px"><button class="btn btn-g" onclick="rcAddItem()" style="font-size:10px">➕ Añadir fila</button></div>
+      <div class="row"><span class="lbl">Impuesto %</span><input type="number" id="rcIva" value="0" min="0" max="100" step="0.1" oninput="rcRender()" style="max-width:90px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:5px;padding:4px 8px;font-size:11px"><span style="font-size:9px;color:var(--tx2)">0 = sin impuesto</span></div>
+      <div id="rcReciboExtra" style="display:none">
+        <div class="row"><span class="lbl">Concepto</span><input type="text" id="rcConcepto" placeholder="por concepto de…" oninput="rcRender()"></div>
+        <div class="row"><span class="lbl">Método de pago</span>
+          <select id="rcMetodo" onchange="rcRender()">
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Pago Móvil">Pago Móvil</option>
+            <option value="Zelle">Zelle</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="row"><span class="lbl">Notas</span><input type="text" id="rcNotas" placeholder="Condiciones, validez, garantía… (opcional)" oninput="rcRender()"></div>
+      <div class="sep"></div>
+      <div style="overflow-x:auto">
+        <div id="rcDoc" style="background:#fff;color:#1a1a1a;border-radius:10px;padding:22px;min-height:180px;box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:'Segoe UI',Arial,sans-serif"></div>
+      </div>
+      <div class="row" style="margin-top:12px;justify-content:center;gap:10px">
+        <button class="btn btn-ok" onclick="rcDownloadPDF()">⬇ Descargar PDF</button>
+      </div>
+      <div style="font-size:9px;color:var(--tx2);text-align:center;margin-top:4px">La descarga cuesta 2 créditos · PDF de texto seleccionable</div>
+      <div id="rcSt"></div>
     </div>
   </div>
 </div>
@@ -665,10 +731,11 @@ function switchMain(tab,el){
   document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('act'));
   document.getElementById('tab-'+tab).classList.add('act');
   el.classList.add('act');
-  const guias={digital:'Protección Digital: sube tu archivo, elige la herramienta del panel izquierdo y descarga protegido.',tarjeta:'Tarjeta Segura: introduce tus datos, desliza el dedo sobre la tarjeta para ocultar zonas sensibles, luego descarga.',cv:'CV y Cartas: elige el tipo de documento, la categoría, rellena tus datos y exporta en PDF.',media:'Vídeo y Audio: sube tu archivo, elige calidad y resolución, y descarga optimizado sin perder calidad importante.',presentacion:'Mi Tarjeta: rellena tu nombre, oficio y WhatsApp, elige un diseño y un color, y descarga tu tarjeta de presentación con código QR para compartir con tus clientes.'};
+  const guias={digital:'Protección Digital: sube tu archivo, elige la herramienta del panel izquierdo y descarga protegido.',tarjeta:'Tarjeta Segura: introduce tus datos, desliza el dedo sobre la tarjeta para ocultar zonas sensibles, luego descarga.',cv:'CV y Cartas: elige el tipo de documento, la categoría, rellena tus datos y exporta en PDF.',media:'Vídeo y Audio: sube tu archivo, elige calidad y resolución, y descarga optimizado sin perder calidad importante.',presentacion:'Mi Tarjeta: rellena tu nombre, oficio y WhatsApp, elige un diseño y un color, y descarga tu tarjeta de presentación con código QR para compartir con tus clientes.',recibos:'Recibos: elige si quieres un presupuesto, un recibo de pago o una factura; pon tus datos y los del cliente, añade las filas del detalle y descarga en PDF.'};
   if(guias[tab])ttsGuia(tab);
   if(tab==='tarjeta')setTimeout(()=>{initDigitSel();renderCardCanvas();},100);
   if(tab==='presentacion')setTimeout(tpOpen,80);
+  if(tab==='recibos')setTimeout(rcOpen,80);
 }
 
 // ══ TTS GUÍA ══
@@ -2179,6 +2246,187 @@ function tpDownload(fmt){
   }
   const st=document.getElementById('tpSt');
   if(st){st.innerHTML='<div class="st done">✅ Tarjeta descargada · '+fmt.toUpperCase()+(fmt==='jpg'?' + PDF':'')+(_forcedPng?' · fondo transparente (PNG)':'')+'</div>';setTimeout(()=>st.innerHTML='',4500);}
+}
+
+// ══════════ RECIBOS · FACTURAS · PRESUPUESTOS (Fase 3) ══════════
+let rcReady=false;
+const RC_INP='background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:5px;padding:4px 6px;font-size:11px;outline:none';
+function rcVal(id){return (document.getElementById(id)?.value||'').trim();}
+function rcSet(id,v){const e=document.getElementById(id);if(e&&v!=null&&v!=='')e.value=v;}
+function rcNegocio(){try{return JSON.parse(localStorage.getItem('fp_negocio')||'{}');}catch(e){return{};}}
+function rcGuardarNegocio(){
+  const prev=rcNegocio();
+  const d={nombre:rcVal('rcNegNombre'),oficio:rcVal('rcNegOficio'),tel:rcVal('rcNegTel'),rif:rcVal('rcNegRif'),direccion:rcVal('rcNegDir')};
+  Object.keys(d).forEach(k=>{if(!d[k])delete d[k];});
+  try{localStorage.setItem('fp_negocio',JSON.stringify(Object.assign(prev,d)));}catch(e){}
+}
+function rcHex(h){h=String(h||'').trim();const m=/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.exec(h);if(!m)return[124,58,237];let x=m[1];if(x.length===3)x=x.split('').map(c=>c+c).join('');return[parseInt(x.slice(0,2),16),parseInt(x.slice(2,4),16),parseInt(x.slice(4,6),16)];}
+function rcMoney(n){
+  const sym=document.getElementById('rcMoneda')?.value||'$';
+  const neg=n<0;n=Math.abs(+n||0);
+  const p=n.toFixed(2).split('.');
+  p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return (neg?'-':'')+sym+' '+p[0]+','+p[1];
+}
+function rcFechaFmt(){const v=rcVal('rcFecha');if(!v)return new Date().toLocaleDateString('es-ES');const p=v.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:v;}
+function rcAddItem(desc,qty,price){
+  const wrap=document.getElementById('rcItems'); if(!wrap)return;
+  const div=document.createElement('div');
+  div.className='rc-item';
+  div.style.cssText='display:flex;gap:6px;margin-bottom:6px;align-items:center';
+  const dv=desc?String(desc).replace(/"/g,'&quot;'):'';
+  div.innerHTML='<input type="text" class="rc-desc" placeholder="Descripción" value="'+dv+'" style="flex:2;'+RC_INP+'" oninput="rcRender()">'
+    +'<input type="number" class="rc-qty" value="'+(qty!=null?qty:1)+'" min="0" step="1" style="width:54px;'+RC_INP+'" oninput="rcRender()">'
+    +'<input type="number" class="rc-price" value="'+(price!=null?price:0)+'" min="0" step="0.01" style="width:84px;'+RC_INP+'" oninput="rcRender()">'
+    +'<span class="rc-sub" style="width:88px;text-align:right;font-size:11px;color:var(--ac2)"></span>'
+    +'<button class="btn btn-g" onclick="rcDelItem(this)" style="padding:2px 8px;font-size:11px">🗑</button>';
+  wrap.appendChild(div);
+  rcRender();
+}
+function rcDelItem(btn){const it=btn.closest('.rc-item');if(it)it.remove();rcRender();}
+function rcGetItems(){
+  return [...document.querySelectorAll('#rcItems .rc-item')].map(r=>{
+    const desc=r.querySelector('.rc-desc')?.value||'';
+    const qty=parseFloat(r.querySelector('.rc-qty')?.value||'0')||0;
+    const price=parseFloat(r.querySelector('.rc-price')?.value||'0')||0;
+    return {desc,qty,price,sub:qty*price};
+  });
+}
+function rcCalc(){
+  const items=rcGetItems();
+  let subtotal=0; items.forEach(it=>subtotal+=it.sub);
+  const ivaPct=parseFloat(rcVal('rcIva'))||0;
+  const iva=subtotal*ivaPct/100;
+  const rows=[...document.querySelectorAll('#rcItems .rc-item')];
+  rows.forEach((r,i)=>{const s=r.querySelector('.rc-sub');if(s)s.textContent=rcMoney(items[i].sub);});
+  return {items,subtotal,iva,ivaPct,total:subtotal+iva};
+}
+function rcRender(){
+  rcGuardarNegocio();
+  const ex=document.getElementById('rcReciboExtra'); if(ex)ex.style.display=(rcVal('rcTipo')==='recibo')?'block':'none';
+  const doc=document.getElementById('rcDoc'); if(!doc)return;
+  const c=rcCalc();
+  const tipo=rcVal('rcTipo');
+  const titulo=tipo==='recibo'?'RECIBO DE PAGO':tipo==='factura'?'FACTURA':'PRESUPUESTO';
+  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const neg=rcNegocio();
+  const col=esc(neg.color||'#7c3aed');
+  const logo=neg.logo?'<img src="'+esc(neg.logo)+'" style="width:56px;height:56px;object-fit:cover;border-radius:8px">':'';
+  let rows='';
+  c.items.forEach(it=>{ rows+='<tr><td style="padding:6px 4px;border-bottom:1px solid #eee">'+(esc(it.desc)||'—')+'</td><td style="text-align:center;padding:6px 4px;border-bottom:1px solid #eee">'+it.qty+'</td><td style="text-align:right;padding:6px 4px;border-bottom:1px solid #eee">'+rcMoney(it.price)+'</td><td style="text-align:right;padding:6px 4px;border-bottom:1px solid #eee">'+rcMoney(it.sub)+'</td></tr>'; });
+  const html=''
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:3px solid '+col+';padding-bottom:12px">'
+      +'<div style="display:flex;gap:10px;align-items:center">'+logo+'<div>'
+        +'<div style="font-size:18px;font-weight:800">'+(esc(rcVal('rcNegNombre'))||'Tu negocio')+'</div>'
+        +'<div style="font-size:12px;color:#666">'+esc(rcVal('rcNegOficio'))+'</div>'
+        +'<div style="font-size:11px;color:#666">'+esc(rcVal('rcNegTel'))+(rcVal('rcNegRif')?' · '+esc(rcVal('rcNegRif')):'')+'</div>'
+        +(rcVal('rcNegDir')?'<div style="font-size:11px;color:#666">'+esc(rcVal('rcNegDir'))+'</div>':'')
+      +'</div></div>'
+      +'<div style="text-align:right">'
+        +'<div style="font-size:20px;font-weight:800;color:'+col+'">'+titulo+'</div>'
+        +'<div style="font-size:12px;color:#333">N° '+(esc(rcVal('rcNum'))||'0001')+'</div>'
+        +'<div style="font-size:12px;color:#333">'+esc(rcFechaFmt())+'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div style="margin:12px 0;font-size:12px"><strong>Cliente:</strong> '+(esc(rcVal('rcCliNombre'))||'—')+(rcVal('rcCliDoc')?' · '+esc(rcVal('rcCliDoc')):'')+'</div>'
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
+      +'<thead><tr style="background:'+col+';color:#fff">'
+        +'<th style="text-align:left;padding:6px 4px">Descripción</th>'
+        +'<th style="text-align:center;padding:6px 4px;width:50px">Cant.</th>'
+        +'<th style="text-align:right;padding:6px 4px;width:90px">P. Unit</th>'
+        +'<th style="text-align:right;padding:6px 4px;width:90px">Total</th>'
+      +'</tr></thead>'
+      +'<tbody>'+(rows||'<tr><td colspan="4" style="padding:12px;color:#999;text-align:center">Añade filas al detalle…</td></tr>')+'</tbody>'
+    +'</table>'
+    +'<div style="margin-top:10px;display:flex;justify-content:flex-end"><table style="font-size:12px">'
+      +'<tr><td style="padding:2px 10px;text-align:right;color:#666">Subtotal:</td><td style="padding:2px 0;text-align:right;min-width:110px">'+rcMoney(c.subtotal)+'</td></tr>'
+      +(c.ivaPct>0?'<tr><td style="padding:2px 10px;text-align:right;color:#666">Impuesto '+c.ivaPct+'%:</td><td style="padding:2px 0;text-align:right">'+rcMoney(c.iva)+'</td></tr>':'')
+      +'<tr><td style="padding:6px 10px;text-align:right;font-weight:800;font-size:14px">TOTAL:</td><td style="padding:6px 0;text-align:right;font-weight:800;font-size:14px;color:'+col+'">'+rcMoney(c.total)+'</td></tr>'
+    +'</table></div>'
+    +(tipo==='recibo'?'<div style="margin-top:10px;font-size:12px;background:#f7f7fb;border-radius:8px;padding:10px">Recibí de <strong>'+(esc(rcVal('rcCliNombre'))||'—')+'</strong> la cantidad de <strong>'+rcMoney(c.total)+'</strong>'+(rcVal('rcConcepto')?' por concepto de <strong>'+esc(rcVal('rcConcepto'))+'</strong>':'')+'. Método de pago: '+esc(rcVal('rcMetodo')||'Efectivo')+'.</div>':'')
+    +(rcVal('rcNotas')?'<div style="margin-top:10px;font-size:11px;color:#666"><strong>Notas:</strong> '+esc(rcVal('rcNotas'))+'</div>':'')
+    +'<div style="margin-top:26px;display:flex;justify-content:space-between;font-size:11px;color:#444"><div style="border-top:1px solid #999;padding-top:4px;width:180px;text-align:center">Firma</div><div style="text-align:right;color:#999">Generado con Fátima Pro</div></div>';
+  doc.innerHTML=html;
+}
+function rcNextNum(){
+  let n=parseInt(String(rcVal('rcNum')).replace(/\D/g,''))||0; n+=1;
+  const pad=String(n).padStart(4,'0');
+  rcSet('rcNum',pad);
+  try{localStorage.setItem('fp_recibo_num',pad);}catch(e){}
+  rcRender();
+}
+function rcInit(){
+  const n=rcNegocio();
+  rcSet('rcNegNombre',n.nombre);rcSet('rcNegOficio',n.oficio);rcSet('rcNegTel',n.tel);rcSet('rcNegRif',n.rif);rcSet('rcNegDir',n.direccion);
+  rcSet('rcNum',localStorage.getItem('fp_recibo_num')||'0001');
+  const f=document.getElementById('rcFecha'); if(f&&!f.value)f.value=new Date().toISOString().slice(0,10);
+  if(!document.querySelectorAll('#rcItems .rc-item').length)rcAddItem('',1,0);
+  rcRender();
+}
+function rcOpen(){if(!rcReady){rcReady=true;rcInit();}else{rcRender();}}
+function rcDownloadPDF(){
+  const JsPDF=window.jspdf?.jsPDF||window.jsPDF;
+  if(!JsPDF){alert('No se pudo cargar el generador de PDF. Reintenta en el sitio publicado.');return;}
+  if(!rcVal('rcNegNombre')){alert('Escribe al menos el nombre de tu negocio.');return;}
+  const items=rcGetItems().filter(it=>it.desc||it.price>0);
+  if(!items.length){alert('Añade al menos una fila al detalle.');return;}
+  if(!gastar(2))return;
+  const c=rcCalc();
+  const tipo=rcVal('rcTipo');
+  const titulo=tipo==='recibo'?'RECIBO DE PAGO':tipo==='factura'?'FACTURA':'PRESUPUESTO';
+  const neg=rcNegocio();
+  const col=rcHex(neg.color||'#7c3aed');
+  const money=rcMoney;
+  const pdf=new JsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+  const PW=595,M=48,W=PW-2*M,BOT=800,cT=PW-M,cP=PW-M-120,cQ=PW-M-200; let y=56;
+  pdf.setTextColor(20,20,20);pdf.setFont('helvetica','bold');pdf.setFontSize(16);
+  pdf.text((rcVal('rcNegNombre')||'').slice(0,60),M,y);
+  pdf.setTextColor(col[0],col[1],col[2]);pdf.setFontSize(18);pdf.text(titulo,cT,y,{align:'right'});
+  y+=18;pdf.setFont('helvetica','normal');pdf.setFontSize(10);pdf.setTextColor(90,90,90);
+  if(rcVal('rcNegOficio'))pdf.text(rcVal('rcNegOficio'),M,y);
+  pdf.setTextColor(50,50,50);pdf.text('N° '+(rcVal('rcNum')||'0001'),cT,y,{align:'right'});
+  y+=14;pdf.setTextColor(90,90,90);
+  const negLine=[rcVal('rcNegTel'),rcVal('rcNegRif'),rcVal('rcNegDir')].filter(Boolean).join('   ·   ');
+  if(negLine)pdf.text(negLine.slice(0,90),M,y);
+  pdf.text(rcFechaFmt(),cT,y,{align:'right'});
+  y+=10;pdf.setDrawColor(col[0],col[1],col[2]);pdf.setLineWidth(2);pdf.line(M,y,cT,y);y+=24;
+  pdf.setTextColor(20,20,20);pdf.setFont('helvetica','bold');pdf.setFontSize(11);pdf.text('Cliente:',M,y);
+  pdf.setFont('helvetica','normal');pdf.text((rcVal('rcCliNombre')||'—')+(rcVal('rcCliDoc')?'   ·   '+rcVal('rcCliDoc'):''),M+52,y);
+  y+=22;
+  pdf.setFillColor(col[0],col[1],col[2]);pdf.rect(M,y-13,W,20,'F');
+  pdf.setTextColor(255,255,255);pdf.setFont('helvetica','bold');pdf.setFontSize(10);
+  pdf.text('Descripción',M+6,y+1);pdf.text('Cant.',cQ,y+1,{align:'right'});pdf.text('P. Unit',cP,y+1,{align:'right'});pdf.text('Total',cT-4,y+1,{align:'right'});
+  y+=24;pdf.setTextColor(30,30,30);pdf.setFont('helvetica','normal');pdf.setFontSize(10);
+  items.forEach(it=>{
+    const dl=pdf.splitTextToSize(it.desc||'—',cQ-(M+6)-46);
+    const rowH=Math.max(14,dl.length*13);
+    if(y+rowH>BOT){pdf.addPage();y=56;}
+    dl.forEach((d,i)=>pdf.text(d,M+6,y+i*13));
+    pdf.text(String(it.qty),cQ,y,{align:'right'});
+    pdf.text(money(it.price),cP,y,{align:'right'});
+    pdf.text(money(it.sub),cT-4,y,{align:'right'});
+    y+=rowH+5;pdf.setDrawColor(230,230,230);pdf.setLineWidth(.5);pdf.line(M,y-7,cT,y-7);
+  });
+  y+=8;const tl=cT-150;
+  pdf.setFontSize(10);pdf.setTextColor(90,90,90);pdf.text('Subtotal:',tl,y,{align:'right'});pdf.setTextColor(30,30,30);pdf.text(money(c.subtotal),cT-4,y,{align:'right'});y+=16;
+  if(c.ivaPct>0){pdf.setTextColor(90,90,90);pdf.text('Impuesto '+c.ivaPct+'%:',tl,y,{align:'right'});pdf.setTextColor(30,30,30);pdf.text(money(c.iva),cT-4,y,{align:'right'});y+=16;}
+  pdf.setFont('helvetica','bold');pdf.setFontSize(13);pdf.setTextColor(col[0],col[1],col[2]);
+  pdf.text('TOTAL:',tl,y+2,{align:'right'});pdf.text(money(c.total),cT-4,y+2,{align:'right'});y+=30;
+  pdf.setFont('helvetica','normal');pdf.setFontSize(10);pdf.setTextColor(40,40,40);
+  if(tipo==='recibo'){
+    const txt='Recibí de '+(rcVal('rcCliNombre')||'—')+' la cantidad de '+money(c.total)+(rcVal('rcConcepto')?' por concepto de '+rcVal('rcConcepto'):'')+'. Método de pago: '+(rcVal('rcMetodo')||'Efectivo')+'.';
+    pdf.splitTextToSize(txt,W).forEach(l=>{if(y>BOT){pdf.addPage();y=56;}pdf.text(l,M,y);y+=14;});
+    y+=6;
+  }
+  if(rcVal('rcNotas')){pdf.setTextColor(90,90,90);pdf.splitTextToSize('Notas: '+rcVal('rcNotas'),W).forEach(l=>{if(y>BOT){pdf.addPage();y=56;}pdf.text(l,M,y);y+=13;});}
+  if(y>720){pdf.addPage();y=120;}else{y=Math.max(y+30,760);}
+  pdf.setDrawColor(120,120,120);pdf.setLineWidth(.5);pdf.line(M,y,M+170,y);
+  pdf.setTextColor(80,80,80);pdf.setFontSize(9);pdf.text('Firma',M+72,y+13);
+  pdf.text('Generado con Fátima Pro',cT,y+13,{align:'right'});
+  pdf.save(titulo.toLowerCase().replace(/ /g,'_')+'_'+(rcVal('rcNum')||'0001')+'.pdf');
+  rcNextNum();
+  const st=document.getElementById('rcSt');
+  if(st){st.innerHTML='<div class="st done">✅ '+titulo+' descargado en PDF (texto seleccionable)</div>';setTimeout(()=>st.innerHTML='',4500);}
 }
 
 // ══ INIT ══
