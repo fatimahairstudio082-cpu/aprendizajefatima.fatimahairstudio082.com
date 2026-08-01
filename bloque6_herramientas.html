@@ -239,6 +239,7 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
   <button class="main-tab" onclick="switchMain('cv',this)">📄 CV &amp; Cartas</button>
   <button class="main-tab" onclick="switchMain('presentacion',this)">💼 Mi Tarjeta</button>
   <button class="main-tab" onclick="switchMain('recibos',this)">🧾 Recibos</button>
+  <button class="main-tab" onclick="switchMain('flyers',this)">📣 Flyers</button>
 </div>
 
 <!-- ══ TAB: PROTECCIÓN DIGITAL ══ -->
@@ -513,6 +514,48 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
   </div>
 </div>
 
+<!-- ══ TAB: FLYERS PARA REDES ══ -->
+<div class="tab-content" id="tab-flyers">
+  <div style="max-width:900px;margin:0 auto">
+    <div class="panel">
+      <div class="p-title">📣 Flyers para redes</div>
+      <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:8px;padding:10px;margin-bottom:12px;font-size:10px;color:var(--ac3)">
+        Crea anuncios listos para <strong>Instagram, Estados de WhatsApp y Facebook</strong>. Sube tu foto, escribe tu oferta y descarga en el <strong>tamaño exacto</strong> de cada red. 🔒 Todo se genera en tu dispositivo.
+      </div>
+      <div class="row"><span class="lbl">Formato</span>
+        <select id="flFormato" onchange="flUpd()">
+          <option value="cuadrado">⬛ Cuadrado 1080×1080 (Instagram)</option>
+          <option value="historia">📱 Historia 1080×1920 (Estado / Story)</option>
+          <option value="horizontal">🖥️ Horizontal 1200×628 (Facebook)</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">Plantilla</span>
+        <select id="flPlantilla" onchange="flUpd()">
+          <option value="promo">✨ Promoción de servicio</option>
+          <option value="oferta">🏷️ Oferta / descuento</option>
+          <option value="antesdespues">🔀 Antes y después (2 fotos)</option>
+          <option value="clase">🎓 Anuncio de clase</option>
+        </select>
+      </div>
+      <div class="row"><span class="lbl">Título</span><input type="text" id="flTitulo" placeholder="Ej: Peinados de novia" oninput="flDraw()"></div>
+      <div class="row"><span class="lbl">Subtítulo</span><input type="text" id="flSubtitulo" placeholder="Ej: Reserva tu cita esta semana" oninput="flDraw()"></div>
+      <div class="row"><span class="lbl">Precio / Oferta</span><input type="text" id="flPrecio" placeholder="Ej: -20% · $15" oninput="flDraw()"></div>
+      <div class="row"><span class="lbl">CTA (botón)</span><input type="text" id="flCta" value="Reserva por WhatsApp" oninput="flDraw()"></div>
+      <div class="row"><span class="lbl">Teléfono</span><input type="text" id="flTel" placeholder="WhatsApp / teléfono" oninput="flDraw()"></div>
+      <div class="row"><span class="lbl">Color de marca</span><input type="color" id="flColor" value="#7c3aed" oninput="flDraw()" style="width:40px;height:28px;border:none;cursor:pointer;background:none"></div>
+      <div class="row"><span class="lbl">Foto</span><input type="file" id="flFoto1" accept="image/*" onchange="flPhoto(event,1)" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px"></div>
+      <div class="row" id="flFoto2Row" style="display:none"><span class="lbl">Foto 2 (después)</span><input type="file" id="flFoto2" accept="image/*" onchange="flPhoto(event,2)" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px"></div>
+      <div class="sep"></div>
+      <div style="overflow:auto;text-align:center;max-height:70vh">
+        <canvas id="flCanvas" width="1080" height="1080" style="max-width:100%;max-height:66vh;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5)"></canvas>
+      </div>
+      <div class="row" style="margin-top:12px;justify-content:center"><button class="btn btn-ok" onclick="flDownload()">⬇ Descargar JPG</button></div>
+      <div style="font-size:9px;color:var(--tx2);text-align:center;margin-top:4px">La descarga cuesta 2 créditos · tamaño exacto para cada red</div>
+      <div id="flSt"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ TAB: CV & CARTAS ══ -->
 <div class="tab-content" id="tab-cv">
   <div class="cv-wrap">
@@ -731,11 +774,12 @@ function switchMain(tab,el){
   document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('act'));
   document.getElementById('tab-'+tab).classList.add('act');
   el.classList.add('act');
-  const guias={digital:'Protección Digital: sube tu archivo, elige la herramienta del panel izquierdo y descarga protegido.',tarjeta:'Tarjeta Segura: introduce tus datos, desliza el dedo sobre la tarjeta para ocultar zonas sensibles, luego descarga.',cv:'CV y Cartas: elige el tipo de documento, la categoría, rellena tus datos y exporta en PDF.',media:'Vídeo y Audio: sube tu archivo, elige calidad y resolución, y descarga optimizado sin perder calidad importante.',presentacion:'Mi Tarjeta: rellena tu nombre, oficio y WhatsApp, elige un diseño y un color, y descarga tu tarjeta de presentación con código QR para compartir con tus clientes.',recibos:'Recibos: elige si quieres un presupuesto, un recibo de pago o una factura; pon tus datos y los del cliente, añade las filas del detalle y descarga en PDF.'};
+  const guias={digital:'Protección Digital: sube tu archivo, elige la herramienta del panel izquierdo y descarga protegido.',tarjeta:'Tarjeta Segura: introduce tus datos, desliza el dedo sobre la tarjeta para ocultar zonas sensibles, luego descarga.',cv:'CV y Cartas: elige el tipo de documento, la categoría, rellena tus datos y exporta en PDF.',media:'Vídeo y Audio: sube tu archivo, elige calidad y resolución, y descarga optimizado sin perder calidad importante.',presentacion:'Mi Tarjeta: rellena tu nombre, oficio y WhatsApp, elige un diseño y un color, y descarga tu tarjeta de presentación con código QR para compartir con tus clientes.',recibos:'Recibos: elige si quieres un presupuesto, un recibo de pago o una factura; pon tus datos y los del cliente, añade las filas del detalle y descarga en PDF.',flyers:'Flyers: elige el formato de la red, una plantilla, escribe tu título y oferta, sube una foto y descarga el anuncio listo para publicar.'};
   if(guias[tab])ttsGuia(tab);
   if(tab==='tarjeta')setTimeout(()=>{initDigitSel();renderCardCanvas();},100);
   if(tab==='presentacion')setTimeout(tpOpen,80);
   if(tab==='recibos')setTimeout(rcOpen,80);
+  if(tab==='flyers')setTimeout(flOpen,80);
 }
 
 // ══ TTS GUÍA ══
@@ -2427,6 +2471,126 @@ function rcDownloadPDF(){
   rcNextNum();
   const st=document.getElementById('rcSt');
   if(st){st.innerHTML='<div class="st done">✅ '+titulo+' descargado en PDF (texto seleccionable)</div>';setTimeout(()=>st.innerHTML='',4500);}
+}
+
+// ══════════ FLYERS PARA REDES (Fase 4) ══════════
+let flImg1=null, flImg2=null, flReady=false;
+function flVal(id){return (document.getElementById(id)?.value||'').trim();}
+function flSet(id,v){const e=document.getElementById(id);if(e&&v)e.value=v;}
+function flNeg(){try{return JSON.parse(localStorage.getItem('fp_negocio')||'{}');}catch(e){return{};}}
+function flFmt(){const m={cuadrado:[1080,1080],historia:[1080,1920],horizontal:[1200,628]};return m[flVal('flFormato')]||m.cuadrado;}
+function flPhoto(ev,which){
+  const f=ev.target.files&&ev.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{const img=new Image();img.onload=()=>{if(which===2)flImg2=img;else flImg1=img;flDraw();};img.src=e.target.result;};
+  r.readAsDataURL(f);
+}
+function flCover(ctx,img,x,y,w,h){
+  const ir=img.width/img.height, rr=w/h; let sw,sh,sx,sy;
+  if(ir>rr){sh=img.height;sw=sh*rr;sx=(img.width-sw)/2;sy=0;}
+  else{sw=img.width;sh=sw/rr;sx=0;sy=(img.height-sh)/2;}
+  ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
+}
+function flShade(ctx,x,y,w,h,from,to){const g=ctx.createLinearGradient(x,y,x,y+h);g.addColorStop(0,from);g.addColorStop(1,to);ctx.fillStyle=g;ctx.fillRect(x,y,w,h);}
+function flWrap(ctx,text,x,y,maxW,lineH,align){
+  ctx.textAlign=align||'left';
+  const words=String(text||'').split(/\s+/); let line='',lines=[];
+  words.forEach(w=>{const t=line?line+' '+w:w; if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=w;}else line=t;});
+  if(line)lines.push(line);
+  lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lineH));
+  return y+lines.length*lineH;
+}
+function flPill(ctx,text,x,y,bg,W){
+  ctx.font='700 '+(W*0.034)+'px Segoe UI,Arial';ctx.textAlign='left';
+  const padX=W*0.03,h=W*0.075,tw=ctx.measureText(text).width;
+  tpRound(ctx,x,y-h*0.72,tw+padX*2,h,h/2);ctx.fillStyle=bg;ctx.fill();
+  ctx.fillStyle='#fff';ctx.fillText(text,x+padX,y-h*0.72+h*0.66);
+}
+function flBand(ctx,W,H,color,titulo,sub,precio,tel,cta){
+  ctx.textAlign='left';
+  let ty=H-H*0.27;
+  ctx.fillStyle='#fff';ctx.font='800 '+(W*0.072)+'px Georgia,serif';
+  ty=flWrap(ctx,titulo,W*0.07,ty,W*0.86,W*0.078,'left');
+  if(sub){ctx.fillStyle='rgba(255,255,255,.92)';ctx.font='400 '+(W*0.038)+'px Segoe UI,Arial';ty=flWrap(ctx,sub,W*0.07,ty+W*0.012,W*0.86,W*0.046,'left');}
+  if(precio){ctx.fillStyle=color;ctx.font='800 '+(W*0.058)+'px Segoe UI,Arial';ctx.textAlign='left';ctx.fillText(precio,W*0.07,ty+W*0.058);}
+  flPill(ctx,cta,W*0.07,H-H*0.05,color,W);
+  if(tel){ctx.fillStyle='#fff';ctx.font='700 '+(W*0.034)+'px Segoe UI,Arial';ctx.textAlign='right';ctx.fillText('📱 '+tel,W*0.93,H-H*0.045);}
+}
+function flDraw(){
+  const cv=document.getElementById('flCanvas'); if(!cv)return;
+  const dim=flFmt(),W=dim[0],H=dim[1];
+  if(cv.width!==W)cv.width=W; if(cv.height!==H)cv.height=H;
+  const ctx=cv.getContext('2d');
+  const color=flVal('flColor')||'#7c3aed';
+  const plant=flVal('flPlantilla')||'promo';
+  const titulo=flVal('flTitulo')||'Tu título aquí';
+  const sub=flVal('flSubtitulo');
+  const precio=flVal('flPrecio');
+  const tel=flVal('flTel');
+  const cta=flVal('flCta')||'Reserva por WhatsApp';
+  const neg=flNeg();
+  ctx.clearRect(0,0,W,H);ctx.lineJoin='round';ctx.textBaseline='alphabetic';
+  if(plant==='antesdespues'){
+    const vertical=(H/W)>1.3;
+    const halves=vertical?[[0,0,W,H/2],[0,H/2,W,H/2]]:[[0,0,W/2,H],[W/2,0,W/2,H]];
+    [flImg1,flImg2].forEach((img,i)=>{
+      const q=halves[i],x=q[0],y=q[1],w=q[2],h=q[3];
+      if(img)flCover(ctx,img,x,y,w,h);
+      else{ctx.fillStyle=i?tpMix(color,'#000',0.35):tpMix(color,'#fff',0.12);ctx.fillRect(x,y,w,h);}
+      const lh=W*0.075;
+      ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(x,y,w,lh);
+      ctx.fillStyle='#fff';ctx.font='800 '+(W*0.04)+'px Segoe UI,Arial';ctx.textAlign='center';
+      ctx.fillText(i?'DESPUÉS':'ANTES',x+w/2,y+lh*0.68);
+    });
+    ctx.strokeStyle='#fff';ctx.lineWidth=W*0.006;ctx.beginPath();
+    if(vertical){ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);}else{ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);}
+    ctx.stroke();
+    flShade(ctx,0,H*0.62,W,H*0.38,'rgba(0,0,0,0)','rgba(0,0,0,.85)');
+    flBand(ctx,W,H,color,titulo,sub,precio,tel,cta);
+    return;
+  }
+  if(flImg1){flCover(ctx,flImg1,0,0,W,H);}
+  else{const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,tpMix(color,'#fff',0.12));g.addColorStop(1,tpMix(color,'#000',0.55));ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+  ctx.textAlign='left';
+  if(neg.nombre){ctx.fillStyle='rgba(255,255,255,.92)';ctx.font='700 '+(W*0.032)+'px Segoe UI,Arial';
+    ctx.shadowColor='rgba(0,0,0,.5)';ctx.shadowBlur=8;ctx.fillText(String(neg.nombre).toUpperCase(),W*0.07,H*0.08);ctx.shadowColor='transparent';ctx.shadowBlur=0;}
+  if(plant==='oferta'&&precio){
+    const r=W*0.15,cx=W-r-W*0.09,cy=H*0.20;
+    ctx.fillStyle=color;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fill();
+    ctx.fillStyle='#fff';ctx.textAlign='center';
+    ctx.font='700 '+(W*0.026)+'px Segoe UI,Arial';ctx.fillText('OFERTA',cx,cy-W*0.045);
+    ctx.font='800 '+(W*0.055)+'px Segoe UI,Arial';ctx.fillText(precio,cx,cy+W*0.025);
+  } else if(plant==='clase'){
+    const bh=W*0.058;ctx.fillStyle=color;tpRound(ctx,W*0.07,H*0.12,W*0.32,bh,bh/2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.textAlign='left';ctx.font='800 '+(W*0.028)+'px Segoe UI,Arial';ctx.fillText('CLASE / CURSO',W*0.10,H*0.12+bh*0.68);
+  }
+  flShade(ctx,0,H*0.48,W,H*0.52,'rgba(0,0,0,0)','rgba(0,0,0,.86)');
+  flBand(ctx,W,H,color,titulo,sub,(plant==='oferta'?'':precio),tel,cta);
+}
+function flUpd(){
+  const ad=flVal('flPlantilla')==='antesdespues';
+  const f2=document.getElementById('flFoto2Row'); if(f2)f2.style.display=ad?'flex':'none';
+  flDraw();
+}
+function flInit(){
+  const n=flNeg();
+  if(n.color)flSet('flColor',n.color);
+  if(n.tel)flSet('flTel',n.tel);
+  flUpd();
+}
+function flOpen(){if(!flReady){flReady=true;flInit();}else{flDraw();}}
+function flDownload(){
+  const cv=document.getElementById('flCanvas'); if(!cv)return;
+  if(!flVal('flTitulo')){alert('Escribe al menos el título del flyer.');return;}
+  if(!gastar(2))return;
+  flDraw();
+  const fmt=flVal('flFormato')||'cuadrado';
+  const fecha=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const url=cv.toDataURL('image/jpeg',0.95);
+  const a=document.createElement('a');a.download='flyer_'+fmt+'_'+fecha+'.jpg';a.href=url;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  const dims={cuadrado:'1080×1080',historia:'1080×1920',horizontal:'1200×628'};
+  const st=document.getElementById('flSt');
+  if(st){st.innerHTML='<div class="st done">✅ Flyer descargado · JPG '+(dims[fmt]||'')+'</div>';setTimeout(()=>st.innerHTML='',4500);}
 }
 
 // ══ INIT ══
