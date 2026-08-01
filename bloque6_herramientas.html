@@ -456,7 +456,19 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
         </select>
       </div>
       <div class="row"><span class="lbl">Melodía</span>
-        <select id="tpAudioSrc"><option value="none">Sin sonido</option></select>
+        <select id="tpAudioSrc">
+          <option value="none">Sin sonido</option>
+          <optgroup label="🎼 Melodías sin copyright">
+            <option value="mel_energia">⚡ Energía (motivador)</option>
+            <option value="mel_elegante">💎 Elegante (suave)</option>
+            <option value="mel_alegre">🎉 Alegre (pop)</option>
+            <option value="mel_epico">🎬 Épico (cine)</option>
+            <option value="mel_lofi">🌙 Lo-fi (relajado)</option>
+            <option value="mel_corporativo">💼 Corporativo (pro)</option>
+            <option value="mel_romantico">💗 Romántico (suave)</option>
+            <option value="mel_dramatico">🎭 Dramático (intenso)</option>
+          </optgroup>
+        </select>
         <button class="btn btn-g" id="tpPrevBtn" onclick="tpPreviewAudio()" style="font-size:10px;padding:2px 10px">▶ Escuchar</button>
       </div>
       <div class="row"><span class="lbl">Duración (seg)</span><input type="number" id="tpDur" value="6" min="2" max="20" step="1" style="max-width:90px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:5px;padding:4px 8px;font-size:11px"></div>
@@ -566,6 +578,33 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
       <div class="row"><span class="lbl">Color de marca</span><input type="color" id="flColor" value="#7c3aed" oninput="flDraw()" style="width:40px;height:28px;border:none;cursor:pointer;background:none"></div>
       <div class="row"><span class="lbl">Foto</span><input type="file" id="flFoto1" accept="image/*" onchange="flPhoto(event,1)" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px"></div>
       <div class="row" id="flFoto2Row" style="display:none"><span class="lbl">Foto 2 (después)</span><input type="file" id="flFoto2" accept="image/*" onchange="flPhoto(event,2)" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px"></div>
+      <div class="row"><span class="lbl">Sticker</span>
+        <select id="flSticker" onchange="flDraw()">
+          <option value="">— Ninguno —</option>
+          <option value="✨">✨ Destellos</option>
+          <option value="💇‍♀️">💇‍♀️ Peinado</option>
+          <option value="💅">💅 Uñas</option>
+          <option value="💄">💄 Maquillaje</option>
+          <option value="💈">💈 Barbería</option>
+          <option value="✂️">✂️ Tijeras</option>
+          <option value="💖">💖 Corazón</option>
+          <option value="⭐">⭐ Estrella</option>
+          <option value="🔥">🔥 Fuego</option>
+          <option value="👑">👑 Corona</option>
+          <option value="🌸">🌸 Flor</option>
+          <option value="🎀">🎀 Lazo</option>
+          <option value="💎">💎 Diamante</option>
+          <option value="🏷️">🏷️ Etiqueta</option>
+          <option value="📅">📅 Cita</option>
+          <option value="🎉">🎉 Fiesta</option>
+        </select>
+        <select id="flStickerPos" onchange="flDraw()" style="max-width:130px">
+          <option value="tl">↖ Arriba izq.</option>
+          <option value="tr" selected>↗ Arriba der.</option>
+          <option value="bl">↙ Abajo izq.</option>
+          <option value="br">↘ Abajo der.</option>
+        </select>
+      </div>
       <div class="sep"></div>
       <div style="overflow:auto;text-align:center;max-height:70vh">
         <canvas id="flCanvas" width="1080" height="1080" style="max-width:100%;max-height:66vh;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5)"></canvas>
@@ -596,6 +635,16 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
       <div class="row"><span class="lbl">Audio</span>
         <select id="flAudioSrc" onchange="flAudioUpd()">
           <option value="none">Sin sonido</option>
+          <optgroup label="🎼 Melodías sin copyright">
+            <option value="mel_energia">⚡ Energía (motivador)</option>
+            <option value="mel_elegante">💎 Elegante (suave)</option>
+            <option value="mel_alegre">🎉 Alegre (pop)</option>
+            <option value="mel_epico">🎬 Épico (cine)</option>
+            <option value="mel_lofi">🌙 Lo-fi (relajado)</option>
+            <option value="mel_corporativo">💼 Corporativo (pro)</option>
+            <option value="mel_romantico">💗 Romántico (suave)</option>
+            <option value="mel_dramatico">🎭 Dramático (intenso)</option>
+          </optgroup>
           <option value="upload">🎵 Subir música / voz</option>
           <option value="mic">🎤 Grabar voz (micrófono)</option>
         </select>
@@ -2311,7 +2360,6 @@ function tpRender(){
   tpDraw();
 }
 function tpInit(){
-  flFillMelodies(document.getElementById('tpAudioSrc'));
   const n=tpLeerNegocio();
   tpSet('tpNombre',n.nombre);tpSet('tpOficio',n.oficio);tpSet('tpTel',n.tel);tpSet('tpIg',n.ig);
   tpSet('tpEmail',n.email);tpSet('tpCiudad',n.ciudad);tpSet('tpEslogan',n.eslogan);tpSet('tpColor',n.color);
@@ -2766,6 +2814,23 @@ function flRenderBg(ctx,W,H){
   if(plant==='cine')flShade(ctx,0,H*0.55,W,H*0.45,'rgba(0,0,0,0)','rgba(0,0,0,.82)');
   else flShade(ctx,0,H*0.48,W,H*0.52,'rgba(0,0,0,0)','rgba(0,0,0,.86)');
 }
+function flStickers(ctx,W,H){
+  const s=flVal('flSticker'); if(!s)return;
+  const pos=flVal('flStickerPos')||'tr';
+  const size=W*0.14, m=W*0.055, bandGap=H*0.30;
+  let x,y;
+  if(pos==='tl'){x=m;y=m;}
+  else if(pos==='tr'){x=W-m-size;y=m;}
+  else if(pos==='bl'){x=m;y=H-m-size-bandGap;}
+  else {x=W-m-size;y=H-m-size-bandGap;}
+  ctx.save();
+  ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.font=size+'px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",Arial';
+  ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=size*0.14;ctx.shadowOffsetY=size*0.03;
+  ctx.fillText(s,x,y);
+  ctx.restore();
+  ctx.textBaseline='alphabetic';ctx.textAlign='left';
+}
 function flDraw(){
   const cv=document.getElementById('flCanvas'); if(!cv)return;
   const dim=flFmt(),W=dim[0],H=dim[1];
@@ -2777,6 +2842,7 @@ function flDraw(){
   const fx=flVal('flTextFx')||'aparecer';
   const opts=(fx==='neon')?{glow:1.1,glowColor:color}:(fx==='brillo')?{glow:0.8,glowColor:'#ffffff'}:null;
   flBand(ctx,W,H,color,flVal('flTitulo')||'Tu título aquí',flVal('flSubtitulo'),(plant==='oferta'?'':flVal('flPrecio')),flVal('flTel'),flVal('flCta')||'Reserva por WhatsApp',opts);
+  flStickers(ctx,W,H);
 }
 function flUpd(){
   const ad=flVal('flPlantilla')==='antesdespues';
@@ -2787,7 +2853,6 @@ function flInit(){
   const n=flNeg();
   if(n.color)flSet('flColor',n.color);
   if(n.tel)flSet('flTel',n.tel);
-  flFillMelodies(document.getElementById('flAudioSrc'));
   flUpd();
 }
 function flOpen(){if(!flReady){flReady=true;flInit();}else{flDraw();}}
@@ -2822,13 +2887,6 @@ const FL_MELODIES={
   mel_romantico:{tempo:72,wave:'sine',gain:0.5,seq:['A4','C5','B4','A4','G4','E4','F4','A4','G4','E4','D4','C4'],bass:['F3','F3','C3','C3','D3','D3','G3','G3']},
   mel_dramatico:{tempo:88,wave:'triangle',gain:0.5,seq:['D4','F4','A4','D5','C5','A4','B4','G4','A4','F4','D4','A3'],bass:['D3','D3','B3','B3','G3','G3','A3','A3']}
 };
-const FL_MELODY_LABELS={mel_energia:'⚡ Energía (motivador)',mel_elegante:'💎 Elegante (suave)',mel_alegre:'🎉 Alegre (pop)',mel_epico:'🎬 Épico (cine)',mel_lofi:'🌙 Lo-fi (relajado)',mel_corporativo:'💼 Corporativo (pro)',mel_romantico:'💗 Romántico (suave)',mel_dramatico:'🎭 Dramático (intenso)'};
-function flFillMelodies(sel){
-  if(!sel||sel.dataset.melodias)return; sel.dataset.melodias='1';
-  const og=document.createElement('optgroup'); og.label='🎼 Melodías sin copyright';
-  Object.keys(FL_MELODY_LABELS).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=FL_MELODY_LABELS[k];og.appendChild(o);});
-  sel.insertBefore(og, sel.children[1]||null); // tras "Sin sonido"
-}
 function flPlayMelody(ac,dest,name,dur){
   const def=FL_MELODIES[name]; if(!def)return {stop(){}};
   const master=ac.createGain(); master.gain.value=def.gain;
@@ -2905,6 +2963,7 @@ function flDrawFrame(ctx,W,H,bg,elapsed,dur){
   else if(fx==='neon')flBand(...args,{alpha:app,glow:0.7+0.6*Math.abs(Math.sin(elapsed*2.6)),glowColor:col});
   else if(fx==='rebote'){const b=Math.exp(-elapsed*3)*Math.cos(elapsed*11)*(-H*0.045);flBand(...args,{alpha:app,dy:b});}
   else{const dy=(1-app)*H*0.03;ctx.save();ctx.globalAlpha=app;ctx.translate(0,dy);flBand(...args);ctx.restore();}
+  flStickers(ctx,W,H);
   flGrain(ctx,W,H,0.05);
 }
 function flStopVideo(){if(flRec&&flRec.state!=='inactive'){try{flRec.stop();}catch(e){}}}
