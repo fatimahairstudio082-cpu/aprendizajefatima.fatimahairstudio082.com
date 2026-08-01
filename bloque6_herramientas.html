@@ -414,6 +414,9 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
           <option value="belleza">✨ Elegante (belleza)</option>
           <option value="oficios">🔧 Fuerte (oficios)</option>
           <option value="comercio">🛍️ Limpio (comercio)</option>
+          <option value="degradado">🌈 Degradado (centrado)</option>
+          <option value="dorado">👑 Dorado de lujo (centrado)</option>
+          <option value="transparente">🪟 Transparente / overlay (PNG)</option>
         </select>
       </div>
       <div class="row"><span class="lbl">El QR abre</span>
@@ -421,8 +424,12 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
           <option value="wa">📱 Mi WhatsApp</option>
           <option value="ig">📷 Mi Instagram</option>
           <option value="vcard">👤 Guardar mi contacto</option>
+          <option value="custom">🔗 Cualquier link o texto</option>
         </select>
       </div>
+      <div class="row"><span class="lbl">Link / texto QR</span><input type="text" id="tpCustom" placeholder="Pega aquí cualquier link o texto (para la opción 🔗)" oninput="tpRender()"></div>
+      <div class="row" style="margin-top:-2px"><label style="display:flex;align-items:center;gap:6px;font-size:10px;cursor:pointer;color:var(--tx2)"><input type="checkbox" id="tpB64" onchange="tpRender()"> Codificar en Base64 (oculta el texto)</label></div>
+      <div style="font-size:9px;color:var(--tx2);margin:-2px 0 6px 0">💡 Para que el QR <strong>abra</strong> el link al escanearlo, deja Base64 desactivado. El campo de arriba solo se usa con la opción “🔗 Cualquier link o texto”.</div>
       <div class="row"><span class="lbl">Color de marca</span><input type="color" id="tpColor" value="#7c3aed" oninput="tpRender()" style="width:40px;height:28px;border:none;cursor:pointer;background:none"></div>
       <div class="row"><span class="lbl">Logo / foto</span><input type="file" id="tpLogoFile" accept="image/*" onchange="tpLogo(event)" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px"></div>
       <div class="sep"></div>
@@ -2003,6 +2010,11 @@ function tpQRTarget(){
   const modo=tpVal('tpQrModo');
   const tel=tpVal('tpTel').replace(/[^\d]/g,'');
   const ig=tpVal('tpIg').replace(/^@/,'').replace(/\s+/g,'');
+  if(modo==='custom'){
+    let v=tpVal('tpCustom'); if(!v)return '';
+    if(document.getElementById('tpB64')?.checked){ try{v=btoa(unescape(encodeURIComponent(v)));}catch(e){} }
+    return v;
+  }
   if(modo==='ig')return ig?'https://instagram.com/'+ig:'';
   if(modo==='vcard'){
     if(!tpVal('tpNombre'))return '';
@@ -2037,7 +2049,7 @@ function tpDraw(){
   const oficio=tpVal('tpOficio')||'Tu oficio o profesión';
   const eslogan=tpVal('tpEslogan');
   const modo=tpVal('tpQrModo');
-  const qrLabel=modo==='ig'?'Escanea mi Instagram':modo==='vcard'?'Guarda mi contacto':'Escanea mi WhatsApp';
+  const qrLabel=modo==='ig'?'Escanea mi Instagram':modo==='vcard'?'Guarda mi contacto':modo==='custom'?'Escanéame':'Escanea mi WhatsApp';
   ctx.clearRect(0,0,W,H);ctx.lineJoin='round';
   const qs=190, qx=W-qs-58, qy=H-qs-72;
   if(plant==='comercio'){
@@ -2061,6 +2073,19 @@ function tpDraw(){
     if(eslogan){ctx.fillStyle='#99a';ctx.font='italic 24px Georgia,serif';ctx.fillText('“'+eslogan+'”',60,242);}
     tpContacts(ctx,60,eslogan?314:288,'#cfd3e0');
     tpDrawQR(ctx,qx,qy,qs,qrLabel,'#fff');
+  } else if(plant==='transparente'){
+    tpDrawCentered(ctx,W,H,color,'#ffffff','rgba(255,255,255,.92)',qrLabel,true);
+  } else if(plant==='dorado'){
+    const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#241d0e');g.addColorStop(.5,'#12100a');g.addColorStop(1,'#000000');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='#c9a84c';ctx.lineWidth=3;tpRound(ctx,22,22,W-44,H-44,18);ctx.stroke();
+    ctx.save();ctx.globalAlpha=.10;ctx.strokeStyle='#e8c979';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(W/2,H/2,300,0,7);ctx.stroke();ctx.restore();
+    tpDrawCentered(ctx,W,H,color,'#f4e3b0','#c9a84c',qrLabel,false);
+  } else if(plant==='degradado'){
+    const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,tpMix(color,'#fff',0.10));g.addColorStop(1,tpMix(color,'#000',0.55));
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    const rg=ctx.createRadialGradient(W*0.72,H*0.22,20,W*0.72,H*0.22,420);rg.addColorStop(0,'rgba(255,255,255,.18)');rg.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
+    tpDrawCentered(ctx,W,H,color,'#ffffff','rgba(255,255,255,.92)',qrLabel,false);
   } else {
     const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,tpMix(color,'#fff',0.12));g.addColorStop(1,tpMix(color,'#000',0.5));
     ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -2074,6 +2099,35 @@ function tpDraw(){
     tpContacts(ctx,60,nameY+(eslogan?156:118),'#fff');
     tpDrawQR(ctx,qx,qy,qs,qrLabel,'#fff');
   }
+}
+function tpDrawCentered(ctx,W,H,color,txtCol,subCol,qrLabel,shadow){
+  const nombre=tpVal('tpNombre')||'Tu Nombre';
+  const oficio=tpVal('tpOficio')||'Tu oficio o profesión';
+  const eslogan=tpVal('tpEslogan');
+  const setSh=on=>{ctx.shadowColor=on?'rgba(0,0,0,.55)':'transparent';ctx.shadowBlur=on?8:0;ctx.shadowOffsetX=0;ctx.shadowOffsetY=on?2:0;};
+  ctx.textAlign='center';
+  let y=150;
+  if(tpLogoImg){const R=52,cx=W/2,cy=80;setSh(false);ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.clip();ctx.drawImage(tpLogoImg,cx-R,cy-R,R*2,R*2);ctx.restore();ctx.lineWidth=4;ctx.strokeStyle=txtCol;ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.stroke();y=188;}
+  setSh(shadow);
+  ctx.fillStyle=txtCol;ctx.font='700 52px Georgia,serif';ctx.fillText(nombre,W/2,y);
+  ctx.fillStyle=subCol;ctx.font='400 28px Segoe UI,Arial';ctx.fillText(oficio,W/2,y+42);
+  setSh(false);ctx.strokeStyle=subCol;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(W/2-90,y+64);ctx.lineTo(W/2+90,y+64);ctx.stroke();
+  let cy2=y+96;
+  if(eslogan){setSh(shadow);ctx.fillStyle=txtCol;ctx.font='italic 24px Georgia,serif';ctx.fillText('“'+eslogan+'”',W/2,y+98);cy2=y+140;}
+  const tel=tpVal('tpTel'),ig=tpVal('tpIg'),email=tpVal('tpEmail'),ciudad=tpVal('tpCiudad');
+  const l1=[];if(tel)l1.push('📱 '+tel);if(ig)l1.push('📷 @'+ig.replace(/^@/,''));
+  const l2=[];if(email)l2.push('✉️ '+email);if(ciudad)l2.push('📍 '+ciudad);
+  setSh(shadow);ctx.font='400 24px Segoe UI,Arial';ctx.fillStyle=txtCol;
+  if(l1.length){ctx.fillText(l1.join('     '),W/2,cy2);cy2+=34;}
+  if(l2.length){ctx.fillText(l2.join('     '),W/2,cy2);cy2+=34;}
+  setSh(false);
+  if(tpQRCanvas){
+    const qs=118,qx=(W-qs)/2,qy=Math.min(cy2+8,H-qs-44),pad=12;
+    ctx.fillStyle='#fff';tpRound(ctx,qx-pad,qy-pad,qs+pad*2,qs+pad*2,12);ctx.fill();
+    try{ctx.drawImage(tpQRCanvas,qx,qy,qs,qs);}catch(e){}
+    setSh(shadow);ctx.fillStyle=subCol;ctx.font='700 18px Segoe UI,Arial';ctx.fillText(qrLabel,W/2,qy+qs+26);setSh(false);
+  }
+  ctx.textAlign='left';
 }
 function tpRender(){
   const target=tpQRTarget();
@@ -2102,6 +2156,8 @@ function tpOpen(){if(!tpReady){tpReady=true;tpInit();}else{tpRender();}}
 function tpDownload(fmt){
   if(!document.getElementById('tpCanvas'))return;
   if(!tpVal('tpNombre')){alert('Escribe al menos tu nombre.');return;}
+  let _forcedPng=false;
+  if(tpVal('tpPlantilla')==='transparente'&&fmt==='jpg'){fmt='png';_forcedPng=true;}
   const _tgt=tpQRTarget();
   if(_tgt && !tpQRCanvas){tpRender();alert('El código QR se está generando. Espera un segundo y vuelve a pulsar Descargar.');return;}
   if(!gastar(2))return;
@@ -2122,7 +2178,7 @@ function tpDownload(fmt){
     pdf.save(base+'.pdf');
   }
   const st=document.getElementById('tpSt');
-  if(st){st.innerHTML='<div class="st done">✅ Tarjeta descargada · '+fmt.toUpperCase()+(fmt==='jpg'?' + PDF':'')+'</div>';setTimeout(()=>st.innerHTML='',4000);}
+  if(st){st.innerHTML='<div class="st done">✅ Tarjeta descargada · '+fmt.toUpperCase()+(fmt==='jpg'?' + PDF':'')+(_forcedPng?' · fondo transparente (PNG)':'')+'</div>';setTimeout(()=>st.innerHTML='',4500);}
 }
 
 // ══ INIT ══
