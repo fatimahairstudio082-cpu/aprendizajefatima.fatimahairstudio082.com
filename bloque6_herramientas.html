@@ -401,6 +401,8 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
         <select id="tipoDoc" onchange="cvRender()">
           <option value="carta">Carta de Presentación</option>
           <option value="motivacional">Carta Motivacional</option>
+          <option value="referencia_laboral">Carta de Referencia Laboral</option>
+          <option value="referencia_personal">Carta de Referencia Personal</option>
           <option value="renuncia">Carta de Renuncia</option>
           <option value="cv">Currículum Vitae</option>
         </select>
@@ -408,15 +410,20 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
         <select id="cvPais" onchange="cvChangePais()">
           <option value="">— Sin especificar —</option>
           <option value="ve">🇻🇪 Venezuela</option>
-          <option value="es">🇪🇸 España</option>
-          <option value="us">🇺🇸 EE.UU.</option>
-          <option value="de">🇩🇪 Alemania</option>
-          <option value="uk">🇬🇧 Reino Unido</option>
+          <option value="pe">🇵🇪 Perú</option>
           <option value="co">🇨🇴 Colombia</option>
+          <option value="ec">🇪🇨 Ecuador</option>
+          <option value="bo">🇧🇴 Bolivia</option>
           <option value="cl">🇨🇱 Chile</option>
           <option value="ar">🇦🇷 Argentina</option>
           <option value="pa">🇵🇦 Panamá</option>
+          <option value="mx">🇲🇽 México</option>
+          <option value="do">🇩🇴 Rep. Dominicana</option>
+          <option value="es">🇪🇸 España</option>
+          <option value="us">🇺🇸 EE.UU.</option>
           <option value="ca">🇨🇦 Canadá</option>
+          <option value="de">🇩🇪 Alemania</option>
+          <option value="uk">🇬🇧 Reino Unido</option>
           <option value="fr">🇫🇷 Francia</option>
         </select>
         <div id="cvPaisBadge" style="display:none"></div>
@@ -428,6 +435,11 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
           <option value="moderno">Moderno Dinámico</option>
           <option value="creativo">Creativo Impacto</option>
           <option value="minimalista">Minimalista Limpio</option>
+          <option value="elegante">Elegante Dos Columnas</option>
+          <option value="ejecutivo">Ejecutivo Serio</option>
+          <option value="compacto">Compacto Una Página</option>
+          <option value="timeline">Línea de Tiempo</option>
+          <option value="ats">ATS · Robots (recomendado para empleo)</option>
         </select>
         <h4>Color</h4>
         <select id="paleta" onchange="cvRender()">
@@ -435,6 +447,14 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
           <option value="verde">Verde Esmeralda</option>
           <option value="violeta">Violeta Tecnológico</option>
           <option value="oro">Dorado Premium</option>
+          <option value="granate">Granate Elegante</option>
+          <option value="grafito">Grafito Serio</option>
+          <option value="turquesa">Turquesa Fresco</option>
+          <option value="coral">Coral Vivo</option>
+          <option value="naranja">Naranja Energía</option>
+          <option value="marino">Azul Marino</option>
+          <option value="magenta">Magenta Creativo</option>
+          <option value="teal">Verde Petróleo</option>
         </select>
         <h4>Datos</h4>
         <input type="text" id="cvNombre" value="Fátima Caldea" placeholder="Tu nombre completo" oninput="cvRender()">
@@ -453,6 +473,23 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
         <select id="cvVar" onchange="cvRender()"></select>
         <h4>Empresa (para cartas)</h4>
         <input type="text" id="cvEmpresa" value="Empresa Ejemplo S.A." oninput="cvRender()">
+        <div id="refBlock" style="display:none">
+          <h4>Quién recomienda <span style="font-size:8px;color:var(--tx2)">(referencia)</span></h4>
+          <input type="text" id="cvReferente" placeholder="👤 Nombre de quien firma" oninput="cvRender()">
+          <input type="text" id="cvReferenteCargo" placeholder="💼 Su cargo o relación (ej: Jefa, Vecino)" oninput="cvRender()">
+          <input type="text" id="cvReferenteContacto" placeholder="📱 Su teléfono o correo" oninput="cvRender()">
+          <input type="text" id="cvTiempoConocido" placeholder="⏳ Desde cuándo lo/la conoce (ej: 3 años)" oninput="cvRender()">
+        </div>
+        <div id="atsBlock" style="margin-top:10px;padding:9px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:11px;font-weight:600">
+            <input type="checkbox" id="cvAts" onchange="cvRender()" style="width:16px;height:16px;accent-color:var(--ac3)">
+            🤖 Modo ATS (que lo lean los robots)
+          </label>
+          <div style="font-size:9px;color:var(--tx2);line-height:1.5;margin-top:5px">Diseño de una columna, sin foto ni colores, letra estándar. Al exportar genera un <strong>PDF de texto real</strong> que los filtros de empleo sí pueden leer.</div>
+          <div id="cvKeywordsBox" style="margin-top:7px"></div>
+          <textarea id="cvOferta" placeholder="Pega aquí la oferta de empleo (opcional) para ver qué palabras clave ya tienes…" oninput="cvChequearOferta()" style="width:100%;min-height:44px;font-size:9px;padding:5px;background:var(--bg2);border:1px solid var(--bd);border-radius:5px;color:var(--tx);resize:vertical;margin-top:6px"></textarea>
+          <div id="cvOfertaResultado" style="font-size:9px;line-height:1.6;margin-top:5px"></div>
+        </div>
         <div id="skillsBlock">
           <h4>Habilidades <span style="font-size:8px;color:var(--tx2)">(solo CV)</span></h4>
           <div class="skill-builder">
@@ -1125,7 +1162,9 @@ document.querySelector('[onclick*="tarjeta"]').addEventListener('click',()=>{set
 const CV_VARIADORES={
   carta:["Presento mi postulación formal con alto entusiasmo. Mi perfil técnico se alinea perfectamente con los requerimientos de su organización.","Me pongo en comunicación con el propósito de aportar dinamismo, compromiso y resultados mensurables a su equipo de trabajo.","A través de la presente, manifiesto mi firme interés en incorporarme a sus operaciones, ofreciendo una trayectoria sólida y metodologías probadas.","Le escribo para ofrecer mis competencias avanzadas orientadas al cumplimiento de objetivos corporativos exigentes.","Deseo proponer mi candidatura para el puesto vacante, respaldado por un impecable historial de eficiencia y proactividad.","Es un honor dirigirme a usted con el fin de sumarme a sus filas operativas, generando adaptación inmediata y excelencia en el servicio.","Motivado por el crecimiento constante de su firma, ofrezco un perfil maduro y habilidades técnicas de vanguardia.","Con gran interés en sus proyectos, postulo mi perfil buscando aportar soluciones eficaces y alto compromiso corporativo.","Me dirijo a usted con la intención de integrarme en su plantilla y desplegar todo mi potencial técnico.","Adjunto mis credenciales con la certeza de poder optimizar los flujos de trabajo mediante mi experiencia."],
   motivacional:["Lo que me impulsa a unirme a ustedes es su cultura organizacional y mi genuina pasión por alcanzar la excelencia.","Considero que los retos de su empresa son la oportunidad perfecta para demostrar mi resiliencia y visión de mejora continua.","Mi motivación radica en la convergencia entre los valores de su corporación y mi búsqueda de desarrollo profesional.","Formar parte de su equipo es un hito que deseo alcanzar para fusionar mi creatividad con las metas globales de la firma.","Me entusiasma profundamente aportar mi energía y ética de trabajo a sus operaciones diarias.","Su liderazgo en el mercado me inspira a ofrecer lo mejor de mis destrezas para superar los estándares de calidad.","Busco un entorno de alta exigencia donde mi pasión por los detalles genere un impacto positivo inmediato.","Mi compromiso va más allá del deber laboral; me apasiona este sector y deseo volcarlo en su marca.","Encuentro profunda inspiración en sus metodologías y es mi deseo alinear mis esfuerzos para consolidar sus éxitos.","La oportunidad de colaborar con profesionales de su calibre es el estímulo definitivo para mi máxima entrega."],
-  renuncia:["Por motivos de índole profesional y crecimiento de carrera, comunico mi decisión irrevocable de cesar en mis funciones.","Agradezco profundamente la confianza depositada y notifico formalmente el término de nuestra relación laboral.","Ha sido una decisión largamente evaluada con el fin de emprender nuevos horizontes y proyectos personales.","Hago de su conocimiento mi renuncia al puesto que desempeño, garantizando una transición ordenada y pulcra.","Presento esta notificación de baja voluntaria, manifestando mi más sincera gratitud por el aprendizaje recibido.","Por razones personales que requieren mi completa atención, me veo en la necesidad de finalizar mis actividades.","Informo mi desvinculación voluntaria. Ha sido un honor sumar esfuerzos con este gran equipo.","Comunico formalmente mi dimisión al cargo con respeto absoluto hacia la dirección y mis mejores deseos.","Con fecha de hoy presento mi renuncia formal, comprometiéndome a colaborar en la capacitación de mi relevo.","Cierro este ciclo de manera sumamente agradecida y radico mi renuncia formal e irrevocable."]
+  renuncia:["Por motivos de índole profesional y crecimiento de carrera, comunico mi decisión irrevocable de cesar en mis funciones.","Agradezco profundamente la confianza depositada y notifico formalmente el término de nuestra relación laboral.","Ha sido una decisión largamente evaluada con el fin de emprender nuevos horizontes y proyectos personales.","Hago de su conocimiento mi renuncia al puesto que desempeño, garantizando una transición ordenada y pulcra.","Presento esta notificación de baja voluntaria, manifestando mi más sincera gratitud por el aprendizaje recibido.","Por razones personales que requieren mi completa atención, me veo en la necesidad de finalizar mis actividades.","Informo mi desvinculación voluntaria. Ha sido un honor sumar esfuerzos con este gran equipo.","Comunico formalmente mi dimisión al cargo con respeto absoluto hacia la dirección y mis mejores deseos.","Con fecha de hoy presento mi renuncia formal, comprometiéndome a colaborar en la capacitación de mi relevo.","Cierro este ciclo de manera sumamente agradecida y radico mi renuncia formal e irrevocable."],
+  referencia_laboral:["Durante ese tiempo demostró ser una persona responsable, puntual y de gran compromiso con sus tareas.","Siempre cumplió sus funciones con dedicación, honestidad y un excelente trato hacia compañeros y clientes.","Se destacó por su capacidad de trabajo, su iniciativa y la calidad constante de sus resultados.","Mostró una actitud proactiva, disposición para aprender y total confiabilidad en cada responsabilidad asignada.","Su desempeño fue ejemplar: ordenada, discreta y siempre dispuesta a dar lo mejor de sí.","Cumplió cabalmente con sus obligaciones, demostrando ética profesional y espíritu de equipo.","Fue una colaboradora leal y eficiente, en quien siempre pude confiar plenamente.","Su profesionalismo, puntualidad y buena disposición la convirtieron en un valioso aporte para nuestro equipo.","Manejó sus responsabilidades con seriedad y honradez, dejando una excelente impresión en toda la organización.","Recomiendo ampliamente su trabajo: es una persona íntegra, capaz y comprometida con la excelencia."],
+  referencia_personal:["Puedo dar fe de su honestidad, responsabilidad y excelente comportamiento como persona.","Es alguien de buenos valores, respetuosa, trabajadora y de trato amable con todos.","Siempre se ha caracterizado por su rectitud, su nobleza y su disposición a ayudar a los demás.","La conozco como una persona de confianza, seria y de conducta intachable.","Es responsable, puntual y honrada; cualidades que la distinguen en su vida personal y familiar.","Doy testimonio de su buena reputación y de su carácter íntegro y solidario.","Es una persona sana, educada y de principios, en quien se puede confiar sin reservas.","Su honestidad y su buen corazón la hacen merecedora de toda recomendación.","La considero una persona ejemplar, de valores firmes y excelente trato humano.","Recomiendo a esta persona sin dudarlo: es trabajadora, honesta y de gran calidad humana."]
 };
 const CV_CATS={"Peluquería":["Colorimetría","Corte","Marcado","Tratamientos","Estilismo"],"Enfermería":["Cuidados","Medicación","Triaje","Urgencias","Clínica"],"Albañilería":["Obra","Alicatado","Planos","Estructuras","Reformas"],"Empleada Hogar":["Limpieza","Cocina","Organización","Plancha","Logística"],"Camarero":["Protocolo","Servicio","Barra","Manejo TPV","Comandas"],"Recepcionista":["Atención","Ofimática","Gestión","Llamadas","Agendas"],"Barbero":["Barba","Degradado","Afeitado","Visajismo","Estilo"],"Dependienta":["Venta directa","Atención al cliente","Escaparatismo","Reposición","Cierre de caja"],"Cajera":["Cuadre de caja","Agilidad cobros","Fidelización","Sistemas POS","Atención al cliente"],"Cocinero":["Gestión de cocina","APPCC","Emplatado","Costes de menú","Alta cocina"],"Conductora":["Seguridad vial","Mantenimiento","Puntualidad","Rutas","Logística"],"Administrativa":["Facturación","Base de datos","Gestión archivos","Contabilidad","Excel avanzado"],"Contable":["Balances","Liquidación impuestos","Auditoría","ERP","Análisis financiero"],"Marketing Digital":["SEO/SEM","Google Analytics","Campañas Paid","Estrategia digital","Growth Hacking"],"Programadora":["JavaScript/Python","Git","Bases de datos","APIs Rest","Clean Code"],"Diseñadora Gráfica":["Adobe Photoshop","Illustrator","Branding","Identidad visual","UI Design"],"Esteticista":["Tratamientos faciales","Manicura","Aparatología","Depilación","Cosmética"],"Fisioterapeuta":["Rehabilitación","Terapia manual","Anatomía","Ergonomía","Vendaje"],"Agente Ventas":["Prospección","Cierre ventas","Negociación","CRM","Fidelización"],"Profesora":["Metodología","Pedagogía","Planificación","Evaluación","Motivación"],"Monitor Gimnasio":["Rutinas","Fitness","Nutrición deportiva","Clases dirigidas","Primeros auxilios"],"Community Manager":["Estrategia contenidos","Gestión comunidades","Copywriting","Métricas","Atención online"],"Traductora":["Traducción simultánea","Localización","Corrección estilo","Glosarios","Idiomas"],"Recursos Humanos":["Reclutamiento","Nóminas","Clima laboral","Evaluación","Onboarding"],"Pastelera":["Repostería fina","Masas fermentadas","Decoración","Higiene alimentaria","Costes"],"Sastre":["Toma de medidas","Patronaje","Confección","Arreglos ropa","Textil"],"Electricista":["Instalaciones BT","Esquemas","Cuadros eléctricos","Mantenimiento","Seguridad"],"Fontanera":["Tuberías","Fugas","Calefacción","Saneamiento","Soldadura"],"Jardinera":["Paisajismo","Sistemas de riego","Poda","Fitosanitarios","Maquinaria"],"Médica":["Diagnóstico","Tratamientos","Urgencias","Cirugía","Historia clínica"],"Agricultor":["Cultivo y siembra","Riego y abono","Maquinaria agrícola","Control de plagas","Cosecha y logística"]};
 // ── Oficios típicos POR PAÍS (aditivo: se suman al set base CV_CATS) ──
@@ -1151,7 +1190,7 @@ function leerCatsCustom(){try{return JSON.parse(localStorage.getItem('fp_cv_cats
 function guardarCatsCustom(obj){try{localStorage.setItem('fp_cv_cats_custom',JSON.stringify(obj||{}));}catch(_){}}
 let CV_CATS_ACT={};   // mapa fusionado vigente (base + país + propias)
 
-const ACCENTMAP={azul:'#2563eb',verde:'#10b981',violeta:'#7c3aed',oro:'#c9a84c'};
+const ACCENTMAP={azul:'#2563eb',verde:'#10b981',violeta:'#7c3aed',oro:'#c9a84c',granate:'#9b2242',grafito:'#374151',turquesa:'#0891b2',coral:'#f43f5e',naranja:'#ea580c',marino:'#1e3a8a',magenta:'#a21caf',teal:'#0d9488'};
 let cvSkills=[];let cvFotoB64='';
 function loadCvFoto(ev){const r=new FileReader();r.onload=e=>{cvFotoB64=e.target.result;cvRender();};r.readAsDataURL(ev.target.files[0]);}
 function cvInit(){
@@ -1254,6 +1293,8 @@ function cvRender(){
   const doc=document.getElementById('cvDoc');if(doc)doc.innerHTML=html;
 }
 function printCV(){
+  // En modo ATS exportamos un PDF de TEXTO REAL (seleccionable) que los filtros de empleo sí leen.
+  if(document.getElementById('cvAts')?.checked){ return printCV_ATS(); }
   const docEl=document.getElementById('cvDoc');
   if(!docEl){alert('Genera el documento primero.');return;}
   if(!gastar(2))return;
@@ -1304,6 +1345,53 @@ function printCV(){
     if(btn){btn.textContent='📥 Exportar JPG + PDF';btn.disabled=false;}
     window.print();
   }
+}
+// ── Recolecta el texto del documento en orden, marcando encabezados ──
+function _cvColectarTexto(node, out){
+  node.childNodes.forEach(ch=>{
+    if(ch.nodeType===3){ const t=ch.textContent.replace(/\s+/g,' ').trim(); if(t) out.push({t,h:0}); return; }
+    if(ch.nodeType!==1) return;
+    const tag=ch.tagName.toLowerCase();
+    if(tag==='h1'){ out.push({t:(ch.innerText||'').trim(), h:1}); return; }
+    if(tag==='h2'||tag==='h3'){ out.push({t:(ch.innerText||'').trim(), h:2}); return; }
+    if(tag==='li'){ const t=(ch.innerText||'').trim(); if(t) out.push({t:'• '+t, h:0}); return; }
+    if(tag==='p'){ const t=(ch.innerText||'').trim(); if(t) out.push({t, h:0}); return; }
+    if(tag==='ul'||tag==='ol'){ _cvColectarTexto(ch,out); return; }
+    const tieneBloque = ch.querySelector && ch.querySelector('h1,h2,h3,p,ul,ol,li,div');
+    if(tieneBloque){ _cvColectarTexto(ch,out); }
+    else { const t=(ch.innerText||'').trim(); if(t) out.push({t, h:0}); }
+  });
+}
+// ── Exportación ATS: PDF de texto real y seleccionable (sin imagen) ──
+function printCV_ATS(){
+  const docEl=document.getElementById('cvDoc');
+  if(!docEl || !docEl.innerText.trim()){alert('Genera el documento primero.');return;}
+  const JsPDF=window.jspdf?.jsPDF||window.jsPDF;
+  if(!JsPDF){alert('No se pudo cargar el generador de PDF. Reintenta en el sitio publicado.');return;}
+  if(!gastar(2))return;
+  const nombre=(document.getElementById('cvNombre')?.value||'cv').replace(/\s+/g,'_');
+  const fecha=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const base=`CV_ATS_${nombre}_${fecha}`;
+  const lineas=[]; _cvColectarTexto(docEl, lineas);
+  const pdf=new JsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+  const M=48, W=595-2*M, BOT=800; let y=64;
+  pdf.setTextColor(0,0,0);
+  lineas.forEach(L=>{
+    if(!L.t) return;
+    if(L.h===1){ pdf.setFont('helvetica','bold'); pdf.setFontSize(18); }
+    else if(L.h===2){ y+=8; pdf.setFont('helvetica','bold'); pdf.setFontSize(12); }
+    else { pdf.setFont('helvetica','normal'); pdf.setFontSize(10.5); }
+    const wrapped=pdf.splitTextToSize(L.t, W);
+    wrapped.forEach(w=>{
+      if(y>BOT){ pdf.addPage(); y=64; }
+      pdf.text(w, M, y);
+      y += (L.h===1?23:L.h===2?16:14);
+    });
+    if(L.h===2) y+=3;
+  });
+  pdf.save(base+'.pdf');
+  const st=document.querySelector('#tab-cv .cv-btn-sec');
+  if(st){ st.insertAdjacentHTML('afterend','<div class="st done" style="margin-top:6px">✅ PDF de texto ATS descargado (los robots sí lo leen)</div>'); setTimeout(()=>document.querySelectorAll('#tab-cv .st.done').forEach(e=>e.remove()),4000); }
 }
 function ttsLeerDoc(){
   const doc=document.getElementById('cvDoc');if(!doc)return;
@@ -1486,6 +1574,81 @@ const CV_PAISES = {
                 'Je présente ma démission en vous assurant de mon total engagement pour une transition fluide et professionnelle.',
                 'Après mûre réflexion, j\'ai décidé de mettre fin à mon contrat de travail. Je vous suis reconnaissant(e) pour tout ce que j\'ai appris.']
     }
+  },
+  pe: { nombre:'Perú', bandera:'🇵🇪', foto:true,  edad:true,  civil:false, cedula:true,  objetivo:true,  referencias:true,  carta:'opcional',
+    reglas:'Se llama Hoja de Vida o CV · DNI incluido · Foto tipo carné recomendada · Referencias personales y laborales muy valoradas · 1-2 páginas',
+    consejo:'En Perú las referencias son clave: pon 2 o 3 con teléfono. Los portales grandes (Bumeran, Computrabajo, LinkedIn) usan filtros ATS, así que usa títulos estándar y repite las palabras del aviso de empleo.',
+    variadores:{
+      carta:['Me dirijo a usted para postular a la vacante, seguro(a) de que mi experiencia y compromiso serán un aporte real para su empresa.',
+             'Presento mi candidatura con entusiasmo, confiando en que mi perfil se ajusta a lo que su organización necesita.',
+             'A través de la presente manifiesto mi interés en el puesto, respaldado(a) por una trayectoria de responsabilidad y buenos resultados.'],
+      motivacional:['El Perú me formó con esfuerzo y perseverancia; llevo esos valores a cada trabajo que asumo.',
+                    'Me motiva crecer en una empresa que valore el talento y el trabajo bien hecho, aportando toda mi dedicación.',
+                    'Busco un equipo donde mi experiencia y mis ganas de superarme generen un impacto positivo y duradero.'],
+      renuncia:['Por medio de la presente comunico mi renuncia voluntaria al cargo, agradeciendo la oportunidad y el aprendizaje recibido.',
+                'Notifico formalmente mi decisión de retirarme del puesto, comprometiéndome con una transición ordenada de mis funciones.',
+                'Presento mi renuncia con respeto y gratitud, asegurando la entrega completa de mis responsabilidades.']
+    }
+  },
+  ec: { nombre:'Ecuador', bandera:'🇪🇨', foto:true,  edad:true,  civil:true,  cedula:true,  objetivo:true,  referencias:true,  carta:'opcional',
+    reglas:'Hoja de Vida · Cédula incluida · Foto recomendada · Referencias personales y laborales · Perfil profesional al inicio · 1-2 páginas',
+    consejo:'Similar a Colombia y Perú. Las referencias con teléfono dan mucha confianza. Un perfil breve y honesto al inicio ayuda a que te lean.',
+    variadores:{
+      carta:['Me permito postular a la vacante disponible, confiando en que mi perfil responde a los requerimientos de su empresa.',
+             'Presento mi candidatura con respeto y entusiasmo, dispuesta(o) a aportar experiencia y compromiso desde el primer día.',
+             'Manifiesto mi interés en integrarme a su equipo de trabajo, con dedicación, honestidad y ganas de crecer.'],
+      motivacional:['Ecuador me enseñó a trabajar con constancia y buen ánimo; eso se refleja en mi desempeño diario.',
+                    'Me motiva pertenecer a una organización que valore el esfuerzo y el buen trato humano.',
+                    'Deseo aportar mi experiencia en un ambiente donde pueda crecer y dar lo mejor de mí.'],
+      renuncia:['Comunico por este medio mi renuncia voluntaria al cargo, agradeciendo la confianza brindada durante mi tiempo en la empresa.',
+                'Notifico formalmente mi retiro del puesto, garantizando una entrega ordenada de mis responsabilidades.',
+                'Presento mi renuncia de manera respetuosa, con gratitud por la experiencia adquirida.']
+    }
+  },
+  bo: { nombre:'Bolivia', bandera:'🇧🇴', foto:true,  edad:true,  civil:true,  cedula:true,  objetivo:true,  referencias:true,  carta:'opcional',
+    reglas:'Hoja de Vida · Carnet de Identidad · Foto recomendada · Referencias personales y laborales · Formación y experiencia claras · 1-2 páginas',
+    consejo:'Las referencias y la formación son muy valoradas. Presenta la información ordenada, con datos de contacto reales y verificables.',
+    variadores:{
+      carta:['Me dirijo a usted para postular a la vacante, con la seguridad de que mi experiencia será un aporte para su institución.',
+             'Presento mi candidatura con entusiasmo y compromiso, dispuesta(o) a contribuir al crecimiento de su empresa.',
+             'Manifiesto mi interés en formar parte de su equipo, aportando responsabilidad y dedicación.'],
+      motivacional:['Bolivia me formó con valores de trabajo y humildad, que aplico en cada tarea que realizo.',
+                    'Me motiva sumarme a una organización seria donde pueda aportar y seguir aprendiendo.',
+                    'Busco un espacio para demostrar mi capacidad y crecer junto a la empresa.'],
+      renuncia:['Comunico mi renuncia voluntaria al cargo, agradeciendo la oportunidad y el aprendizaje recibido.',
+                'Notifico formalmente mi retiro, comprometiéndome con una transición ordenada de mis funciones.',
+                'Presento mi renuncia con respeto y gratitud por la experiencia vivida.']
+    }
+  },
+  mx: { nombre:'México', bandera:'🇲🇽', foto:true,  edad:true,  civil:false, cedula:false, objetivo:true,  referencias:true,  carta:'opcional',
+    reglas:'CV · CURP/RFC según empleo · Foto opcional (según empresa) · Objetivo profesional · Logros concretos · 1-2 páginas',
+    consejo:'Las grandes empresas y bolsas (OCC, Computrabajo, LinkedIn) filtran con ATS. Usa títulos estándar, verbos de acción y las palabras clave del aviso. Los logros con números destacan.',
+    variadores:{
+      carta:['Me permito presentar mi candidatura para la vacante, con la confianza de que mi perfil aporta valor a su empresa.',
+             'Postulo a esta posición con entusiasmo, respaldado(a) por experiencia y orientación a resultados.',
+             'Manifiesto mi interés en integrarme a su equipo, aportando compromiso y disposición desde el primer día.'],
+      motivacional:['Me motiva crecer en una empresa sólida donde pueda aportar mi experiencia y mi energía.',
+                    'Busco un entorno que valore el esfuerzo y los resultados, y donde pueda desarrollarme profesionalmente.',
+                    'Mi compromiso con la calidad y el trabajo en equipo es el motor de mi desempeño diario.'],
+      renuncia:['Por medio de la presente comunico mi renuncia voluntaria, agradeciendo la oportunidad brindada.',
+                'Notifico formalmente mi separación del cargo, asegurando una transición ordenada de mis actividades.',
+                'Presento mi renuncia de manera respetuosa, con gratitud por lo aprendido en la empresa.']
+    }
+  },
+  do: { nombre:'Rep. Dominicana', bandera:'🇩🇴', foto:true,  edad:true,  civil:true,  cedula:true,  objetivo:true,  referencias:true,  carta:'opcional',
+    reglas:'Hoja de Vida · Cédula incluida · Foto recomendada · Referencias personales y laborales · Perfil profesional · 1-2 páginas',
+    consejo:'Las referencias con teléfono son muy importantes. Un perfil breve, honesto y con buen trato transmite confianza al empleador.',
+    variadores:{
+      carta:['Me dirijo a usted para postular a la vacante, confiando en que mi experiencia será de aporte para su empresa.',
+             'Presento mi candidatura con entusiasmo y compromiso, lista(o) para contribuir desde el primer día.',
+             'Manifiesto mi interés en integrarme a su equipo, con responsabilidad, dedicación y buen trato.'],
+      motivacional:['Me motiva formar parte de una empresa que valore el esfuerzo y el buen servicio.',
+                    'Deseo aportar mi experiencia y crecer profesionalmente en un ambiente de trabajo sano.',
+                    'Mi dedicación y mis ganas de superarme son el motor de mi trabajo diario.'],
+      renuncia:['Comunico mi renuncia voluntaria al cargo, agradeciendo la confianza y la oportunidad brindada.',
+                'Notifico formalmente mi retiro del puesto, garantizando una transición ordenada de mis funciones.',
+                'Presento mi renuncia con respeto y gratitud por la experiencia adquirida.']
+    }
   }
 };
 
@@ -1510,6 +1673,38 @@ const CV_PLANTILLAS = {
     const {nombre,cargo,ac,cat} = d;
     const header = `<div style="border-left:4px solid ${ac};padding-left:16px;margin-bottom:22px"><h1 style="font-size:26px;color:#111;margin:0;font-weight:300;letter-spacing:-1px">${nombre}</h1><div style="color:#888;font-size:12px;margin-top:4px;letter-spacing:2px;text-transform:uppercase">${cargo||cat}</div></div>`;
     return header + cvContactoHTML(d) + cvCuerpo(d,'minimalista');
+  },
+  elegante: (d) => {
+    const {nombre,cargo,ac,cat,fotoHTML} = d;
+    const header = `<div style="display:flex;gap:16px;align-items:center;margin-bottom:6px">${fotoHTML}<div style="border-left:5px solid ${ac};padding-left:14px"><h1 style="font-size:23px;color:#1a1a1a;margin:0;font-family:Georgia,serif;letter-spacing:.3px">${nombre}</h1><div style="color:${ac};font-size:12px;margin-top:4px;letter-spacing:1.5px;text-transform:uppercase">${cargo||cat}</div></div></div><div style="height:2px;background:linear-gradient(90deg,${ac},transparent);margin:10px 0 16px"></div>`;
+    return header + cvContactoHTML(d) + cvCuerpo(d,'elegante');
+  },
+  ejecutivo: (d) => {
+    const {nombre,cargo,ac,cat} = d;
+    const header = `<div style="text-align:center;margin-bottom:16px;padding-bottom:14px;border-bottom:2px solid ${ac}"><h1 style="font-size:25px;color:#111;margin:0;font-family:Georgia,serif;text-transform:uppercase;letter-spacing:2px">${nombre}</h1><div style="color:${ac};font-size:12px;margin-top:6px;letter-spacing:3px;text-transform:uppercase">${cargo||cat}</div></div>`;
+    return header + cvContactoHTML(d) + cvCuerpo(d,'ejecutivo');
+  },
+  compacto: (d) => {
+    const {nombre,cargo,ac,cat,fotoHTML} = d;
+    const foto = fotoHTML ? fotoHTML.replace('width:80px;height:80px','width:56px;height:56px') : '';
+    const header = `<div style="display:flex;gap:12px;align-items:center;border-bottom:2px solid ${ac};padding-bottom:8px;margin-bottom:10px">${foto}<div><h1 style="font-size:19px;color:#111;margin:0">${nombre}</h1><div style="color:${ac};font-size:11px;margin-top:2px">${cargo||cat}</div></div></div>`;
+    return header + cvContactoHTML(d) + cvCuerpo(d,'compacto');
+  },
+  timeline: (d) => {
+    const {nombre,cargo,ac,cat} = d;
+    const header = `<div style="margin-bottom:16px"><div style="display:inline-block;background:${ac};color:#fff;padding:8px 18px;border-radius:0 20px 20px 0;margin-left:-24px"><h1 style="font-size:21px;margin:0">${nombre}</h1></div><div style="color:${ac};font-size:12px;margin-top:6px;letter-spacing:1px;text-transform:uppercase;font-weight:700">${cargo||cat}</div></div>`;
+    return header + cvContactoHTML(d) + cvCuerpo(d,'timeline');
+  },
+  ats: (d) => {
+    const {nombre,cargo,cat} = d;
+    const c=[];
+    if(d.telefono)   c.push('Tel: '+cvEsc(d.telefono));
+    if(d.correo)     c.push('Correo: '+cvEsc(d.correo));
+    if(d.cedula)     c.push('ID: '+cvEsc(d.cedula));
+    if(d.ciudad)     c.push('Ciudad: '+cvEsc(d.ciudad));
+    const contacto = c.length ? `<div style="font-size:12px;color:#000;margin:2px 0 14px;font-family:Arial,Helvetica,sans-serif">${c.join(' | ')}</div>` : '';
+    const header = `<div style="font-family:Arial,Helvetica,sans-serif;margin-bottom:2px"><h1 style="font-size:22px;color:#000;margin:0;font-weight:700">${nombre}</h1><div style="color:#000;font-size:13px;margin-top:3px">${cargo||cat}</div></div>`;
+    return `<div style="font-family:Arial,Helvetica,sans-serif;color:#000">${header}${contacto}${cvCuerpo(d,'ats')}</div>`;
   }
 };
 
@@ -1526,11 +1721,33 @@ function cvContactoHTML(d){
   return `<div style="font-size:11px;color:#555;margin:-6px 0 16px;line-height:1.8" contenteditable="true">${items.join(' &nbsp;·&nbsp; ')}</div>`;
 }
 function cvCuerpo(d, estilo) {
-  const {nombre,cargo,ac,cat,empresa,hoy,skills,varText,tipo,paisData,estudios} = d;
+  const {nombre,cargo,ac,cat,empresa,hoy,skills,varText,tipo,paisData,estudios,referente,referenteCargo,referenteContacto,tiempoConocido} = d;
   const secStyle = estilo==='minimalista'
     ? `font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#aaa;margin:18px 0 8px;font-family:monospace`
+    : estilo==='ats'
+    ? `font-size:13px;color:#000;margin:16px 0 6px;text-transform:uppercase;font-weight:700`
     : `font-size:13px;border-bottom:1px solid ${ac};padding-bottom:3px;margin:16px 0 8px;text-transform:uppercase;color:${ac};font-weight:700`;
 
+  if(tipo==='referencia_laboral' || tipo==='referencia_personal'){
+    const laboral = tipo==='referencia_laboral';
+    const quien   = referente || 'Nombre de quien recomienda';
+    const rol     = referenteCargo || (laboral ? 'Cargo / Empresa' : 'Relación (ej: vecino, amigo)');
+    const desde   = tiempoConocido || 'varios años';
+    const contacto= referenteContacto ? `<p style="margin-top:6px;font-size:12px;color:#555">Para cualquier consulta: ${cvEsc(referenteContacto)}</p>` : '';
+    const encabezado = laboral ? `<p><strong>${cvEsc(rol)}</strong></p>` : '';
+    const titulo = laboral ? 'Carta de Referencia Laboral' : 'Carta de Referencia Personal';
+    const detalle = laboral
+      ? `hago constar que <strong>${nombre}</strong> laboró bajo mi supervisión desempeñándose como <strong>${cargo||cat}</strong> durante ${desde}.`
+      : `hago constar que conozco a <strong>${nombre}</strong> desde hace ${desde} y doy fe de sus cualidades como persona.`;
+    return `<div style="text-align:right;font-size:11px;color:#777;margin-bottom:14px">${hoy}</div>
+    ${encabezado}
+    <p style="margin-bottom:12px">A quien pueda interesar:</p>
+    <h3 style="${secStyle}">${titulo}</h3>
+    <p contenteditable="true">Yo, <strong>${cvEsc(quien)}</strong>, en mi condición de <strong>${cvEsc(rol)}</strong>, ${detalle} ${varText}</p>
+    <p contenteditable="true">Por lo anteriormente expuesto, recomiendo a <strong>${nombre}</strong> y quedo a disposición para ampliar cualquier información que se requiera.</p>
+    <p style="margin-top:22px">Atentamente,<br><br><strong>${cvEsc(quien)}</strong><br><span style="font-size:12px;color:#555">${cvEsc(rol)}</span></p>
+    ${contacto}`;
+  }
   if(tipo==='carta'){
     const idiomaTag = paisData && (paisData.nombre==='EE.UU.'||paisData.nombre==='Canadá'||paisData.nombre==='Reino Unido') ? ' (en inglés)' : '';
     return `<div style="text-align:right;font-size:11px;color:#777;margin-bottom:14px">${hoy}</div>
@@ -1621,20 +1838,30 @@ cvRender = function() {
   const estudios = document.getElementById('cvEstudios')?.value || '';
   const varIdx   = parseInt(document.getElementById('cvVar')?.value || 0);
   const ac       = ACCENTMAP[paleta] || '#2563eb';
+  const esRef    = tipo==='referencia_laboral' || tipo==='referencia_personal';
+  const referente       = document.getElementById('cvReferente')?.value || '';
+  const referenteCargo  = document.getElementById('cvReferenteCargo')?.value || '';
+  const referenteContacto=document.getElementById('cvReferenteContacto')?.value || '';
+  const tiempoConocido  = document.getElementById('cvTiempoConocido')?.value || '';
+  // Modo ATS: fuerza la plantilla de una columna sin colores
+  const atsOn    = !!document.getElementById('cvAts')?.checked;
+  const plantillaFinal = atsOn ? 'ats' : plantilla;
 
   const skillsBlock = document.getElementById('skillsBlock');
   if (skillsBlock) skillsBlock.style.display = tipo==='cv' ? 'block' : 'none';
+  const refBlock = document.getElementById('refBlock');
+  if (refBlock) refBlock.style.display = esRef ? 'block' : 'none';
+  const expBtn = document.querySelector('#tab-cv .cv-btn:not(.cv-btn-sec)');
+  if (expBtn && !expBtn.disabled) expBtn.textContent = atsOn ? '📥 Exportar PDF de texto (ATS)' : '📥 Exportar JPG + PDF';
 
   const paisData = paisCode ? CV_PAISES[paisCode] : null;
 
-  // Seleccionar variadores: país > genérico
+  // Seleccionar variadores: país > genérico. Las referencias usan siempre el banco genérico.
   let varArr;
-  if (paisData && paisData.variadores && paisData.variadores[tipo]) {
+  if (!esRef && paisData && paisData.variadores && paisData.variadores[tipo]) {
     varArr = paisData.variadores[tipo];
   } else {
-    varArr = tipo==='carta' ? CV_VARIADORES.carta
-           : tipo==='motivacional' ? CV_VARIADORES.motivacional
-           : tipo==='renuncia' ? CV_VARIADORES.renuncia : null;
+    varArr = CV_VARIADORES[tipo] || null;
   }
   const varText = varArr ? varArr[Math.min(varIdx, varArr.length-1)] : '';
 
@@ -1643,16 +1870,47 @@ cvRender = function() {
     : '';
   const hoy = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
 
-  const datos = { nombre, cargo, ac, cat, empresa, hoy, fotoHTML, skills: cvSkills, varText, tipo, paisData, telefono, correo, cedula, ciudad, nacimiento, civil, estudios };
+  const datos = { nombre, cargo, ac, cat, empresa, hoy, fotoHTML, skills: cvSkills, varText, tipo, paisData, telefono, correo, cedula, ciudad, nacimiento, civil, estudios, referente, referenteCargo, referenteContacto, tiempoConocido };
 
-  const tplFn = CV_PLANTILLAS[plantilla] || CV_PLANTILLAS.clasico;
+  const tplFn = CV_PLANTILLAS[plantillaFinal] || CV_PLANTILLAS.clasico;
   const html  = tplFn(datos);
 
   const docEl = document.getElementById('cvDoc');
   if (docEl) docEl.innerHTML = html;
 
   cvActualizarBadgePais();
+  cvSugerirKeywords();
+  cvChequearOferta();
 };
+
+// ── Palabras clave por oficio para pasar filtros ATS ──
+const CV_KEYWORDS_BASE = ['responsable','puntual','trabajo en equipo','atención al cliente','organización','proactiva','honesta','compromiso'];
+function cvSugerirKeywords(){
+  const box = document.getElementById('cvKeywordsBox');
+  if(!box) return;
+  const cargo = (document.getElementById('cvCargo')?.value||'').trim();
+  const cat   = document.getElementById('cvCat')?.value||'';
+  const habs  = (CV_CATS_ACT && CV_CATS_ACT[cat]) ? CV_CATS_ACT[cat] : [];
+  const lista = [...new Set([...(cargo?[cargo]:[]), ...habs, ...CV_KEYWORDS_BASE])].slice(0,10);
+  box.innerHTML = `<div style="font-size:9px;color:var(--tx2);margin-bottom:3px">💡 Palabras clave que conviene incluir (${cat||'tu oficio'}):</div>`
+    + `<div style="display:flex;flex-wrap:wrap;gap:3px">${lista.map(k=>`<span style="background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:2px 6px;font-size:9px;color:var(--ac3)">${cvEsc(k)}</span>`).join('')}</div>`;
+}
+// ── Cotejar la oferta pegada con el texto actual del CV ──
+function cvChequearOferta(){
+  const out = document.getElementById('cvOfertaResultado');
+  const ta  = document.getElementById('cvOferta');
+  if(!out || !ta) return;
+  const oferta = (ta.value||'').toLowerCase();
+  if(!oferta.trim()){ out.innerHTML=''; return; }
+  const docTxt = (document.getElementById('cvDoc')?.innerText||'').toLowerCase();
+  const stop = new Set(['para','como','este','esta','esto','pero','porque','tiene','tienen','sobre','entre','desde','hasta','muy','con','sin','los','las','del','una','uno','que','por','y','o','de','la','el','en','a','se','su','al']);
+  const palabras = [...new Set(oferta.replace(/[^a-záéíóúñü\s]/g,' ').split(/\s+/).filter(w=>w.length>3 && !stop.has(w)))].slice(0,40);
+  const tengo = palabras.filter(w=>docTxt.includes(w));
+  const faltan= palabras.filter(w=>!docTxt.includes(w));
+  const pct = palabras.length ? Math.round(tengo.length/palabras.length*100) : 0;
+  out.innerHTML = `<div style="font-weight:700;color:${pct>=60?'#10b981':pct>=35?'#f59e0b':'#ef4444'}">Coincidencia con la oferta: ${pct}%</div>`
+    + (faltan.length?`<div style="margin-top:3px;color:var(--tx2)">Te faltan por incluir: ${faltan.slice(0,12).map(cvEsc).join(', ')}</div>`:'<div style="margin-top:3px;color:#10b981">¡Muy bien! Tu documento cubre las palabras clave de la oferta.</div>');
+}
 
 // ── Créditos: 10 descargas gratis, luego 1cr, pack 30cr = €6 ──
 // Solo actualiza el texto informativo del modal y la barra — no toca la lógica gastar()
