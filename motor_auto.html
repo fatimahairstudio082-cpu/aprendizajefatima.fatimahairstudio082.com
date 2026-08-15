@@ -188,6 +188,7 @@
           <option value="replicate">Replicate · por defecto</option>
           <option value="fal">fal.ai · Kling (clip 5s)</option>
           <option value="luma">Luma · Dream Machine (clip 5s)</option>
+          <option value="minimax">Minimax · Hailuo (clip ~6s)</option>
         </select>
       </div>
     </div>
@@ -1475,7 +1476,8 @@ const PROV_META = {
   openai:    { label:'OpenAI',      ph:'sk-...',     help:'platform.openai.com → API keys' },
   stability: { label:'Stability AI',ph:'sk-...',     help:'platform.stability.ai → API keys' },
   fal:       { label:'fal.ai',      ph:'id:secret',  help:'fal.ai/dashboard/keys' },
-  luma:      { label:'Luma',        ph:'luma-...',   help:'lumalabs.ai/dream-machine/api/keys' }
+  luma:      { label:'Luma',        ph:'luma-...',   help:'lumalabs.ai/dream-machine/api/keys' },
+  minimax:   { label:'Minimax / Hailuo', ph:'clave API', help:'platform.minimax.io → API Keys' }
 };
 function provKey(p){ return localStorage.getItem('fc_key_'+p)||''; }
 async function aiProxy(url, o){
@@ -1542,6 +1544,23 @@ async function genVidOtro(prov, prompt){
     }
     if(st.state!=='completed') throw new Error('Luma video: '+(st.failure_reason||st.state||'falló'));
     const url=st.assets&&st.assets.video; if(!url) throw new Error('Luma: sin video');
+    return url;
+  }
+  if(prov==='minimax'){
+    const key=provKey('minimax'); if(!key) throw new Error('Pega tu clave de Minimax/Hailuo en "Otros proveedores".');
+    const model=(window.VID_MODEL_MINIMAX)||'MiniMax-Hailuo-02';
+    const start=await aiProxy('https://api.minimax.io/v1/video_generation',{auth:'Bearer '+key, body:{model, prompt, duration:6, resolution:'768P'}});
+    const taskId=start.task_id; if(!taskId) throw new Error('Minimax: no inició la generación'+((start.base_resp&&start.base_resp.status_msg)?(' ('+start.base_resp.status_msg+')'):''));
+    let st={status:'Preparing'}, i=0;
+    while(st.status!=='Success' && st.status!=='Fail' && i<200){
+      await new Promise(r=>setTimeout(r,3000));
+      st=await aiProxy('https://api.minimax.io/v1/query/video_generation?task_id='+taskId,{method:'GET',auth:'Bearer '+key}); i++;
+    }
+    if(st.status!=='Success') throw new Error('Minimax video: '+(st.status||'falló'));
+    const fileId=st.file_id; if(!fileId) throw new Error('Minimax: sin file_id en la respuesta');
+    const fj=await aiProxy('https://api.minimax.io/v1/files/retrieve?file_id='+fileId,{method:'GET',auth:'Bearer '+key});
+    const url=fj.file&&fj.file.download_url;
+    if(!url) throw new Error('Minimax: sin download_url en la respuesta');
     return url;
   }
   throw new Error('Proveedor de video desconocido: '+prov);
