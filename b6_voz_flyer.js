@@ -50,10 +50,21 @@
     box.innerHTML =
       '<div class="sep"></div>' +
       '<div style="font-size:10px;color:var(--ac2);font-weight:700;margin-bottom:6px">' +
-        '🗣️ Voz IA gratuita (Google)</div>' +
+        '🗣️ Voz IA — Panel de voz</div>' +
 
-      '<div class="row"><span class="lbl">Voz</span>' +
+      '<div class="row"><span class="lbl">Voz gratis</span>' +
         '<select id="vzVoz" style="flex:1"></select>' +
+      '</div>' +
+
+      '<div class="row"><span class="lbl">Voz pro (video)</span>' +
+        '<select id="vzOaiVoz" style="flex:1">' +
+          '<option value="nova">🌟 Nova (femenina cálida)</option>' +
+          '<option value="shimmer">✨ Shimmer (femenina suave)</option>' +
+          '<option value="alloy">🔵 Alloy (neutral)</option>' +
+          '<option value="echo">🎤 Echo (masculina)</option>' +
+          '<option value="fable">📖 Fable (expresiva)</option>' +
+          '<option value="onyx">⬛ Onyx (masculina grave)</option>' +
+        '</select>' +
       '</div>' +
 
       '<div class="row"><span class="lbl">Velocidad</span>' +
@@ -69,14 +80,14 @@
       '</div>' +
 
       '<div class="row">' +
-        '<button class="btn" id="vzPlay" type="button">▶ Reproducir</button>' +
+        '<button class="btn" id="vzPlay" type="button">▶ Escuchar gratis</button>' +
         '<button class="btn btn-g" id="vzStop" type="button">■ Parar</button>' +
         '<span id="vzCount" style="font-size:9px;color:var(--tx2)">0 caracteres</span>' +
       '</div>' +
 
       '<div id="vzSt"></div>' +
       '<div style="font-size:9px;color:var(--tx2);margin-top:2px">' +
-        'Gratis e ilimitada · suena en tu dispositivo · no se sube nada a internet</div>';
+        '▶ Escuchar = voz gratuita del navegador · Para grabar video selecciona "🗣️ Voz IA" en Audio y usa la voz pro (OpenAI)</div>';
 
     ancla.parentNode.insertBefore(box, ancla.nextSibling);
 
@@ -183,7 +194,7 @@
 
     speechSynthesis.cancel();
     hablando = true;
-    document.getElementById('vzPlay').textContent = '■ Detener';
+    document.getElementById('vzPlay').textContent = '■ Detener escucha';
     estado('🔊 Reproduciendo…', 'proc');
 
     // Chrome deja de hablar a los ~15 s: este resume() lo mantiene vivo.
@@ -210,7 +221,7 @@
     hablando = false;
     if (keepAlive) { clearInterval(keepAlive); keepAlive = null; }
     var b = document.getElementById('vzPlay');
-    if (b) b.textContent = '▶ Reproducir';
+    if (b) b.textContent = '▶ Escuchar gratis';
     estado(ok ? '✅ Listo.' : '⚠️ La voz se interrumpió. Prueba con un texto más corto.',
            ok ? 'done' : 'err');
     setTimeout(function () {
@@ -223,7 +234,7 @@
     try { speechSynthesis.cancel(); } catch (e) {}
     if (keepAlive) { clearInterval(keepAlive); keepAlive = null; }
     var b = document.getElementById('vzPlay');
-    if (b) b.textContent = '▶ Reproducir';
+    if (b) b.textContent = '▶ Escuchar gratis';
     estado('');
   }
 
