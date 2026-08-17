@@ -199,7 +199,7 @@
       var u = new SpeechSynthesisUtterance(trozos[i]);
       if (voz) { u.voice = voz; u.lang = voz.lang; } else { u.lang = 'es-ES'; }
       u.rate = vel;
-      u.pitch = 1;
+      u.pitch = window._vzxPitchValue || parseFloat((document.getElementById('vzxPitch') || {}).value || 1) || 1;
       u.onend = function () { i++; siguiente(); };
       u.onerror = function () { finalizar(false); };
       speechSynthesis.speak(u);
