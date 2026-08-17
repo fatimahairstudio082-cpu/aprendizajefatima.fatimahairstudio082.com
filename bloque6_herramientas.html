@@ -661,13 +661,14 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
             <option value="mel_romantico">💗 Romántico (suave)</option>
             <option value="mel_dramatico">🎭 Dramático (intenso)</option>
           </optgroup>
+          <option value="voz_ia">🗣️ Voz IA (lee tu texto)</option>
           <option value="upload">🎵 Subir música / voz</option>
           <option value="mic">🎤 Grabar voz (micrófono)</option>
         </select>
         <button class="btn btn-g" id="flPrevBtn" onclick="flPreviewAudio()" style="font-size:10px;padding:2px 10px">▶ Escuchar</button>
       </div>
       <div class="row" id="flAudioRow" style="display:none"><span class="lbl">Archivo audio</span><input type="file" id="flAudio" accept="audio/*" onchange="flAudioFile(event)" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px"></div>
-      <div class="row"><span class="lbl">Duración (seg)</span><input type="number" id="flDur" value="6" min="2" max="20" step="1" style="max-width:90px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:5px;padding:4px 8px;font-size:11px"><span style="font-size:9px;color:var(--tx2)">música/sin sonido · el micrófono graba hasta pulsar Detener</span></div>
+      <div class="row"><span class="lbl">Duración (seg)</span><input type="number" id="flDur" value="6" min="2" max="20" step="1" style="max-width:90px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:5px;padding:4px 8px;font-size:11px"><span style="font-size:9px;color:var(--tx2)">música/sin sonido · micrófono/voz IA graba hasta terminar</span></div>
       <div class="row" style="justify-content:center"><button class="btn" id="flVidBtn" onclick="flStartVideo()">🎬 Grabar video</button></div>
       <div style="font-size:9px;color:var(--tx2);text-align:center;margin-top:2px">El video cuesta 2 créditos · sale en WebM (va bien en Android; en iPhone puede no reproducirse en algunas apps)</div>
       <div id="flSt"></div>
@@ -2915,7 +2916,7 @@ function flDownload(){
 // ── Flyers: video animado con sonido (Fase 4.1) ──
 let flRec=null, flRecording=false, flAudioEl=null, flAudioCtx=null, flMicStream=null, flAnimReq=null, flAudioUrl=null, flMelodyPlayer=null;
 function flAudioFile(ev){const f=ev.target.files&&ev.target.files[0];if(!f)return;if(flAudioUrl)URL.revokeObjectURL(flAudioUrl);flAudioUrl=URL.createObjectURL(f);}
-function flAudioUpd(){const ar=document.getElementById('flAudioRow');if(ar)ar.style.display=(flVal('flAudioSrc')==='upload')?'flex':'none';flStopPreview();}
+function flAudioUpd(){const ar=document.getElementById('flAudioRow');if(ar)ar.style.display=(flVal('flAudioSrc')==='upload')?'flex':'none';const vp=document.getElementById('vzPanel');if(vp){const isVoz=flVal('flAudioSrc')==='voz_ia';vp.style.outline=isVoz?'2px solid var(--ac2)':'';vp.style.outlineOffset=isVoz?'4px':'';if(isVoz)vp.scrollIntoView({behavior:'smooth',block:'nearest'});}flStopPreview();}
 
 // ── Melodías sin derecho de autor (sintetizadas 100% en el dispositivo) ──
 const FL_NOTE={C3:130.81,D3:146.83,E3:164.81,F3:174.61,G3:196.00,A3:220.00,B3:246.94,C4:261.63,D4:293.66,E4:329.63,F4:349.23,G4:392.00,A4:440.00,B4:493.88,C5:523.25,D5:587.33,E5:659.25,F5:698.46,G5:783.99,A5:880.00};
@@ -2958,6 +2959,7 @@ function flPreviewAudio(){
   if(flPrevStop){flStopPreview();return;}
   const btn=document.getElementById('flPrevBtn');
   if(mode==='none'){alert('Elige una melodía o un archivo para escuchar.');return;}
+  if(mode==='voz_ia'){const b=document.getElementById('vzPlay');if(b)b.click();return;}
   if(mode==='mic'){alert('El micrófono se graba mientras haces el video; no tiene pre-escucha.');return;}
   if(mode==='upload'){
     if(!flAudioUrl){alert('Sube un archivo de música o voz primero.');return;}
@@ -3046,6 +3048,35 @@ async function flStartVideo(){
       flMelodyPlayer=flPlayMelody(flAudioCtx,dest,mode,dm);
       audioTrack=dest.stream.getAudioTracks()[0];
       cleanup.push(()=>{try{flMelodyPlayer&&flMelodyPlayer.stop();flAudioCtx.close();}catch(e){}});
+    } else if(mode==='voz_ia'){
+      const vzText=((document.getElementById('vzTexto')||{}).value||'').trim();
+      if(!vzText){abort('Escribe el texto en el panel de Voz IA (abajo).');return;}
+      if(st)st.innerHTML='<div class="st proc">🗣️ Generando voz con IA… un momento.</div>';
+      const oaiVoice=(document.getElementById('vzOaiVoz')||{}).value||'nova';
+      const oaiSpeed=parseFloat((document.getElementById('vzVel')||{}).value||1)||1;
+      let oaiKey=localStorage.getItem('fc_key_openai')||localStorage.getItem('fc_oai_key')||'';
+      const ttsHeaders={'Content-Type':'application/json'};
+      if(oaiKey)ttsHeaders['Authorization']='Bearer '+oaiKey;
+      let ttsRes;
+      try{
+        ttsRes=await fetch('/.netlify/functions/tts',{method:'POST',headers:ttsHeaders,body:JSON.stringify({text:vzText,voice:oaiVoice,speed:oaiSpeed})});
+      }catch(e){abort('No se pudo conectar con el servidor de voz: '+e.message);return;}
+      if(!ttsRes.ok){
+        let errMsg='Error del servidor de voz.';
+        try{const ej=await ttsRes.json();errMsg=ej.error||errMsg;}catch(e){try{errMsg=await ttsRes.text();}catch(e2){}}
+        abort(errMsg);return;
+      }
+      const ttsBlob=await ttsRes.blob();
+      const ttsUrl=URL.createObjectURL(ttsBlob);
+      flAudioEl=new Audio(ttsUrl);
+      flAudioEl.preload='auto';
+      await new Promise((ok,ko)=>{flAudioEl.oncanplaythrough=ok;flAudioEl.onerror=ko;flAudioEl.load();setTimeout(ok,5000);});
+      flAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      try{if(flAudioCtx.state==='suspended')await flAudioCtx.resume();}catch(e){}
+      const src=flAudioCtx.createMediaElementSource(flAudioEl), dest=flAudioCtx.createMediaStreamDestination();
+      src.connect(dest);src.connect(flAudioCtx.destination);
+      audioTrack=dest.stream.getAudioTracks()[0];
+      cleanup.push(()=>{try{flAudioEl.pause();flAudioCtx.close();URL.revokeObjectURL(ttsUrl);}catch(e){}});
     }
   }catch(e){abort('No se pudo acceder al audio: '+(e.message||e));return;}
   const dim=flFmt(),W=dim[0],H=dim[1];
@@ -3075,8 +3106,8 @@ async function flStartVideo(){
     flDraw();
   };
   let dur=parseFloat(flVal('flDur'))||6; dur=Math.max(2,Math.min(20,dur));
-  if(mode==='upload'&&flAudioEl){try{await flAudioEl.play();}catch(e){} if(flAudioEl.duration&&isFinite(flAudioEl.duration))dur=Math.min(20,flAudioEl.duration+0.3);}
-  if(st)st.innerHTML='<div class="st proc">'+(mode==='mic'?'● Grabando con micrófono… habla ahora y pulsa Detener al terminar.':'🎬 Grabando video…')+'</div>';
+  if((mode==='upload'||mode==='voz_ia')&&flAudioEl){try{await flAudioEl.play();}catch(e){} if(flAudioEl.duration&&isFinite(flAudioEl.duration))dur=Math.min(60,flAudioEl.duration+0.3);}
+  if(st)st.innerHTML='<div class="st proc">'+(mode==='mic'?'● Grabando con micrófono… habla ahora y pulsa Detener al terminar.':mode==='voz_ia'?'🗣️ Grabando video con voz IA…':'🎬 Grabando video…')+'</div>';
   const t0=performance.now();
   flRec.start();
   (function loop(){
@@ -3084,7 +3115,7 @@ async function flStartVideo(){
     flDrawFrame(ctx,W,H,bg,el,dur);
     if(mode!=='mic'&&el>=dur){flStopVideo();return;}
     if(mode==='mic'&&el>=30){flStopVideo();return;}
-    if(mode==='upload'&&flAudioEl&&flAudioEl.ended){flStopVideo();return;}
+    if((mode==='upload'||mode==='voz_ia')&&flAudioEl&&flAudioEl.ended){flStopVideo();return;}
     flAnimReq=requestAnimationFrame(loop);
   })();
 }
