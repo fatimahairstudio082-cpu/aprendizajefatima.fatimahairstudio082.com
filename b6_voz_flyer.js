@@ -248,6 +248,9 @@
     arrancar();
   }
 
+  window._vzTrocear = trocear;
+  window._vzGetVoice = vozElegida;
+
   // Si el usuario sale del bloque al Hub, callamos la voz.
   window.addEventListener('pagehide', parar);
   window.addEventListener('beforeunload', parar);
