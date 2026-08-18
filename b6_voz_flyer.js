@@ -87,7 +87,7 @@
 
       '<div id="vzSt"></div>' +
       '<div style="font-size:9px;color:var(--tx2);margin-top:2px">' +
-        '▶ Escuchar = voz gratuita del navegador · Para grabar video selecciona "🗣️ Voz IA" en Audio y usa la voz pro (OpenAI)</div>';
+        '▶ Escuchar = voz gratuita del navegador · Para meter ESA MISMA voz dentro del video usa el botón «🎙️ Poner esta voz en el video» de aquí abajo (gratis, sin clave)</div>';
 
     ancla.parentNode.insertBefore(box, ancla.nextSibling);
 
