@@ -27,6 +27,17 @@ optimizador que ya existía (ese no se ha tocado).
    25% para que se entienda la voz; a 0% queda mudo).
 4. **🎬 Montar el video con la voz** → se descarga solo al terminar.
 
+## Si te equivocas de sitio, te lleva solo
+
+El hueco de **Foto** de la pestaña Flyers solo admite imágenes, y es ahí donde
+la gente intenta subir su video (es lo lógico: es el sitio que ya conocen de
+hacer anuncios). Si sueltas un video ahí, el sistema lo detecta, **te cambia
+solo a esta herramienta con el video ya cargado** y te lo dice. Además, debajo
+del hueco de Foto hay un enlace: *«¿Tienes un video en vez de una foto?»*.
+
+El panel de esta herramienta es lo primero que aparece en la pestaña
+**🎬 Vídeo & Audio**, para no tener que buscarlo.
+
 ## Cosas que hay que saber
 
 - **Tarda lo mismo que dura el video.** La grabación va en tiempo real; es un

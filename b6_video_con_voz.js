@@ -415,7 +415,7 @@
 
     var caja = document.createElement('div');
     caja.id = 'vcBox';
-    caja.style.cssText = 'max-width:680px;margin:14px auto 0';
+    caja.style.cssText = 'max-width:680px;margin:0 auto 14px';
     caja.innerHTML =
       '<div class="panel">' +
       '<div class="p-title">🎙️ Ponle voz a tu video</div>' +
@@ -487,7 +487,8 @@
           CREDITOS + ' créditos · se descarga en MP4 cuando el navegador lo permite</div>' +
       '</div></div>';
 
-    tab.appendChild(caja);
+    // Va el primero de la pestaña: es la herramienta que más se busca.
+    tab.insertBefore(caja, tab.firstChild);
 
     $('vcDz').addEventListener('click', function () { $('vcVideo').click(); });
     $('vcDz').addEventListener('dragover', function (e) { e.preventDefault(); this.classList.add('drag'); });
@@ -520,10 +521,79 @@
     return true;
   }
 
+  /* ¿Es un video? Por el tipo, y si el móvil no lo dice, por la extensión. */
+  function esVideo(f) {
+    if (!f) return false;
+    if (/^video\//.test(f.type || '')) return true;
+    if (/^image\//.test(f.type || '')) return false;
+    return /\.(mp4|mov|m4v|webm|mkv|avi|3gp|mpg|mpeg)$/i.test(f.name || '');
+  }
+
+  /* Lleva el archivo a esta herramienta y deja la pestaña puesta. */
+  function traerAqui(f, motivo) {
+    var boton = document.querySelector('.main-tab[onclick*="media"]');
+    if (boton) {
+      if (typeof window.switchMain === 'function') window.switchMain('media', boton);
+      else boton.click();
+    }
+    setTimeout(function () {
+      construir();
+      cargarVideo(f);
+      var caja = $('vcBox');
+      if (caja) caja.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (motivo) estado(motivo, 'done');
+    }, 150);
+  }
+
+  /* Los huecos de foto del flyer solo admiten imágenes, y ahí es donde la
+     gente intenta subir su video. En vez de no hacer nada, se detecta y se
+     trae a esta herramienta con el archivo ya cargado.
+     El escuchador va en captura y sobre el documento a propósito: así corre
+     ANTES del onchange que el flyer tiene puesto en la propia etiqueta. */
+  function vigilarFlyer() {
+    document.addEventListener('change', function (e) {
+      var t = e.target;
+      if (!t || (t.id !== 'flFoto1' && t.id !== 'flFoto2')) return;
+      var f = t.files && t.files[0];
+      if (!esVideo(f)) return;
+      e.stopPropagation();
+      try { t.value = ''; } catch (err) {}
+      traerAqui(f, '👉 Eso es un video, no una foto. Te lo he traído aquí, que es donde se le pone la voz.');
+    }, true);
+  }
+
+  /* Y un aviso a la vista, en el propio flyer, para quien no lo intente. */
+  function pistaEnFlyer() {
+    var fila = document.getElementById('flFoto1');
+    fila = fila && fila.closest ? fila.closest('.row') : null;
+    if (!fila || document.getElementById('vcPista2')) return false;
+    var p = document.createElement('div');
+    p.id = 'vcPista2';
+    p.style.cssText = 'font-size:9px;color:var(--tx2);margin:-3px 0 7px';
+    p.innerHTML = '🎬 ¿Tienes un <strong>video</strong> en vez de una foto? ' +
+      '<span id="vcIrDesdeFlyer" style="color:var(--ac3);text-decoration:underline;cursor:pointer">' +
+      'Ponle voz a tu video →</span>';
+    fila.parentNode.insertBefore(p, fila.nextSibling);
+    document.getElementById('vcIrDesdeFlyer').addEventListener('click', function () {
+      var boton = document.querySelector('.main-tab[onclick*="media"]');
+      if (boton) {
+        if (typeof window.switchMain === 'function') window.switchMain('media', boton);
+        else boton.click();
+      }
+      setTimeout(function () {
+        var caja = $('vcBox');
+        if (caja) caja.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    });
+    return true;
+  }
+
   function arrancar() {
+    vigilarFlyer();
+    pistaEnFlyer();
     if (construir()) return;
     var n = 0;
-    var t = setInterval(function () { if (construir() || ++n > 25) clearInterval(t); }, 300);
+    var t = setInterval(function () { pistaEnFlyer(); if (construir() || ++n > 25) clearInterval(t); }, 300);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancar);
