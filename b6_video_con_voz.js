@@ -41,6 +41,11 @@
   var CREDITOS   = 2;
 
   var videoFile = null, videoUrl = null, videoInfo = null;
+  // El contexto de audio y la fuente del <video> se crean UNA vez y no se
+  // cierran: createMediaElementSource solo se puede llamar una vez por
+  // elemento, y si se cerrara el contexto el vídeo se quedaría mudo para
+  // siempre en la vista previa.
+  var ac = null, srcVideo = null, gOrig = null;
   var audioFile = null, audioUrl = null;
   var montando = false, pararTodo = null;
 
@@ -80,29 +85,53 @@
     videoUrl = URL.createObjectURL(f);
     videoInfo = null;
 
-    var v = document.createElement('video');
-    v.preload = 'metadata';
+    // Se enseña el video en pantalla desde el primer momento: así se ve que
+    // el archivo entró bien, y además el montaje necesita que el <video> esté
+    // dentro de la página (Safari no dibuja en el canvas los que están fuera).
+    var v = $('vcPrev');
+    if (!v) return;
+    v.style.display = 'block';
+    v.src = videoUrl;
+    try { v.load(); } catch (e) {}
+
+    // Las opciones se abren YA. Antes esperaban a que el navegador leyera los
+    // datos del archivo y, si eso no llegaba, no aparecía nada y parecía que
+    // el sistema no hacía nada con el video.
+    var op = $('vcOpts'); if (op) op.style.display = 'block';
+    ficha(f, null);
+    estado('');
+
+    var contestado = false;
     v.onloadedmetadata = function () {
+      contestado = true;
       videoInfo = { seg: v.duration, w: v.videoWidth, h: v.videoHeight };
-      var largo = (isFinite(v.duration) ? v.duration.toFixed(1) + ' s' : 'desconocida');
-      var aviso = '';
-      if (isFinite(v.duration) && v.duration > MAX_SEG)
-        aviso = '<div style="color:var(--err);margin-top:3px">⚠️ Dura más de ' + (MAX_SEG / 60) +
-                ' minutos. Recórtalo antes o solo se montará el principio.</div>';
-      var info = $('vcInfo');
-      if (info) info.innerHTML =
-        '<div class="media-info"><div style="font-size:12px;font-weight:700;color:var(--ac2)">🎬 ' + f.name + '</div>' +
-        '<div style="font-size:10px;color:var(--tx2);margin-top:3px">Duración: <strong>' + largo +
-        '</strong> · Tamaño: <strong>' + peso(f.size) + '</strong> · ' + v.videoWidth + '×' + v.videoHeight + '</div>' +
-        '<div style="font-size:9px;color:var(--ok);margin-top:2px">✅ Listo para ponerle voz</div>' + aviso + '</div>';
-      var op = $('vcOpts'); if (op) op.style.display = 'block';
-      estado('');
+      ficha(f, v);
     };
     v.onerror = function () {
+      contestado = true;
       estado('❌ El navegador no pudo abrir «' + f.name + '». Suele pasar con videos de cámara antiguos: ' +
              'pásalo a MP4 o mándatelo por WhatsApp a ti misma y sube el que te llega.', 'err');
     };
-    v.src = videoUrl;
+    // Si el móvil no adelanta los datos hasta que se toca el play, no se
+    // bloquea nada: se avisa y se deja montar igual.
+    setTimeout(function () {
+      if (!contestado) estado('ℹ️ Aún no sé cuánto dura el video. Dale al play un segundo, o monta directamente.', 'proc');
+    }, 6000);
+  }
+
+  function ficha(f, v) {
+    var info = $('vcInfo');
+    if (!info) return;
+    var largo = (v && isFinite(v.duration)) ? v.duration.toFixed(1) + ' s' : 'calculando…';
+    var medida = (v && v.videoWidth) ? ' · ' + v.videoWidth + '×' + v.videoHeight : '';
+    var aviso = (v && isFinite(v.duration) && v.duration > MAX_SEG)
+      ? '<div style="color:var(--err);margin-top:3px">⚠️ Dura más de ' + (MAX_SEG / 60) +
+        ' minutos. Recórtalo antes o solo se montará el principio.</div>' : '';
+    info.innerHTML =
+      '<div class="media-info"><div style="font-size:12px;font-weight:700;color:var(--ac2)">🎬 ' + f.name + '</div>' +
+      '<div style="font-size:10px;color:var(--tx2);margin-top:3px">Duración: <strong>' + largo +
+      '</strong> · Tamaño: <strong>' + peso(f.size) + '</strong>' + medida + '</div>' +
+      '<div style="font-size:9px;color:var(--ok);margin-top:2px">✅ Listo para ponerle voz</div>' + aviso + '</div>';
   }
 
   function cargarAudio(ev) {
@@ -201,12 +230,17 @@
 
       // 2) El video, cargado y listo para dibujar
       estado('⏳ Preparando el video…', 'proc');
-      var vid = document.createElement('video');
-      vid.src = videoUrl; vid.playsInline = true; vid.preload = 'auto';
-      await new Promise(function (ok, ko) {
-        vid.oncanplay = ok; vid.onerror = function () { ko(new Error('No se pudo leer el video.')); };
-        setTimeout(ok, 8000);
-      });
+      var vid = $('vcPrev');
+      if (!vid || !vid.src) throw new Error('Vuelve a elegir el video.');
+      vid.playsInline = true;
+      if (vid.readyState < 2) {
+        await new Promise(function (ok) {
+          vid.oncanplay = ok; vid.onerror = ok;
+          try { vid.load(); } catch (e) {}
+          setTimeout(ok, 8000);
+        });
+      }
+      if (!vid.videoWidth) throw new Error('El navegador no consigue abrir ese video. Prueba con otro MP4.');
 
       var W = vid.videoWidth || 1280, H = vid.videoHeight || 720;
       var escala = Math.min(1, MAX_LADO / Math.max(W, H));
@@ -217,18 +251,28 @@
       var ctx = lienzo.getContext('2d');
 
       // 3) La mezcla de sonido
-      var ac = new (window.AudioContext || window.webkitAudioContext)();
+      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
       try { if (ac.state === 'suspended') await ac.resume(); } catch (e) {}
       var destino = ac.createMediaStreamDestination();
-      limpieza.push(function () { try { ac.close(); } catch (e) {} });
 
       var volOrig = (parseFloat(val('vcVolOrig')) || 0) / 100;
       var volVoz  = (parseFloat(val('vcVolVoz'))  || 0) / 100;
 
-      var gOrig = ac.createGain(); gOrig.gain.value = volOrig;
-      ac.createMediaElementSource(vid).connect(gOrig);
+      // La fuente del <video> se engancha una sola vez en toda la sesión.
+      if (!srcVideo) {
+        srcVideo = ac.createMediaElementSource(vid);
+        gOrig = ac.createGain();
+        srcVideo.connect(gOrig);
+        gOrig.connect(ac.destination);        // para oírlo mientras se monta
+      }
+      gOrig.gain.value = volOrig;
       gOrig.connect(destino);
-      gOrig.connect(ac.destination);          // para oírlo mientras se monta
+      // Al terminar se devuelve el volumen normal y se suelta la grabación,
+      // para que la vista previa siga sonando como siempre.
+      limpieza.push(function () {
+        try { gOrig.disconnect(destino); } catch (e) {}
+        try { gOrig.gain.value = 1; } catch (e) {}
+      });
 
       var vozEl = null;
       if (micStream) {
@@ -240,10 +284,14 @@
         vozEl.src = vozInfo.url; vozEl.preload = 'auto';
         await new Promise(function (ok) { vozEl.oncanplay = ok; vozEl.onerror = ok; setTimeout(ok, 6000); });
         var gVoz = ac.createGain(); gVoz.gain.value = volVoz;
-        ac.createMediaElementSource(vozEl).connect(gVoz);
+        var srcVoz = ac.createMediaElementSource(vozEl);
+        srcVoz.connect(gVoz);
         gVoz.connect(destino);
         gVoz.connect(ac.destination);
-        limpieza.push(function () { try { vozEl.pause(); } catch (e) {} });
+        limpieza.push(function () {
+          try { vozEl.pause(); } catch (e) {}
+          try { srcVoz.disconnect(); gVoz.disconnect(); } catch (e) {}
+        });
       }
 
       // 4) El grabador
@@ -269,6 +317,9 @@
       var partes = [];
       grabador.ondataavailable = function (e) { if (e.data && e.data.size) partes.push(e.data); };
       var parado = new Promise(function (ok) { grabador.onstop = ok; });
+
+      vid.controls = false;
+      limpieza.push(function () { vid.controls = true; });
 
       var pedido = null;
       var detener = function () {
@@ -379,6 +430,8 @@
       '</div>' +
       '<input type="file" id="vcVideo" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,.avi,.3gp" ' +
         'style="display:none">' +
+      '<video id="vcPrev" controls playsinline preload="metadata" style="display:none;width:100%;' +
+        'max-height:40vh;margin-top:8px;border-radius:10px;background:#000"></video>' +
       '<div id="vcInfo"></div>' +
 
       '<div id="vcOpts" style="display:none">' +
@@ -457,6 +510,13 @@
     eco('vcVolOrig', 'vcVolOrigV', '%');
 
     cambioFuente();
+
+    // Aviso temprano: más vale decirlo antes de que suba el video.
+    var puede = (typeof MediaRecorder !== 'undefined') &&
+                !!document.createElement('canvas').captureStream;
+    if (!puede) {
+      estado('⚠️ Este navegador no puede montar videos. Ábrelo en Chrome (Android o PC).', 'err');
+    }
     return true;
   }
 
