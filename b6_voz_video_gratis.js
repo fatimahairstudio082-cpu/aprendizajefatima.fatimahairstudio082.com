@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════
-   VOZ GRATIS DENTRO DEL VIDEO · Bloque 6 — pestaña Flyers
+   VOZ GRATIS DENTRO DEL VIDEO · Bloque 6
    Fátima Caldea Estudio
    ------------------------------------------------------------------
    PARCHE ADITIVO. No modifica ni una línea del sistema existente.
@@ -14,25 +14,29 @@
    LA SOLUCIÓN (sin clave, sin servidor, sin cuota)
      Se capta la voz gratuita por el micrófono mientras suena por el
      altavoz, se limpia (recorte de silencios + normalizado de volumen)
-     y se entrega al flyer como si fuera un archivo de música subido a
-     mano. A partir de ahí el motor de siempre hace TODO lo demás:
-     mezcla el audio en el video y ajusta la duración a la de la voz.
+     y se devuelve como WAV.
 
-   POR QUÉ SE ENTREGA COMO WAV Y NO COMO WEBM
+   DOS USOS
+     1) Botón en la pestaña Flyers: entrega la voz al flyer como si
+        fuera un archivo de música subido a mano. A partir de ahí el
+        motor de siempre mezcla el audio y ajusta la duración.
+     2) Motor público window.B6_VOZ_GRATIS.capturar({...}) que usa
+        b6_video_con_voz.js para ponerle voz a un video subido.
+
+   POR QUÉ SE DEVUELVE WAV Y NO WEBM
      1) La voz captada por el micrófono sale floja y con silencios al
         principio y al final: hay que recortarla y subirle el volumen,
         y eso obliga a decodificarla de todas formas.
      2) La duración del WEBM de MediaRecorder no es de fiar (en varios
         Chrome y en Android sale Infinity). flStartVideo la descarta con
         isFinite y el video se cortaría a 6 s dejando la voz a medias.
-        El WAV siempre lleva la duración en la cabecera, así que el
-        video dura exactamente lo que dura la voz.
+        El WAV siempre lleva la duración en la cabecera.
 
    Qué NO toca (verificado):
      flStartVideo · flAudioFile · flAudioUpd · flPreviewAudio
      flPlayMelody · flDrawFrame · gastar() · b6_voz_flyer.js
      b6_melodias_extra.js · Firebase · CSS · ningún ID previo
-     No cobra créditos: cobra el video, como siempre (2 créditos).
+     No cobra créditos: cobra el video, como siempre.
 
    IDs nuevos: prefijo "vg" — 0 colisiones.
    ══════════════════════════════════════════════════════════════════ */
@@ -42,19 +46,21 @@
   if (window._B6_VOZVIDEOGRATIS_LOADED) return;
   window._B6_VOZVIDEOGRATIS_LOADED = true;
 
-  var COLA_SEG   = 0.45;   // silencio que se deja al final antes de parar
-  var CUENTA     = 3;      // cuenta atrás antes de empezar a hablar
+  var COLA_SEG    = 0.45;  // silencio que se deja al final antes de parar
+  var CUENTA      = 3;     // cuenta atrás antes de empezar a hablar
   var PICO_MINIMO = 0.02;  // por debajo de esto, el micro no oyó nada
-  var MAX_SEG    = 60;     // tope duro de seguridad
+  var MAX_SEG     = 60;    // tope duro de seguridad
 
   var ocupado = false;
-  var abortar = null;
+  var cancelador = null;
 
   function $(id) { return document.getElementById(id); }
+  function esperar(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
-  function estado(msg, tipo) {
-    var e = $('vgSt');
-    if (e) e.innerHTML = msg ? '<div class="st ' + (tipo || 'proc') + '">' + msg + '</div>' : '';
+  function disponible() {
+    return ('speechSynthesis' in window) &&
+           (typeof MediaRecorder !== 'undefined') &&
+           !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   }
 
   /* ─────────── Limpieza del audio captado ───────────
@@ -86,46 +92,12 @@
   }
 
   function aWav(buffer) {
-    // Reutiliza audioBufferToWav() que YA existe en el HTML (línea 1350).
+    // Reutiliza audioBufferToWav() que YA existe en el HTML.
     if (typeof window.audioBufferToWav === 'function') return window.audioBufferToWav(buffer);
     throw new Error('Falta audioBufferToWav en la página.');
   }
 
-  /* ─────────── Entrega al flyer, sin tocar su código ───────────
-     Se rellena el <input id="flAudio"> y se dispara 'change' para que
-     corra SU propia flAudioFile(), que es quien pone flAudioUrl. */
-  function entregar(blob, segundos) {
-    var input = $('flAudio'), sel = $('flAudioSrc');
-    if (!input || !sel) throw new Error('No encuentro el bloque de audio del flyer.');
-
-    var entregado = false;
-    try {
-      var file = new File([blob], 'voz_gratis.wav', { type: 'audio/wav' });
-      var dt = new DataTransfer();
-      dt.items.add(file);
-      input.files = dt.files;
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-      entregado = input.files && input.files.length === 1;
-    } catch (e) { entregado = false; }
-
-    if (!entregado) {
-      // Respaldo para navegadores sin DataTransfer: se pone la URL a mano.
-      // flAudioUrl es un 'let' global del script de la página, compartido.
-      try { flAudioUrl = URL.createObjectURL(blob); entregado = true; } catch (e2) {}
-    }
-    if (!entregado) throw new Error('Este navegador no deja entregar el audio al flyer.');
-
-    sel.value = 'upload';
-    if (typeof window.flAudioUpd === 'function') window.flAudioUpd();
-    else sel.dispatchEvent(new Event('change', { bubbles: true }));
-
-    // Deja la duración a la vista del usuario (el motor la recalcula igual).
-    var dur = $('flDur');
-    if (dur && segundos > 0) dur.value = String(Math.max(2, Math.min(20, Math.ceil(segundos))));
-  }
-
-  /* ─────────── Habla el texto con la voz gratuita ───────────
-     Reutiliza el troceado y la voz elegida en b6_voz_flyer.js. */
+  /* ─────────── Habla el texto con la voz gratuita ─────────── */
   function hablar(trozos, voz, vel, tono, alTerminar) {
     var i = 0, vivo = true;
     var keepAlive = setInterval(function () {
@@ -163,128 +135,181 @@
     return function cortar() { try { speechSynthesis.cancel(); } catch (e) {} fin(false); };
   }
 
-  function esperar(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  /* ══════════════════════════════════════════════════════════════
+     MOTOR PÚBLICO
+     await B6_VOZ_GRATIS.capturar({texto, voz, vel, tono, aviso})
+       → {blob, segundos}   ·   lanza Error con el motivo en español
+     ══════════════════════════════════════════════════════════════ */
+  async function capturarVoz(op) {
+    op = op || {};
+    var aviso = (typeof op.aviso === 'function') ? op.aviso : function () {};
 
-  /* ─────────── Acción principal ─────────── */
-  async function capturar() {
-    if (ocupado) { if (abortar) abortar(); return; }
+    if (ocupado) throw new Error('Ya se está capturando una voz. Espera a que termine.');
+    if (!disponible()) throw new Error('Este navegador no puede captar la voz. Prueba en Chrome (Android o PC).');
 
-    var ta = $('vzTexto');
-    var texto = ((ta && ta.value) || '').trim();
-    if (!texto) { estado('✏️ Escribe primero el texto arriba, en el panel de voz.', 'err'); return; }
-    if (!('speechSynthesis' in window)) { estado('❌ Este navegador no tiene voces gratuitas.', 'err'); return; }
-    if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices) {
-      estado('❌ Este navegador no puede grabar audio. Prueba en Chrome (Android o PC).', 'err'); return;
-    }
+    var texto = String(op.texto || '').trim();
+    if (!texto) throw new Error('Escribe primero el texto que quieres que diga la voz.');
 
     var trozos = (typeof window._vzTrocear === 'function') ? window._vzTrocear(texto) : [texto];
-    if (!trozos.length) { estado('✏️ El texto está vacío.', 'err'); return; }
+    if (!trozos.length) throw new Error('El texto está vacío.');
 
-    var voz  = (typeof window._vzGetVoice === 'function') ? window._vzGetVoice() : null;
-    var vel  = parseFloat(($('vzVel') || {}).value || 1) || 1;
-    var tono = parseFloat(($('vzxPitch') || {}).value || 1) || 1;
+    var voz  = op.voz || ((typeof window._vzGetVoice === 'function') ? window._vzGetVoice() : null);
+    var vel  = parseFloat(op.vel)  || 1;
+    var tono = parseFloat(op.tono) || 1;
 
-    var btn = $('vgCap');
     ocupado = true;
-    if (btn) { btn.textContent = '■ Cancelar'; btn.classList.add('btn-warn'); }
-
     var stream = null, rec = null, cortarVoz = null, cancelado = false;
-    var terminar = function () {
+
+    function soltar() {
       ocupado = false;
-      if (btn) { btn.textContent = '🎙️ Poner esta voz en el video'; btn.classList.remove('btn-warn'); }
-      abortar = null;
+      cancelador = null;
       try { if (cortarVoz) cortarVoz(); } catch (e) {}
       try { if (stream) stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
-    };
-    abortar = function () {
+    }
+    cancelador = function () {
       cancelado = true;
       try { if (rec && rec.state !== 'inactive') rec.stop(); } catch (e) {}
-      terminar();
-      estado('Cancelado.', 'err');
-      setTimeout(function () { if (!ocupado) estado(''); }, 2500);
+      soltar();
     };
 
     try {
       // Micrófono SIN cancelación de eco: si se deja activada, el navegador
       // borra justamente lo que sale del altavoz, o sea, la voz.
-      estado('🎤 Pidiendo permiso del micrófono…', 'proc');
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      aviso('🎤 Pidiendo permiso del micrófono…');
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+        });
+      } catch (e) {
+        throw new Error('Sin permiso de micrófono no se puede poner la voz.');
+      }
+
+      var mime = '';
+      ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].some(function (m) {
+        if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) { mime = m; return true; }
+        return false;
       });
-    } catch (e) {
-      terminar();
-      estado('❌ Sin permiso de micrófono no se puede poner la voz en el video.', 'err');
-      return;
-    }
 
-    var mime = '';
-    ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].some(function (m) {
-      if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) { mime = m; return true; }
-      return false;
-    });
+      try { rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); }
+      catch (e) { throw new Error('No se pudo iniciar la grabación: ' + (e.message || e)); }
 
-    try { rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); }
-    catch (e) { terminar(); estado('❌ No se pudo iniciar la grabación: ' + (e.message || e), 'err'); return; }
+      var partes = [];
+      rec.ondataavailable = function (e) { if (e.data && e.data.size) partes.push(e.data); };
+      var parado = new Promise(function (res) { rec.onstop = function () { res(); }; });
 
-    var trozosAudio = [];
-    rec.ondataavailable = function (e) { if (e.data && e.data.size) trozosAudio.push(e.data); };
+      // Cuenta atrás: da tiempo a subir el volumen y evita cortar la 1ª palabra.
+      for (var c = CUENTA; c > 0; c--) {
+        if (cancelado) throw new Error('Cancelado.');
+        aviso('🔊 Sube el volumen del altavoz… empieza en ' + c + '…');
+        await esperar(700);
+      }
+      if (cancelado) throw new Error('Cancelado.');
 
-    var listo = new Promise(function (res) { rec.onstop = function () { res(); }; });
+      rec.start();
+      await esperar(300);   // colchón de silencio al principio
+      aviso('● Grabando la voz… no hables ni tapes el micrófono.');
 
-    // Cuenta atrás: da tiempo a subir el volumen y evita cortar la 1ª palabra.
-    for (var c = CUENTA; c > 0 && !cancelado; c--) {
-      estado('🔊 Sube el volumen del altavoz… empieza en ' + c + '…', 'proc');
-      await esperar(700);
-    }
-    if (cancelado) return;
+      var hablado = await new Promise(function (res) {
+        cortarVoz = hablar(trozos, voz, vel, tono, function (ok) { res(ok); });
+      });
+      cortarVoz = null;
+      if (cancelado) throw new Error('Cancelado.');
 
-    rec.start();
-    await esperar(300);   // colchón de silencio al principio
-    estado('● Grabando la voz… no hables ni tapes el micrófono.', 'proc');
+      await esperar(COLA_SEG * 1000);
+      try { if (rec.state !== 'inactive') rec.stop(); } catch (e) {}
+      await parado;
+      try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
 
-    var hablado = await new Promise(function (res) {
-      cortarVoz = hablar(trozos, voz, vel, tono, function (ok) { res(ok); });
-    });
-    cortarVoz = null;
-    if (cancelado) return;
+      if (!hablado && !partes.length) throw new Error('La voz no llegó a sonar. Inténtalo otra vez.');
 
-    await esperar(COLA_SEG * 1000);
-    try { if (rec.state !== 'inactive') rec.stop(); } catch (e) {}
-    await listo;
-    try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
-
-    if (!hablado && !trozosAudio.length) { terminar(); estado('❌ La voz no llegó a sonar. Inténtalo otra vez.', 'err'); return; }
-
-    estado('⏳ Limpiando la voz…', 'proc');
-    try {
-      var bruto = new Blob(trozosAudio, { type: mime || 'audio/webm' });
+      aviso('⏳ Limpiando la voz…');
+      var bruto = new Blob(partes, { type: mime || 'audio/webm' });
       var ac = new (window.AudioContext || window.webkitAudioContext)();
-      var ab = await bruto.arrayBuffer();
-      var decodificado = await ac.decodeAudioData(ab);
+      var decodificado = await ac.decodeAudioData(await bruto.arrayBuffer());
       try { ac.close(); } catch (e) {}
 
-      if (decodificado.duration > MAX_SEG) { terminar(); estado('❌ El texto es demasiado largo. Acórtalo.', 'err'); return; }
+      if (decodificado.duration > MAX_SEG) throw new Error('El texto es demasiado largo. Acórtalo.');
 
       var r = limpiar(decodificado);
-      if (!r.buffer) {
-        terminar();
-        estado('🔇 El micrófono no oyó nada. Quita los auriculares, sube el volumen del altavoz y repite.', 'err');
-        return;
-      }
+      if (!r.buffer) throw new Error('El micrófono no oyó nada. Quita los auriculares, sube el volumen del altavoz y repite.');
 
       var wav = aWav(r.buffer);
       var seg = r.buffer.length / r.buffer.sampleRate;
-      entregar(wav, seg);
-
-      terminar();
-      estado('✅ Voz lista (' + seg.toFixed(1) + ' s) y puesta en el flyer. Pulsa «🎬 Grabar video».', 'done');
-    } catch (e) {
-      terminar();
-      estado('❌ No se pudo preparar la voz: ' + (e.message || e), 'err');
+      return { blob: wav, segundos: seg };
+    } finally {
+      soltar();
     }
   }
 
-  /* ─────────── Panel ─────────── */
+  window.B6_VOZ_GRATIS = {
+    disponible: disponible,
+    capturar: capturarVoz,
+    cancelar: function () { if (cancelador) cancelador(); },
+    ocupada: function () { return ocupado; }
+  };
+
+  /* ══════════════════════════════════════════════════════════════
+     PANEL DE LA PESTAÑA FLYERS
+     ══════════════════════════════════════════════════════════════ */
+  function estado(msg, tipo) {
+    var e = $('vgSt');
+    if (e) e.innerHTML = msg ? '<div class="st ' + (tipo || 'proc') + '">' + msg + '</div>' : '';
+  }
+
+  /* Entrega al flyer, sin tocar su código: se rellena el <input id="flAudio">
+     y se dispara 'change' para que corra SU propia flAudioFile(), que es
+     quien pone flAudioUrl. */
+  function entregar(blob, segundos) {
+    var input = $('flAudio'), sel = $('flAudioSrc');
+    if (!input || !sel) throw new Error('No encuentro el bloque de audio del flyer.');
+
+    var entregado = false;
+    try {
+      var file = new File([blob], 'voz_gratis.wav', { type: 'audio/wav' });
+      var dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      entregado = input.files && input.files.length === 1;
+    } catch (e) { entregado = false; }
+
+    if (!entregado) {
+      // Respaldo para navegadores sin DataTransfer: se pone la URL a mano.
+      // flAudioUrl es un 'let' global del script de la página, compartido.
+      try { flAudioUrl = URL.createObjectURL(blob); entregado = true; } catch (e2) {}
+    }
+    if (!entregado) throw new Error('Este navegador no deja entregar el audio al flyer.');
+
+    sel.value = 'upload';
+    if (typeof window.flAudioUpd === 'function') window.flAudioUpd();
+    else sel.dispatchEvent(new Event('change', { bubbles: true }));
+
+    // Deja la duración a la vista del usuario (el motor la recalcula igual).
+    var dur = $('flDur');
+    if (dur && segundos > 0) dur.value = String(Math.max(2, Math.min(20, Math.ceil(segundos))));
+  }
+
+  async function alPulsar() {
+    if (ocupado) { window.B6_VOZ_GRATIS.cancelar(); estado('Cancelado.', 'err'); return; }
+
+    var btn = $('vgCap');
+    if (btn) { btn.textContent = '■ Cancelar'; btn.classList.add('btn-warn'); }
+    try {
+      var r = await capturarVoz({
+        texto: (($('vzTexto') || {}).value || ''),
+        vel:   parseFloat(($('vzVel')   || {}).value || 1) || 1,
+        tono:  parseFloat(($('vzxPitch') || {}).value || 1) || 1,
+        aviso: function (m) { estado(m, 'proc'); }
+      });
+      entregar(r.blob, r.segundos);
+      estado('✅ Voz lista (' + r.segundos.toFixed(1) + ' s) y puesta en el flyer. Pulsa «🎬 Grabar video».', 'done');
+    } catch (e) {
+      estado('❌ ' + (e.message || e), 'err');
+    } finally {
+      if (btn) { btn.textContent = '🎙️ Poner esta voz en el video'; btn.classList.remove('btn-warn'); }
+    }
+  }
+
   function construir() {
     var panel = $('vzPanel');
     if (!panel || $('vgBox')) return false;
@@ -306,7 +331,7 @@
       '<div id="vgSt"></div>';
 
     panel.appendChild(box);
-    $('vgCap').addEventListener('click', capturar);
+    $('vgCap').addEventListener('click', alPulsar);
     return true;
   }
 
@@ -333,5 +358,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancar);
   else setTimeout(arrancar, 0);
 
-  window.addEventListener('pagehide', function () { if (abortar) abortar(); });
+  window.addEventListener('pagehide', function () { if (cancelador) cancelador(); });
 })();
