@@ -68,7 +68,13 @@
 
   function cargarVideo(f) {
     if (!f) return;
-    if (!/^video\//.test(f.type || '')) { estado('❌ Eso no es un video. Sube un MP4, MOV o WEBM.', 'err'); return; }
+    // Solo se rechaza de entrada lo que es claramente una foto. Muchos móviles
+    // entregan los videos con el tipo vacío o raro (MOV, 3GP), así que el único
+    // juez de verdad es el propio <video>: si no lo puede leer, ya avisa abajo.
+    if (/^image\//.test(f.type || '')) {
+      estado('❌ Eso es una foto, no un video. Para hacer un anuncio con fotos usa la pestaña 📣 Flyers.', 'err');
+      return;
+    }
     if (videoUrl) URL.revokeObjectURL(videoUrl);
     videoFile = f;
     videoUrl = URL.createObjectURL(f);
@@ -92,7 +98,10 @@
       var op = $('vcOpts'); if (op) op.style.display = 'block';
       estado('');
     };
-    v.onerror = function () { estado('❌ No se pudo leer ese video. Prueba con un MP4.', 'err'); };
+    v.onerror = function () {
+      estado('❌ El navegador no pudo abrir «' + f.name + '». Suele pasar con videos de cámara antiguos: ' +
+             'pásalo a MP4 o mándatelo por WhatsApp a ti misma y sube el que te llega.', 'err');
+    };
     v.src = videoUrl;
   }
 
@@ -368,7 +377,8 @@
         '<div style="font-size:12px;font-weight:600;margin-bottom:3px">Arrastra tu video o haz clic</div>' +
         '<div style="font-size:9px;color:var(--tx2)">MP4 · MOV · WEBM · hasta ' + (MAX_SEG / 60) + ' minutos</div>' +
       '</div>' +
-      '<input type="file" id="vcVideo" accept="video/*" style="display:none">' +
+      '<input type="file" id="vcVideo" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,.avi,.3gp" ' +
+        'style="display:none">' +
       '<div id="vcInfo"></div>' +
 
       '<div id="vcOpts" style="display:none">' +
