@@ -1447,6 +1447,13 @@
       var cv = document.createElement('canvas');
       cv.width = F.w; cv.height = F.h;
       var ctx = cv.getContext('2d');
+      // El canvas de grabación va al DOM pero fuera de la vista: un canvas
+      // "suelto" (sin insertar) deja de entregar cuadros a captureStream tras
+      // el primero en Android/tablets y el vídeo sale negro. No se usa
+      // display:none ni visibility:hidden porque eso también corta la captura.
+      cv.style.cssText = 'position:fixed;left:-99999px;top:0;width:1px;height:1px;opacity:0.001;pointer-events:none;z-index:-1';
+      document.body.appendChild(cv);
+      limpieza.push(function () { try { cv.remove(); } catch (e) {} });
 
       var ac = new (window.AudioContext || window.webkitAudioContext)();
       var destino = ac.createMediaStreamDestination();
@@ -1495,11 +1502,21 @@
         }
 
         var flujo = cv.captureStream(30);
+        var pistaVideo = flujo.getVideoTracks()[0];
+        // Además de tener el canvas en el DOM, empujamos cada cuadro a mano
+        // cuando el navegador lo permite: así ni un fotograma se pierde.
+        var empujarCuadro = (pistaVideo && typeof pistaVideo.requestFrame === 'function')
+          ? function () { try { pistaVideo.requestFrame(); } catch (e) {} }
+          : function () {};
         if (pistaAudio) flujo.addTrack(pistaAudio);
 
+        // WebM (VP9/VP8) primero: el codificador MP4 de Chrome en móvil suele
+        // grabar sólo el primer cuadro y dejar el resto negro. El WebM de
+        // Chromium es fiable en Android/PC; en iPhone (Safari) no hay WebM, así
+        // que ahí cae a MP4, que Safari sí graba bien.
         var mime = '';
-        ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4',
-         'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].some(function (m) {
+        ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm',
+         'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4'].some(function (m) {
           if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) { mime = m; return true; }
           return false;
         });
@@ -1566,6 +1583,7 @@
           } else {
             hoja(iHoja, tHoja);
           }
+          empujarCuadro();
           if (fuente !== 'mic' && t >= dur) { FP.pararGrabacion(); return; }
           if (fuente === 'mic' && t >= 90) { FP.pararGrabacion(); return; }
           if (vozEl && vozEl.ended) { FP.pararGrabacion(); return; }
