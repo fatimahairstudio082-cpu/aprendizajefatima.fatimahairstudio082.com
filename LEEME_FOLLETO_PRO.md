@@ -10,8 +10,12 @@ bloque que no cobra; las demás siguen cobrando lo de siempre.
 ## Cómo se usa
 
 1. Pestaña **📰 Folletos Pro**.
-2. Elige la **cuadrícula** (2, 4, 6 u 8 cuadros) y la **hoja** (A4 vertical, A4
-   apaisada, cuadrado de Instagram o historia de WhatsApp).
+2. Elige un **🎨 Estilo** de diseño profesional (Catálogo lujo, Post de
+   Instagram, Historia/WhatsApp, Minimal blanco, Corporativo, Escaparate…): de
+   un clic te coloca la paleta, la cuadrícula, la hoja y los acabados que pegan.
+   Después puedes cambiar la **cuadrícula** (2, 4, 6 u 8 cuadros) y la **hoja**
+   (A4 vertical, A4 apaisada, cuadrado de Instagram o historia de WhatsApp) a
+   mano si quieres afinarlo.
 3. Elige los **colores** de las 10 paletas, o cámbialos a mano con los seis
    selectores. **🎲 Sorpresa** gira el tono manteniendo la armonía.
 4. Pulsa **📝 Escríbelo tú por mí**: elige tu tipo de negocio y el tono, y te
@@ -38,6 +42,15 @@ bloque que no cobra; las demás siguen cobrando lo de siempre.
 | **📄 PDF** | Todas las hojas en un PDF, cada una a su tamaño real. Para imprimir. |
 | **🌐 Folleto web** | Un solo archivo `.html` que se abre en cualquier móvil, se pasa con el dedo, reproduce los vídeos y lee el folleto en voz alta al pulsar 🔊. |
 | **🎬 Hacer el vídeo** | El folleto animado, con los cuadros entrando de uno en uno y la voz leyendo. |
+
+### La música de fondo (gratis)
+
+Debajo de las opciones de voz hay un selector **🎵 Música**: las mismas 16
+melodías **sin derechos de autor** que ya usaba Flyers (enérgica, elegante,
+lo-fi, tropical, reggaetón, flamenco, jazz…), sintetizadas en el propio móvil.
+El botón **▶ Escuchar** las prueba antes de grabar. La música suena **por debajo
+de la voz** (o sola, si eliges «Sin sonido» en la voz), y entra dentro del vídeo
+descargado. No hace falta subir ningún archivo ni tener conexión.
 
 ### La voz del vídeo
 
@@ -75,7 +88,14 @@ símbolos.
 
 ## Para el técnico
 
-Tres archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
+Cuatro archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
+
+- **`b6_folleto_disenos.js`** — el cerebro de diseño: 14 estilos profesionales
+  agrupados por uso (catálogo, redes, elegante, escaparate). Cada estilo es una
+  combinación de paleta + cuadrícula + hoja + acabados que ya sabe dibujar el
+  motor; no inventa nada nuevo en el lienzo. Expone `FOLLETO_DISENOS.lista()`,
+  `.grupos()` y `.get(id)`. Es opcional: si no carga, la herramienta funciona
+  igual sin la fila de estilos.
 
 - **`b6_folleto_motor.js`** — el dibujo, en canvas 2D. Es la única fuente de
   verdad: la vista previa, el JPG, el PDF, el vídeo y las portadas del folleto
@@ -84,14 +104,19 @@ Tres archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
   devuelve los rectángulos; en hoja apaisada la calcula en vertical y la gira
   90°, así una 2×3 pasa a 3×2 sola. `op.revelar(i)` es lo que usa el vídeo para
   hacer entrar los cuadros de uno en uno sin duplicar el dibujo.
-- **`b6_folleto_cerebro.js`** — los textos. 12 rubros × 8 servicios, 5 tonos,
-  precios de salón y el guion para la voz. Bolsa sin reposición: en una hoja de
-  8 cuadros no se repite ni un servicio ni una descripción.
-- **`b6_folleto_pro.js`** — la herramienta (IDs con prefijo `fp`).
+- **`b6_folleto_cerebro.js`** — los textos. 22 rubros × 8 servicios (belleza y
+  muchos otros sectores, más «✍️ Otra»), 5 tonos, precios de salón y el guion
+  para la voz. Bolsa sin reposición: en una hoja de 8 cuadros no se repite ni un
+  servicio ni una descripción.
+- **`b6_folleto_pro.js`** — la herramienta (IDs con prefijo `fp`). La **música
+  de fondo** reutiliza los datos `FL_MELODIES` / `FL_NOTE` de Flyers (ya
+  cargados en el bloque) pero sintetiza con su propio mezclador, que conecta
+  sólo a la pista que se graba; si esos datos no están, la fila de música se
+  oculta sola.
 
-En `bloque6_herramientas.html` sólo se han tocado 6 líneas: el botón de la
+En `bloque6_herramientas.html` sólo se han tocado 7 líneas: el botón de la
 pestaña, el contenedor `#tab-folleto`, la llamada a `fpOpen` en `switchMain`, la
-guía hablada y los tres `<script src>`.
+guía hablada y los cuatro `<script src>`.
 
 **No se toca** nada de lo que ya funcionaba: ni `flStartVideo`, ni `gastar()`, ni
 Firebase, ni `firestore.rules`, ni el CSS, ni `index.html` / `fatima_hub.html`.

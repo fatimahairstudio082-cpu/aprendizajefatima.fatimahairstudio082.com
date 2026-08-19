@@ -25,7 +25,30 @@
   var TOPE_WEB = 45 * 1024 * 1024;  // lo que se puede incrustar en el folleto web
 
   var M = null, CB = null;     // motor y cerebro, se resuelven al arrancar
+  var DIS = null;              // cerebro de diseño (FOLLETO_DISENOS), opcional
+  var MEL = null, NOTE = null; // música gratis (FL_MELODIES / FL_NOTE), opcional
   var listo = false;
+
+  /* Notas de reserva, por si el bloque de Flyers no estuviera cargado (por
+     ejemplo abriendo el archivo suelto). Así la música nunca rompe nada. */
+  var NOTE_FALLBACK = {
+    C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
+    C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+    C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00
+  };
+
+  /* Nombres bonitos para las melodías que ya trae Flyers (FL_MELODIES). */
+  var NOMBRES_MEL = {
+    mel_energia: '⚡ Enérgica', mel_elegante: '🎩 Elegante', mel_alegre: '😊 Alegre',
+    mel_epico: '🎬 Épica', mel_lofi: '🎧 Lo-fi (relax)', mel_corporativo: '💼 Corporativa',
+    mel_romantico: '💕 Romántica', mel_dramatico: '🎭 Dramática',
+    mel_tropical: '🌴 Tropical', mel_reggaeton: '🔥 Reggaetón', mel_flamenco: '💃 Flamenco',
+    mel_bossa: '🌺 Bossa Nova', mel_jazz: '🎷 Jazz', mel_techno: '🤖 Techno',
+    mel_vals: '🩰 Vals', mel_cumbia: '🥁 Cumbia'
+  };
+  function nombreMel(id) {
+    return NOMBRES_MEL[id] || id.replace(/^mel_/, '').replace(/^\w/, function (c) { return c.toUpperCase(); });
+  }
 
   var FP = {
     pagina: null,
@@ -92,17 +115,39 @@
     }).join('');
   }
 
+  /* Desplegable del cerebro de diseño, agrupado por uso. Si el archivo no está
+     cargado, esta fila no aparece y todo lo demás funciona igual. */
+  function selectDisenos() {
+    if (!DIS) return '';
+    var lista = DIS.lista();
+    var ops = DIS.grupos().map(function (g) {
+      var items = lista.filter(function (d) { return d.cat === g; }).map(function (d) {
+        return '<option value="' + d.id + '">' + esc(d.nombre) + '</option>';
+      }).join('');
+      return '<optgroup label="' + esc(g) + '">' + items + '</optgroup>';
+    }).join('');
+    return '<div class="row">' +
+        '<span class="lbl">🎨 Estilo</span>' +
+        '<select id="fpDiseno" style="flex:1;min-width:150px">' +
+          '<option value="">— elige un diseño profesional —</option>' + ops +
+        '</select>' +
+      '</div>' +
+      '<div class="row" id="fpDisenoDesc" style="font-size:9px;color:var(--tx2);margin-top:-2px"></div>';
+  }
+
   function construir() {
     var caja = $('tab-folleto');
     if (!caja) return false;
 
     caja.innerHTML =
     '<div class="panel">' +
-      '<div class="p-title">📰 Folletos Pro · tu carta de servicios en una hoja</div>' +
+      '<div class="p-title">📰 Folletos Pro · tu carta en una hoja, con diseño profesional</div>' +
       '<div style="font-size:10px;color:var(--tx2);margin-bottom:6px">' +
-        'Elige la cuadrícula, pon tus fotos o tus vídeos en cada hueco y escribe tus precios. ' +
+        'Elige un <b>estilo de diseño</b>, pon tus fotos o tus vídeos en cada hueco y escribe tus precios. ' +
         'Todo se monta en tu móvil y <b>no gasta créditos</b>.' +
       '</div>' +
+
+      selectDisenos() +
 
       '<div class="row">' +
         '<span class="lbl">Cuadrícula</span>' +
@@ -199,6 +244,14 @@
         '<span class="lbl">Archivo</span>' +
         '<input type="file" id="fpAudio" accept="audio/*" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px">' +
       '</div>' +
+      '<div class="row" id="fpMusicaRow">' +
+        '<span class="lbl">🎵 Música</span>' +
+        '<select id="fpMusica" style="flex:1;min-width:150px"><option value="none">🔇 Sin música de fondo</option></select>' +
+        '<button class="btn btn-g" id="fpMusPrev" style="font-size:10px;padding:3px 9px">▶ Escuchar</button>' +
+      '</div>' +
+      '<div class="row" style="margin-top:-2px"><span style="font-size:9px;color:var(--tx2)">' +
+        'Melodías gratis sin derechos de autor. Suenan por debajo de la voz.' +
+      '</span></div>' +
       '<div class="row" id="fpGuionRow">' +
         '<span class="lbl">Lo que dirá</span>' +
         '<textarea id="fpGuion" rows="3" style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:6px;padding:5px;font-size:11px"></textarea>' +
@@ -331,10 +384,19 @@
     r.readAsDataURL(f);
   }
 
+  /* ¿Alguna página YA GUARDADA sigue usando este vídeo? Si es así, no se puede
+     revocar su URL ni sacarlo del DOM: la copia guardada lo comparte por
+     referencia y se quedaría en blanco al exportar la Imagen, el PDF o el vídeo. */
+  function mediaEnUso(media) {
+    return FP.paginas.some(function (p) {
+      return p.celdas.some(function (c) { return c.media === media; });
+    });
+  }
+
   function quitarMedia(i, callado) {
     var c = FP.pagina.celdas[i];
     if (!c || !c.media) { if (!callado) repintar(); return; }
-    if (c.media.tipo === 'vid') {
+    if (c.media.tipo === 'vid' && !mediaEnUso(c.media)) {
       try { c.media.el.pause(); } catch (e) {}
       if (c.media.el.parentNode) c.media.el.parentNode.removeChild(c.media.el);
       try { URL.revokeObjectURL(c.media.url); } catch (e) {}
@@ -398,6 +460,34 @@
     c.texto = CB.regenerar('texto', ctx);
     pintarCeldas();
     repintar();
+  }
+
+  /* ═══════════════════ Cerebro de diseño ═══════════════════ */
+
+  /* Aplica un estilo profesional: mueve de golpe la paleta, la cuadrícula, la
+     hoja y los acabados. No toca los textos ni las fotos que ya haya puesto. */
+  function aplicarDiseno(id) {
+    var d = DIS && DIS.get(id);
+    if (!d) return;
+    $('fpTema').value = d.tema;
+    $('fpFormato').value = d.formato;
+    FP.coloresManuales = null;                 // el estilo trae su propia paleta
+    $('fpAGrano').checked = !!d.adornos.grano;
+    $('fpAVineta').checked = !!d.adornos.vineta;
+    $('fpAFiletes').checked = !!d.adornos.filetes;
+    $('fpASombras').checked = !!d.adornos.sombras;
+
+    // la cuadrícula puede cambiar el nº de huecos: los nuevos se rellenan solos
+    $('fpRejilla').value = d.rejilla;
+    var n = nCuadros(), faltaban = FP.pagina.celdas.length < n;
+    while (FP.pagina.celdas.length < n) FP.pagina.celdas.push({ titulo: '', texto: '', precio: '', etiqueta: '', media: null });
+
+    var desc = $('fpDisenoDesc');
+    if (desc) desc.textContent = d.desc;
+
+    if (faltaban) rellenarVacias();            // ya repinta las celdas y el lienzo
+    else { pintarCeldas(); repintar(); }
+    estado('✓ Diseño «' + d.nombre + '» aplicado. Cambia lo que quieras a mano.', 'done');
   }
 
   /* ═══════════════════ Vista previa ═══════════════════ */
@@ -646,6 +736,72 @@
     });
   }
 
+  /* ═══════════════════ Música gratis ═══════════════════
+     Sintetiza en el propio dispositivo una de las melodías sin derechos de
+     autor de Flyers (FL_MELODIES), conectándola SÓLO al destino que se le
+     pasa. Para el vídeo, ese destino es la pista que se graba; para la
+     preescucha, es el altavoz. Si FL_MELODIES no está, no hace nada. */
+  function crearMezclaMusica(ac, dest, def, dur, ganancia) {
+    var master = ac.createGain();
+    master.gain.value = (def.gain || 0.5) * ganancia;
+    var lp = ac.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 3400; lp.Q.value = 0.5;
+    master.connect(lp); lp.connect(dest);
+
+    var beat = 60 / (def.tempo || 100), step = beat * 0.5, bstep = beat * 2;
+    var t0 = ac.currentTime + 0.15, fin = t0 + dur, oscs = [];
+    var tabla = NOTE || NOTE_FALLBACK;
+    function nota(freq, t, d, pico, onda) {
+      if (t >= fin) return;
+      var o = ac.createOscillator(); o.type = onda || 'sine'; o.frequency.value = freq;
+      var ge = ac.createGain();
+      ge.gain.setValueAtTime(0.0001, t);
+      ge.gain.linearRampToValueAtTime(pico, t + 0.02);
+      ge.gain.exponentialRampToValueAtTime(0.0008, t + d);
+      o.connect(ge); ge.connect(master);
+      o.start(t); o.stop(Math.min(fin + 0.1, t + d + 0.05)); oscs.push(o);
+    }
+    var seq = def.seq || [], bass = def.bass || [], i, t;
+    for (i = 0, t = t0; t < fin && seq.length; t += step, i++) nota(tabla[seq[i % seq.length]] || 440, t, step * 1.1, 0.6, def.wave);
+    for (i = 0, t = t0; t < fin && bass.length; t += bstep, i++) nota(tabla[bass[i % bass.length]] || 130, t, bstep * 0.95, 0.4, 'sine');
+    master.gain.setValueAtTime(master.gain.value, Math.max(t0, fin - 0.6));
+    master.gain.linearRampToValueAtTime(0.0001, fin);
+    return { stop: function () { oscs.forEach(function (o) { try { o.stop(); } catch (e) {} }); try { master.disconnect(); lp.disconnect(); } catch (e) {} } };
+  }
+
+  /* Llena el desplegable de música con las melodías de Flyers, si están. Si no
+     hay ninguna, deja la fila oculta y el vídeo sigue funcionando sin música. */
+  function llenarMusica() {
+    var sel = $('fpMusica'), fila = $('fpMusicaRow');
+    if (!sel) return;
+    if (!MEL) { if (fila) fila.style.display = 'none'; return; }
+    var ids = Object.keys(MEL);
+    if (!ids.length) { if (fila) fila.style.display = 'none'; return; }
+    var html = '<option value="none">🔇 Sin música de fondo</option>';
+    ids.forEach(function (id) { html += '<option value="' + esc(id) + '">' + esc(nombreMel(id)) + '</option>'; });
+    sel.innerHTML = html;
+  }
+
+  var prevAc = null, prevMus = null, prevTO = null;
+  function pararPreview() {
+    if (prevMus) { try { prevMus.stop(); } catch (e) {} prevMus = null; }
+    if (prevAc) { try { prevAc.close(); } catch (e) {} prevAc = null; }
+    if (prevTO) { clearTimeout(prevTO); prevTO = null; }
+    var b = $('fpMusPrev'); if (b) b.textContent = '▶ Escuchar';
+  }
+  function previewMusica() {
+    if (prevMus) { pararPreview(); return; }
+    var id = val('fpMusica');
+    if (!id || id === 'none' || !MEL || !MEL[id]) { estado('Elige una melodía para escucharla.', 'err'); return; }
+    try {
+      prevAc = new (window.AudioContext || window.webkitAudioContext)();
+      if (prevAc.state === 'suspended') prevAc.resume();
+      prevMus = crearMezclaMusica(prevAc, prevAc.destination, MEL[id], 5, 1);
+      var b = $('fpMusPrev'); if (b) b.textContent = '■ Parar';
+      prevTO = setTimeout(pararPreview, 5400);
+    } catch (e) { estado('No se pudo reproducir la música: ' + (e.message || e), 'err'); }
+  }
+
   /* ═══════════════════ Vídeo con voz ═══════════════════ */
 
   function prepararVoz(fuente) {
@@ -745,6 +901,21 @@
       }
 
       return cadena.then(function () {
+        // la duración se decide antes de nada: la manda la voz si la hay, y con
+        // ella se programa la música para que cuadren
+        var dur = Math.max(4, Math.min(60, parseFloat(val('fpDur')) || 12));
+        if (vozEl && vozEl.duration && isFinite(vozEl.duration)) dur = Math.min(90, vozEl.duration + 0.4);
+
+        // música gratis: suena por debajo de la voz (0.32) o sola (0.9) si no
+        // hay voz. Se enchufa al mismo destino que se graba, así entra en el MP4
+        var melId = val('fpMusica');
+        if (melId && melId !== 'none' && MEL && MEL[melId]) {
+          if (ac.state === 'suspended') { try { ac.resume(); } catch (e) {} }
+          var musica = crearMezclaMusica(ac, destino, MEL[melId], dur + 0.3, pistaAudio ? 0.32 : 0.9);
+          limpieza.push(function () { try { musica.stop(); } catch (e) {} });
+          if (!pistaAudio) pistaAudio = destino.stream.getAudioTracks()[0];
+        }
+
         var flujo = cv.captureStream(30);
         if (pistaAudio) flujo.addTrack(pistaAudio);
 
@@ -759,8 +930,6 @@
         var trozos = [];
         rec.ondataavailable = function (e) { if (e.data && e.data.size) trozos.push(e.data); };
 
-        var dur = Math.max(4, Math.min(60, parseFloat(val('fpDur')) || 12));
-        if (vozEl && vozEl.duration && isFinite(vozEl.duration)) dur = Math.min(90, vozEl.duration + 0.4);
         var porHoja = dur / hs.length;
         var t0 = performance.now();
         var pedido = null;
@@ -875,6 +1044,15 @@
       repintar();
     });
 
+    if (DIS && $('fpDiseno')) {
+      $('fpDiseno').addEventListener('change', function () {
+        var id = val('fpDiseno');
+        if (id) aplicarDiseno(id);
+      });
+    }
+    if ($('fpMusPrev')) $('fpMusPrev').addEventListener('click', previewMusica);
+    if ($('fpMusica')) $('fpMusica').addEventListener('change', pararPreview);
+
     $('fpEscribir').addEventListener('click', function () { escribirSolo(false); });
     $('fpOtra').addEventListener('click', function () { escribirSolo(true); });
     $('fpAddPag').addEventListener('click', añadirPagina);
@@ -894,6 +1072,9 @@
 
     M = window.FOLLETO_MOTOR;
     CB = window.FOLLETO_CEREBRO;
+    DIS = window.FOLLETO_DISENOS || null;                          // opcional
+    MEL = (typeof FL_MELODIES !== 'undefined') ? FL_MELODIES : null; // de Flyers
+    NOTE = (typeof FL_NOTE !== 'undefined') ? FL_NOTE : null;
     var caja = document.getElementById('tab-folleto');
     if (!caja) return;
     if (!M || !CB) {
@@ -914,6 +1095,7 @@
     $('fpRubro').value = FP.pagina.rubro;
     $('fpTono').value = FP.pagina.tono;
     pintarCeldas();
+    llenarMusica();
     enlazar();
     $('fpMarca').value = FP.pagina.cabecera.marca;
     $('fpTitulo').value = FP.pagina.cabecera.titulo;
