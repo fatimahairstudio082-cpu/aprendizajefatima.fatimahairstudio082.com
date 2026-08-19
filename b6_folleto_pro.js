@@ -420,6 +420,16 @@
         '</select>' +
       '</div>' +
       '<div class="row">' +
+        '<span class="lbl">📼 Formato</span>' +
+        '<select id="fpVidFormato" style="flex:1;min-width:160px">' +
+          '<option value="auto" selected>Automático · el más compatible (recomendado)</option>' +
+          '<option value="mp4">MP4 · para la app de Instagram</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="row" style="margin-top:-2px"><span style="font-size:9px;color:var(--tx2)">' +
+        'Automático elige el formato que tu móvil graba sin fallos. Elige MP4 sólo si vas a subirlo desde la app de Instagram.' +
+      '</span></div>' +
+      '<div class="row">' +
         '<span class="lbl">Segundos</span>' +
         '<input type="number" id="fpDur" value="12" min="4" max="60" step="1" style="width:70px">' +
         '<span style="font-size:9px;color:var(--tx2)">si hay voz, dura lo que dure la voz</span>' +
@@ -1510,13 +1520,19 @@
           : function () {};
         if (pistaAudio) flujo.addTrack(pistaAudio);
 
-        // WebM (VP9/VP8) primero: el codificador MP4 de Chrome en móvil suele
-        // grabar sólo el primer cuadro y dejar el resto negro. El WebM de
-        // Chromium es fiable en Android/PC; en iPhone (Safari) no hay WebM, así
-        // que ahí cae a MP4, que Safari sí graba bien.
+        // «Automático» usa WebM primero: el codificador MP4 de Chrome en móvil
+        // suele grabar sólo el primer cuadro y dejar el resto negro, mientras
+        // que el WebM de Chromium es fiable en Android/PC. En iPhone (Safari)
+        // no hay WebM, así que ahí cae a MP4, que Safari sí graba bien.
+        // Si la dueña pide MP4 (para la app de Instagram), se intenta MP4 antes
+        // —ya con el canvas en el DOM y requestFrame no debería salir negro— y
+        // se deja WebM de respaldo por si el navegador no sabe grabar MP4.
+        var listaMp4 = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4'];
+        var listaWebm = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+        var quiereMp4 = val('fpVidFormato') === 'mp4';
+        var candidatos = quiereMp4 ? listaMp4.concat(listaWebm) : listaWebm.concat(listaMp4);
         var mime = '';
-        ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm',
-         'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4'].some(function (m) {
+        candidatos.some(function (m) {
           if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) { mime = m; return true; }
           return false;
         });
