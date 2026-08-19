@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Muestrario de Folletos Pro · Fátima</title>
+<style>
+:root{
+  --bg:#0d0d1a;--bg2:#13132a;--bg3:#1a1a35;--ac:#7c3aed;--ac2:#a855f7;--ac3:#06b6d4;
+  --tx:#e2e8f0;--tx2:#94a3b8;--bd:#2d2d4a;--ok:#10b981;--warn:#f59e0b;--card:#18183a;--card2:#22224a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:13px 'Segoe UI',system-ui,sans-serif;padding:0 0 60px}
+header{background:linear-gradient(135deg,var(--bg2),var(--card));border-bottom:1px solid var(--bd);padding:18px 20px}
+h1{margin:0 0 6px;font-size:19px;background:linear-gradient(90deg,var(--ac2),var(--ac3));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--tx2);font-size:12px;max-width:760px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+h2{font-size:14px;margin:26px 0 4px;color:var(--ac2)}
+h2 span{color:var(--tx2);font-weight:400;font-size:11px}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin-top:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:7px 0}
+.lbl{font-size:11px;color:var(--tx2);min-width:78px}
+select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:6px;padding:5px 8px;font-size:12px}
+input[type=color]{width:34px;height:26px;padding:0;border:1px solid var(--bd);border-radius:5px;background:var(--bg3);cursor:pointer}
+.btn{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;border:0;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer}
+.btn:hover{transform:translateY(-1px)}
+.btn-g{background:transparent;border:1px solid var(--bd);color:var(--tx2)}
+.btn-ok{background:linear-gradient(135deg,#059669,var(--ok))}
+.vista{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-top:14px}
+.vista canvas{background:#000;border-radius:10px;border:1px solid var(--bd);max-width:100%;height:auto;box-shadow:0 10px 34px rgba(0,0,0,.5)}
+.ficha{flex:1;min-width:230px;font-size:11.5px;color:var(--tx2);line-height:1.6}
+.ficha b{color:var(--tx)}
+.grid{display:grid;gap:12px;margin-top:12px}
+.g-rej{grid-template-columns:repeat(auto-fill,minmax(168px,1fr))}
+.g-pal{grid-template-columns:repeat(auto-fill,minmax(168px,1fr))}
+.tarj{background:var(--card);border:1px solid var(--bd);border-radius:10px;overflow:hidden;cursor:pointer;transition:.15s;position:relative}
+.tarj:hover{border-color:var(--ac2);transform:translateY(-2px)}
+.tarj.sel{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
+.tarj.act{border-color:var(--ac2);box-shadow:0 0 0 1px var(--ac2) inset}
+.tarj canvas{display:block;width:100%;height:auto;background:#000}
+.tarj .pie{padding:7px 9px;font-size:11px;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.tarj .pie b{font-size:11.5px}
+.tarj .uso{color:var(--tx2);font-size:10px;display:block;margin-top:1px}
+.tick{width:20px;height:20px;border-radius:5px;border:1px solid var(--bd);background:var(--bg3);color:transparent;font-size:12px;line-height:18px;text-align:center;flex:none}
+.tarj.sel .tick{background:var(--ok);border-color:var(--ok);color:#04231a}
+.chip{display:inline-block;background:var(--bg3);border:1px solid var(--bd);border-radius:20px;padding:2px 9px;font-size:10.5px;margin:2px 3px 0 0}
+.chip.si{border-color:var(--ok);color:var(--ok)}
+.aviso{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:#fde3b3;border-radius:8px;padding:9px 12px;font-size:11.5px;line-height:1.55;margin-top:12px}
+.sel-caja{margin-top:24px}
+.sel-caja .in{background:var(--card2);border:1px solid var(--ac);border-radius:10px;padding:11px 14px}
+/* contador flotante: recuerda lo marcado sin tapar las miniaturas */
+.flot{position:fixed;right:14px;bottom:14px;background:var(--card2);border:1px solid var(--ac);
+      border-radius:20px;padding:7px 14px;font-size:11px;box-shadow:0 6px 20px rgba(0,0,0,.5);cursor:pointer;z-index:9}
+.flot b{color:var(--ok)}
+.paleta-muestra{display:flex;gap:3px;margin-top:4px}
+.paleta-muestra i{width:14px;height:14px;border-radius:3px;display:block;border:1px solid rgba(255,255,255,.14)}
+@media(max-width:640px){.lbl{min-width:100%}.vista canvas{width:100%}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>📰 Muestrario de Folletos Pro</h1>
+    <div class="sub">
+      Esto <b>no es una maqueta</b>: está dibujado con el mismo motor que usará la herramienta,
+      así que lo que veas aquí es lo que saldrá luego en el PDF, en la imagen y en el vídeo.
+      Mira las <b>8 rejillas</b> y las <b>10 paletas</b>, marca con ✓ las que te gusten y
+      descarta el resto. Después se programa la herramienta sólo con lo aprobado.
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ═══ CONTROLES ═══ -->
+  <div class="panel">
+    <div class="row">
+      <span class="lbl">Rejilla</span>
+      <select id="mRejilla"></select>
+      <span class="lbl">Paleta</span>
+      <select id="mTema"></select>
+      <span class="lbl">Hoja</span>
+      <select id="mFormato"></select>
+    </div>
+    <div class="row">
+      <span class="lbl">Tipo de negocio</span>
+      <select id="mRubro"></select>
+      <span class="lbl">Tono</span>
+      <select id="mTono"></select>
+      <button class="btn" onclick="otraVersion()">🔁 Otra versión del texto</button>
+    </div>
+    <div class="row">
+      <span class="lbl">Negocio</span>
+      <input type="text" id="mNegocio" value="Fátima Hair Studio" style="width:190px">
+      <span class="lbl">Contacto</span>
+      <input type="text" id="mContacto" value="📱 600 00 00 00 · @fatimahairstudio" style="width:250px">
+    </div>
+    <div class="row">
+      <span class="lbl">Colores a mano</span>
+      <label style="font-size:10.5px;color:var(--tx2)">fondo <input type="color" id="cFondo"></label>
+      <label style="font-size:10.5px;color:var(--tx2)">panel <input type="color" id="cPanel"></label>
+      <label style="font-size:10.5px;color:var(--tx2)">tinta <input type="color" id="cTinta"></label>
+      <label style="font-size:10.5px;color:var(--tx2)">tinta 2 <input type="color" id="cTinta2"></label>
+      <label style="font-size:10.5px;color:var(--tx2)">acento <input type="color" id="cAcento"></label>
+      <label style="font-size:10.5px;color:var(--tx2)">acento 2 <input type="color" id="cAcento2"></label>
+      <button class="btn-g btn" onclick="volverAlTema()">↩ Volver a la paleta</button>
+    </div>
+    <div class="row">
+      <span class="lbl">Acabado</span>
+      <label><input type="checkbox" id="aGrano" checked> grano</label>
+      <label><input type="checkbox" id="aVineta" checked> viñeta</label>
+      <label><input type="checkbox" id="aFiletes" checked> filetes</label>
+      <label><input type="checkbox" id="aSombras" checked> sombras</label>
+      <button class="btn btn-ok" onclick="descargarGrande()">🖼️ Descargar esta hoja</button>
+    </div>
+  </div>
+
+  <!-- ═══ VISTA GRANDE ═══ -->
+  <div class="vista">
+    <canvas id="lienzo" style="width:420px"></canvas>
+    <div class="ficha" id="ficha"></div>
+  </div>
+
+  <!-- ═══ LAS 8 REJILLAS ═══ -->
+  <h2>Las 8 rejillas <span>· pulsa una para verla grande · ✓ para quedártela</span></h2>
+  <div class="grid g-rej" id="gridRejillas"></div>
+
+  <!-- ═══ LAS 10 PALETAS ═══ -->
+  <h2>Las 10 paletas <span>· cinco claras para papel, cinco oscuras para el móvil</span></h2>
+  <div class="grid g-pal" id="gridTemas"></div>
+
+  <div class="aviso">
+    <b>Cómo leer el muestrario.</b> Las fotos que ves son de mentira, dibujadas con la propia
+    paleta: en la herramienta ahí van tus fotos y tus vídeos. Los textos sí son reales, los
+    escribe el cerebro automático — dale a <b>🔁 Otra versión</b> y verás que no se repiten.
+  </div>
+
+  <!-- ═══ SELECCIÓN ═══ -->
+  <div class="sel-caja">
+    <div class="in">
+      <div style="font-size:12px;margin-bottom:5px"><b>Lo que te quedas</b> <span style="color:var(--tx2);font-size:11px">· se guarda solo en este móvil</span></div>
+      <div id="resumen" style="font-size:11px;line-height:1.9"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn btn-ok" onclick="copiarSeleccion()">📋 Copiar mi selección</button>
+        <button class="btn btn-g" onclick="todo(true)">Marcar todas</button>
+        <button class="btn btn-g" onclick="todo(false)">Quitar todas</button>
+        <span id="copiado" style="font-size:11px;color:var(--ok)"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="flot" id="flot" onclick="document.querySelector('.sel-caja').scrollIntoView({behavior:'smooth'})"></div>
+
+<script src="b6_folleto_cerebro.js"></script>
+<script src="b6_folleto_motor.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   Muestrario · sólo enseña. Toda la lógica de dibujo está en el motor.
+   ═══════════════════════════════════════════════════════════════════ */
+const M = window.FOLLETO_MOTOR, C = window.FOLLETO_CEREBRO;
+const $ = id => document.getElementById(id);
+
+let semilla = 20260818;
+let coloresManuales = null;
+let sel = cargarSel();
+
+function cargarSel(){
+  try{ return JSON.parse(localStorage.getItem('fp_muestrario_sel')) || {rejillas:[],temas:[]}; }
+  catch(e){ return {rejillas:[],temas:[]}; }
+}
+function guardarSel(){
+  try{ localStorage.setItem('fp_muestrario_sel', JSON.stringify(sel)); }catch(e){}
+  pintarResumen();
+}
+
+/* ── Rellenar los selectores ── */
+(function llenar(){
+  Object.keys(M.REJILLAS).forEach(k=>{
+    const r=M.REJILLAS[k];
+    $('mRejilla').insertAdjacentHTML('beforeend',`<option value="${k}">${r.nombre} · ${r.n} cuadros</option>`);
+  });
+  Object.keys(M.TEMAS).forEach(k=>{
+    $('mTema').insertAdjacentHTML('beforeend',`<option value="${k}">${M.TEMAS[k].nombre}${M.TEMAS[k].claro?' (clara)':''}</option>`);
+  });
+  Object.keys(M.FORMATOS).forEach(k=>{
+    $('mFormato').insertAdjacentHTML('beforeend',`<option value="${k}">${M.FORMATOS[k].nombre}</option>`);
+  });
+  C.rubros().forEach(r=>$('mRubro').insertAdjacentHTML('beforeend',`<option value="${r.id}">${r.nombre}</option>`));
+  C.tonos().forEach(t=>$('mTono').insertAdjacentHTML('beforeend',`<option value="${t.id}">${t.nombre}</option>`));
+  $('mRejilla').value='r4a'; $('mTema').value='oro_negro'; $('mFormato').value='a4v';
+  $('mRubro').value='peluqueria'; $('mTono').value='cercano';
+})();
+
+/* ── Armar la página que se va a dibujar ── */
+function hacerPagina(rejilla, tema, coloresLibres){
+  const rej = M.REJILLAS[rejilla] || M.REJILLAS.r4a;
+  const txt = C.generar({
+    rubro:$('mRubro').value, tono:$('mTono').value, n:rej.n,
+    negocio:$('mNegocio').value, contacto:$('mContacto').value, semilla:semilla
+  });
+  txt.rejilla = rejilla;
+  txt.tema = tema;
+  if(coloresLibres) txt.colores = coloresLibres;
+  txt.adornos = {
+    grano:$('aGrano').checked, vineta:$('aVineta').checked,
+    filetes:$('aFiletes').checked, sombras:$('aSombras').checked
+  };
+  return txt;
+}
+
+function dibujar(cv, pagina, formato, escala){
+  const F = M.FORMATOS[formato] || M.FORMATOS.a4v;
+  const W = Math.round(F.w*escala), H = Math.round(F.h*escala);
+  cv.width = W; cv.height = H;
+  M.pintar(cv.getContext('2d'), W, H, pagina, {nPagina:1});
+}
+
+/* ── Vista grande ── */
+function refrescarGrande(){
+  const pag = hacerPagina($('mRejilla').value, $('mTema').value, coloresManuales);
+  dibujar($('lienzo'), pag, $('mFormato').value, 1);
+  const F = M.FORMATOS[$('mFormato').value];
+  $('lienzo').style.width = (F.w>F.h ? 520 : 400)+'px';
+
+  const rej = M.REJILLAS[$('mRejilla').value], tem = M.TEMAS[$('mTema').value];
+  $('ficha').innerHTML = `
+    <b>${rej.nombre}</b> · ${rej.n} cuadros<br>
+    <span style="color:var(--tx2)">${rej.uso}</span><br><br>
+    <b>${tem.nombre}</b> · ${tem.claro?'clara, buena para imprimir':'oscura, luce en el móvil'}
+    <div class="paleta-muestra">
+      ${['fondo','panel','tinta','tinta2','acento','acento2'].map(k=>`<i style="background:${tem[k]}" title="${k}: ${tem[k]}"></i>`).join('')}
+    </div><br>
+    <b>Hoja:</b> ${F.nombre} · ${F.w}×${F.h}px<br>
+    <b>Texto:</b> ${C.rubros().find(r=>r.id===pag.rubro).nombre} · tono ${C.tonos().find(t=>t.id===pag.tono).nombre}<br><br>
+    <b style="color:var(--ac2)">Lo que leerá la voz</b><br>
+    <span style="color:var(--tx2);font-size:10.5px">${pag.guion.slice(0,240)}…</span>
+  `;
+  sincronizarColores();
+}
+
+function sincronizarColores(){
+  const c = M.colores({tema:$('mTema').value, colores:coloresManuales});
+  $('cFondo').value=c.fondo; $('cPanel').value=c.panel; $('cTinta').value=c.tinta;
+  $('cTinta2').value=c.tinta2; $('cAcento').value=c.acento; $('cAcento2').value=c.acento2;
+}
+function volverAlTema(){ coloresManuales=null; refrescarGrande(); redibujarTodo(); }
+['cFondo','cPanel','cTinta','cTinta2','cAcento','cAcento2'].forEach(id=>{
+  $(id).addEventListener('input',()=>{
+    coloresManuales={fondo:$('cFondo').value,panel:$('cPanel').value,tinta:$('cTinta').value,
+                     tinta2:$('cTinta2').value,acento:$('cAcento').value,acento2:$('cAcento2').value};
+    refrescarGrande();
+  });
+});
+
+/* ── Las dos parrillas de miniaturas ── */
+function tarjeta(clave, tipo, titulo, uso, extra){
+  const marcada = sel[tipo].indexOf(clave)>=0;
+  return `<div class="tarj ${marcada?'sel':''}" data-tipo="${tipo}" data-clave="${clave}">
+    <canvas id="mini_${tipo}_${clave}"></canvas>
+    <div class="pie">
+      <span><b>${titulo}</b><span class="uso">${uso}</span>${extra||''}</span>
+      <span class="tick">✓</span>
+    </div>
+  </div>`;
+}
+
+function construirGrids(){
+  $('gridRejillas').innerHTML = Object.keys(M.REJILLAS).map(k=>{
+    const r=M.REJILLAS[k];
+    return tarjeta(k,'rejillas',r.nombre+' · '+r.n,r.uso);
+  }).join('');
+  $('gridTemas').innerHTML = Object.keys(M.TEMAS).map(k=>{
+    const t=M.TEMAS[k];
+    const muestra=`<span class="paleta-muestra">${['fondo','tinta','acento','acento2'].map(c=>`<i style="background:${t[c]}"></i>`).join('')}</span>`;
+    return tarjeta(k,'temas',t.nombre,t.claro?'clara · papel':'oscura · móvil',muestra);
+  }).join('');
+
+  document.querySelectorAll('.tarj').forEach(el=>{
+    el.addEventListener('click',ev=>{
+      const tipo=el.dataset.tipo, clave=el.dataset.clave;
+      if(ev.target.classList.contains('tick')){
+        const i=sel[tipo].indexOf(clave);
+        if(i>=0) sel[tipo].splice(i,1); else sel[tipo].push(clave);
+        el.classList.toggle('sel'); guardarSel(); return;
+      }
+      if(tipo==='rejillas') $('mRejilla').value=clave; else { $('mTema').value=clave; coloresManuales=null; }
+      refrescarGrande(); marcarActivas(); redibujarTodo();
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+  });
+}
+
+function marcarActivas(){
+  document.querySelectorAll('.tarj').forEach(el=>{
+    const activo = (el.dataset.tipo==='rejillas' && el.dataset.clave===$('mRejilla').value)
+                || (el.dataset.tipo==='temas'    && el.dataset.clave===$('mTema').value);
+    el.classList.toggle('act',activo);
+  });
+}
+
+/* Las miniaturas se dibujan a media resolución y de una en una, para no
+   congelar el móvil mientras se pintan las dieciocho. */
+let cola=[];
+function redibujarTodo(){
+  cola = [];
+  Object.keys(M.REJILLAS).forEach(k=>cola.push({tipo:'rejillas',clave:k}));
+  Object.keys(M.TEMAS).forEach(k=>cola.push({tipo:'temas',clave:k}));
+  siguiente();
+}
+function siguiente(){
+  const t = cola.shift();
+  if(!t) return;
+  const cv = $('mini_'+t.tipo+'_'+t.clave);
+  if(cv){
+    const rejilla = t.tipo==='rejillas' ? t.clave : $('mRejilla').value;
+    const tema    = t.tipo==='temas'    ? t.clave : $('mTema').value;
+    const libres  = (t.tipo==='temas') ? null : coloresManuales;
+    dibujar(cv, hacerPagina(rejilla,tema,libres), $('mFormato').value, 0.5);
+  }
+  requestAnimationFrame(siguiente);
+}
+
+/* ── Selección ── */
+function pintarResumen(){
+  const r = sel.rejillas.map(k=>`<span class="chip si">${M.REJILLAS[k]?M.REJILLAS[k].nombre:k}</span>`).join('')||'<span class="chip">ninguna todavía</span>';
+  const t = sel.temas.map(k=>`<span class="chip si">${M.TEMAS[k]?M.TEMAS[k].nombre:k}</span>`).join('')||'<span class="chip">ninguna todavía</span>';
+  $('resumen').innerHTML = `<b>Rejillas (${sel.rejillas.length}/8):</b> ${r}<br><b>Paletas (${sel.temas.length}/10):</b> ${t}`;
+  $('flot').innerHTML = `✓ <b>${sel.rejillas.length}</b> rejillas · <b>${sel.temas.length}</b> paletas`;
+}
+function todo(si){
+  sel.rejillas = si?Object.keys(M.REJILLAS):[];
+  sel.temas    = si?Object.keys(M.TEMAS):[];
+  document.querySelectorAll('.tarj').forEach(el=>el.classList.toggle('sel',si));
+  guardarSel();
+}
+function copiarSeleccion(){
+  const txt = 'MI SELECCIÓN DEL MUESTRARIO\n'
+    + 'Rejillas que me quedo: ' + (sel.rejillas.map(k=>M.REJILLAS[k].nombre+' ('+k+')').join(', ')||'—') + '\n'
+    + 'Paletas que me quedo: ' + (sel.temas.map(k=>M.TEMAS[k].nombre+' ('+k+')').join(', ')||'—');
+  const ok = ()=>{ $('copiado').textContent='✓ Copiado, ya puedes pegármelo'; setTimeout(()=>$('copiado').textContent='',4000); };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok,()=>prompt('Copia esto:',txt));
+  else prompt('Copia esto:',txt);
+}
+
+/* ── Acciones ── */
+function otraVersion(){ semilla = Math.floor(Math.random()*1e9); refrescarGrande(); redibujarTodo(); }
+function descargarGrande(){
+  const a=document.createElement('a');
+  a.download='muestra_folleto_'+$('mRejilla').value+'_'+$('mTema').value+'.jpg';
+  a.href=$('lienzo').toDataURL('image/jpeg',0.95);
+  a.click();
+}
+
+['mRejilla','mTema','mFormato','mRubro','mTono','mNegocio','mContacto',
+ 'aGrano','aVineta','aFiletes','aSombras'].forEach(id=>{
+  $(id).addEventListener('change',()=>{
+    if(id==='mTema') coloresManuales=null;
+    refrescarGrande(); marcarActivas(); redibujarTodo();
+  });
+});
+
+construirGrids();
+refrescarGrande();
+marcarActivas();
+pintarResumen();
+redibujarTodo();
+</script>
+</body>
+</html>
