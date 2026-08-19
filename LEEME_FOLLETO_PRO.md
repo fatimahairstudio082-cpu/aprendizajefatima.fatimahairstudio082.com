@@ -18,6 +18,12 @@ bloque que no cobra; las demás siguen cobrando lo de siempre.
    escribe todos los textos y unos precios de referencia. **Después cambia lo
    que quieras**: cada título, cada frase y cada precio son tuyos. El **🔁** de
    cada cuadro reescribe sólo esa frase.
+   - **No es sólo para peluquerías.** Hay categorías para muchos sectores
+     (restaurante y bar, cafetería y panadería, tienda de ropa, mascotas y
+     peluquería canina, fotografía, inmobiliaria, eventos, limpieza y hogar,
+     reformas…) además de todas las de belleza. Si tu negocio no está en la
+     lista, elige **✍️ Otra (la escribo yo)**: trae textos neutros y
+     profesionales que cambias por los tuyos.
 5. En cada cuadro, **pon tu foto o tu vídeo**. Los vídeos se ven moviéndose
    dentro del folleto y entran en el vídeo final.
 6. Si el folleto tiene varias hojas: monta la primera, pulsa **📚 Guardar como

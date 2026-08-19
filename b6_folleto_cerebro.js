@@ -554,6 +554,363 @@
           'Para la boda, la cena o la foto que te toca.',
           'Aguanta las horas y sigue pareciendo tu cara.'] }
       ]
+    },
+
+    /* ───────── Sectores fuera de la peluquería ─────────
+       Mismo formato que los de arriba: la herramienta ya no es sólo para
+       salones. El desplegable se llena solo desde FOLLETO_CEREBRO.rubros(). */
+
+    restaurante: {
+      nombre: 'Restaurante y bar',
+      titulos: ['Nuestra Carta', 'Carta del Día', 'Lo que Cocinamos', 'Menú de la Casa'],
+      subs: ['Cocina de mercado, hecha al momento',
+             'Producto de temporada y de cercanía',
+             'Para comer aquí o llevar',
+             'Reserva tu mesa y ven con hambre'],
+      serv: [
+        { n: 'Menú del día', p: [11, 18], d: [
+          'Primero, segundo, postre y bebida, cambia cada día.',
+          'Casero de verdad, del que llena y no repite.'] },
+        { n: 'Tapas y raciones', p: [4, 12], d: [
+          'Para picar entre varios y probar de todo.',
+          'Las de siempre bien hechas, sin florituras.'] },
+        { n: 'Carne a la brasa', p: [14, 26], d: [
+          'A la parrilla y en su punto, como la pides.',
+          'Corte del día según lo que llega fresco.'] },
+        { n: 'Pescado del día', p: [15, 28], d: [
+          'Lo que ha entrado de la lonja esta mañana.',
+          'A la plancha o al horno, respetando el producto.'] },
+        { n: 'Menú de grupo', p: [20, 40], d: [
+          'Cerrado y a buen precio para celebraciones.',
+          'Nos dices cuántos sois y lo dejamos montado.'] },
+        { n: 'Postres caseros', p: [4, 7], d: [
+          'Hechos aquí, no vienen en caja.',
+          'El punto dulce para cerrar la comida.'] },
+        { n: 'Comida para llevar', p: [8, 20], d: [
+          'La misma cocina, empaquetada para casa.',
+          'Pide por teléfono y lo tienes listo al pasar.'] },
+        { n: 'Desayunos', p: [2, 6], d: [
+          'Café, tostada y zumo para empezar bien.',
+          'Barra rápida o mesa con calma, tú eliges.'] }
+      ]
+    },
+
+    cafeteria: {
+      nombre: 'Cafetería y panadería',
+      titulos: ['Nuestra Cafetería', 'Café y Dulce', 'Recién Horneado', 'Para Endulzar el Día'],
+      subs: ['Café de tueste natural y masa madre',
+             'Todo se hornea aquí cada mañana',
+             'Para desayunar, merendar o llevar',
+             'El rincón para tu pausa del día'],
+      serv: [
+        { n: 'Café de especialidad', p: [1, 3], d: [
+          'Grano seleccionado y molido al momento.',
+          'Del espresso corto al flat white cremoso.'] },
+        { n: 'Bollería artesana', p: [1, 4], d: [
+          'Croissant y napolitana de mantequilla de verdad.',
+          'Hojaldre que cruje, hecho aquí de madrugada.'] },
+        { n: 'Pan de masa madre', p: [2, 5], d: [
+          'Fermentación lenta, corteza fina y miga tierna.',
+          'El pan que aguanta bueno hasta el día siguiente.'] },
+        { n: 'Tartas por porción', p: [3, 6], d: [
+          'De zanahoria, queso o chocolate, cambia cada semana.',
+          'La porción justa para acompañar el café.'] },
+        { n: 'Desayuno completo', p: [3, 7], d: [
+          'Café, zumo natural y tostada con lo que quieras.',
+          'Empezar el día como toca, sin prisas.'] },
+        { n: 'Tartas por encargo', p: [18, 45], d: [
+          'Para el cumple o la celebración, a tu gusto.',
+          'Nos dices sabor y personas y la preparamos.'] },
+        { n: 'Batidos y zumos', p: [2, 5], d: [
+          'Fruta natural exprimida al momento.',
+          'Frescos de verdad, sin concentrados.'] },
+        { n: 'Merienda para llevar', p: [2, 6], d: [
+          'Dulce y bebida listos para el camino.',
+          'La parada rápida cuando vas con el tiempo justo.'] }
+      ]
+    },
+
+    moda: {
+      nombre: 'Tienda de ropa y moda',
+      titulos: ['Nueva Colección', 'Nuestra Tienda', 'Lo Nuevo de Temporada', 'Estilo para Ti'],
+      subs: ['Prendas seleccionadas una a una',
+             'Moda que se lleva y no pasa de moda',
+             'Tallas y estilos para todas',
+             'Cambios y asesoramiento sin compromiso'],
+      serv: [
+        { n: 'Colección nueva', p: [20, 80], d: [
+          'Lo último que ha llegado, en tienda y probador.',
+          'Piezas de temporada listas para combinar.'] },
+        { n: 'Básicos de fondo de armario', p: [10, 35], d: [
+          'Lo que te pones siempre y nunca falla.',
+          'Calidad que aguanta lavado tras lavado.'] },
+        { n: 'Vestidos de evento', p: [40, 120], d: [
+          'Para la boda, la cena o la ocasión especial.',
+          'Te ayudamos a elegir el que te favorece.'] },
+        { n: 'Complementos', p: [5, 40], d: [
+          'Bolsos, pañuelos y bisutería que rematan el look.',
+          'El detalle que cambia un conjunto entero.'] },
+        { n: 'Asesoría de imagen', p: [0, 30], d: [
+          'Te decimos qué te sienta bien y por qué.',
+          'Sales sabiendo comprar y dejas de fallar.'] },
+        { n: 'Arreglos y ajustes', p: [5, 20], d: [
+          'Bajos, cinturas y mangas a tu medida.',
+          'Que la prenda te quede como hecha para ti.'] },
+        { n: 'Rebajas y outlet', p: [5, 30], d: [
+          'Temporada anterior a mitad de precio.',
+          'Buenas prendas esperando que las encuentres.'] },
+        { n: 'Tarjeta regalo', p: [10, 100], d: [
+          'Para acertar seguro cuando no sabes la talla.',
+          'Que elija ella lo que de verdad quiere.'] }
+      ]
+    },
+
+    mascotas: {
+      nombre: 'Mascotas y peluquería canina',
+      titulos: ['Cuidado de tu Mascota', 'Peluquería Canina', 'Nuestros Servicios', 'Mímalos como Merecen'],
+      subs: ['Trato cariñoso y sin estrés para tu peludo',
+             'Productos suaves y material esterilizado',
+             'Perros y gatos, cada uno a su ritmo',
+             'Salen guapos y contentos'],
+      serv: [
+        { n: 'Baño e higiene', p: [15, 30], d: [
+          'Baño, secado y corte de uñas, con champú a su piel.',
+          'Sale limpio, oliendo bien y sin nudos.'] },
+        { n: 'Corte de raza', p: [20, 45], d: [
+          'El corte que le toca según su raza y su pelo.',
+          'Respetamos el estándar y lo que pida el dueño.'] },
+        { n: 'Deslanado', p: [18, 40], d: [
+          'Quitamos el subpelo muerto que da tanto calor.',
+          'Menos pelo por casa y su piel respira mejor.'] },
+        { n: 'Corte de uñas', p: [5, 12], d: [
+          'Rápido y sin hacerle daño, con calma.',
+          'Uñas a su punto para que ande cómodo.'] },
+        { n: 'Limpieza de oídos', p: [5, 12], d: [
+          'Revisión y limpieza suave de la zona.',
+          'Prevenimos molestias antes de que vayan a más.'] },
+        { n: 'Bono de baños', p: [50, 110], d: [
+          'Varios baños a mejor precio a lo largo del mes.',
+          'Para razas que necesitan cuidado seguido.'] },
+        { n: 'Peluquería felina', p: [25, 50], d: [
+          'Manejo tranquilo y adaptado al gato.',
+          'Con paciencia, para que el mal rato sea el mínimo.'] },
+        { n: 'Antiparasitario', p: [8, 20], d: [
+          'Tratamiento de pipeta o baño según necesite.',
+          'Protección frente a pulgas y garrapatas.'] }
+      ]
+    },
+
+    fotografia: {
+      nombre: 'Estudio de fotografía',
+      titulos: ['Servicios de Fotografía', 'Nuestro Estudio', 'Tus Momentos, en Imagen', 'Sesiones y Reportajes'],
+      subs: ['Fotografía cuidada para cada ocasión',
+             'Estudio con luz y decorado propio',
+             'Entrega editada y en alta calidad',
+             'Reserva tu sesión con antelación'],
+      serv: [
+        { n: 'Sesión de retrato', p: [40, 90], d: [
+          'Una hora de estudio con varios fondos y cambios.',
+          'Salen las fotos que de verdad te representan.'] },
+        { n: 'Reportaje de boda', p: [600, 1500], d: [
+          'Desde los preparativos hasta el último baile.',
+          'Álbum editado y todas las imágenes en digital.'] },
+        { n: 'Fotos de producto', p: [50, 150], d: [
+          'Para tu tienda online, con fondo limpio y luz pareja.',
+          'Que el producto se vea tal cual, y venda.'] },
+        { n: 'Book profesional', p: [80, 200], d: [
+          'Para actores, modelos o tu perfil de trabajo.',
+          'Seleccionamos y retocamos las mejores tomas.'] },
+        { n: 'Fotos de familia', p: [50, 120], d: [
+          'En estudio o al aire libre, con niños incluidos.',
+          'El recuerdo que dentro de años agradecerás.'] },
+        { n: 'Comunión y bautizo', p: [150, 400], d: [
+          'Reportaje del día completo, sin perder detalle.',
+          'Con álbum impreso si lo quieres.'] },
+        { n: 'Fotografía de eventos', p: [200, 600], d: [
+          'Cubrimos tu evento de empresa o celebración.',
+          'Entrega rápida para que compartas al momento.'] },
+        { n: 'Revelado e impresión', p: [5, 40], d: [
+          'Tus fotos en papel de calidad, no en el móvil.',
+          'Tamaños y acabados a elegir.'] }
+      ]
+    },
+
+    inmobiliaria: {
+      nombre: 'Inmobiliaria',
+      titulos: ['Nuestros Servicios', 'Compra, Vende, Alquila', 'Tu Casa te Espera', 'Inmobiliaria de Confianza'],
+      subs: ['Acompañamiento en toda la operación',
+             'Valoración real y sin humo',
+             'Gestionamos el papeleo por ti',
+             'Conocemos la zona como nadie'],
+      serv: [
+        { n: 'Venta de tu vivienda', p: [0, 30], d: [
+          'La ponemos en valor y la enseñamos por ti.',
+          'Filtramos visitas serias y negociamos el precio.'] },
+        { n: 'Búsqueda de piso', p: [0, 30], d: [
+          'Nos dices lo que buscas y te lo encontramos.',
+          'Te avisamos antes de que salga al portal.'] },
+        { n: 'Valoración gratuita', p: [0, 0], d: [
+          'Te decimos cuánto vale de verdad, sin compromiso.',
+          'Precio de mercado, ni inflado ni regalado.'] },
+        { n: 'Gestión de alquiler', p: [0, 30], d: [
+          'Buscamos inquilino solvente y firmamos con garantías.',
+          'Nos ocupamos de contratos, fianzas y altas.'] },
+        { n: 'Reportaje del inmueble', p: [0, 30], d: [
+          'Fotos, plano y vídeo para que entre por los ojos.',
+          'Una casa bien enseñada se vende antes.'] },
+        { n: 'Asesoría hipotecaria', p: [0, 30], d: [
+          'Te ayudamos a comparar y a preparar la financiación.',
+          'Menos sorpresas el día de la firma.'] },
+        { n: 'Gestión de herencias', p: [0, 30], d: [
+          'Ordenamos la parte inmobiliaria del papeleo.',
+          'Te acompañamos en un trámite que agobia.'] },
+        { n: 'Tasación oficial', p: [150, 400], d: [
+          'Informe válido para el banco y para notaría.',
+          'Firmado por tasador homologado.'] }
+      ]
+    },
+
+    eventos: {
+      nombre: 'Eventos y celebraciones',
+      titulos: ['Organización de Eventos', 'Tu Celebración, Resuelta', 'Nuestros Servicios', 'Momentos Inolvidables'],
+      subs: ['Nos ocupamos de todo para que disfrutes',
+             'Bodas, cumpleaños y eventos de empresa',
+             'Presupuesto cerrado y sin sustos',
+             'De la idea al último detalle'],
+      serv: [
+        { n: 'Organización de bodas', p: [800, 2500], d: [
+          'Desde la finca hasta el arroz de la salida.',
+          'Un solo interlocutor para todo el día.'] },
+        { n: 'Cumpleaños infantil', p: [120, 350], d: [
+          'Animación, decoración y merienda montadas.',
+          'Tú disfrutas de tu hijo y del resto nos ocupamos.'] },
+        { n: 'Evento de empresa', p: [300, 1500], d: [
+          'Presentaciones, cenas y jornadas sin fallos.',
+          'Imagen cuidada para tu marca.'] },
+        { n: 'Decoración y ambientación', p: [150, 800], d: [
+          'Flores, luces y montaje según tu estilo.',
+          'El espacio queda listo y para la foto.'] },
+        { n: 'Catering', p: [15, 45], d: [
+          'Menú a elegir, servido y recogido.',
+          'Para todos los gustos y para todas las dietas.'] },
+        { n: 'Alquiler de material', p: [50, 400], d: [
+          'Carpas, mesas, sillas y sonido.',
+          'Lo que falte para que salga redondo.'] },
+        { n: 'Animación y música', p: [200, 700], d: [
+          'DJ o música en directo, y actividades.',
+          'Que nadie se quede sentado.'] },
+        { n: 'Photocall y recuerdos', p: [100, 350], d: [
+          'Rincón de fotos y detalle para los invitados.',
+          'Se llevan a casa un recuerdo del día.'] }
+      ]
+    },
+
+    limpieza: {
+      nombre: 'Limpieza y hogar',
+      titulos: ['Servicios de Limpieza', 'Tu Casa Impecable', 'Lo que Hacemos', 'Limpieza Profesional'],
+      subs: ['Personal de confianza y producto propio',
+             'Para hogares, oficinas y comunidades',
+             'Puntual o por horas, tú decides',
+             'Presupuesto claro, sin letra pequeña'],
+      serv: [
+        { n: 'Limpieza de hogar', p: [12, 20], d: [
+          'Por horas, la casa a punto cuando llegas.',
+          'Personal fijo para que te conozca la casa.'] },
+        { n: 'Limpieza a fondo', p: [80, 200], d: [
+          'La grande de temporada, rincón por rincón.',
+          'Cristales, azulejos y lo que nunca da tiempo.'] },
+        { n: 'Fin de obra', p: [150, 400], d: [
+          'Dejamos la reforma lista para entrar a vivir.',
+          'Quitamos polvo, restos y manchas de pintura.'] },
+        { n: 'Oficinas y locales', p: [15, 30], d: [
+          'Mantenimiento diario o varias veces por semana.',
+          'Fuera de tu horario, para no molestar.'] },
+        { n: 'Comunidades y portales', p: [100, 300], d: [
+          'Escaleras, ascensor y zonas comunes al día.',
+          'Contrato mensual con parte de trabajo.'] },
+        { n: 'Cristales y escaparates', p: [20, 60], d: [
+          'Sin marcas ni goteos, dentro y fuera.',
+          'Tu escaparate reluciente para vender más.'] },
+        { n: 'Tapicería y alfombras', p: [30, 90], d: [
+          'Lavado en profundidad de sofás y moquetas.',
+          'Quitamos manchas y olores, no sólo la superficie.'] },
+        { n: 'Bono de horas', p: [100, 250], d: [
+          'Paquete de horas a mejor precio al mes.',
+          'Las repartes como mejor te venga.'] }
+      ]
+    },
+
+    reformas: {
+      nombre: 'Reformas y mantenimiento',
+      titulos: ['Reformas y Arreglos', 'Nuestros Trabajos', 'Manos a la Obra', 'Tu Casa, a Punto'],
+      subs: ['Presupuesto cerrado antes de empezar',
+             'Oficios de confianza y trabajo limpio',
+             'Desde el arreglo pequeño a la reforma entera',
+             'Cumplimos plazos y dejamos todo recogido'],
+      serv: [
+        { n: 'Reforma de baño', p: [2500, 6000], d: [
+          'Fontanería, alicatado y sanitarios, llave en mano.',
+          'Te lo dejamos listo para usar y sin sorpresas.'] },
+        { n: 'Reforma de cocina', p: [3000, 8000], d: [
+          'Muebles, encimera e instalaciones renovadas.',
+          'Coordinamos los gremios para que no te agobies.'] },
+        { n: 'Pintura de vivienda', p: [500, 1800], d: [
+          'Paredes y techos, con la casa protegida.',
+          'Color a elegir y acabado parejo.'] },
+        { n: 'Fontanería', p: [40, 150], d: [
+          'Fugas, grifos y desatascos resueltos.',
+          'Vamos, lo vemos y te decimos el precio.'] },
+        { n: 'Electricidad', p: [40, 150], d: [
+          'Enchufes, cuadros y averías con garantía.',
+          'Trabajo seguro y según normativa.'] },
+        { n: 'Albañilería', p: [200, 1200], d: [
+          'Tabiques, solados y arreglos de obra.',
+          'Lo que haga falta picar, con orden.'] },
+        { n: 'Carpintería y armarios', p: [300, 2000], d: [
+          'Puertas, armarios a medida y tarima.',
+          'Madera bien rematada que dura años.'] },
+        { n: 'Mantenimiento por horas', p: [30, 50], d: [
+          'El manitas para esos arreglos que se acumulan.',
+          'Una mañana y tachas media lista de casa.'] }
+      ]
+    },
+
+    /* «✍️ Otra» — para cualquier negocio que no esté en la lista. Trae textos
+       neutros y profesionales que la persona cambia por los suyos: la
+       herramienta ya deja editar cada palabra, cada precio y la marca. */
+    generico: {
+      nombre: '✍️ Otra (la escribo yo)',
+      titulos: ['Nuestros Servicios', 'Lo que Ofrecemos', 'Nuestro Catálogo', 'Bienvenida'],
+      subs: ['Calidad y trato cercano en cada trabajo',
+             'Profesionales en lo que hacemos',
+             'Cambia estos textos por los tuyos',
+             'A tu servicio, con toda la atención'],
+      serv: [
+        { n: 'Servicio destacado', p: [10, 50], d: [
+          'Escribe aquí en qué consiste tu mejor servicio.',
+          'Lo que mejor haces y por lo que te buscan.'] },
+        { n: 'Nuestro trabajo estrella', p: [20, 80], d: [
+          'Cuenta qué te diferencia del resto.',
+          'El motivo por el que repiten contigo.'] },
+        { n: 'Atención personalizada', p: [0, 40], d: [
+          'Explica cómo cuidas a cada cliente.',
+          'El trato cercano que marca la diferencia.'] },
+        { n: 'Presupuesto sin compromiso', p: [0, 0], d: [
+          'Di que asesoras antes y sin coste.',
+          'Que pregunten sin miedo a la sorpresa final.'] },
+        { n: 'Ofertas y promociones', p: [5, 40], d: [
+          'Pon aquí tu oferta del mes.',
+          'Un buen gancho para que se decidan.'] },
+        { n: 'Bonos y paquetes', p: [40, 150], d: [
+          'Agrupa varios servicios a mejor precio.',
+          'Fideliza y aseguras las próximas visitas.'] },
+        { n: 'Servicio a domicilio', p: [10, 60], d: [
+          'Si vas a casa del cliente, cuéntalo aquí.',
+          'La comodidad que muchos valoran y pagan.'] },
+        { n: 'Novedad', p: [10, 60], d: [
+          'Estrena algo y anúncialo en el folleto.',
+          'Lo nuevo siempre llama la atención.'] }
+      ]
     }
   };
 
