@@ -25,7 +25,30 @@
   var TOPE_WEB = 45 * 1024 * 1024;  // lo que se puede incrustar en el folleto web
 
   var M = null, CB = null;     // motor y cerebro, se resuelven al arrancar
+  var DIS = null;              // cerebro de diseño (FOLLETO_DISENOS), opcional
+  var MEL = null, NOTE = null; // música gratis (FL_MELODIES / FL_NOTE), opcional
   var listo = false;
+
+  /* Notas de reserva, por si el bloque de Flyers no estuviera cargado (por
+     ejemplo abriendo el archivo suelto). Así la música nunca rompe nada. */
+  var NOTE_FALLBACK = {
+    C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
+    C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+    C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00
+  };
+
+  /* Nombres bonitos para las melodías que ya trae Flyers (FL_MELODIES). */
+  var NOMBRES_MEL = {
+    mel_energia: '⚡ Enérgica', mel_elegante: '🎩 Elegante', mel_alegre: '😊 Alegre',
+    mel_epico: '🎬 Épica', mel_lofi: '🎧 Lo-fi (relax)', mel_corporativo: '💼 Corporativa',
+    mel_romantico: '💕 Romántica', mel_dramatico: '🎭 Dramática',
+    mel_tropical: '🌴 Tropical', mel_reggaeton: '🔥 Reggaetón', mel_flamenco: '💃 Flamenco',
+    mel_bossa: '🌺 Bossa Nova', mel_jazz: '🎷 Jazz', mel_techno: '🤖 Techno',
+    mel_vals: '🩰 Vals', mel_cumbia: '🥁 Cumbia'
+  };
+  function nombreMel(id) {
+    return NOMBRES_MEL[id] || id.replace(/^mel_/, '').replace(/^\w/, function (c) { return c.toUpperCase(); });
+  }
 
   var FP = {
     pagina: null,
@@ -34,8 +57,71 @@
     semilla: Math.floor(Math.random() * 1e9),
     coloresManuales: null,
     grabando: false,
-    pararGrabacion: null
+    pararGrabacion: null,
+    qr: null          // { el:Image, contenido:'...' } cuando se activa el QR
   };
+
+  /* Mete el QR (si lo hay) en las opciones de dibujo. Todos los dibujos pasan
+     por aquí, así el QR sale en la vista previa, el JPG, el PDF, el web y el vídeo. */
+  function conQR(op) {
+    op = op || {};
+    if (FP.qr && FP.qr.el) op.qr = FP.qr.el;
+    return op;
+  }
+
+  /* ═══════════════════ Código QR ═══════════════════
+     Lo que escriba la persona se convierte en algo que el móvil sepa abrir:
+     un número suelto pasa a ser un enlace de WhatsApp; un link se respeta tal
+     cual. Usa la librería QRCode que el bloque ya carga. */
+  function contenidoQR(txt) {
+    var t = String(txt || '').trim();
+    if (!t) return '';
+    if (/^(https?:|mailto:|tel:|whatsapp:)/i.test(t)) return t;
+    if (/^www\./i.test(t)) return 'https://' + t;
+    var soloNum = t.replace(/[^\d+]/g, '');
+    if (soloNum.replace(/\D/g, '').length >= 8) return 'https://wa.me/' + soloNum.replace(/\D/g, '');
+    return t;
+  }
+
+  /* Genera el QR como <img>. La librería pinta dentro de un div oculto; de ahí
+     se saca la imagen y se guarda en FP.qr para que el motor la dibuje. */
+  function generarQR() {
+    var activo = $('fpQR') && $('fpQR').checked;
+    var contenido = contenidoQR(val('fpTel'));
+    if (!activo || !contenido) { FP.qr = null; repintar(); return; }
+    if (FP.qr && FP.qr.contenido === contenido) { repintar(); return; }
+    if (typeof QRCode === 'undefined') {
+      estado('No se pudo cargar el generador de códigos QR. Comprueba la conexión y recarga.', 'err');
+      FP.qr = null; repintar(); return;
+    }
+    var caja = $('fpOculto');
+    var div = document.createElement('div');
+    caja.appendChild(div);
+    try {
+      new QRCode(div, {
+        text: contenido, width: 480, height: 480,
+        colorDark: '#000000', colorLight: '#FFFFFF',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch (e) {
+      caja.removeChild(div);
+      estado('No se pudo crear el QR: ' + (e.message || e), 'err');
+      FP.qr = null; repintar(); return;
+    }
+    // la librería tarda un instante y devuelve <canvas> o <img> según el navegador
+    setTimeout(function () {
+      var cv = div.querySelector('canvas'), im = div.querySelector('img');
+      var fuente = null;
+      try { fuente = cv ? cv.toDataURL('image/png') : (im ? im.src : null); } catch (e) { fuente = im ? im.src : null; }
+      caja.removeChild(div);
+      if (!fuente) { FP.qr = null; repintar(); return; }
+      var img = new Image();
+      img.onload = function () { repintar(); };
+      img.src = fuente;
+      FP.qr = { el: img, contenido: contenido };
+      repintar();
+    }, 260);
+  }
 
   function $(id) { return document.getElementById(id); }
   function val(id) { var e = $(id); return e ? e.value : ''; }
@@ -92,17 +178,59 @@
     }).join('');
   }
 
+  /* Desplegable del cerebro de diseño, agrupado por uso. Si el archivo no está
+     cargado, esta fila no aparece y todo lo demás funciona igual. */
+  function selectDisenos() {
+    if (!DIS) return '';
+    var lista = DIS.lista();
+    var ops = DIS.grupos().map(function (g) {
+      var items = lista.filter(function (d) { return d.cat === g; }).map(function (d) {
+        return '<option value="' + d.id + '">' + esc(d.nombre) + '</option>';
+      }).join('');
+      return '<optgroup label="' + esc(g) + '">' + items + '</optgroup>';
+    }).join('');
+    return '<div class="row">' +
+        '<span class="lbl">🎨 Estilo</span>' +
+        '<select id="fpDiseno" style="flex:1;min-width:150px">' +
+          '<option value="">— elige un diseño profesional —</option>' + ops +
+        '</select>' +
+      '</div>' +
+      '<div class="row" id="fpDisenoDesc" style="font-size:9px;color:var(--tx2);margin-top:-2px"></div>';
+  }
+
+  /* En el móvil los botones del bloque miden 25px de alto: con el dedo se falla.
+     Aquí se agrandan SÓLO en pantallas táctiles y SÓLO dentro de esta pestaña,
+     así el resto del bloque y la vista de ordenador se quedan como estaban.
+     Es un <style> añadido, no se toca ninguna regla del CSS de la página. */
+  function estilosTactiles() {
+    if ($('fpEstiloTactil')) return;
+    var s = document.createElement('style');
+    s.id = 'fpEstiloTactil';
+    s.textContent =
+      '@media (pointer: coarse){' +
+        '#tab-folleto .btn{min-height:38px;padding-top:9px;padding-bottom:9px}' +
+        '#tab-folleto select,#tab-folleto input[type=text],#tab-folleto input[type=number]{min-height:38px}' +
+        '#tab-folleto input[type=checkbox]{width:20px;height:20px}' +
+        '#tab-folleto input[type=color]{min-height:34px}' +
+        '#tab-folleto label{padding:3px 0}' +
+      '}';
+    document.head.appendChild(s);
+  }
+
   function construir() {
     var caja = $('tab-folleto');
     if (!caja) return false;
+    estilosTactiles();
 
     caja.innerHTML =
     '<div class="panel">' +
-      '<div class="p-title">📰 Folletos Pro · tu carta de servicios en una hoja</div>' +
+      '<div class="p-title">📰 Folletos Pro · tu carta en una hoja, con diseño profesional</div>' +
       '<div style="font-size:10px;color:var(--tx2);margin-bottom:6px">' +
-        'Elige la cuadrícula, pon tus fotos o tus vídeos en cada hueco y escribe tus precios. ' +
+        'Elige un <b>estilo de diseño</b>, pon tus fotos o tus vídeos en cada hueco y escribe tus precios. ' +
         'Todo se monta en tu móvil y <b>no gasta créditos</b>.' +
       '</div>' +
+
+      selectDisenos() +
 
       '<div class="row">' +
         '<span class="lbl">Cuadrícula</span>' +
@@ -148,6 +276,14 @@
         '<span class="lbl">Contacto</span><input type="text" id="fpContacto" placeholder="📱 600 00 00 00 · @tuinstagram" style="flex:1;min-width:120px">' +
         '<span class="lbl">Botón</span><input type="text" id="fpCta" style="width:130px">' +
       '</div>' +
+      '<div class="row">' +
+        '<span class="lbl">📲 WhatsApp</span>' +
+        '<input type="text" id="fpTel" placeholder="34600000000 · o pega un link" style="flex:1;min-width:120px">' +
+        '<label style="font-size:10px;color:var(--tx2)"><input type="checkbox" id="fpQR"> mostrar QR</label>' +
+      '</div>' +
+      '<div class="row" style="margin-top:-2px"><span style="font-size:9px;color:var(--tx2)">' +
+        'El QR se dibuja en el folleto: al escanearlo abre tu WhatsApp (o el link que pongas).' +
+      '</span></div>' +
     '</div>' +
 
     /* ── Los cuadros ── */
@@ -176,6 +312,45 @@
       '</div>' +
     '</div>' +
 
+    /* ── Mis diseños (se quedan en el dispositivo) ── */
+    '<div class="panel">' +
+      '<div class="p-title">📚 Mis diseños · guárdalo y sigue cuando quieras</div>' +
+      '<div class="row">' +
+        '<input type="text" id="fpDisNombre" placeholder="Ponle un nombre" style="flex:1;min-width:120px">' +
+        '<button class="btn btn-ok" id="fpDisGuardar">💾 Guardar este</button>' +
+      '</div>' +
+      '<div id="fpDisLista" style="margin-top:6px"></div>' +
+      '<div style="font-size:9px;color:var(--tx2);margin-top:5px">' +
+        'Se guarda en <b>este móvil</b> (textos, colores y fotos). Los vídeos, por su tamaño, se vuelven a poner al abrir.' +
+      '</div>' +
+    '</div>' +
+
+    /* ── Carrusel para redes ── */
+    '<div class="panel">' +
+      '<div class="p-title">🎠 Carrusel para redes · Instagram, Facebook, TikTok, Telegram</div>' +
+      '<div style="font-size:10px;color:var(--tx2);margin-bottom:6px">' +
+        'Convierte tu folleto en una <b>secuencia de tarjetas</b> que se pasan con el dedo. ' +
+        'Salen numeradas, listas para subirlas en orden.' +
+      '</div>' +
+      '<div class="row">' +
+        '<span class="lbl">Formato</span>' +
+        '<select id="fpCarFormato">' +
+          '<option value="cuadrado">Cuadrado 1:1 · Instagram y Facebook</option>' +
+          '<option value="vertical" selected>Vertical 4:5 · el que más se ve</option>' +
+          '<option value="historia">Vertical 9:16 · TikTok e historias</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="row">' +
+        '<label style="font-size:10px"><input type="checkbox" id="fpCarUno" checked> una tarjeta por servicio</label>' +
+        '<label style="font-size:10px"><input type="checkbox" id="fpCarPortada" checked> con portada</label>' +
+      '</div>' +
+      '<div class="row">' +
+        '<button class="btn btn-ok" id="fpCarImg">🎠 Descargar el carrusel</button>' +
+        '<button class="btn" id="fpCarVid">🎬 Vídeo del carrusel</button>' +
+        '<span id="fpCarInfo" style="font-size:9px;color:var(--tx2)"></span>' +
+      '</div>' +
+    '</div>' +
+
     /* ── Descargas ── */
     '<div class="panel">' +
       '<div class="p-title">⬇️ Llévatelo</div>' +
@@ -195,13 +370,54 @@
           '<option value="ninguna">🔇 Sin sonido</option>' +
         '</select>' +
       '</div>' +
+
+      /* Player de voces gratis: elige la voz del navegador (las 🟢 de Google
+         suelen ser las mejores), la velocidad y el tono, y pruébala al momento. */
+      '<div id="fpVozGratisPanel" style="display:none;margin:6px 0;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg3)">' +
+        '<div style="font-size:10px;color:var(--ac2);font-weight:700;margin-bottom:7px">🗣️ Elige tu voz gratis</div>' +
+        '<div class="row" style="margin:0 0 6px">' +
+          '<select id="fpVozSel" style="flex:1;min-width:150px"><option value="">Cargando voces…</option></select>' +
+          '<button class="btn btn-g" id="fpVozProbar" style="font-size:10px;padding:4px 10px">▶ Probar</button>' +
+        '</div>' +
+        '<div class="row" style="margin:0 0 4px;align-items:center">' +
+          '<span class="lbl" style="min-width:62px">Velocidad</span>' +
+          '<input type="range" id="fpVozVel" min="0.7" max="1.3" step="0.05" value="1" style="flex:1">' +
+          '<span id="fpVozVelN" style="font-size:9px;color:var(--tx2);width:34px;text-align:right">1.0×</span>' +
+        '</div>' +
+        '<div class="row" style="margin:0;align-items:center">' +
+          '<span class="lbl" style="min-width:62px">Tono</span>' +
+          '<input type="range" id="fpVozTono" min="0.6" max="1.4" step="0.05" value="1" style="flex:1">' +
+          '<span id="fpVozTonoN" style="font-size:9px;color:var(--tx2);width:34px;text-align:right">1.0</span>' +
+        '</div>' +
+        '<div id="fpVozAviso" style="font-size:9px;color:var(--tx2);margin-top:6px"></div>' +
+      '</div>' +
       '<div class="row" id="fpAudioRow" style="display:none">' +
         '<span class="lbl">Archivo</span>' +
         '<input type="file" id="fpAudio" accept="audio/*" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px">' +
       '</div>' +
+      '<div class="row" id="fpMusicaRow">' +
+        '<span class="lbl">🎵 Música</span>' +
+        '<select id="fpMusica" style="flex:1;min-width:150px"><option value="none">🔇 Sin música de fondo</option></select>' +
+        '<button class="btn btn-g" id="fpMusPrev" style="font-size:10px;padding:3px 9px">▶ Escuchar</button>' +
+      '</div>' +
+      '<div class="row" style="margin-top:-2px"><span style="font-size:9px;color:var(--tx2)">' +
+        'Melodías gratis sin derechos de autor. Suenan por debajo de la voz.' +
+      '</span></div>' +
       '<div class="row" id="fpGuionRow">' +
         '<span class="lbl">Lo que dirá</span>' +
         '<textarea id="fpGuion" rows="3" style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:6px;padding:5px;font-size:11px"></textarea>' +
+      '</div>' +
+      '<div class="row">' +
+        '<span class="lbl">✨ Efecto</span>' +
+        '<select id="fpEfecto" style="flex:1;min-width:160px">' +
+          '<option value="uno_a_uno">Cuadros de uno en uno</option>' +
+          '<option value="olas">🌊 Olas</option>' +
+          '<option value="circulos">⭕ Círculos</option>' +
+          '<option value="cuadros">🔲 Mosaico</option>' +
+          '<option value="deslizar">➡️ Deslizar</option>' +
+          '<option value="persiana">🎚️ Persiana</option>' +
+          '<option value="fundido">🎞️ Fundido</option>' +
+        '</select>' +
       '</div>' +
       '<div class="row">' +
         '<span class="lbl">Segundos</span>' +
@@ -331,10 +547,19 @@
     r.readAsDataURL(f);
   }
 
+  /* ¿Alguna página YA GUARDADA sigue usando este vídeo? Si es así, no se puede
+     revocar su URL ni sacarlo del DOM: la copia guardada lo comparte por
+     referencia y se quedaría en blanco al exportar la Imagen, el PDF o el vídeo. */
+  function mediaEnUso(media) {
+    return FP.paginas.some(function (p) {
+      return p.celdas.some(function (c) { return c.media === media; });
+    });
+  }
+
   function quitarMedia(i, callado) {
     var c = FP.pagina.celdas[i];
     if (!c || !c.media) { if (!callado) repintar(); return; }
-    if (c.media.tipo === 'vid') {
+    if (c.media.tipo === 'vid' && !mediaEnUso(c.media)) {
       try { c.media.el.pause(); } catch (e) {}
       if (c.media.el.parentNode) c.media.el.parentNode.removeChild(c.media.el);
       try { URL.revokeObjectURL(c.media.url); } catch (e) {}
@@ -400,6 +625,34 @@
     repintar();
   }
 
+  /* ═══════════════════ Cerebro de diseño ═══════════════════ */
+
+  /* Aplica un estilo profesional: mueve de golpe la paleta, la cuadrícula, la
+     hoja y los acabados. No toca los textos ni las fotos que ya haya puesto. */
+  function aplicarDiseno(id) {
+    var d = DIS && DIS.get(id);
+    if (!d) return;
+    $('fpTema').value = d.tema;
+    $('fpFormato').value = d.formato;
+    FP.coloresManuales = null;                 // el estilo trae su propia paleta
+    $('fpAGrano').checked = !!d.adornos.grano;
+    $('fpAVineta').checked = !!d.adornos.vineta;
+    $('fpAFiletes').checked = !!d.adornos.filetes;
+    $('fpASombras').checked = !!d.adornos.sombras;
+
+    // la cuadrícula puede cambiar el nº de huecos: los nuevos se rellenan solos
+    $('fpRejilla').value = d.rejilla;
+    var n = nCuadros(), faltaban = FP.pagina.celdas.length < n;
+    while (FP.pagina.celdas.length < n) FP.pagina.celdas.push({ titulo: '', texto: '', precio: '', etiqueta: '', media: null });
+
+    var desc = $('fpDisenoDesc');
+    if (desc) desc.textContent = d.desc;
+
+    if (faltaban) rellenarVacias();            // ya repinta las celdas y el lienzo
+    else { pintarCeldas(); repintar(); }
+    estado('✓ Diseño «' + d.nombre + '» aplicado. Cambia lo que quieras a mano.', 'done');
+  }
+
   /* ═══════════════════ Vista previa ═══════════════════ */
 
   function leerPanel() {
@@ -428,7 +681,7 @@
     var cv = $('fpLienzo');
     cv.width = F.w; cv.height = F.h;
     cv.style.width = (F.w > F.h ? 400 : 320) + 'px';
-    M.pintar(cv.getContext('2d'), F.w, F.h, FP.pagina, { nPagina: FP.paginas.length + 1 });
+    M.pintar(cv.getContext('2d'), F.w, F.h, FP.pagina, conQR({ nPagina: FP.paginas.length + 1 }));
     sincronizarColores();
   }
 
@@ -450,7 +703,7 @@
       if (!cuentaVideos()) { bucle = null; return; }
       var F = M.FORMATOS[FP.pagina.formato] || M.FORMATOS.a4v;
       var cv = $('fpLienzo');
-      if (cv) M.pintar(cv.getContext('2d'), F.w, F.h, FP.pagina, { nPagina: FP.paginas.length + 1 });
+      if (cv) M.pintar(cv.getContext('2d'), F.w, F.h, FP.pagina, conQR({ nPagina: FP.paginas.length + 1 }));
       bucle = requestAnimationFrame(paso);
     })();
   }
@@ -502,21 +755,322 @@
     var F = M.FORMATOS[pag.formato] || M.FORMATOS.a4v;
     var cv = document.createElement('canvas');
     cv.width = F.w; cv.height = F.h;
-    M.pintar(cv.getContext('2d'), F.w, F.h, pag, { nPagina: n });
+    M.pintar(cv.getContext('2d'), F.w, F.h, pag, conQR({ nPagina: n }));
     return cv;
+  }
+
+  /* ═══════════════════ Mis diseños (guardar en el dispositivo) ═══════════════════
+     Se guarda en localStorage: textos, ajustes, colores y las fotos (reducidas
+     para que quepan). Los vídeos no se guardan por su tamaño; al abrir, se avisa
+     de cuántos hay que volver a poner. */
+  var CLAVE_DIS = 'fp_disenos_v1';
+
+  function listaDisenos() {
+    try { return JSON.parse(localStorage.getItem(CLAVE_DIS) || '[]') || []; }
+    catch (e) { return []; }
+  }
+  function escribirLista(l) {
+    try { localStorage.setItem(CLAVE_DIS, JSON.stringify(l)); return true; }
+    catch (e) { return false; }
+  }
+
+  /* Reduce una foto (dataURL) a 1200px de lado máximo, para que no reviente la
+     memoria del navegador al guardar varios diseños. */
+  function miniFoto(dataURL) {
+    return new Promise(function (res) {
+      if (!dataURL) { res(null); return; }
+      var img = new Image();
+      img.onload = function () {
+        var mx = 1200, w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        if (!w || !h) { res(dataURL); return; }
+        var s = Math.min(1, mx / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * s)); c.height = Math.max(1, Math.round(h * s));
+        try { c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.82)); }
+        catch (e) { res(dataURL); }
+      };
+      img.onerror = function () { res(dataURL); };
+      img.src = dataURL;
+    });
+  }
+
+  function serializarPagina(p) {
+    return {
+      rejilla: p.rejilla, formato: p.formato, tema: p.tema,
+      colores: p.colores ? JSON.parse(JSON.stringify(p.colores)) : null,
+      cabecera: { marca: p.cabecera.marca, titulo: p.cabecera.titulo, subtitulo: p.cabecera.subtitulo },
+      pie: { cta: p.pie.cta, contacto: p.pie.contacto },
+      rubro: p.rubro, tono: p.tono, guion: p.guion || '',
+      adornos: { grano: !!p.adornos.grano, vineta: !!p.adornos.vineta, filetes: !!p.adornos.filetes, sombras: !!p.adornos.sombras },
+      celdas: p.celdas.map(function (c) {
+        return {
+          titulo: c.titulo, texto: c.texto, precio: c.precio, etiqueta: c.etiqueta,
+          foto: (c.media && c.media.tipo === 'img') ? c.media.url : null,
+          sinVideo: !!(c.media && c.media.tipo === 'vid')
+        };
+      })
+    };
+  }
+
+  function deserializarPagina(pg) {
+    return {
+      rejilla: pg.rejilla, formato: pg.formato, tema: pg.tema,
+      colores: pg.colores ? JSON.parse(JSON.stringify(pg.colores)) : null,
+      cabecera: { marca: pg.cabecera.marca, titulo: pg.cabecera.titulo, subtitulo: pg.cabecera.subtitulo },
+      pie: { cta: pg.pie.cta, contacto: pg.pie.contacto },
+      rubro: pg.rubro, tono: pg.tono, guion: pg.guion || '',
+      adornos: { grano: !!pg.adornos.grano, vineta: !!pg.adornos.vineta, filetes: !!pg.adornos.filetes, sombras: !!pg.adornos.sombras },
+      celdas: pg.celdas.map(function (c) {
+        var celda = { titulo: c.titulo, texto: c.texto, precio: c.precio, etiqueta: c.etiqueta, media: null };
+        if (c.foto) {
+          var img = new Image();
+          img.onload = function () { repintar(); };  // redibuja cuando la foto está lista
+          img.src = c.foto;
+          celda.media = { tipo: 'img', el: img, url: c.foto, file: null, nombre: 'foto guardada' };
+        }
+        return celda;
+      })
+    };
+  }
+
+  function guardarDiseno() {
+    if (!listo) return;
+    leerPanel();
+    var nombre = (val('fpDisNombre') || '').trim() || ('Diseño ' + (listaDisenos().length + 1));
+    var pags = FP.paginas.map(serializarPagina).concat([serializarPagina(FP.pagina)]);
+    var tareas = [];
+    pags.forEach(function (pg) {
+      pg.celdas.forEach(function (cel) { tareas.push(miniFoto(cel.foto).then(function (d) { cel.foto = d; })); });
+    });
+    estado('Guardando el diseño…', 'proc');
+    Promise.all(tareas).then(function () {
+      var item = {
+        id: 'd' + Date.now(), nombre: nombre, fecha: hoy(), paginas: pags,
+        tel: val('fpTel') || '', qr: !!($('fpQR') && $('fpQR').checked)
+      };
+      var lista = listaDisenos();
+      lista.unshift(item);
+      if (lista.length > 20) lista = lista.slice(0, 20);
+      if (escribirLista(lista)) { estado('✓ Diseño «' + nombre + '» guardado.', 'done'); pintarDisenos(); return; }
+      // no cupo: reintenta sin las fotos
+      item.paginas.forEach(function (pg) { pg.celdas.forEach(function (cel) { cel.foto = null; }); });
+      if (escribirLista(lista)) { estado('✓ Guardado, pero sin las fotos (no cabían en la memoria del móvil).', 'done'); pintarDisenos(); }
+      else estado('No se pudo guardar: la memoria del navegador está llena. Borra algún diseño y prueba otra vez.', 'err');
+    });
+  }
+
+  function borrarDiseno(id) {
+    escribirLista(listaDisenos().filter(function (x) { return x.id !== id; }));
+    pintarDisenos();
+  }
+
+  function cargarDisenoGuardado(id) {
+    var it = null;
+    listaDisenos().some(function (x) { if (x.id === id) { it = x; return true; } return false; });
+    if (!it) { estado('Ese diseño ya no está.', 'err'); return; }
+
+    // suelta los medios actuales (los vídeos, aunque estén compartidos, se van)
+    FP.pagina.celdas.forEach(function (c, i) { if (c.media) quitarMedia(i, true); });
+    FP.paginas.forEach(function (pg) {
+      pg.celdas.forEach(function (c) {
+        if (c.media && c.media.tipo === 'vid') {
+          try { c.media.el.pause(); if (c.media.el.parentNode) c.media.el.parentNode.removeChild(c.media.el); URL.revokeObjectURL(c.media.url); } catch (e) {}
+        }
+      });
+    });
+
+    var pags = it.paginas.map(deserializarPagina);
+    FP.paginas = pags.slice(0, pags.length - 1);
+    FP.pagina = pags[pags.length - 1];
+    FP.coloresManuales = FP.pagina.colores || null;
+
+    $('fpRejilla').value = FP.pagina.rejilla;
+    $('fpFormato').value = FP.pagina.formato;
+    $('fpTema').value = FP.pagina.tema;
+    $('fpRubro').value = FP.pagina.rubro;
+    $('fpTono').value = FP.pagina.tono;
+    $('fpMarca').value = FP.pagina.cabecera.marca;
+    $('fpTitulo').value = FP.pagina.cabecera.titulo;
+    $('fpSub').value = FP.pagina.cabecera.subtitulo;
+    $('fpContacto').value = FP.pagina.pie.contacto;
+    $('fpCta').value = FP.pagina.pie.cta;
+    $('fpGuion').value = FP.pagina.guion || '';
+    $('fpAGrano').checked = FP.pagina.adornos.grano;
+    $('fpAVineta').checked = FP.pagina.adornos.vineta;
+    $('fpAFiletes').checked = FP.pagina.adornos.filetes;
+    $('fpASombras').checked = FP.pagina.adornos.sombras;
+
+    if ($('fpTel')) $('fpTel').value = it.tel || '';
+    if ($('fpQR')) $('fpQR').checked = !!it.qr;
+    FP.qr = null;
+    generarQR();          // lo rehace con el número guardado (o lo quita)
+
+    var faltan = 0;
+    it.paginas.forEach(function (pg) { pg.celdas.forEach(function (c) { if (c.sinVideo) faltan++; }); });
+
+    pintarCeldas();
+    pintarPaginas();
+    repintar();
+    arrancarBucle();
+    estado('✓ Diseño «' + it.nombre + '» abierto' +
+      (faltan ? '. Vuelve a poner ' + faltan + ' vídeo(s): no se guardan por su tamaño.' : '.'), 'done');
+  }
+
+  function pintarDisenos() {
+    var caja = $('fpDisLista');
+    if (!caja) return;
+    var lista = listaDisenos();
+    if (!lista.length) { caja.innerHTML = '<span style="font-size:9px;color:var(--tx2)">Aún no has guardado ningún diseño.</span>'; return; }
+    caja.innerHTML = lista.map(function (it) {
+      return '<div class="row" style="margin:0 0 4px;align-items:center">' +
+        '<span style="flex:1;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📄 ' + esc(it.nombre) +
+          ' <span style="color:var(--tx2)">· ' + esc(it.fecha) + '</span></span>' +
+        '<button class="btn btn-g fpDisAbrir" data-id="' + esc(it.id) + '" style="font-size:9px;padding:2px 9px">Abrir</button>' +
+        '<button class="btn btn-g fpDisBorrar" data-id="' + esc(it.id) + '" style="font-size:9px;padding:2px 7px">✕</button>' +
+      '</div>';
+    }).join('');
+    caja.querySelectorAll('.fpDisAbrir').forEach(function (el) {
+      el.addEventListener('click', function () { cargarDisenoGuardado(el.dataset.id); });
+    });
+    caja.querySelectorAll('.fpDisBorrar').forEach(function (el) {
+      el.addEventListener('click', function () { borrarDiseno(el.dataset.id); });
+    });
+  }
+
+  /* ═══════════════════ ZIP (varias imágenes en una descarga) ═══════════════════
+     Un ZIP «store» (sin comprimir; el JPEG ya lo está) hecho a mano, para que
+     bajar varias hojas sea UNA sola descarga —fiable en el móvil, donde bajar
+     varios archivos seguidos suele fallar— con cada hoja como un .jpg dentro. */
+  var CRC_TABLA = (function () {
+    var t = [], c, n, k;
+    for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; }
+    return t;
+  })();
+  function crc32(u8) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < u8.length; i++) c = CRC_TABLA[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function b64aU8(b64) {
+    var bin = atob(b64), n = bin.length, u = new Uint8Array(n);
+    for (var i = 0; i < n; i++) u[i] = bin.charCodeAt(i);
+    return u;
+  }
+  function ascii(s) {
+    var u = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255;
+    return u;
+  }
+  function le16(v) { return [v & 255, (v >> 8) & 255]; }
+  function le32(v) { return [v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >>> 24) & 255]; }
+  function zipStore(archivos) {
+    var partes = [], central = [], offset = 0;
+    archivos.forEach(function (f) {
+      var nombre = ascii(f.name), datos = f.data, crc = crc32(datos), sz = datos.length;
+      var lh = new Uint8Array([].concat([0x50, 0x4b, 0x03, 0x04], le16(20), le16(0), le16(0), le16(0), le16(0),
+        le32(crc), le32(sz), le32(sz), le16(nombre.length), le16(0)));
+      partes.push(lh, nombre, datos);
+      central.push(new Uint8Array([].concat([0x50, 0x4b, 0x01, 0x02], le16(20), le16(20), le16(0), le16(0), le16(0), le16(0),
+        le32(crc), le32(sz), le32(sz), le16(nombre.length), le16(0), le16(0), le16(0), le16(0), le32(0), le32(offset))), nombre);
+      offset += lh.length + nombre.length + datos.length;
+    });
+    var centralBytes = 0;
+    central.forEach(function (u) { centralBytes += u.length; });
+    var eocd = new Uint8Array([].concat([0x50, 0x4b, 0x05, 0x06], le16(0), le16(0),
+      le16(archivos.length), le16(archivos.length), le32(centralBytes), le32(offset), le16(0)));
+    return new Blob(partes.concat(central).concat([eocd]), { type: 'application/zip' });
+  }
+
+  /* ═══════════════════ Carrusel para redes ═══════════════════
+     Convierte el folleto en una secuencia de tarjetas que se pasan con el
+     dedo: portada + una tarjeta por servicio. Cada tarjeta es una hoja normal
+     (el mismo motor la dibuja), sólo que con el formato de la red y con un
+     único cuadro dentro, así el servicio se ve grande y se lee en el móvil. */
+  function tarjetasCarrusel() {
+    var fmt = val('fpCarFormato') || 'vertical';
+    var unoAUno = !$('fpCarUno') || $('fpCarUno').checked;
+    var conPortada = !$('fpCarPortada') || $('fpCarPortada').checked;
+    var origen = hojas();           // lee el panel y devuelve las hojas actuales
+    var salida = [];
+
+    origen.forEach(function (p) {
+      if (!unoAUno) { var t = copiar(p); t.formato = fmt; salida.push(t); return; }
+      // portada: la hoja entera, para que se vea de qué va el folleto
+      if (conPortada) {
+        var por = copiar(p);
+        por.formato = fmt;
+        salida.push(por);
+      }
+      // y después, un servicio por tarjeta (sólo los que tienen algo escrito)
+      p.celdas.forEach(function (c) {
+        if (!c.titulo && !c.texto && !c.media) return;
+        var t2 = copiar(p);
+        t2.formato = fmt;
+        t2.rejilla = 'r1';
+        t2.celdas = [{ titulo: c.titulo, texto: c.texto, precio: c.precio, etiqueta: c.etiqueta, media: c.media }];
+        salida.push(t2);
+      });
+    });
+
+    if (!salida.length) { var u = copiar(origen[0]); u.formato = fmt; salida.push(u); }
+    return salida;
+  }
+
+  function infoCarrusel(msg) {
+    var e = $('fpCarInfo');
+    if (e) e.textContent = msg || '';
+  }
+
+  /* Dice cuántas tarjetas van a salir, para que no sea una sorpresa al pulsar. */
+  function contarCarrusel() {
+    if (!listo) return;
+    var n = tarjetasCarrusel().length;
+    infoCarrusel(n > 20 ? '20 tarjetas (de ' + n + ': es el tope de Instagram)' : n + ' tarjetas');
+  }
+
+  function descargarCarrusel() {
+    var ts = tarjetasCarrusel();
+    if (ts.length > 20) ts = ts.slice(0, 20);   // Instagram admite 20 por carrusel
+    estado('Preparando el carrusel…', 'proc');
+    try {
+      var archivos = ts.map(function (p, i) {
+        var n = ('0' + (i + 1)).slice(-2);
+        var b64 = lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.95).split(',')[1];
+        return { name: n + '_carrusel.jpg', data: b64aU8(b64) };
+      });
+      bajar('carrusel_' + hoy() + '.zip', URL.createObjectURL(zipStore(archivos)));
+      estado('✓ Carrusel de ' + ts.length + ' tarjetas en un ZIP. Ábrelo y súbelas en orden (01, 02, 03…).', 'done');
+      infoCarrusel(ts.length + ' tarjetas');
+    } catch (e) {
+      estado('No se pudo montar el carrusel: ' + (e.message || e), 'err');
+    }
   }
 
   /* ═══════════════════ Descargas ═══════════════════ */
 
   function descargarPNG() {
     var hs = hojas();
-    hs.forEach(function (p, i) {
-      setTimeout(function () {
-        bajar('folleto_' + hoy() + (hs.length > 1 ? '_hoja' + (i + 1) : '') + '.jpg',
-              lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.95));
-      }, i * 350);
-    });
-    estado('✓ ' + hs.length + (hs.length > 1 ? ' imágenes descargadas.' : ' imagen descargada.'), 'done');
+    if (hs.length === 1) {
+      bajar('folleto_' + hoy() + '.jpg', lienzoDe(hs[0], 1).toDataURL('image/jpeg', 0.95));
+      estado('✓ Imagen descargada.', 'done');
+      return;
+    }
+    try {
+      var archivos = hs.map(function (p, i) {
+        var b64 = lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.95).split(',')[1];
+        return { name: 'folleto_hoja' + (i + 1) + '.jpg', data: b64aU8(b64) };
+      });
+      bajar('folleto_' + hoy() + '.zip', URL.createObjectURL(zipStore(archivos)));
+      estado('✓ Las ' + hs.length + ' hojas en un ZIP (una sola descarga). Ábrelo y tienes cada imagen por separado.', 'done');
+    } catch (e) {
+      // respaldo: hoja a hoja (por si algún navegador no deja crear el ZIP)
+      hs.forEach(function (p, i) {
+        setTimeout(function () {
+          bajar('folleto_' + hoy() + '_hoja' + (i + 1) + '.jpg', lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.95));
+        }, i * 350);
+      });
+      estado('✓ ' + hs.length + ' imágenes descargadas.', 'done');
+    }
   }
 
   function descargarPDF() {
@@ -646,6 +1200,124 @@
     });
   }
 
+  /* ═══════════════════ Música gratis ═══════════════════
+     Sintetiza en el propio dispositivo una de las melodías sin derechos de
+     autor de Flyers (FL_MELODIES), conectándola SÓLO al destino que se le
+     pasa. Para el vídeo, ese destino es la pista que se graba; para la
+     preescucha, es el altavoz. Si FL_MELODIES no está, no hace nada. */
+  function crearMezclaMusica(ac, dest, def, dur, ganancia) {
+    var master = ac.createGain();
+    master.gain.value = (def.gain || 0.5) * ganancia;
+    var lp = ac.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 3400; lp.Q.value = 0.5;
+    master.connect(lp); lp.connect(dest);
+
+    var beat = 60 / (def.tempo || 100), step = beat * 0.5, bstep = beat * 2;
+    var t0 = ac.currentTime + 0.15, fin = t0 + dur, oscs = [];
+    var tabla = NOTE || NOTE_FALLBACK;
+    function nota(freq, t, d, pico, onda) {
+      if (t >= fin) return;
+      var o = ac.createOscillator(); o.type = onda || 'sine'; o.frequency.value = freq;
+      var ge = ac.createGain();
+      ge.gain.setValueAtTime(0.0001, t);
+      ge.gain.linearRampToValueAtTime(pico, t + 0.02);
+      ge.gain.exponentialRampToValueAtTime(0.0008, t + d);
+      o.connect(ge); ge.connect(master);
+      o.start(t); o.stop(Math.min(fin + 0.1, t + d + 0.05)); oscs.push(o);
+    }
+    var seq = def.seq || [], bass = def.bass || [], i, t;
+    for (i = 0, t = t0; t < fin && seq.length; t += step, i++) nota(tabla[seq[i % seq.length]] || 440, t, step * 1.1, 0.6, def.wave);
+    for (i = 0, t = t0; t < fin && bass.length; t += bstep, i++) nota(tabla[bass[i % bass.length]] || 130, t, bstep * 0.95, 0.4, 'sine');
+    master.gain.setValueAtTime(master.gain.value, Math.max(t0, fin - 0.6));
+    master.gain.linearRampToValueAtTime(0.0001, fin);
+    return { stop: function () { oscs.forEach(function (o) { try { o.stop(); } catch (e) {} }); try { master.disconnect(); lp.disconnect(); } catch (e) {} } };
+  }
+
+  /* Llena el desplegable de música con las melodías de Flyers, si están. Si no
+     hay ninguna, deja la fila oculta y el vídeo sigue funcionando sin música. */
+  function llenarMusica() {
+    var sel = $('fpMusica'), fila = $('fpMusicaRow');
+    if (!sel) return;
+    if (!MEL) { if (fila) fila.style.display = 'none'; return; }
+    var ids = Object.keys(MEL);
+    if (!ids.length) { if (fila) fila.style.display = 'none'; return; }
+    var html = '<option value="none">🔇 Sin música de fondo</option>';
+    ids.forEach(function (id) { html += '<option value="' + esc(id) + '">' + esc(nombreMel(id)) + '</option>'; });
+    sel.innerHTML = html;
+  }
+
+  var prevAc = null, prevMus = null, prevTO = null;
+  function pararPreview() {
+    if (prevMus) { try { prevMus.stop(); } catch (e) {} prevMus = null; }
+    if (prevAc) { try { prevAc.close(); } catch (e) {} prevAc = null; }
+    if (prevTO) { clearTimeout(prevTO); prevTO = null; }
+    var b = $('fpMusPrev'); if (b) b.textContent = '▶ Escuchar';
+  }
+  function previewMusica() {
+    if (prevMus) { pararPreview(); return; }
+    var id = val('fpMusica');
+    if (!id || id === 'none' || !MEL || !MEL[id]) { estado('Elige una melodía para escucharla.', 'err'); return; }
+    try {
+      prevAc = new (window.AudioContext || window.webkitAudioContext)();
+      if (prevAc.state === 'suspended') prevAc.resume();
+      prevMus = crearMezclaMusica(prevAc, prevAc.destination, MEL[id], 5, 1);
+      var b = $('fpMusPrev'); if (b) b.textContent = '■ Parar';
+      prevTO = setTimeout(pararPreview, 5400);
+    } catch (e) { estado('No se pudo reproducir la música: ' + (e.message || e), 'err'); }
+  }
+
+  /* ═══════════════════ Voces gratis (player) ═══════════════════
+     Lista las voces del navegador (speechSynthesis), las de Google primero,
+     para que la persona elija la que le guste. La misma que se elige aquí es
+     la que lee el folleto en el vídeo. */
+  function cargarVocesFolleto() {
+    var sel = $('fpVozSel');
+    if (!sel || !('speechSynthesis' in window)) return;
+    var todas = speechSynthesis.getVoices() || [];
+    if (!todas.length) return;                        // aún no están listas
+    var es = todas.filter(function (v) { return String(v.lang || '').toLowerCase().indexOf('es') === 0; });
+    var lista = (es.length ? es : todas).slice().sort(function (a, b) {
+      var ga = /google/i.test(a.name) ? 0 : 1, gb = /google/i.test(b.name) ? 0 : 1;
+      if (ga !== gb) return ga - gb;
+      return a.name.localeCompare(b.name);
+    });
+    var previa = sel.value;
+    sel.innerHTML = lista.map(function (v) {
+      var marca = /google/i.test(v.name) ? '🟢 ' : '· ';
+      return '<option value="' + encodeURIComponent(v.name) + '">' + marca + esc(v.name) + ' (' + esc(v.lang) + ')</option>';
+    }).join('');
+    if (previa) sel.value = previa;
+    var av = $('fpVozAviso');
+    if (av) av.textContent = lista.length + (lista.length === 1 ? ' voz disponible' : ' voces disponibles') +
+      '. Las 🟢 son de Google (suelen sonar mejor).';
+  }
+
+  function vozGratisElegida() {
+    var sel = $('fpVozSel');
+    if (!sel || !sel.value || !('speechSynthesis' in window)) return null;
+    var nombre = decodeURIComponent(sel.value);
+    var todas = speechSynthesis.getVoices() || [];
+    for (var i = 0; i < todas.length; i++) if (todas[i].name === nombre) return todas[i];
+    return null;
+  }
+
+  var probandoVoz = false;
+  function probarVoz() {
+    var btn = $('fpVozProbar');
+    if (!('speechSynthesis' in window)) { estado('Este navegador no tiene voces para probar.', 'err'); return; }
+    if (probandoVoz) { try { speechSynthesis.cancel(); } catch (e) {} probandoVoz = false; if (btn) btn.textContent = '▶ Probar'; return; }
+    var txt = (val('fpGuion') || '').trim();
+    txt = txt ? txt.slice(0, 160) : 'Hola, así sonará la voz de tu folleto. Reserva tu cita.';
+    var u = new SpeechSynthesisUtterance(txt);
+    var v = vozGratisElegida();
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
+    u.rate = parseFloat(val('fpVozVel')) || 1;
+    u.pitch = parseFloat(val('fpVozTono')) || 1;
+    u.onend = u.onerror = function () { probandoVoz = false; if (btn) btn.textContent = '▶ Probar'; };
+    try { speechSynthesis.cancel(); speechSynthesis.speak(u); probandoVoz = true; if (btn) btn.textContent = '■ Parar'; }
+    catch (e) { estado('No se pudo probar la voz: ' + (e.message || e), 'err'); }
+  }
+
   /* ═══════════════════ Vídeo con voz ═══════════════════ */
 
   function prepararVoz(fuente) {
@@ -664,8 +1336,12 @@
         return Promise.reject(new Error('Se está grabando otra voz ahora mismo. Espera a que termine.'));
       var texto = (val('fpGuion') || '').trim();
       if (!texto) return Promise.reject(new Error('No hay nada que leer. Pulsa «Escríbelo tú por mí» o escribe el guion.'));
+      try { speechSynthesis.cancel(); } catch (e) {}   // corta la preescucha si sonaba
       return window.B6_VOZ_GRATIS.capturar({
         texto: texto,
+        voz: vozGratisElegida(),
+        vel: parseFloat(val('fpVozVel')) || 1,
+        tono: parseFloat(val('fpVozTono')) || 1,
         aviso: function (m) { estado(m, 'proc'); }
       }).then(function (r) { return { url: URL.createObjectURL(r.blob), seg: r.segundos, propia: true }; });
     }
@@ -691,30 +1367,93 @@
     return Promise.resolve(null);   // 'mic' se resuelve en vivo
   }
 
-  function grabarVideo() {
+  /* ═══════════════════ Efectos del vídeo ═══════════════════
+     Cómo entra cada cuadro en el vídeo. Devuelve lo que el motor sabe aplicar
+     (opacidad, desplazamiento, escala y recortes), así que lo que se ve es
+     exactamente lo que se graba, sin dibujar nada dos veces.
+
+     efecto  · id del desplegable      i     · nº de cuadro
+     n       · cuántos cuadros hay     tHoja · segundos dentro de esta hoja
+     porHoja · lo que dura la hoja     F     · formato (para medir el salto) */
+  function revelado(efecto, i, n, tHoja, porHoja, F) {
+    n = Math.max(1, n);
+    // el retardo escalonado es lo que hace que entren en cascada y no de golpe
+    var paso = Math.min(0.30, (porHoja * 0.45) / n);
+    var salida = 0.45;                       // lo que tarda un cuadro en entrar
+    var arranque = 0.25 + i * paso;
+    var f = Math.max(0, Math.min(1, (tHoja - arranque) / salida));
+    // suavizado: arranca y frena despacio, que es lo que se ve "caro"
+    var s = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+
+    if (efecto === 'fundido') {
+      return { a: f };
+    }
+    if (efecto === 'olas') {
+      // sube y baja como una ola, con un vaivén que se va calmando
+      var onda = Math.sin((1 - s) * Math.PI * 2.2) * (1 - s);
+      return { a: f, dy: onda * F.h * 0.05, escala: 0.94 + s * 0.06 };
+    }
+    if (efecto === 'circulos') {
+      return { a: Math.min(1, f * 1.6), recorte: 'circulo', p: s };
+    }
+    if (efecto === 'cuadros') {
+      // mosaico: cada cuadro crece desde su centro
+      return { a: f, escala: 0.55 + s * 0.45 };
+    }
+    if (efecto === 'deslizar') {
+      // entran alternando desde la izquierda y desde la derecha
+      var lado = (i % 2 === 0) ? -1 : 1;
+      return { a: f, dx: lado * (1 - s) * F.w * 0.35 };
+    }
+    if (efecto === 'persiana') {
+      return { a: Math.min(1, f * 1.5), recorte: 'persiana', p: s };
+    }
+    // 'uno_a_uno': el de siempre, subiendo y apareciendo
+    return { a: f, dy: (1 - s) * F.h * 0.02 };
+  }
+
+  /* Los dos botones de vídeo: el normal y el de carrusel. Se separan para que
+     el manejador del clic nunca se cuele como opciones. */
+  function grabarVideoNormal() { grabarVideo(false); }
+  function grabarVideoCarrusel() { grabarVideo(true); }
+
+  function grabarVideo(carrusel) {
     if (FP.grabando) { if (FP.pararGrabacion) FP.pararGrabacion(); return; }
     if (!window.MediaRecorder) { estado('Este navegador no sabe grabar vídeo. Prueba en Chrome.', 'err'); return; }
 
     var fuente = val('fpVoz') || 'texto_gratis';
+    // el botón que se pulsó es el que pasa a «Detener», para poder pararlo
+    var boton = carrusel ? ($('fpCarVid') || $('fpVideo')) : $('fpVideo');
+    var textoBoton = carrusel ? '🎬 Vídeo del carrusel' : '🎬 Hacer el vídeo';
+    function soltarBoton() { if (boton) boton.textContent = textoBoton; }
+
     var limpieza = [];
     function limpiar() { limpieza.forEach(function (f) { try { f(); } catch (e) {} }); limpieza = []; }
     function fallar(msg) {
       limpiar();
       FP.grabando = false;
-      $('fpVideo').textContent = '🎬 Hacer el vídeo';
+      soltarBoton();
       estado(msg, 'err');
     }
 
     FP.grabando = true;
-    $('fpVideo').textContent = '■ Detener';
+    if (boton) boton.textContent = '■ Detener';
     estado('Preparando…', 'proc');
 
     prepararVoz(fuente).then(function (voz) {
-      var hs = hojas();
+      // en modo carrusel el vídeo va tarjeta a tarjeta, como al pasar el dedo
+      var hs = carrusel ? tarjetasCarrusel() : hojas();
       var F = M.FORMATOS[hs[0].formato] || M.FORMATOS.a4v;
       var cv = document.createElement('canvas');
       cv.width = F.w; cv.height = F.h;
       var ctx = cv.getContext('2d');
+      // El canvas de grabación va al DOM pero fuera de la vista: un canvas
+      // "suelto" (sin insertar) deja de entregar cuadros a captureStream tras
+      // el primero en Android/tablets y el vídeo sale negro. No se usa
+      // display:none ni visibility:hidden porque eso también corta la captura.
+      cv.style.cssText = 'position:fixed;left:-99999px;top:0;width:1px;height:1px;opacity:0.001;pointer-events:none;z-index:-1';
+      document.body.appendChild(cv);
+      limpieza.push(function () { try { cv.remove(); } catch (e) {} });
 
       var ac = new (window.AudioContext || window.webkitAudioContext)();
       var destino = ac.createMediaStreamDestination();
@@ -745,12 +1484,39 @@
       }
 
       return cadena.then(function () {
+        // la duración se decide antes de nada: la manda la voz si la hay, y con
+        // ella se programa la música para que cuadren
+        var dur = Math.max(4, Math.min(60, parseFloat(val('fpDur')) || 12));
+        // en carrusel, cada tarjeta necesita su tiempo para poder leerse
+        if (carrusel) dur = Math.max(dur, Math.min(90, hs.length * 2.2));
+        if (vozEl && vozEl.duration && isFinite(vozEl.duration)) dur = Math.min(90, vozEl.duration + 0.4);
+
+        // música gratis: suena por debajo de la voz (0.32) o sola (0.9) si no
+        // hay voz. Se enchufa al mismo destino que se graba, así entra en el MP4
+        var melId = val('fpMusica');
+        if (melId && melId !== 'none' && MEL && MEL[melId]) {
+          if (ac.state === 'suspended') { try { ac.resume(); } catch (e) {} }
+          var musica = crearMezclaMusica(ac, destino, MEL[melId], dur + 0.3, pistaAudio ? 0.32 : 0.9);
+          limpieza.push(function () { try { musica.stop(); } catch (e) {} });
+          if (!pistaAudio) pistaAudio = destino.stream.getAudioTracks()[0];
+        }
+
         var flujo = cv.captureStream(30);
+        var pistaVideo = flujo.getVideoTracks()[0];
+        // Además de tener el canvas en el DOM, empujamos cada cuadro a mano
+        // cuando el navegador lo permite: así ni un fotograma se pierde.
+        var empujarCuadro = (pistaVideo && typeof pistaVideo.requestFrame === 'function')
+          ? function () { try { pistaVideo.requestFrame(); } catch (e) {} }
+          : function () {};
         if (pistaAudio) flujo.addTrack(pistaAudio);
 
+        // WebM (VP9/VP8) primero: el codificador MP4 de Chrome en móvil suele
+        // grabar sólo el primer cuadro y dejar el resto negro. El WebM de
+        // Chromium es fiable en Android/PC; en iPhone (Safari) no hay WebM, así
+        // que ahí cae a MP4, que Safari sí graba bien.
         var mime = '';
-        ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4',
-         'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].some(function (m) {
+        ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm',
+         'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4'].some(function (m) {
           if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) { mime = m; return true; }
           return false;
         });
@@ -759,8 +1525,6 @@
         var trozos = [];
         rec.ondataavailable = function (e) { if (e.data && e.data.size) trozos.push(e.data); };
 
-        var dur = Math.max(4, Math.min(60, parseFloat(val('fpDur')) || 12));
-        if (vozEl && vozEl.duration && isFinite(vozEl.duration)) dur = Math.min(90, vozEl.duration + 0.4);
         var porHoja = dur / hs.length;
         var t0 = performance.now();
         var pedido = null;
@@ -768,10 +1532,10 @@
         rec.onstop = function () {
           limpiar();
           FP.grabando = false;
-          $('fpVideo').textContent = '🎬 Hacer el vídeo';
+          soltarBoton();
           var tipo = (mime && mime.indexOf('mp4') >= 0) ? 'mp4' : 'webm';
           var blob = new Blob(trozos, { type: mime || 'video/webm' });
-          bajar('folleto_' + hoy() + '.' + tipo, URL.createObjectURL(blob));
+          bajar((carrusel ? 'carrusel_' : 'folleto_') + hoy() + '.' + tipo, URL.createObjectURL(blob));
           estado('✓ Vídeo descargado' + (tipo === 'webm'
             ? ' en WebM. Va bien en Android; si en iPhone no se ve, mándalo por Drive en vez de por WhatsApp.'
             : ' en MP4, listo para WhatsApp e Instagram.'), 'done');
@@ -787,19 +1551,39 @@
         if (vozEl) vozEl.play().catch(function () {});
         estado(fuente === 'mic' ? '● Grabando · habla ahora y pulsa Detener al terminar.' : '🎬 Grabando el vídeo…', 'proc');
 
+        var efecto = val('fpEfecto') || 'uno_a_uno';
+        var PASO = Math.min(0.55, porHoja * 0.28);   // lo que dura el deslizamiento
+
+        /* Dibuja una tarjeta. En carrusel, sólo la primera hace entrar sus
+           cuadros: las demás llegan ya montadas, porque la animación es el
+           propio deslizamiento (si no, parpadearían al aterrizar). */
+        function hoja(idx, tDentro) {
+          var op = conQR({ nPagina: idx + 1 });
+          if (!carrusel || idx === 0) {
+            op.revelar = function (i) {
+              return revelado(efecto, i, hs[idx].celdas.length, tDentro, porHoja, F);
+            };
+          }
+          M.pintar(ctx, F.w, F.h, hs[idx], op);
+        }
+
         (function pintar() {
           var t = (performance.now() - t0) / 1000;
           var iHoja = Math.min(hs.length - 1, Math.floor(t / porHoja));
           var tHoja = t - iHoja * porHoja;
-          M.pintar(ctx, F.w, F.h, hs[iHoja], {
-            nPagina: iHoja + 1,
-            revelar: function (i) {
-              // los cuadros entran de uno en uno, subiendo y apareciendo
-              var arranque = 0.25 + i * Math.min(0.32, (porHoja * 0.45) / Math.max(1, hs[iHoja].celdas.length));
-              var f = Math.max(0, Math.min(1, (tHoja - arranque) / 0.45));
-              return { a: f, dy: (1 - f) * F.h * 0.02 };
-            }
-          });
+          var queda = porHoja - tHoja;
+
+          if (carrusel && iHoja < hs.length - 1 && queda < PASO) {
+            // las dos tarjetas se dibujan pegadas y se desplazan juntas: la de
+            // ahora sale por la izquierda y la siguiente entra por la derecha
+            var q = 1 - queda / PASO;
+            var e = q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
+            ctx.save(); ctx.translate(-e * F.w, 0); hoja(iHoja, tHoja); ctx.restore();
+            ctx.save(); ctx.translate((1 - e) * F.w, 0); hoja(iHoja + 1, porHoja); ctx.restore();
+          } else {
+            hoja(iHoja, tHoja);
+          }
+          empujarCuadro();
           if (fuente !== 'mic' && t >= dur) { FP.pararGrabacion(); return; }
           if (fuente === 'mic' && t >= 90) { FP.pararGrabacion(); return; }
           if (vozEl && vozEl.ended) { FP.pararGrabacion(); return; }
@@ -875,18 +1659,60 @@
       repintar();
     });
 
+    if (DIS && $('fpDiseno')) {
+      $('fpDiseno').addEventListener('change', function () {
+        var id = val('fpDiseno');
+        if (id) aplicarDiseno(id);
+      });
+    }
+    if ($('fpMusPrev')) $('fpMusPrev').addEventListener('click', previewMusica);
+    if ($('fpMusica')) $('fpMusica').addEventListener('change', pararPreview);
+
+    // QR: se regenera al marcar la casilla y al dejar de escribir el número
+    if ($('fpQR')) $('fpQR').addEventListener('change', generarQR);
+    if ($('fpTel')) {
+      var tQR = null;
+      $('fpTel').addEventListener('input', function () {
+        clearTimeout(tQR);
+        tQR = setTimeout(generarQR, 500);   // sin esto se regenera en cada tecla
+      });
+    }
+
     $('fpEscribir').addEventListener('click', function () { escribirSolo(false); });
     $('fpOtra').addEventListener('click', function () { escribirSolo(true); });
     $('fpAddPag').addEventListener('click', añadirPagina);
+    if ($('fpDisGuardar')) $('fpDisGuardar').addEventListener('click', guardarDiseno);
     $('fpPNG').addEventListener('click', descargarPNG);
     $('fpPDF').addEventListener('click', descargarPDF);
     $('fpWeb').addEventListener('click', descargarWeb);
-    $('fpVideo').addEventListener('click', grabarVideo);
+    $('fpVideo').addEventListener('click', grabarVideoNormal);
+    if ($('fpCarImg')) $('fpCarImg').addEventListener('click', descargarCarrusel);
+    if ($('fpCarVid')) $('fpCarVid').addEventListener('click', grabarVideoCarrusel);
+    ['fpCarFormato', 'fpCarUno', 'fpCarPortada'].forEach(function (id) {
+      if ($(id)) $(id).addEventListener('change', contarCarrusel);
+    });
     $('fpVoz').addEventListener('change', function () {
-      $('fpAudioRow').style.display = (val('fpVoz') === 'audio') ? 'flex' : 'none';
-      $('fpGuionRow').style.display = (val('fpVoz') === 'texto_gratis' || val('fpVoz') === 'texto_pro') ? 'flex' : 'none';
+      var v = val('fpVoz');
+      try { speechSynthesis.cancel(); } catch (e) {}
+      if (probandoVoz) { probandoVoz = false; var pb = $('fpVozProbar'); if (pb) pb.textContent = '▶ Probar'; }
+      $('fpAudioRow').style.display = (v === 'audio') ? 'flex' : 'none';
+      $('fpGuionRow').style.display = (v === 'texto_gratis' || v === 'texto_pro') ? 'flex' : 'none';
+      $('fpVozGratisPanel').style.display = (v === 'texto_gratis') ? 'block' : 'none';
     });
     $('fpGuion').addEventListener('input', function () { FP.pagina.guion = $('fpGuion').value; });
+
+    // Player de voces gratis
+    if ($('fpVozProbar')) $('fpVozProbar').addEventListener('click', probarVoz);
+    if ($('fpVozVel')) $('fpVozVel').addEventListener('input', function () {
+      var e = $('fpVozVelN'); if (e) e.textContent = (parseFloat(this.value) || 1).toFixed(1) + '×';
+    });
+    if ($('fpVozTono')) $('fpVozTono').addEventListener('input', function () {
+      var e = $('fpVozTonoN'); if (e) e.textContent = (parseFloat(this.value) || 1).toFixed(1);
+    });
+    if ('speechSynthesis' in window && speechSynthesis.addEventListener) {
+      // addEventListener, no .onvoiceschanged: así no se pisa el de Flyers
+      speechSynthesis.addEventListener('voiceschanged', cargarVocesFolleto);
+    }
   }
 
   function abrir() {
@@ -894,6 +1720,9 @@
 
     M = window.FOLLETO_MOTOR;
     CB = window.FOLLETO_CEREBRO;
+    DIS = window.FOLLETO_DISENOS || null;                          // opcional
+    MEL = (typeof FL_MELODIES !== 'undefined') ? FL_MELODIES : null; // de Flyers
+    NOTE = (typeof FL_NOTE !== 'undefined') ? FL_NOTE : null;
     var caja = document.getElementById('tab-folleto');
     if (!caja) return;
     if (!M || !CB) {
@@ -914,12 +1743,20 @@
     $('fpRubro').value = FP.pagina.rubro;
     $('fpTono').value = FP.pagina.tono;
     pintarCeldas();
+    llenarMusica();
     enlazar();
+    // la voz por defecto es la gratis: se muestra el player y se cargan las voces
+    // (a veces llegan tarde; el listener 'voiceschanged' las repone solo)
+    if ($('fpVozGratisPanel')) $('fpVozGratisPanel').style.display = 'block';
+    cargarVocesFolleto();
+    setTimeout(cargarVocesFolleto, 400);
     $('fpMarca').value = FP.pagina.cabecera.marca;
     $('fpTitulo').value = FP.pagina.cabecera.titulo;
     $('fpCta').value = FP.pagina.pie.cta;
     pintarPaginas();
+    pintarDisenos();
     escribirSolo(false);   // arranca con textos de ejemplo, para que no salga en blanco
+    contarCarrusel();
     estado('Pon tus fotos en los huecos y cambia los precios. Nada de esto gasta créditos.', 'done');
   }
 

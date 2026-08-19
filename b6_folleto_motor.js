@@ -27,6 +27,7 @@
     a4v:      { nombre: 'A4 vertical',          w: 1240, h: 1754, mm: [210, 297] },
     a4h:      { nombre: 'A4 horizontal',        w: 1754, h: 1240, mm: [297, 210] },
     cuadrado: { nombre: 'Cuadrado · Instagram', w: 1080, h: 1080, mm: [210, 210] },
+    vertical: { nombre: 'Vertical 4:5 · feed',  w: 1080, h: 1350, mm: [190, 238] },
     historia: { nombre: 'Historia · WhatsApp',  w: 1080, h: 1920, mm: [160, 284] }
   };
 
@@ -53,6 +54,7 @@
      las ocho plantillas sin escribir coordenadas a mano.                */
 
   var REJILLAS = {
+    r1:  { nombre: 'Pieza única',        n: 1, uso: 'Carta, cartel o anuncio',    filas: [{ alto: 1, cols: [1] }] },
     r2a: { nombre: 'Dúo apilado',        n: 2, uso: 'Antes y después',            filas: [{ alto: 1, cols: [1] }, { alto: 1, cols: [1] }] },
     r2b: { nombre: 'Dúo lado a lado',    n: 2, uso: 'Dos promociones',            filas: [{ alto: 1, cols: [1, 1] }] },
     r4a: { nombre: 'Cuadrícula 2×2',     n: 4, uso: 'La tarifa clásica',          filas: [{ alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }] },
@@ -470,6 +472,38 @@
     }
   }
 
+  /* ───────────────────────── Código QR ─────────────────────────
+     op.qr es una <img> ya generada (por la herramienta) con el QR del
+     teléfono/WhatsApp. Se dibuja como una tarjetita blanca en la esquina
+     inferior derecha, con la etiqueta «Escanéame». */
+  function dibujarQR(ctx, W, H, C, M, op) {
+    var qr = op.qr;
+    if (!qr) return;
+    var listo = qr.complete !== false && (qr.naturalWidth || qr.width);
+    if (!listo) return;
+    // QR discreto: antes ocupaba el 15% del ancho y tapaba el diseño. Al 10%
+    // (tope pequeño) sigue leyéndose bien con el móvil sin comerse la hoja.
+    var s = Math.max(96, Math.min(W * 0.10, H * 0.13));
+    var pad = W * 0.014;
+    var lbl = W * 0.024;
+    var x = W - M - s;
+    var yLineaPie = H - M - W * 0.052;
+    var y = yLineaPie - s - lbl - pad * 2 - W * 0.014;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.35)';
+    ctx.shadowBlur = W * 0.02; ctx.shadowOffsetY = W * 0.005;
+    redondo(ctx, x - pad, y - pad, s + pad * 2, s + pad * 2 + lbl * 1.4, W * 0.018);
+    ctx.fillStyle = '#FFFFFF'; ctx.fill();
+    ctx.restore();
+
+    ctx.drawImage(qr, x, y, s, s);
+    ctx.fillStyle = '#111111';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.font = '700 ' + lbl.toFixed(1) + 'px Segoe UI,Arial,sans-serif';
+    ctx.fillText(op.qrTexto || 'Escanéame', x + s / 2, y + s + lbl * 1.25);
+  }
+
   /* ───────────────────────── Pintar la hoja entera ───────────────────────── */
 
   function pintar(ctx, W, H, pag, op) {
@@ -505,20 +539,42 @@
       return k;
     });
 
-    // 2ª pasada: dibujar. op.revelar(i) → {a:opacidad, dy:desplazamiento} deja
-    // que el vídeo haga entrar los cuadros de uno en uno sin duplicar el dibujo
+    // 2ª pasada: dibujar. op.revelar(i) devuelve cómo entra ese cuadro en el
+    // vídeo, sin duplicar el dibujo:
+    //   a       opacidad (0..1)
+    //   dx, dy  desplazamiento en píxeles (deslizar, olas)
+    //   escala  1 = tamaño normal; menos, entra creciendo (mosaico)
+    //   recorte 'circulo' | 'persiana', con avance en rev.p (0..1)
     rects.forEach(function (r, i) {
       var rev = op.revelar ? op.revelar(i) : null;
       if (!rev) return cuadro(ctx, r, C, celdas[i], i, ad, op, grupos[medidas[i]]);
       if (rev.a <= 0.01) return;
       ctx.save();
-      ctx.globalAlpha = rev.a;
-      if (rev.dy) ctx.translate(0, rev.dy);
+      ctx.globalAlpha = Math.max(0, Math.min(1, rev.a));
+      if (rev.dx || rev.dy) ctx.translate(rev.dx || 0, rev.dy || 0);
+      if (rev.escala && rev.escala !== 1) {
+        var cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+        ctx.translate(cx, cy); ctx.scale(rev.escala, rev.escala); ctx.translate(-cx, -cy);
+      }
+      if (rev.recorte === 'circulo') {
+        // el cuadro aparece desde el centro en un círculo que crece
+        var rad = Math.sqrt(r.w * r.w + r.h * r.h) / 2 * Math.max(0, Math.min(1, rev.p));
+        ctx.beginPath();
+        ctx.arc(r.x + r.w / 2, r.y + r.h / 2, rad, 0, Math.PI * 2);
+        ctx.clip();
+      } else if (rev.recorte === 'persiana') {
+        // seis franjas horizontales que se abren a la vez
+        var n = 6, alto = r.h / n, abre = alto * Math.max(0, Math.min(1, rev.p));
+        ctx.beginPath();
+        for (var k = 0; k < n; k++) ctx.rect(r.x, r.y + k * alto, r.w, abre);
+        ctx.clip();
+      }
       cuadro(ctx, r, C, celdas[i], i, ad, op, grupos[medidas[i]]);
       ctx.restore();
     });
 
     pie(ctx, W, H, M, C, pag, ad, op.nPagina);
+    dibujarQR(ctx, W, H, C, M, op);
     ctx.restore();
     return rects;
   }
