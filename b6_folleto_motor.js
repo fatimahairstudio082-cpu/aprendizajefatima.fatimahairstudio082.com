@@ -481,7 +481,9 @@
     if (!qr) return;
     var listo = qr.complete !== false && (qr.naturalWidth || qr.width);
     if (!listo) return;
-    var s = Math.max(150, W * 0.15);
+    // QR discreto: antes ocupaba el 15% del ancho y tapaba el diseño. Al 10%
+    // (tope pequeño) sigue leyéndose bien con el móvil sin comerse la hoja.
+    var s = Math.max(96, Math.min(W * 0.10, H * 0.13));
     var pad = W * 0.014;
     var lbl = W * 0.024;
     var x = W - M - s;
