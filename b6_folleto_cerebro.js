@@ -875,6 +875,356 @@
       ]
     },
 
+    bodas: {
+      nombre: 'Bodas y novias',
+      titulos: ['Vuestro Gran Día', 'Servicios para Bodas', 'Sí, Quiero', 'Bodas a Medida'],
+      subs: ['Cuidamos cada detalle de vuestro día',
+             'Prueba previa incluida en todo',
+             'Un solo equipo para no agobiaros',
+             'De la pedida al último baile'],
+      serv: [
+        { n: 'Pack novia completo', p: [180, 400], d: [
+          'Prueba, peinado y maquillaje del día, cerrado.',
+          'Llegas al altar sin una sola sorpresa.'] },
+        { n: 'Peinado de novia', p: [70, 150], d: [
+          'Recogido que aguanta baile, abrazos y fotos.',
+          'Lo probamos antes para ir sobre seguro.'] },
+        { n: 'Maquillaje de novia', p: [90, 180], d: [
+          'Larga duración, resistente a lágrimas y horas.',
+          'Sigues siendo tú, pero en tu mejor versión.'] },
+        { n: 'Prueba de novia', p: [40, 90], d: [
+          'Ensayamos el look completo con tiempo.',
+          'Ajustamos lo que haga falta antes del día.'] },
+        { n: 'Madrina e invitadas', p: [30, 70], d: [
+          'Peinado y maquillaje para el resto del cortejo.',
+          'Todas a juego y a buena hora.'] },
+        { n: 'Damas y niñas', p: [20, 45], d: [
+          'Peinados sencillos y cómodos para las peques.',
+          'Bonitas y sin que les moleste toda la tarde.'] },
+        { n: 'Preparativos en casa', p: [50, 150], d: [
+          'Vamos a donde te preparas, sin correr.',
+          'El desplazamiento incluido y con calma.'] },
+        { n: 'Ensayo de recogido', p: [35, 70], d: [
+          'Para bodas de tarde o de varios días.',
+          'Dejamos elegido el peinado exacto.'] }
+      ]
+    },
+
+    ventas: {
+      nombre: 'Ventas y productos',
+      titulos: ['Nuestros Productos', 'Catálogo de Venta', 'Lo que Vendemos', 'Ofertas del Mes'],
+      subs: ['Producto seleccionado, precio justo',
+             'Envíos y recogida en tienda',
+             'Lo que buscas, cuando lo buscas',
+             'Pregunta sin compromiso'],
+      serv: [
+        { n: 'Producto destacado', p: [10, 80], d: [
+          'Lo que más se lleva esta temporada.',
+          'Calidad probada al mejor precio.'] },
+        { n: 'Novedad', p: [15, 100], d: [
+          'Recién llegado, unidades limitadas.',
+          'De lo último y ya en tienda.'] },
+        { n: 'Oferta del mes', p: [5, 50], d: [
+          'Precio especial hasta fin de existencias.',
+          'El chollo que estabas esperando.'] },
+        { n: 'Pack ahorro', p: [20, 120], d: [
+          'Varios productos juntos a mejor precio.',
+          'Llevas más y pagas menos.'] },
+        { n: 'Producto premium', p: [50, 300], d: [
+          'La gama alta para quien busca lo mejor.',
+          'Materiales y acabado de primera.'] },
+        { n: 'Recambios y accesorios', p: [3, 40], d: [
+          'Todo lo que le hace falta a tu producto.',
+          'Compatible y garantizado.'] },
+        { n: 'Envío a domicilio', p: [0, 15], d: [
+          'Te lo llevamos a casa en pocos días.',
+          'Gratis a partir de cierto importe.'] },
+        { n: 'Tarjeta regalo', p: [10, 100], d: [
+          'Para acertar seguro con cualquiera.',
+          'Que elija la persona lo que quiere.'] }
+      ]
+    },
+
+    tecnologia: {
+      nombre: 'Tecnología y reparación',
+      titulos: ['Servicio Técnico', 'Reparación y Venta', 'Tu Móvil, como Nuevo', 'Tecnología'],
+      subs: ['Reparamos móviles, tablets y ordenadores',
+             'Diagnóstico gratis y presupuesto claro',
+             'Repuestos con garantía',
+             'Mientras esperas, si es rápido'],
+      serv: [
+        { n: 'Cambio de pantalla', p: [40, 150], d: [
+          'Pantalla nueva y calibrada, en el día.',
+          'Se acabaron los cristales rotos.'] },
+        { n: 'Cambio de batería', p: [25, 70], d: [
+          'Recupera la autonomía de cuando era nuevo.',
+          'Batería original o equivalente con garantía.'] },
+        { n: 'Liberar móvil', p: [10, 30], d: [
+          'Para usarlo con cualquier compañía.',
+          'Rápido y sin perder tus datos.'] },
+        { n: 'Reparación de ordenador', p: [30, 120], d: [
+          'Va lento, no arranca o se apaga: lo vemos.',
+          'Limpieza, cambio de disco o memoria.'] },
+        { n: 'Recuperar datos', p: [40, 150], d: [
+          'Fotos y archivos de un equipo estropeado.',
+          'Antes de tirarlo, déjanos intentarlo.'] },
+        { n: 'Quitar virus', p: [25, 60], d: [
+          'Limpieza a fondo y protección al terminar.',
+          'El equipo vuelve a ir fino.'] },
+        { n: 'Venta de reacondicionados', p: [80, 400], d: [
+          'Equipos revisados a precio de segunda mano.',
+          'Con garantía, no una compra a ciegas.'] },
+        { n: 'Accesorios', p: [5, 60], d: [
+          'Fundas, cargadores y protectores.',
+          'Lo que le falta a tu equipo.'] }
+      ]
+    },
+
+    automovil: {
+      nombre: 'Autos y taller',
+      titulos: ['Nuestro Taller', 'Servicios del Taller', 'Tu Coche en Buenas Manos', 'Taller Mecánico'],
+      subs: ['Mecánica de confianza y presupuesto cerrado',
+             'Todas las marcas, sin perder la garantía',
+             'Revisión antes de vacaciones o ITV',
+             'Te decimos lo que necesita y lo que no'],
+      serv: [
+        { n: 'Cambio de aceite y filtros', p: [40, 90], d: [
+          'El mantenimiento básico que alarga el motor.',
+          'Aceite recomendado para tu coche.'] },
+        { n: 'Pastillas de freno', p: [60, 180], d: [
+          'Frenada segura, revisadas discos incluidos.',
+          'No es cosa de dejar para más adelante.'] },
+        { n: 'Neumáticos', p: [50, 300], d: [
+          'Montaje, equilibrado y válvula nueva.',
+          'Te asesoramos según cómo conduces.'] },
+        { n: 'Pre-ITV', p: [20, 50], d: [
+          'Revisamos lo que suele suspender.',
+          'Pasas a la primera y sin sustos.'] },
+        { n: 'Diagnóstico electrónico', p: [25, 60], d: [
+          'Leemos la centralita y buscamos la avería.',
+          'Antes de tocar nada, saber qué pasa.'] },
+        { n: 'Aire acondicionado', p: [40, 90], d: [
+          'Recarga de gas y revisión de fugas.',
+          'Que enfríe otra vez cuando aprieta el calor.'] },
+        { n: 'Distribución', p: [250, 600], d: [
+          'La correa a tiempo evita una avería grave.',
+          'Según los kilómetros que marca la marca.'] },
+        { n: 'Chapa y pintura', p: [150, 800], d: [
+          'Golpes y arañazos, como si no hubieran pasado.',
+          'Igualamos el color exacto de tu coche.'] }
+      ]
+    },
+
+    salud: {
+      nombre: 'Salud y consulta',
+      titulos: ['Nuestra Consulta', 'Servicios de Salud', 'Cuidamos de Ti', 'Consulta y Terapias'],
+      subs: ['Atención cercana y personalizada',
+             'Primera visita con valoración completa',
+             'Bonos de sesiones a mejor precio',
+             'Pide cita sin esperas largas'],
+      serv: [
+        { n: 'Primera consulta', p: [30, 60], d: [
+          'Te escuchamos y valoramos tu caso con calma.',
+          'De aquí sale el plan de tratamiento.'] },
+        { n: 'Sesión de fisioterapia', p: [30, 55], d: [
+          'Trabajamos la zona y te enseñamos ejercicios.',
+          'Menos dolor y mejor movilidad, sesión a sesión.'] },
+        { n: 'Masaje terapéutico', p: [30, 60], d: [
+          'Descarga de espalda, cuello y cargas.',
+          'Alivio de verdad, no sólo un rato.'] },
+        { n: 'Revisión de control', p: [25, 50], d: [
+          'Seguimiento para ver cómo evolucionas.',
+          'Ajustamos lo que haga falta.'] },
+        { n: 'Bono de 5 sesiones', p: [130, 250], d: [
+          'El precio por sesión baja con el bono.',
+          'La constancia es lo que da resultado.'] },
+        { n: 'Nutrición y dieta', p: [30, 55], d: [
+          'Plan realista para tu vida y tus horarios.',
+          'Sin pasar hambre ni dietas milagro.'] },
+        { n: 'Terapia psicológica', p: [40, 70], d: [
+          'Un espacio seguro para hablar y avanzar.',
+          'A tu ritmo y con total confidencialidad.'] },
+        { n: 'Domicilio', p: [40, 80], d: [
+          'Vamos a tu casa si no puedes desplazarte.',
+          'La misma atención, sin salir de casa.'] }
+      ]
+    },
+
+    clases: {
+      nombre: 'Clases y academia',
+      titulos: ['Nuestras Clases', 'Aprende con Nosotros', 'Formación', 'Clases Particulares'],
+      subs: ['Grupos reducidos y atención personal',
+             'Del refuerzo escolar a los idiomas',
+             'Presencial o por videollamada',
+             'Primera clase de prueba sin compromiso'],
+      serv: [
+        { n: 'Refuerzo escolar', p: [10, 20], d: [
+          'Repaso y deberes de primaria y secundaria.',
+          'Recupera lo atrasado antes del examen.'] },
+        { n: 'Clases de idiomas', p: [12, 25], d: [
+          'Inglés y otros idiomas, hablando desde el día uno.',
+          'Preparamos también exámenes oficiales.'] },
+        { n: 'Clases de música', p: [15, 30], d: [
+          'Guitarra, piano o canto, para cualquier edad.',
+          'Empiezas a tocar desde la primera semana.'] },
+        { n: 'Informática', p: [12, 28], d: [
+          'Desde manejar el móvil a Office o internet.',
+          'A tu ritmo y sin agobios.'] },
+        { n: 'Preparación de exámenes', p: [15, 35], d: [
+          'Selectividad, oposiciones y pruebas oficiales.',
+          'Con simulacros y plan de estudio.'] },
+        { n: 'Bono mensual', p: [40, 120], d: [
+          'Varias clases al mes a mejor precio.',
+          'La constancia sale más a cuenta.'] },
+        { n: 'Clase de prueba', p: [0, 15], d: [
+          'La primera para conocernos, sin compromiso.',
+          'Ves si encajamos antes de apuntarte.'] },
+        { n: 'Clase online', p: [10, 25], d: [
+          'Por videollamada, desde donde estés.',
+          'Mismo temario, sin desplazarte.'] }
+      ]
+    },
+
+    viajes: {
+      nombre: 'Viajes y turismo',
+      titulos: ['Nuestros Viajes', 'Escápate con Nosotros', 'Ofertas de Viaje', 'Agencia de Viajes'],
+      subs: ['Viajes a medida y sin sorpresas',
+             'Nos ocupamos de todo el papeleo',
+             'Escapadas, playa, ciudad y aventura',
+             'Pregunta por tu destino soñado'],
+      serv: [
+        { n: 'Escapada de fin de semana', p: [80, 250], d: [
+          'Dos noches para desconectar cerca de casa.',
+          'Hotel y detalles resueltos.'] },
+        { n: 'Vacaciones de playa', p: [300, 900], d: [
+          'Vuelo, hotel y traslados, todo junto.',
+          'Sólo tienes que hacer la maleta.'] },
+        { n: 'Circuito cultural', p: [400, 1200], d: [
+          'Varias ciudades con guía y visitas incluidas.',
+          'Conocer de verdad, no sólo hacer fotos.'] },
+        { n: 'Viaje de novios', p: [1000, 3000], d: [
+          'El viaje de vuestra vida, a vuestro gusto.',
+          'Detalles especiales para la pareja.'] },
+        { n: 'Crucero', p: [500, 1800], d: [
+          'Varios destinos durmiendo en el mismo sitio.',
+          'Todo incluido a bordo.'] },
+        { n: 'Billetes y hoteles sueltos', p: [30, 400], d: [
+          'Sólo el vuelo o sólo el hotel, si lo prefieres.',
+          'Buscamos la mejor combinación.'] },
+        { n: 'Seguro de viaje', p: [15, 80], d: [
+          'Por si algo se tuerce, ir tranquilo.',
+          'Cobertura médica y de cancelación.'] },
+        { n: 'Viaje de grupo', p: [200, 700], d: [
+          'Precio especial para amigos o empresa.',
+          'Organizamos todo para que sólo disfrutéis.'] }
+      ]
+    },
+
+    jardineria: {
+      nombre: 'Jardinería y exteriores',
+      titulos: ['Jardinería', 'Cuidamos tu Jardín', 'Nuestros Servicios', 'Verde y a Punto'],
+      subs: ['Mantenimiento y diseño de zonas verdes',
+             'Puntual o por contrato mensual',
+             'Casas, comunidades y empresas',
+             'Presupuesto sin compromiso'],
+      serv: [
+        { n: 'Mantenimiento de jardín', p: [30, 60], d: [
+          'Césped, setos y limpieza al día.',
+          'Contrato mensual y tu jardín siempre listo.'] },
+        { n: 'Poda de árboles', p: [40, 200], d: [
+          'Poda segura, con recogida de restos.',
+          'Sanea el árbol y evita sustos.'] },
+        { n: 'Corte de césped', p: [20, 50], d: [
+          'Segado y perfilado de bordes.',
+          'Ese verde tupido que da gusto pisar.'] },
+        { n: 'Diseño de jardín', p: [150, 800], d: [
+          'Proyecto a medida según tu espacio.',
+          'Plantas que aguantan tu clima y tu tiempo.'] },
+        { n: 'Sistema de riego', p: [200, 900], d: [
+          'Riego automático, ni una gota de más.',
+          'Ahorras agua y te olvidas de la manguera.'] },
+        { n: 'Limpieza de terreno', p: [80, 400], d: [
+          'Desbroce de maleza y retirada de restos.',
+          'Terreno despejado y sin riesgo de incendio.'] },
+        { n: 'Huerto urbano', p: [60, 250], d: [
+          'Montamos tu huerto en casa o en la terraza.',
+          'Tomates y verduras a un paso de la cocina.'] },
+        { n: 'Piscina y exteriores', p: [40, 120], d: [
+          'Mantenimiento del agua y la zona de baño.',
+          'Lista para el verano sin que tú hagas nada.'] }
+      ]
+    },
+
+    transporte: {
+      nombre: 'Transporte y mudanzas',
+      titulos: ['Transporte y Mudanzas', 'Nos Encargamos', 'Servicios de Porte', 'Mudanzas'],
+      subs: ['Rápido, cuidadoso y con seguro',
+             'Desde un porte pequeño a la casa entera',
+             'Embalaje y montaje si lo necesitas',
+             'Presupuesto cerrado, sin sorpresas'],
+      serv: [
+        { n: 'Mudanza completa', p: [200, 900], d: [
+          'La casa entera, embalaje y montaje incluidos.',
+          'Llegas a la nueva y está todo en su sitio.'] },
+        { n: 'Porte pequeño', p: [30, 90], d: [
+          'Un mueble, un electrodoméstico o poca cosa.',
+          'Rápido y sin pagar de más.'] },
+        { n: 'Embalaje', p: [40, 150], d: [
+          'Cajas, plástico y protección de lo frágil.',
+          'Que no se rompa nada por el camino.'] },
+        { n: 'Montaje de muebles', p: [30, 120], d: [
+          'Desmontamos y volvemos a montar por ti.',
+          'Sin tornillos perdidos ni dolores de cabeza.'] },
+        { n: 'Guardamuebles', p: [40, 120], d: [
+          'Guardamos tus cosas el tiempo que haga falta.',
+          'Seguro y con acceso cuando lo necesites.'] },
+        { n: 'Entrega a domicilio', p: [15, 60], d: [
+          'Recogemos y llevamos donde digas.',
+          'Ideal para tiendas y compras grandes.'] },
+        { n: 'Vaciado de pisos', p: [100, 400], d: [
+          'Dejamos la vivienda vacía y limpia.',
+          'Reciclamos y retiramos lo que no sirve.'] },
+        { n: 'Subidas por ventana', p: [80, 300], d: [
+          'Con plataforma, para lo que no entra por la escalera.',
+          'Muebles grandes sin dañar nada.'] }
+      ]
+    },
+
+    legal: {
+      nombre: 'Abogados y gestoría',
+      titulos: ['Asesoría Legal', 'Nuestros Servicios', 'Te Asesoramos', 'Abogados y Gestoría'],
+      subs: ['Primera consulta orientativa',
+             'Claro con los honorarios desde el principio',
+             'Particulares, autónomos y empresas',
+             'Cerca de ti para lo que necesites'],
+      serv: [
+        { n: 'Primera consulta', p: [0, 50], d: [
+          'Nos cuentas tu caso y te orientamos.',
+          'Sabes a qué atenerte antes de decidir.'] },
+        { n: 'Declaración de la renta', p: [30, 90], d: [
+          'La hacemos por ti, buscando lo que te desgrava.',
+          'Sin errores y sin quebraderos de cabeza.'] },
+        { n: 'Alta de autónomo', p: [40, 120], d: [
+          'Todo el papeleo para empezar a facturar.',
+          'Te explicamos cuotas e impuestos claro.'] },
+        { n: 'Contratos y herencias', p: [60, 300], d: [
+          'Revisamos y redactamos lo que firmas.',
+          'Que ningún papel te pille por sorpresa.'] },
+        { n: 'Reclamaciones', p: [50, 250], d: [
+          'Bancos, seguros o consumo: reclamamos por ti.',
+          'Sólo cobramos si tiene sentido pelearlo.'] },
+        { n: 'Divorcios y familia', p: [150, 600], d: [
+          'Con tacto y buscando el mejor acuerdo.',
+          'Te acompañamos en un momento difícil.'] },
+        { n: 'Gestión laboral', p: [30, 120], d: [
+          'Nóminas, contratos y seguros sociales.',
+          'Tu empresa al día con Hacienda.'] },
+        { n: 'Trámites de extranjería', p: [50, 200], d: [
+          'Permisos, renovaciones y nacionalidad.',
+          'Papeles en regla, sin colas ni líos.'] }
+      ]
+    },
+
     /* «✍️ Otra» — para cualquier negocio que no esté en la lista. Trae textos
        neutros y profesionales que la persona cambia por los suyos: la
        herramienta ya deja editar cada palabra, cada precio y la marca. */

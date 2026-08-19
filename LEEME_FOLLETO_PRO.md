@@ -22,12 +22,16 @@ bloque que no cobra; las demás siguen cobrando lo de siempre.
    escribe todos los textos y unos precios de referencia. **Después cambia lo
    que quieras**: cada título, cada frase y cada precio son tuyos. El **🔁** de
    cada cuadro reescribe sólo esa frase.
-   - **No es sólo para peluquerías.** Hay categorías para muchos sectores
-     (restaurante y bar, cafetería y panadería, tienda de ropa, mascotas y
-     peluquería canina, fotografía, inmobiliaria, eventos, limpieza y hogar,
-     reformas…) además de todas las de belleza. Si tu negocio no está en la
-     lista, elige **✍️ Otra (la escribo yo)**: trae textos neutros y
-     profesionales que cambias por los tuyos.
+   - **No es sólo para peluquerías.** Hay **32 categorías** para casi cualquier
+     negocio o anuncio: belleza (peluquería, color, mechas, uñas, maquillaje,
+     estética, barbería, nutrición, fitness, cursos, ofertas, salón), y muchos
+     otros sectores — restaurante y bar, cafetería y panadería, tienda de ropa,
+     mascotas y peluquería canina, fotografía, inmobiliaria, eventos, **bodas y
+     novias**, **ventas y productos**, tecnología y reparación, autos y taller,
+     salud y consulta, clases y academia, viajes y turismo, jardinería,
+     transporte y mudanzas, abogados y gestoría, limpieza y hogar, reformas… Si
+     tu negocio no está en la lista, elige **✍️ Otra (la escribo yo)**: trae
+     textos neutros y profesionales que cambias por los tuyos.
 5. En cada cuadro, **pon tu foto o tu vídeo**. Los vídeos se ven moviéndose
    dentro del folleto y entran en el vídeo final.
 6. Si el folleto tiene varias hojas: monta la primera, pulsa **📚 Guardar como
@@ -108,10 +112,10 @@ Cuatro archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
   devuelve los rectángulos; en hoja apaisada la calcula en vertical y la gira
   90°, así una 2×3 pasa a 3×2 sola. `op.revelar(i)` es lo que usa el vídeo para
   hacer entrar los cuadros de uno en uno sin duplicar el dibujo.
-- **`b6_folleto_cerebro.js`** — los textos. 22 rubros × 8 servicios (belleza y
-  muchos otros sectores, más «✍️ Otra»), 5 tonos, precios de salón y el guion
-  para la voz. Bolsa sin reposición: en una hoja de 8 cuadros no se repite ni un
-  servicio ni una descripción.
+- **`b6_folleto_cerebro.js`** — los textos. 32 rubros × 8 servicios (belleza y
+  muchos otros sectores, más «✍️ Otra»), 5 tonos, precios de referencia y el
+  guion para la voz. Bolsa sin reposición: en una hoja de 8 cuadros no se repite
+  ni un servicio ni una descripción.
 - **`b6_folleto_pro.js`** — la herramienta (IDs con prefijo `fp`). La **música
   de fondo** reutiliza los datos `FL_MELODIES` / `FL_NOTE` de Flyers (ya
   cargados en el bloque) pero sintetiza con su propio mezclador, que conecta
