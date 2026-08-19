@@ -198,9 +198,29 @@
       '<div class="row" id="fpDisenoDesc" style="font-size:9px;color:var(--tx2);margin-top:-2px"></div>';
   }
 
+  /* En el móvil los botones del bloque miden 25px de alto: con el dedo se falla.
+     Aquí se agrandan SÓLO en pantallas táctiles y SÓLO dentro de esta pestaña,
+     así el resto del bloque y la vista de ordenador se quedan como estaban.
+     Es un <style> añadido, no se toca ninguna regla del CSS de la página. */
+  function estilosTactiles() {
+    if ($('fpEstiloTactil')) return;
+    var s = document.createElement('style');
+    s.id = 'fpEstiloTactil';
+    s.textContent =
+      '@media (pointer: coarse){' +
+        '#tab-folleto .btn{min-height:38px;padding-top:9px;padding-bottom:9px}' +
+        '#tab-folleto select,#tab-folleto input[type=text],#tab-folleto input[type=number]{min-height:38px}' +
+        '#tab-folleto input[type=checkbox]{width:20px;height:20px}' +
+        '#tab-folleto input[type=color]{min-height:34px}' +
+        '#tab-folleto label{padding:3px 0}' +
+      '}';
+    document.head.appendChild(s);
+  }
+
   function construir() {
     var caja = $('tab-folleto');
     if (!caja) return false;
+    estilosTactiles();
 
     caja.innerHTML =
     '<div class="panel">' +
