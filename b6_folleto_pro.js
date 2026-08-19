@@ -57,8 +57,71 @@
     semilla: Math.floor(Math.random() * 1e9),
     coloresManuales: null,
     grabando: false,
-    pararGrabacion: null
+    pararGrabacion: null,
+    qr: null          // { el:Image, contenido:'...' } cuando se activa el QR
   };
+
+  /* Mete el QR (si lo hay) en las opciones de dibujo. Todos los dibujos pasan
+     por aquí, así el QR sale en la vista previa, el JPG, el PDF, el web y el vídeo. */
+  function conQR(op) {
+    op = op || {};
+    if (FP.qr && FP.qr.el) op.qr = FP.qr.el;
+    return op;
+  }
+
+  /* ═══════════════════ Código QR ═══════════════════
+     Lo que escriba la persona se convierte en algo que el móvil sepa abrir:
+     un número suelto pasa a ser un enlace de WhatsApp; un link se respeta tal
+     cual. Usa la librería QRCode que el bloque ya carga. */
+  function contenidoQR(txt) {
+    var t = String(txt || '').trim();
+    if (!t) return '';
+    if (/^(https?:|mailto:|tel:|whatsapp:)/i.test(t)) return t;
+    if (/^www\./i.test(t)) return 'https://' + t;
+    var soloNum = t.replace(/[^\d+]/g, '');
+    if (soloNum.replace(/\D/g, '').length >= 8) return 'https://wa.me/' + soloNum.replace(/\D/g, '');
+    return t;
+  }
+
+  /* Genera el QR como <img>. La librería pinta dentro de un div oculto; de ahí
+     se saca la imagen y se guarda en FP.qr para que el motor la dibuje. */
+  function generarQR() {
+    var activo = $('fpQR') && $('fpQR').checked;
+    var contenido = contenidoQR(val('fpTel'));
+    if (!activo || !contenido) { FP.qr = null; repintar(); return; }
+    if (FP.qr && FP.qr.contenido === contenido) { repintar(); return; }
+    if (typeof QRCode === 'undefined') {
+      estado('No se pudo cargar el generador de códigos QR. Comprueba la conexión y recarga.', 'err');
+      FP.qr = null; repintar(); return;
+    }
+    var caja = $('fpOculto');
+    var div = document.createElement('div');
+    caja.appendChild(div);
+    try {
+      new QRCode(div, {
+        text: contenido, width: 480, height: 480,
+        colorDark: '#000000', colorLight: '#FFFFFF',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch (e) {
+      caja.removeChild(div);
+      estado('No se pudo crear el QR: ' + (e.message || e), 'err');
+      FP.qr = null; repintar(); return;
+    }
+    // la librería tarda un instante y devuelve <canvas> o <img> según el navegador
+    setTimeout(function () {
+      var cv = div.querySelector('canvas'), im = div.querySelector('img');
+      var fuente = null;
+      try { fuente = cv ? cv.toDataURL('image/png') : (im ? im.src : null); } catch (e) { fuente = im ? im.src : null; }
+      caja.removeChild(div);
+      if (!fuente) { FP.qr = null; repintar(); return; }
+      var img = new Image();
+      img.onload = function () { repintar(); };
+      img.src = fuente;
+      FP.qr = { el: img, contenido: contenido };
+      repintar();
+    }, 260);
+  }
 
   function $(id) { return document.getElementById(id); }
   function val(id) { var e = $(id); return e ? e.value : ''; }
@@ -193,6 +256,14 @@
         '<span class="lbl">Contacto</span><input type="text" id="fpContacto" placeholder="📱 600 00 00 00 · @tuinstagram" style="flex:1;min-width:120px">' +
         '<span class="lbl">Botón</span><input type="text" id="fpCta" style="width:130px">' +
       '</div>' +
+      '<div class="row">' +
+        '<span class="lbl">📲 WhatsApp</span>' +
+        '<input type="text" id="fpTel" placeholder="34600000000 · o pega un link" style="flex:1;min-width:120px">' +
+        '<label style="font-size:10px;color:var(--tx2)"><input type="checkbox" id="fpQR"> mostrar QR</label>' +
+      '</div>' +
+      '<div class="row" style="margin-top:-2px"><span style="font-size:9px;color:var(--tx2)">' +
+        'El QR se dibuja en el folleto: al escanearlo abre tu WhatsApp (o el link que pongas).' +
+      '</span></div>' +
     '</div>' +
 
     /* ── Los cuadros ── */
@@ -289,6 +360,18 @@
       '<div class="row" id="fpGuionRow">' +
         '<span class="lbl">Lo que dirá</span>' +
         '<textarea id="fpGuion" rows="3" style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:6px;padding:5px;font-size:11px"></textarea>' +
+      '</div>' +
+      '<div class="row">' +
+        '<span class="lbl">✨ Efecto</span>' +
+        '<select id="fpEfecto" style="flex:1;min-width:160px">' +
+          '<option value="uno_a_uno">Cuadros de uno en uno</option>' +
+          '<option value="olas">🌊 Olas</option>' +
+          '<option value="circulos">⭕ Círculos</option>' +
+          '<option value="cuadros">🔲 Mosaico</option>' +
+          '<option value="deslizar">➡️ Deslizar</option>' +
+          '<option value="persiana">🎚️ Persiana</option>' +
+          '<option value="fundido">🎞️ Fundido</option>' +
+        '</select>' +
       '</div>' +
       '<div class="row">' +
         '<span class="lbl">Segundos</span>' +
@@ -552,7 +635,7 @@
     var cv = $('fpLienzo');
     cv.width = F.w; cv.height = F.h;
     cv.style.width = (F.w > F.h ? 400 : 320) + 'px';
-    M.pintar(cv.getContext('2d'), F.w, F.h, FP.pagina, { nPagina: FP.paginas.length + 1 });
+    M.pintar(cv.getContext('2d'), F.w, F.h, FP.pagina, conQR({ nPagina: FP.paginas.length + 1 }));
     sincronizarColores();
   }
 
@@ -574,7 +657,7 @@
       if (!cuentaVideos()) { bucle = null; return; }
       var F = M.FORMATOS[FP.pagina.formato] || M.FORMATOS.a4v;
       var cv = $('fpLienzo');
-      if (cv) M.pintar(cv.getContext('2d'), F.w, F.h, FP.pagina, { nPagina: FP.paginas.length + 1 });
+      if (cv) M.pintar(cv.getContext('2d'), F.w, F.h, FP.pagina, conQR({ nPagina: FP.paginas.length + 1 }));
       bucle = requestAnimationFrame(paso);
     })();
   }
@@ -626,7 +709,7 @@
     var F = M.FORMATOS[pag.formato] || M.FORMATOS.a4v;
     var cv = document.createElement('canvas');
     cv.width = F.w; cv.height = F.h;
-    M.pintar(cv.getContext('2d'), F.w, F.h, pag, { nPagina: n });
+    M.pintar(cv.getContext('2d'), F.w, F.h, pag, conQR({ nPagina: n }));
     return cv;
   }
 
@@ -715,7 +798,10 @@
     });
     estado('Guardando el diseño…', 'proc');
     Promise.all(tareas).then(function () {
-      var item = { id: 'd' + Date.now(), nombre: nombre, fecha: hoy(), paginas: pags };
+      var item = {
+        id: 'd' + Date.now(), nombre: nombre, fecha: hoy(), paginas: pags,
+        tel: val('fpTel') || '', qr: !!($('fpQR') && $('fpQR').checked)
+      };
       var lista = listaDisenos();
       lista.unshift(item);
       if (lista.length > 20) lista = lista.slice(0, 20);
@@ -767,6 +853,11 @@
     $('fpAVineta').checked = FP.pagina.adornos.vineta;
     $('fpAFiletes').checked = FP.pagina.adornos.filetes;
     $('fpASombras').checked = FP.pagina.adornos.sombras;
+
+    if ($('fpTel')) $('fpTel').value = it.tel || '';
+    if ($('fpQR')) $('fpQR').checked = !!it.qr;
+    FP.qr = null;
+    generarQR();          // lo rehace con el número guardado (o lo quita)
 
     var faltan = 0;
     it.paginas.forEach(function (pg) { pg.celdas.forEach(function (c) { if (c.sinVideo) faltan++; }); });
@@ -1165,6 +1256,51 @@
     return Promise.resolve(null);   // 'mic' se resuelve en vivo
   }
 
+  /* ═══════════════════ Efectos del vídeo ═══════════════════
+     Cómo entra cada cuadro en el vídeo. Devuelve lo que el motor sabe aplicar
+     (opacidad, desplazamiento, escala y recortes), así que lo que se ve es
+     exactamente lo que se graba, sin dibujar nada dos veces.
+
+     efecto  · id del desplegable      i     · nº de cuadro
+     n       · cuántos cuadros hay     tHoja · segundos dentro de esta hoja
+     porHoja · lo que dura la hoja     F     · formato (para medir el salto) */
+  function revelado(efecto, i, n, tHoja, porHoja, F) {
+    n = Math.max(1, n);
+    // el retardo escalonado es lo que hace que entren en cascada y no de golpe
+    var paso = Math.min(0.30, (porHoja * 0.45) / n);
+    var salida = 0.45;                       // lo que tarda un cuadro en entrar
+    var arranque = 0.25 + i * paso;
+    var f = Math.max(0, Math.min(1, (tHoja - arranque) / salida));
+    // suavizado: arranca y frena despacio, que es lo que se ve "caro"
+    var s = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+
+    if (efecto === 'fundido') {
+      return { a: f };
+    }
+    if (efecto === 'olas') {
+      // sube y baja como una ola, con un vaivén que se va calmando
+      var onda = Math.sin((1 - s) * Math.PI * 2.2) * (1 - s);
+      return { a: f, dy: onda * F.h * 0.05, escala: 0.94 + s * 0.06 };
+    }
+    if (efecto === 'circulos') {
+      return { a: Math.min(1, f * 1.6), recorte: 'circulo', p: s };
+    }
+    if (efecto === 'cuadros') {
+      // mosaico: cada cuadro crece desde su centro
+      return { a: f, escala: 0.55 + s * 0.45 };
+    }
+    if (efecto === 'deslizar') {
+      // entran alternando desde la izquierda y desde la derecha
+      var lado = (i % 2 === 0) ? -1 : 1;
+      return { a: f, dx: lado * (1 - s) * F.w * 0.35 };
+    }
+    if (efecto === 'persiana') {
+      return { a: Math.min(1, f * 1.5), recorte: 'persiana', p: s };
+    }
+    // 'uno_a_uno': el de siempre, subiendo y apareciendo
+    return { a: f, dy: (1 - s) * F.h * 0.02 };
+  }
+
   function grabarVideo() {
     if (FP.grabando) { if (FP.pararGrabacion) FP.pararGrabacion(); return; }
     if (!window.MediaRecorder) { estado('Este navegador no sabe grabar vídeo. Prueba en Chrome.', 'err'); return; }
@@ -1274,19 +1410,18 @@
         if (vozEl) vozEl.play().catch(function () {});
         estado(fuente === 'mic' ? '● Grabando · habla ahora y pulsa Detener al terminar.' : '🎬 Grabando el vídeo…', 'proc');
 
+        var efecto = val('fpEfecto') || 'uno_a_uno';
+
         (function pintar() {
           var t = (performance.now() - t0) / 1000;
           var iHoja = Math.min(hs.length - 1, Math.floor(t / porHoja));
           var tHoja = t - iHoja * porHoja;
-          M.pintar(ctx, F.w, F.h, hs[iHoja], {
+          M.pintar(ctx, F.w, F.h, hs[iHoja], conQR({
             nPagina: iHoja + 1,
             revelar: function (i) {
-              // los cuadros entran de uno en uno, subiendo y apareciendo
-              var arranque = 0.25 + i * Math.min(0.32, (porHoja * 0.45) / Math.max(1, hs[iHoja].celdas.length));
-              var f = Math.max(0, Math.min(1, (tHoja - arranque) / 0.45));
-              return { a: f, dy: (1 - f) * F.h * 0.02 };
+              return revelado(efecto, i, hs[iHoja].celdas.length, tHoja, porHoja, F);
             }
-          });
+          }));
           if (fuente !== 'mic' && t >= dur) { FP.pararGrabacion(); return; }
           if (fuente === 'mic' && t >= 90) { FP.pararGrabacion(); return; }
           if (vozEl && vozEl.ended) { FP.pararGrabacion(); return; }
@@ -1370,6 +1505,16 @@
     }
     if ($('fpMusPrev')) $('fpMusPrev').addEventListener('click', previewMusica);
     if ($('fpMusica')) $('fpMusica').addEventListener('change', pararPreview);
+
+    // QR: se regenera al marcar la casilla y al dejar de escribir el número
+    if ($('fpQR')) $('fpQR').addEventListener('change', generarQR);
+    if ($('fpTel')) {
+      var tQR = null;
+      $('fpTel').addEventListener('input', function () {
+        clearTimeout(tQR);
+        tQR = setTimeout(generarQR, 500);   // sin esto se regenera en cada tecla
+      });
+    }
 
     $('fpEscribir').addEventListener('click', function () { escribirSolo(false); });
     $('fpOtra').addEventListener('click', function () { escribirSolo(true); });

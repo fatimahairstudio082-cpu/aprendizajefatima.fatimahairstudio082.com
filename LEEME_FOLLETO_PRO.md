@@ -46,6 +46,37 @@ bloque que no cobra; las demás siguen cobrando lo de siempre.
 > grupo **Carta y cartel**): una sola foto grande con tu texto encima, ideal
 > para una **carta de presentación**, un **cartel** o un **anuncio**.
 
+### 📲 Tu WhatsApp en un código QR
+
+En la cabecera, escribe tu número en **📲 WhatsApp** y marca **mostrar QR**: en
+el folleto aparece una tarjetita blanca con el código y la palabra
+«Escanéame». Quien lo escanee con la cámara **te abre el WhatsApp** directo.
+
+- Un **número suelto** (600123456 o +34 600 12 34 56) se convierte solo en un
+  enlace de WhatsApp.
+- También puedes pegar **cualquier link** (tu Instagram, tu web, un formulario)
+  y el QR lo abrirá.
+- El QR sale en **todo**: la vista previa, la imagen, el PDF, el folleto web y
+  el vídeo.
+
+### ✨ Los efectos del vídeo
+
+Antes de darle a **🎬 Hacer el vídeo**, elige cómo quieres que entren los
+cuadros:
+
+| Efecto | Cómo se ve |
+|---|---|
+| **Cuadros de uno en uno** | Suben y aparecen en cascada. El de siempre. |
+| **🌊 Olas** | Entran meciéndose, con un vaivén que se calma. |
+| **⭕ Círculos** | Cada cuadro se abre desde el centro en un círculo. |
+| **🔲 Mosaico** | Crecen desde su centro, como piezas que encajan. |
+| **➡️ Deslizar** | Entran alternando desde la izquierda y la derecha. |
+| **🎚️ Persiana** | Se abren en franjas, como una persiana. |
+| **🎞️ Fundido** | Aparecen suavemente, sin moverse. |
+
+Funcionan **con fotos, con vídeos o sin nada** (con los fondos de la propia
+paleta), y el sonido —la voz y la música— se graba dentro del vídeo igual.
+
 ## Las cuatro descargas
 
 | Botón | Qué sale |
@@ -106,8 +137,9 @@ símbolos.
 
 Cuatro archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
 
-- **`b6_folleto_disenos.js`** — el cerebro de diseño: 14 estilos profesionales
-  agrupados por uso (catálogo, redes, elegante, escaparate). Cada estilo es una
+- **`b6_folleto_disenos.js`** — el cerebro de diseño: 25 estilos profesionales
+  agrupados por uso (carta y cartel, catálogo, redes, **bodas** —8 diseños—,
+  elegante, escaparate). Cada estilo es una
   combinación de paleta + cuadrícula + hoja + acabados que ya sabe dibujar el
   motor; no inventa nada nuevo en el lienzo. Expone `FOLLETO_DISENOS.lista()`,
   `.grupos()` y `.get(id)`. Es opcional: si no carga, la herramienta funciona
@@ -119,7 +151,10 @@ Cuatro archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
   paletas y las 8 rejillas. `rejilla(id,x,y,w,h,hueco)` es una función pura que
   devuelve los rectángulos; en hoja apaisada la calcula en vertical y la gira
   90°, así una 2×3 pasa a 3×2 sola. `op.revelar(i)` es lo que usa el vídeo para
-  hacer entrar los cuadros de uno en uno sin duplicar el dibujo.
+  hacer entrar los cuadros sin duplicar el dibujo: devuelve `a` (opacidad),
+  `dx`/`dy`, `escala` y `recorte` (`'circulo'` o `'persiana'`, con avance en
+  `p`), y de ahí salen los siete efectos. `op.qr` es la `<img>` del código QR,
+  que se dibuja en una tarjetita en la esquina inferior derecha.
 - **`b6_folleto_cerebro.js`** — los textos. 32 rubros × 8 servicios (belleza y
   muchos otros sectores, más «✍️ Otra»), 5 tonos, precios de referencia y el
   guion para la voz. Bolsa sin reposición: en una hoja de 8 cuadros no se repite
@@ -132,7 +167,10 @@ Cuatro archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
   textos, ajustes, colores y las fotos (reducidas a 1200px); si no cabe,
   reintenta sin fotos. La descarga de **varias imágenes** se empaqueta en un
   **ZIP «store»** hecho a mano (CRC-32 + cabeceras), para que sea una sola
-  descarga fiable en el móvil.
+  descarga fiable en el móvil. El **QR** se genera con la librería `QRCode` que
+  el bloque ya carga, y se guarda como `<img>` en `FP.qr`; todos los dibujos
+  pasan por `conQR()`, así sale en la vista previa, el JPG, el PDF, el folleto
+  web y el vídeo.
 
 En `bloque6_herramientas.html` sólo se han tocado 7 líneas: el botón de la
 pestaña, el contenedor `#tab-folleto`, la llamada a `fpOpen` en `switchMain`, la
