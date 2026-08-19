@@ -56,10 +56,14 @@ descargado. No hace falta subir ningún archivo ni tener conexión.
 
 Cinco opciones, las mismas que en Flyers y en «Ponle voz a tu video»:
 
-- **🗣️ Voz gratis que lee mi folleto** — la del navegador, sin claves. Como el
+- **🗣️ Voz gratis que lee mi folleto** — la del navegador, sin claves. Al
+  elegirla se abre un **player de voces**: eliges la voz que más te guste (las
+  🟢 son de **Google**, suelen ser las mejores), ajustas **velocidad** y **tono**
+  con dos deslizadores, y la **▶ pruebas** al momento antes de grabar. Como el
   navegador no deja grabarla, se capta por el micrófono: usa el **altavoz** (no
   auriculares), en un sitio en silencio, y no hables encima. Es el motor común
-  `window.B6_VOZ_GRATIS`, el mismo que ya usaban las otras dos herramientas.
+  `window.B6_VOZ_GRATIS`, el mismo que ya usaban las otras dos herramientas, al
+  que ahora se le pasan la voz, la velocidad y el tono elegidos.
 - **🎤 Narro yo con el micrófono** — hablas tú mientras se monta.
 - **🎵 Subir música o voz** — un archivo que ya tengas.
 - **✨ Voz de estudio (pro)** — la de OpenAI. Suena mejor pero necesita la clave

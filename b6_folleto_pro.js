@@ -240,6 +240,27 @@
           '<option value="ninguna">🔇 Sin sonido</option>' +
         '</select>' +
       '</div>' +
+
+      /* Player de voces gratis: elige la voz del navegador (las 🟢 de Google
+         suelen ser las mejores), la velocidad y el tono, y pruébala al momento. */
+      '<div id="fpVozGratisPanel" style="display:none;margin:6px 0;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg3)">' +
+        '<div style="font-size:10px;color:var(--ac2);font-weight:700;margin-bottom:7px">🗣️ Elige tu voz gratis</div>' +
+        '<div class="row" style="margin:0 0 6px">' +
+          '<select id="fpVozSel" style="flex:1;min-width:150px"><option value="">Cargando voces…</option></select>' +
+          '<button class="btn btn-g" id="fpVozProbar" style="font-size:10px;padding:4px 10px">▶ Probar</button>' +
+        '</div>' +
+        '<div class="row" style="margin:0 0 4px;align-items:center">' +
+          '<span class="lbl" style="min-width:62px">Velocidad</span>' +
+          '<input type="range" id="fpVozVel" min="0.7" max="1.3" step="0.05" value="1" style="flex:1">' +
+          '<span id="fpVozVelN" style="font-size:9px;color:var(--tx2);width:34px;text-align:right">1.0×</span>' +
+        '</div>' +
+        '<div class="row" style="margin:0;align-items:center">' +
+          '<span class="lbl" style="min-width:62px">Tono</span>' +
+          '<input type="range" id="fpVozTono" min="0.6" max="1.4" step="0.05" value="1" style="flex:1">' +
+          '<span id="fpVozTonoN" style="font-size:9px;color:var(--tx2);width:34px;text-align:right">1.0</span>' +
+        '</div>' +
+        '<div id="fpVozAviso" style="font-size:9px;color:var(--tx2);margin-top:6px"></div>' +
+      '</div>' +
       '<div class="row" id="fpAudioRow" style="display:none">' +
         '<span class="lbl">Archivo</span>' +
         '<input type="file" id="fpAudio" accept="audio/*" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px">' +
@@ -802,6 +823,58 @@
     } catch (e) { estado('No se pudo reproducir la música: ' + (e.message || e), 'err'); }
   }
 
+  /* ═══════════════════ Voces gratis (player) ═══════════════════
+     Lista las voces del navegador (speechSynthesis), las de Google primero,
+     para que la persona elija la que le guste. La misma que se elige aquí es
+     la que lee el folleto en el vídeo. */
+  function cargarVocesFolleto() {
+    var sel = $('fpVozSel');
+    if (!sel || !('speechSynthesis' in window)) return;
+    var todas = speechSynthesis.getVoices() || [];
+    if (!todas.length) return;                        // aún no están listas
+    var es = todas.filter(function (v) { return String(v.lang || '').toLowerCase().indexOf('es') === 0; });
+    var lista = (es.length ? es : todas).slice().sort(function (a, b) {
+      var ga = /google/i.test(a.name) ? 0 : 1, gb = /google/i.test(b.name) ? 0 : 1;
+      if (ga !== gb) return ga - gb;
+      return a.name.localeCompare(b.name);
+    });
+    var previa = sel.value;
+    sel.innerHTML = lista.map(function (v) {
+      var marca = /google/i.test(v.name) ? '🟢 ' : '· ';
+      return '<option value="' + encodeURIComponent(v.name) + '">' + marca + esc(v.name) + ' (' + esc(v.lang) + ')</option>';
+    }).join('');
+    if (previa) sel.value = previa;
+    var av = $('fpVozAviso');
+    if (av) av.textContent = lista.length + (lista.length === 1 ? ' voz disponible' : ' voces disponibles') +
+      '. Las 🟢 son de Google (suelen sonar mejor).';
+  }
+
+  function vozGratisElegida() {
+    var sel = $('fpVozSel');
+    if (!sel || !sel.value || !('speechSynthesis' in window)) return null;
+    var nombre = decodeURIComponent(sel.value);
+    var todas = speechSynthesis.getVoices() || [];
+    for (var i = 0; i < todas.length; i++) if (todas[i].name === nombre) return todas[i];
+    return null;
+  }
+
+  var probandoVoz = false;
+  function probarVoz() {
+    var btn = $('fpVozProbar');
+    if (!('speechSynthesis' in window)) { estado('Este navegador no tiene voces para probar.', 'err'); return; }
+    if (probandoVoz) { try { speechSynthesis.cancel(); } catch (e) {} probandoVoz = false; if (btn) btn.textContent = '▶ Probar'; return; }
+    var txt = (val('fpGuion') || '').trim();
+    txt = txt ? txt.slice(0, 160) : 'Hola, así sonará la voz de tu folleto. Reserva tu cita.';
+    var u = new SpeechSynthesisUtterance(txt);
+    var v = vozGratisElegida();
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
+    u.rate = parseFloat(val('fpVozVel')) || 1;
+    u.pitch = parseFloat(val('fpVozTono')) || 1;
+    u.onend = u.onerror = function () { probandoVoz = false; if (btn) btn.textContent = '▶ Probar'; };
+    try { speechSynthesis.cancel(); speechSynthesis.speak(u); probandoVoz = true; if (btn) btn.textContent = '■ Parar'; }
+    catch (e) { estado('No se pudo probar la voz: ' + (e.message || e), 'err'); }
+  }
+
   /* ═══════════════════ Vídeo con voz ═══════════════════ */
 
   function prepararVoz(fuente) {
@@ -820,8 +893,12 @@
         return Promise.reject(new Error('Se está grabando otra voz ahora mismo. Espera a que termine.'));
       var texto = (val('fpGuion') || '').trim();
       if (!texto) return Promise.reject(new Error('No hay nada que leer. Pulsa «Escríbelo tú por mí» o escribe el guion.'));
+      try { speechSynthesis.cancel(); } catch (e) {}   // corta la preescucha si sonaba
       return window.B6_VOZ_GRATIS.capturar({
         texto: texto,
+        voz: vozGratisElegida(),
+        vel: parseFloat(val('fpVozVel')) || 1,
+        tono: parseFloat(val('fpVozTono')) || 1,
         aviso: function (m) { estado(m, 'proc'); }
       }).then(function (r) { return { url: URL.createObjectURL(r.blob), seg: r.segundos, propia: true }; });
     }
@@ -1061,10 +1138,27 @@
     $('fpWeb').addEventListener('click', descargarWeb);
     $('fpVideo').addEventListener('click', grabarVideo);
     $('fpVoz').addEventListener('change', function () {
-      $('fpAudioRow').style.display = (val('fpVoz') === 'audio') ? 'flex' : 'none';
-      $('fpGuionRow').style.display = (val('fpVoz') === 'texto_gratis' || val('fpVoz') === 'texto_pro') ? 'flex' : 'none';
+      var v = val('fpVoz');
+      try { speechSynthesis.cancel(); } catch (e) {}
+      if (probandoVoz) { probandoVoz = false; var pb = $('fpVozProbar'); if (pb) pb.textContent = '▶ Probar'; }
+      $('fpAudioRow').style.display = (v === 'audio') ? 'flex' : 'none';
+      $('fpGuionRow').style.display = (v === 'texto_gratis' || v === 'texto_pro') ? 'flex' : 'none';
+      $('fpVozGratisPanel').style.display = (v === 'texto_gratis') ? 'block' : 'none';
     });
     $('fpGuion').addEventListener('input', function () { FP.pagina.guion = $('fpGuion').value; });
+
+    // Player de voces gratis
+    if ($('fpVozProbar')) $('fpVozProbar').addEventListener('click', probarVoz);
+    if ($('fpVozVel')) $('fpVozVel').addEventListener('input', function () {
+      var e = $('fpVozVelN'); if (e) e.textContent = (parseFloat(this.value) || 1).toFixed(1) + '×';
+    });
+    if ($('fpVozTono')) $('fpVozTono').addEventListener('input', function () {
+      var e = $('fpVozTonoN'); if (e) e.textContent = (parseFloat(this.value) || 1).toFixed(1);
+    });
+    if ('speechSynthesis' in window && speechSynthesis.addEventListener) {
+      // addEventListener, no .onvoiceschanged: así no se pisa el de Flyers
+      speechSynthesis.addEventListener('voiceschanged', cargarVocesFolleto);
+    }
   }
 
   function abrir() {
@@ -1097,6 +1191,11 @@
     pintarCeldas();
     llenarMusica();
     enlazar();
+    // la voz por defecto es la gratis: se muestra el player y se cargan las voces
+    // (a veces llegan tarde; el listener 'voiceschanged' las repone solo)
+    if ($('fpVozGratisPanel')) $('fpVozGratisPanel').style.display = 'block';
+    cargarVocesFolleto();
+    setTimeout(cargarVocesFolleto, 400);
     $('fpMarca').value = FP.pagina.cabecera.marca;
     $('fpTitulo').value = FP.pagina.cabecera.titulo;
     $('fpCta').value = FP.pagina.pie.cta;
