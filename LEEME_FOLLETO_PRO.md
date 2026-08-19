@@ -59,6 +59,27 @@ el folleto aparece una tarjetita blanca con el código y la palabra
 - El QR sale en **todo**: la vista previa, la imagen, el PDF, el folleto web y
   el vídeo.
 
+### 🎠 Carrusel para redes
+
+Convierte el folleto en una **secuencia de tarjetas** que se pasan con el dedo,
+como los carruseles de Instagram, Facebook, TikTok o Telegram.
+
+1. Elige el **formato**: cuadrado 1:1, vertical 4:5 (el que más se ve en el
+   feed) o vertical 9:16 para TikTok e historias.
+2. Deja marcado **una tarjeta por servicio** y te reparte el folleto: cada
+   servicio pasa a su propia tarjeta, con la foto grande y el precio bien
+   legible en el móvil. Los cuadros vacíos se saltan solos.
+3. **Con portada** añade delante la hoja entera, para que se vea de qué va.
+
+| Botón | Qué sale |
+|---|---|
+| **🎠 Descargar el carrusel** | Un **ZIP** con las tarjetas numeradas (`01_`, `02_`…). Las subes en ese orden y ya está. Máximo 20, que es el tope de Instagram. |
+| **🎬 Vídeo del carrusel** | El mismo carrusel en **vídeo**: las tarjetas se deslizan solas de una a otra, como al pasar el dedo, con la voz y la música dentro. |
+
+En el vídeo del carrusel, la primera tarjeta hace entrar sus cuadros con el
+efecto que hayas elegido y las demás llegan deslizándose — el movimiento es el
+propio paso de tarjeta, que es como se ve en las redes.
+
 ### ✨ Los efectos del vídeo
 
 Antes de darle a **🎬 Hacer el vídeo**, elige cómo quieres que entren los
@@ -170,7 +191,11 @@ Cuatro archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
   descarga fiable en el móvil. El **QR** se genera con la librería `QRCode` que
   el bloque ya carga, y se guarda como `<img>` en `FP.qr`; todos los dibujos
   pasan por `conQR()`, así sale en la vista previa, el JPG, el PDF, el folleto
-  web y el vídeo.
+  web y el vídeo. El **carrusel** (`tarjetasCarrusel()`) reparte cada hoja en
+  tarjetas: la portada más una hoja de rejilla `r1` por servicio, todas con el
+  formato de la red; el **vídeo del carrusel** dibuja dos tarjetas pegadas y las
+  desplaza juntas (`translate` de −e·W y (1−e)·W, que quedan exactamente
+  contiguas), así no hacen falta lienzos auxiliares.
 
 En `bloque6_herramientas.html` sólo se han tocado 7 líneas: el botón de la
 pestaña, el contenedor `#tab-folleto`, la llamada a `fpOpen` en `switchMain`, la

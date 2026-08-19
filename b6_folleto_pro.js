@@ -305,6 +305,32 @@
       '</div>' +
     '</div>' +
 
+    /* ── Carrusel para redes ── */
+    '<div class="panel">' +
+      '<div class="p-title">🎠 Carrusel para redes · Instagram, Facebook, TikTok, Telegram</div>' +
+      '<div style="font-size:10px;color:var(--tx2);margin-bottom:6px">' +
+        'Convierte tu folleto en una <b>secuencia de tarjetas</b> que se pasan con el dedo. ' +
+        'Salen numeradas, listas para subirlas en orden.' +
+      '</div>' +
+      '<div class="row">' +
+        '<span class="lbl">Formato</span>' +
+        '<select id="fpCarFormato">' +
+          '<option value="cuadrado">Cuadrado 1:1 · Instagram y Facebook</option>' +
+          '<option value="vertical" selected>Vertical 4:5 · el que más se ve</option>' +
+          '<option value="historia">Vertical 9:16 · TikTok e historias</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="row">' +
+        '<label style="font-size:10px"><input type="checkbox" id="fpCarUno" checked> una tarjeta por servicio</label>' +
+        '<label style="font-size:10px"><input type="checkbox" id="fpCarPortada" checked> con portada</label>' +
+      '</div>' +
+      '<div class="row">' +
+        '<button class="btn btn-ok" id="fpCarImg">🎠 Descargar el carrusel</button>' +
+        '<button class="btn" id="fpCarVid">🎬 Vídeo del carrusel</button>' +
+        '<span id="fpCarInfo" style="font-size:9px;color:var(--tx2)"></span>' +
+      '</div>' +
+    '</div>' +
+
     /* ── Descargas ── */
     '<div class="panel">' +
       '<div class="p-title">⬇️ Llévatelo</div>' +
@@ -935,6 +961,71 @@
     return new Blob(partes.concat(central).concat([eocd]), { type: 'application/zip' });
   }
 
+  /* ═══════════════════ Carrusel para redes ═══════════════════
+     Convierte el folleto en una secuencia de tarjetas que se pasan con el
+     dedo: portada + una tarjeta por servicio. Cada tarjeta es una hoja normal
+     (el mismo motor la dibuja), sólo que con el formato de la red y con un
+     único cuadro dentro, así el servicio se ve grande y se lee en el móvil. */
+  function tarjetasCarrusel() {
+    var fmt = val('fpCarFormato') || 'vertical';
+    var unoAUno = !$('fpCarUno') || $('fpCarUno').checked;
+    var conPortada = !$('fpCarPortada') || $('fpCarPortada').checked;
+    var origen = hojas();           // lee el panel y devuelve las hojas actuales
+    var salida = [];
+
+    origen.forEach(function (p) {
+      if (!unoAUno) { var t = copiar(p); t.formato = fmt; salida.push(t); return; }
+      // portada: la hoja entera, para que se vea de qué va el folleto
+      if (conPortada) {
+        var por = copiar(p);
+        por.formato = fmt;
+        salida.push(por);
+      }
+      // y después, un servicio por tarjeta (sólo los que tienen algo escrito)
+      p.celdas.forEach(function (c) {
+        if (!c.titulo && !c.texto && !c.media) return;
+        var t2 = copiar(p);
+        t2.formato = fmt;
+        t2.rejilla = 'r1';
+        t2.celdas = [{ titulo: c.titulo, texto: c.texto, precio: c.precio, etiqueta: c.etiqueta, media: c.media }];
+        salida.push(t2);
+      });
+    });
+
+    if (!salida.length) { var u = copiar(origen[0]); u.formato = fmt; salida.push(u); }
+    return salida;
+  }
+
+  function infoCarrusel(msg) {
+    var e = $('fpCarInfo');
+    if (e) e.textContent = msg || '';
+  }
+
+  /* Dice cuántas tarjetas van a salir, para que no sea una sorpresa al pulsar. */
+  function contarCarrusel() {
+    if (!listo) return;
+    var n = tarjetasCarrusel().length;
+    infoCarrusel(n > 20 ? '20 tarjetas (de ' + n + ': es el tope de Instagram)' : n + ' tarjetas');
+  }
+
+  function descargarCarrusel() {
+    var ts = tarjetasCarrusel();
+    if (ts.length > 20) ts = ts.slice(0, 20);   // Instagram admite 20 por carrusel
+    estado('Preparando el carrusel…', 'proc');
+    try {
+      var archivos = ts.map(function (p, i) {
+        var n = ('0' + (i + 1)).slice(-2);
+        var b64 = lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.95).split(',')[1];
+        return { name: n + '_carrusel.jpg', data: b64aU8(b64) };
+      });
+      bajar('carrusel_' + hoy() + '.zip', URL.createObjectURL(zipStore(archivos)));
+      estado('✓ Carrusel de ' + ts.length + ' tarjetas en un ZIP. Ábrelo y súbelas en orden (01, 02, 03…).', 'done');
+      infoCarrusel(ts.length + ' tarjetas');
+    } catch (e) {
+      estado('No se pudo montar el carrusel: ' + (e.message || e), 'err');
+    }
+  }
+
   /* ═══════════════════ Descargas ═══════════════════ */
 
   function descargarPNG() {
@@ -1301,26 +1392,37 @@
     return { a: f, dy: (1 - s) * F.h * 0.02 };
   }
 
-  function grabarVideo() {
+  /* Los dos botones de vídeo: el normal y el de carrusel. Se separan para que
+     el manejador del clic nunca se cuele como opciones. */
+  function grabarVideoNormal() { grabarVideo(false); }
+  function grabarVideoCarrusel() { grabarVideo(true); }
+
+  function grabarVideo(carrusel) {
     if (FP.grabando) { if (FP.pararGrabacion) FP.pararGrabacion(); return; }
     if (!window.MediaRecorder) { estado('Este navegador no sabe grabar vídeo. Prueba en Chrome.', 'err'); return; }
 
     var fuente = val('fpVoz') || 'texto_gratis';
+    // el botón que se pulsó es el que pasa a «Detener», para poder pararlo
+    var boton = carrusel ? ($('fpCarVid') || $('fpVideo')) : $('fpVideo');
+    var textoBoton = carrusel ? '🎬 Vídeo del carrusel' : '🎬 Hacer el vídeo';
+    function soltarBoton() { if (boton) boton.textContent = textoBoton; }
+
     var limpieza = [];
     function limpiar() { limpieza.forEach(function (f) { try { f(); } catch (e) {} }); limpieza = []; }
     function fallar(msg) {
       limpiar();
       FP.grabando = false;
-      $('fpVideo').textContent = '🎬 Hacer el vídeo';
+      soltarBoton();
       estado(msg, 'err');
     }
 
     FP.grabando = true;
-    $('fpVideo').textContent = '■ Detener';
+    if (boton) boton.textContent = '■ Detener';
     estado('Preparando…', 'proc');
 
     prepararVoz(fuente).then(function (voz) {
-      var hs = hojas();
+      // en modo carrusel el vídeo va tarjeta a tarjeta, como al pasar el dedo
+      var hs = carrusel ? tarjetasCarrusel() : hojas();
       var F = M.FORMATOS[hs[0].formato] || M.FORMATOS.a4v;
       var cv = document.createElement('canvas');
       cv.width = F.w; cv.height = F.h;
@@ -1358,6 +1460,8 @@
         // la duración se decide antes de nada: la manda la voz si la hay, y con
         // ella se programa la música para que cuadren
         var dur = Math.max(4, Math.min(60, parseFloat(val('fpDur')) || 12));
+        // en carrusel, cada tarjeta necesita su tiempo para poder leerse
+        if (carrusel) dur = Math.max(dur, Math.min(90, hs.length * 2.2));
         if (vozEl && vozEl.duration && isFinite(vozEl.duration)) dur = Math.min(90, vozEl.duration + 0.4);
 
         // música gratis: suena por debajo de la voz (0.32) o sola (0.9) si no
@@ -1391,10 +1495,10 @@
         rec.onstop = function () {
           limpiar();
           FP.grabando = false;
-          $('fpVideo').textContent = '🎬 Hacer el vídeo';
+          soltarBoton();
           var tipo = (mime && mime.indexOf('mp4') >= 0) ? 'mp4' : 'webm';
           var blob = new Blob(trozos, { type: mime || 'video/webm' });
-          bajar('folleto_' + hoy() + '.' + tipo, URL.createObjectURL(blob));
+          bajar((carrusel ? 'carrusel_' : 'folleto_') + hoy() + '.' + tipo, URL.createObjectURL(blob));
           estado('✓ Vídeo descargado' + (tipo === 'webm'
             ? ' en WebM. Va bien en Android; si en iPhone no se ve, mándalo por Drive en vez de por WhatsApp.'
             : ' en MP4, listo para WhatsApp e Instagram.'), 'done');
@@ -1411,17 +1515,37 @@
         estado(fuente === 'mic' ? '● Grabando · habla ahora y pulsa Detener al terminar.' : '🎬 Grabando el vídeo…', 'proc');
 
         var efecto = val('fpEfecto') || 'uno_a_uno';
+        var PASO = Math.min(0.55, porHoja * 0.28);   // lo que dura el deslizamiento
+
+        /* Dibuja una tarjeta. En carrusel, sólo la primera hace entrar sus
+           cuadros: las demás llegan ya montadas, porque la animación es el
+           propio deslizamiento (si no, parpadearían al aterrizar). */
+        function hoja(idx, tDentro) {
+          var op = conQR({ nPagina: idx + 1 });
+          if (!carrusel || idx === 0) {
+            op.revelar = function (i) {
+              return revelado(efecto, i, hs[idx].celdas.length, tDentro, porHoja, F);
+            };
+          }
+          M.pintar(ctx, F.w, F.h, hs[idx], op);
+        }
 
         (function pintar() {
           var t = (performance.now() - t0) / 1000;
           var iHoja = Math.min(hs.length - 1, Math.floor(t / porHoja));
           var tHoja = t - iHoja * porHoja;
-          M.pintar(ctx, F.w, F.h, hs[iHoja], conQR({
-            nPagina: iHoja + 1,
-            revelar: function (i) {
-              return revelado(efecto, i, hs[iHoja].celdas.length, tHoja, porHoja, F);
-            }
-          }));
+          var queda = porHoja - tHoja;
+
+          if (carrusel && iHoja < hs.length - 1 && queda < PASO) {
+            // las dos tarjetas se dibujan pegadas y se desplazan juntas: la de
+            // ahora sale por la izquierda y la siguiente entra por la derecha
+            var q = 1 - queda / PASO;
+            var e = q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
+            ctx.save(); ctx.translate(-e * F.w, 0); hoja(iHoja, tHoja); ctx.restore();
+            ctx.save(); ctx.translate((1 - e) * F.w, 0); hoja(iHoja + 1, porHoja); ctx.restore();
+          } else {
+            hoja(iHoja, tHoja);
+          }
           if (fuente !== 'mic' && t >= dur) { FP.pararGrabacion(); return; }
           if (fuente === 'mic' && t >= 90) { FP.pararGrabacion(); return; }
           if (vozEl && vozEl.ended) { FP.pararGrabacion(); return; }
@@ -1523,7 +1647,12 @@
     $('fpPNG').addEventListener('click', descargarPNG);
     $('fpPDF').addEventListener('click', descargarPDF);
     $('fpWeb').addEventListener('click', descargarWeb);
-    $('fpVideo').addEventListener('click', grabarVideo);
+    $('fpVideo').addEventListener('click', grabarVideoNormal);
+    if ($('fpCarImg')) $('fpCarImg').addEventListener('click', descargarCarrusel);
+    if ($('fpCarVid')) $('fpCarVid').addEventListener('click', grabarVideoCarrusel);
+    ['fpCarFormato', 'fpCarUno', 'fpCarPortada'].forEach(function (id) {
+      if ($(id)) $(id).addEventListener('change', contarCarrusel);
+    });
     $('fpVoz').addEventListener('change', function () {
       var v = val('fpVoz');
       try { speechSynthesis.cancel(); } catch (e) {}
@@ -1589,6 +1718,7 @@
     pintarPaginas();
     pintarDisenos();
     escribirSolo(false);   // arranca con textos de ejemplo, para que no salga en blanco
+    contarCarrusel();
     estado('Pon tus fotos en los huecos y cambia los precios. Nada de esto gasta créditos.', 'done');
   }
 
