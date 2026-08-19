@@ -29,6 +29,20 @@
   /* cat = grupo para el desplegable · tema/rejilla/formato = mandos del motor */
   var DISENOS = [
 
+    /* ── Carta y cartel (una sola pieza: foto grande + texto) ── */
+    { id: 'carta_presentacion', cat: 'Carta y cartel', nombre: '💌 Carta de presentación',
+      desc: 'Una sola pieza limpia: foto grande, tu nombre y tu mensaje.',
+      tema: 'minimal', rejilla: 'r1', formato: 'a4v', adornos: LIMPIO },
+    { id: 'cartel_anuncio', cat: 'Carta y cartel', nombre: '📢 Cartel de anuncio',
+      desc: 'Pieza única llamativa en oro sobre negro, para anunciar algo.',
+      tema: 'oro_negro', rejilla: 'r1', formato: 'a4v', adornos: TODO },
+    { id: 'anuncio_historia', cat: 'Carta y cartel', nombre: '📱 Anuncio para historia',
+      desc: 'Pieza única vertical para stories y estados de WhatsApp.',
+      tema: 'violeta', rejilla: 'r1', formato: 'historia', adornos: TODO },
+    { id: 'anuncio_cuadrado', cat: 'Carta y cartel', nombre: '📸 Anuncio cuadrado',
+      desc: 'Pieza única para el feed de Instagram, cálida y clara.',
+      tema: 'coral', rejilla: 'r1', formato: 'cuadrado', adornos: SUAVE },
+
     /* ── Catálogo y tarifa (para imprimir o PDF) ── */
     { id: 'catalogo_lujo', cat: 'Catálogo y tarifa', nombre: '👑 Catálogo lujo',
       desc: 'Oro sobre negro, seis servicios. El más elegante.',

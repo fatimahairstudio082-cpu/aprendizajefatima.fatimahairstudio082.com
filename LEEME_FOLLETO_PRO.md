@@ -37,12 +37,20 @@ bloque que no cobra; las demás siguen cobrando lo de siempre.
 6. Si el folleto tiene varias hojas: monta la primera, pulsa **📚 Guardar como
    página**, cambia las fotos y los textos, y sigue. El PDF y el folleto web
    salen con todas las páginas.
+7. **📚 Mis diseños**: pulsa **💾 Guardar este** para conservar el folleto en el
+   móvil (textos, colores y fotos) y seguir otro día. Se guardan hasta 20; cada
+   uno con su botón **Abrir**. Los vídeos, por su tamaño, se vuelven a poner al
+   abrir.
+
+> **¿Sólo una pieza?** Elige la cuadrícula **Pieza única** (o un estilo del
+> grupo **Carta y cartel**): una sola foto grande con tu texto encima, ideal
+> para una **carta de presentación**, un **cartel** o un **anuncio**.
 
 ## Las cuatro descargas
 
 | Botón | Qué sale |
 |---|---|
-| **🖼️ Imagen** | Un JPG por hoja. Para Instagram y estados de WhatsApp. |
+| **🖼️ Imagen** | Una hoja sale en JPG; si hay varias, salen juntas en un **ZIP** (una sola descarga, con cada hoja como un JPG dentro — así el móvil no bloquea las descargas). |
 | **📄 PDF** | Todas las hojas en un PDF, cada una a su tamaño real. Para imprimir. |
 | **🌐 Folleto web** | Un solo archivo `.html` que se abre en cualquier móvil, se pasa con el dedo, reproduce los vídeos y lee el folleto en voz alta al pulsar 🔊. |
 | **🎬 Hacer el vídeo** | El folleto animado, con los cuadros entrando de uno en uno y la voz leyendo. |
@@ -120,7 +128,11 @@ Cuatro archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
   de fondo** reutiliza los datos `FL_MELODIES` / `FL_NOTE` de Flyers (ya
   cargados en el bloque) pero sintetiza con su propio mezclador, que conecta
   sólo a la pista que se graba; si esos datos no están, la fila de música se
-  oculta sola.
+  oculta sola. **Mis diseños** guarda en `localStorage` (`fp_disenos_v1`) los
+  textos, ajustes, colores y las fotos (reducidas a 1200px); si no cabe,
+  reintenta sin fotos. La descarga de **varias imágenes** se empaqueta en un
+  **ZIP «store»** hecho a mano (CRC-32 + cabeceras), para que sea una sola
+  descarga fiable en el móvil.
 
 En `bloque6_herramientas.html` sólo se han tocado 7 líneas: el botón de la
 pestaña, el contenedor `#tab-folleto`, la llamada a `fpOpen` en `switchMain`, la

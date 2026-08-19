@@ -221,6 +221,19 @@
       '</div>' +
     '</div>' +
 
+    /* ── Mis diseños (se quedan en el dispositivo) ── */
+    '<div class="panel">' +
+      '<div class="p-title">📚 Mis diseños · guárdalo y sigue cuando quieras</div>' +
+      '<div class="row">' +
+        '<input type="text" id="fpDisNombre" placeholder="Ponle un nombre" style="flex:1;min-width:120px">' +
+        '<button class="btn btn-ok" id="fpDisGuardar">💾 Guardar este</button>' +
+      '</div>' +
+      '<div id="fpDisLista" style="margin-top:6px"></div>' +
+      '<div style="font-size:9px;color:var(--tx2);margin-top:5px">' +
+        'Se guarda en <b>este móvil</b> (textos, colores y fotos). Los vídeos, por su tamaño, se vuelven a poner al abrir.' +
+      '</div>' +
+    '</div>' +
+
     /* ── Descargas ── */
     '<div class="panel">' +
       '<div class="p-title">⬇️ Llévatelo</div>' +
@@ -617,17 +630,245 @@
     return cv;
   }
 
+  /* ═══════════════════ Mis diseños (guardar en el dispositivo) ═══════════════════
+     Se guarda en localStorage: textos, ajustes, colores y las fotos (reducidas
+     para que quepan). Los vídeos no se guardan por su tamaño; al abrir, se avisa
+     de cuántos hay que volver a poner. */
+  var CLAVE_DIS = 'fp_disenos_v1';
+
+  function listaDisenos() {
+    try { return JSON.parse(localStorage.getItem(CLAVE_DIS) || '[]') || []; }
+    catch (e) { return []; }
+  }
+  function escribirLista(l) {
+    try { localStorage.setItem(CLAVE_DIS, JSON.stringify(l)); return true; }
+    catch (e) { return false; }
+  }
+
+  /* Reduce una foto (dataURL) a 1200px de lado máximo, para que no reviente la
+     memoria del navegador al guardar varios diseños. */
+  function miniFoto(dataURL) {
+    return new Promise(function (res) {
+      if (!dataURL) { res(null); return; }
+      var img = new Image();
+      img.onload = function () {
+        var mx = 1200, w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        if (!w || !h) { res(dataURL); return; }
+        var s = Math.min(1, mx / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * s)); c.height = Math.max(1, Math.round(h * s));
+        try { c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.82)); }
+        catch (e) { res(dataURL); }
+      };
+      img.onerror = function () { res(dataURL); };
+      img.src = dataURL;
+    });
+  }
+
+  function serializarPagina(p) {
+    return {
+      rejilla: p.rejilla, formato: p.formato, tema: p.tema,
+      colores: p.colores ? JSON.parse(JSON.stringify(p.colores)) : null,
+      cabecera: { marca: p.cabecera.marca, titulo: p.cabecera.titulo, subtitulo: p.cabecera.subtitulo },
+      pie: { cta: p.pie.cta, contacto: p.pie.contacto },
+      rubro: p.rubro, tono: p.tono, guion: p.guion || '',
+      adornos: { grano: !!p.adornos.grano, vineta: !!p.adornos.vineta, filetes: !!p.adornos.filetes, sombras: !!p.adornos.sombras },
+      celdas: p.celdas.map(function (c) {
+        return {
+          titulo: c.titulo, texto: c.texto, precio: c.precio, etiqueta: c.etiqueta,
+          foto: (c.media && c.media.tipo === 'img') ? c.media.url : null,
+          sinVideo: !!(c.media && c.media.tipo === 'vid')
+        };
+      })
+    };
+  }
+
+  function deserializarPagina(pg) {
+    return {
+      rejilla: pg.rejilla, formato: pg.formato, tema: pg.tema,
+      colores: pg.colores ? JSON.parse(JSON.stringify(pg.colores)) : null,
+      cabecera: { marca: pg.cabecera.marca, titulo: pg.cabecera.titulo, subtitulo: pg.cabecera.subtitulo },
+      pie: { cta: pg.pie.cta, contacto: pg.pie.contacto },
+      rubro: pg.rubro, tono: pg.tono, guion: pg.guion || '',
+      adornos: { grano: !!pg.adornos.grano, vineta: !!pg.adornos.vineta, filetes: !!pg.adornos.filetes, sombras: !!pg.adornos.sombras },
+      celdas: pg.celdas.map(function (c) {
+        var celda = { titulo: c.titulo, texto: c.texto, precio: c.precio, etiqueta: c.etiqueta, media: null };
+        if (c.foto) {
+          var img = new Image();
+          img.onload = function () { repintar(); };  // redibuja cuando la foto está lista
+          img.src = c.foto;
+          celda.media = { tipo: 'img', el: img, url: c.foto, file: null, nombre: 'foto guardada' };
+        }
+        return celda;
+      })
+    };
+  }
+
+  function guardarDiseno() {
+    if (!listo) return;
+    leerPanel();
+    var nombre = (val('fpDisNombre') || '').trim() || ('Diseño ' + (listaDisenos().length + 1));
+    var pags = FP.paginas.map(serializarPagina).concat([serializarPagina(FP.pagina)]);
+    var tareas = [];
+    pags.forEach(function (pg) {
+      pg.celdas.forEach(function (cel) { tareas.push(miniFoto(cel.foto).then(function (d) { cel.foto = d; })); });
+    });
+    estado('Guardando el diseño…', 'proc');
+    Promise.all(tareas).then(function () {
+      var item = { id: 'd' + Date.now(), nombre: nombre, fecha: hoy(), paginas: pags };
+      var lista = listaDisenos();
+      lista.unshift(item);
+      if (lista.length > 20) lista = lista.slice(0, 20);
+      if (escribirLista(lista)) { estado('✓ Diseño «' + nombre + '» guardado.', 'done'); pintarDisenos(); return; }
+      // no cupo: reintenta sin las fotos
+      item.paginas.forEach(function (pg) { pg.celdas.forEach(function (cel) { cel.foto = null; }); });
+      if (escribirLista(lista)) { estado('✓ Guardado, pero sin las fotos (no cabían en la memoria del móvil).', 'done'); pintarDisenos(); }
+      else estado('No se pudo guardar: la memoria del navegador está llena. Borra algún diseño y prueba otra vez.', 'err');
+    });
+  }
+
+  function borrarDiseno(id) {
+    escribirLista(listaDisenos().filter(function (x) { return x.id !== id; }));
+    pintarDisenos();
+  }
+
+  function cargarDisenoGuardado(id) {
+    var it = null;
+    listaDisenos().some(function (x) { if (x.id === id) { it = x; return true; } return false; });
+    if (!it) { estado('Ese diseño ya no está.', 'err'); return; }
+
+    // suelta los medios actuales (los vídeos, aunque estén compartidos, se van)
+    FP.pagina.celdas.forEach(function (c, i) { if (c.media) quitarMedia(i, true); });
+    FP.paginas.forEach(function (pg) {
+      pg.celdas.forEach(function (c) {
+        if (c.media && c.media.tipo === 'vid') {
+          try { c.media.el.pause(); if (c.media.el.parentNode) c.media.el.parentNode.removeChild(c.media.el); URL.revokeObjectURL(c.media.url); } catch (e) {}
+        }
+      });
+    });
+
+    var pags = it.paginas.map(deserializarPagina);
+    FP.paginas = pags.slice(0, pags.length - 1);
+    FP.pagina = pags[pags.length - 1];
+    FP.coloresManuales = FP.pagina.colores || null;
+
+    $('fpRejilla').value = FP.pagina.rejilla;
+    $('fpFormato').value = FP.pagina.formato;
+    $('fpTema').value = FP.pagina.tema;
+    $('fpRubro').value = FP.pagina.rubro;
+    $('fpTono').value = FP.pagina.tono;
+    $('fpMarca').value = FP.pagina.cabecera.marca;
+    $('fpTitulo').value = FP.pagina.cabecera.titulo;
+    $('fpSub').value = FP.pagina.cabecera.subtitulo;
+    $('fpContacto').value = FP.pagina.pie.contacto;
+    $('fpCta').value = FP.pagina.pie.cta;
+    $('fpGuion').value = FP.pagina.guion || '';
+    $('fpAGrano').checked = FP.pagina.adornos.grano;
+    $('fpAVineta').checked = FP.pagina.adornos.vineta;
+    $('fpAFiletes').checked = FP.pagina.adornos.filetes;
+    $('fpASombras').checked = FP.pagina.adornos.sombras;
+
+    var faltan = 0;
+    it.paginas.forEach(function (pg) { pg.celdas.forEach(function (c) { if (c.sinVideo) faltan++; }); });
+
+    pintarCeldas();
+    pintarPaginas();
+    repintar();
+    arrancarBucle();
+    estado('✓ Diseño «' + it.nombre + '» abierto' +
+      (faltan ? '. Vuelve a poner ' + faltan + ' vídeo(s): no se guardan por su tamaño.' : '.'), 'done');
+  }
+
+  function pintarDisenos() {
+    var caja = $('fpDisLista');
+    if (!caja) return;
+    var lista = listaDisenos();
+    if (!lista.length) { caja.innerHTML = '<span style="font-size:9px;color:var(--tx2)">Aún no has guardado ningún diseño.</span>'; return; }
+    caja.innerHTML = lista.map(function (it) {
+      return '<div class="row" style="margin:0 0 4px;align-items:center">' +
+        '<span style="flex:1;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📄 ' + esc(it.nombre) +
+          ' <span style="color:var(--tx2)">· ' + esc(it.fecha) + '</span></span>' +
+        '<button class="btn btn-g fpDisAbrir" data-id="' + esc(it.id) + '" style="font-size:9px;padding:2px 9px">Abrir</button>' +
+        '<button class="btn btn-g fpDisBorrar" data-id="' + esc(it.id) + '" style="font-size:9px;padding:2px 7px">✕</button>' +
+      '</div>';
+    }).join('');
+    caja.querySelectorAll('.fpDisAbrir').forEach(function (el) {
+      el.addEventListener('click', function () { cargarDisenoGuardado(el.dataset.id); });
+    });
+    caja.querySelectorAll('.fpDisBorrar').forEach(function (el) {
+      el.addEventListener('click', function () { borrarDiseno(el.dataset.id); });
+    });
+  }
+
+  /* ═══════════════════ ZIP (varias imágenes en una descarga) ═══════════════════
+     Un ZIP «store» (sin comprimir; el JPEG ya lo está) hecho a mano, para que
+     bajar varias hojas sea UNA sola descarga —fiable en el móvil, donde bajar
+     varios archivos seguidos suele fallar— con cada hoja como un .jpg dentro. */
+  var CRC_TABLA = (function () {
+    var t = [], c, n, k;
+    for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; }
+    return t;
+  })();
+  function crc32(u8) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < u8.length; i++) c = CRC_TABLA[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function b64aU8(b64) {
+    var bin = atob(b64), n = bin.length, u = new Uint8Array(n);
+    for (var i = 0; i < n; i++) u[i] = bin.charCodeAt(i);
+    return u;
+  }
+  function ascii(s) {
+    var u = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255;
+    return u;
+  }
+  function le16(v) { return [v & 255, (v >> 8) & 255]; }
+  function le32(v) { return [v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >>> 24) & 255]; }
+  function zipStore(archivos) {
+    var partes = [], central = [], offset = 0;
+    archivos.forEach(function (f) {
+      var nombre = ascii(f.name), datos = f.data, crc = crc32(datos), sz = datos.length;
+      var lh = new Uint8Array([].concat([0x50, 0x4b, 0x03, 0x04], le16(20), le16(0), le16(0), le16(0), le16(0),
+        le32(crc), le32(sz), le32(sz), le16(nombre.length), le16(0)));
+      partes.push(lh, nombre, datos);
+      central.push(new Uint8Array([].concat([0x50, 0x4b, 0x01, 0x02], le16(20), le16(20), le16(0), le16(0), le16(0), le16(0),
+        le32(crc), le32(sz), le32(sz), le16(nombre.length), le16(0), le16(0), le16(0), le16(0), le32(0), le32(offset))), nombre);
+      offset += lh.length + nombre.length + datos.length;
+    });
+    var centralBytes = 0;
+    central.forEach(function (u) { centralBytes += u.length; });
+    var eocd = new Uint8Array([].concat([0x50, 0x4b, 0x05, 0x06], le16(0), le16(0),
+      le16(archivos.length), le16(archivos.length), le32(centralBytes), le32(offset), le16(0)));
+    return new Blob(partes.concat(central).concat([eocd]), { type: 'application/zip' });
+  }
+
   /* ═══════════════════ Descargas ═══════════════════ */
 
   function descargarPNG() {
     var hs = hojas();
-    hs.forEach(function (p, i) {
-      setTimeout(function () {
-        bajar('folleto_' + hoy() + (hs.length > 1 ? '_hoja' + (i + 1) : '') + '.jpg',
-              lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.95));
-      }, i * 350);
-    });
-    estado('✓ ' + hs.length + (hs.length > 1 ? ' imágenes descargadas.' : ' imagen descargada.'), 'done');
+    if (hs.length === 1) {
+      bajar('folleto_' + hoy() + '.jpg', lienzoDe(hs[0], 1).toDataURL('image/jpeg', 0.95));
+      estado('✓ Imagen descargada.', 'done');
+      return;
+    }
+    try {
+      var archivos = hs.map(function (p, i) {
+        var b64 = lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.95).split(',')[1];
+        return { name: 'folleto_hoja' + (i + 1) + '.jpg', data: b64aU8(b64) };
+      });
+      bajar('folleto_' + hoy() + '.zip', URL.createObjectURL(zipStore(archivos)));
+      estado('✓ Las ' + hs.length + ' hojas en un ZIP (una sola descarga). Ábrelo y tienes cada imagen por separado.', 'done');
+    } catch (e) {
+      // respaldo: hoja a hoja (por si algún navegador no deja crear el ZIP)
+      hs.forEach(function (p, i) {
+        setTimeout(function () {
+          bajar('folleto_' + hoy() + '_hoja' + (i + 1) + '.jpg', lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.95));
+        }, i * 350);
+      });
+      estado('✓ ' + hs.length + ' imágenes descargadas.', 'done');
+    }
   }
 
   function descargarPDF() {
@@ -1133,6 +1374,7 @@
     $('fpEscribir').addEventListener('click', function () { escribirSolo(false); });
     $('fpOtra').addEventListener('click', function () { escribirSolo(true); });
     $('fpAddPag').addEventListener('click', añadirPagina);
+    if ($('fpDisGuardar')) $('fpDisGuardar').addEventListener('click', guardarDiseno);
     $('fpPNG').addEventListener('click', descargarPNG);
     $('fpPDF').addEventListener('click', descargarPDF);
     $('fpWeb').addEventListener('click', descargarWeb);
@@ -1200,6 +1442,7 @@
     $('fpTitulo').value = FP.pagina.cabecera.titulo;
     $('fpCta').value = FP.pagina.pie.cta;
     pintarPaginas();
+    pintarDisenos();
     escribirSolo(false);   // arranca con textos de ejemplo, para que no salga en blanco
     estado('Pon tus fotos en los huecos y cambia los precios. Nada de esto gasta créditos.', 'done');
   }

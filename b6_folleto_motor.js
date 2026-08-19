@@ -53,6 +53,7 @@
      las ocho plantillas sin escribir coordenadas a mano.                */
 
   var REJILLAS = {
+    r1:  { nombre: 'Pieza única',        n: 1, uso: 'Carta, cartel o anuncio',    filas: [{ alto: 1, cols: [1] }] },
     r2a: { nombre: 'Dúo apilado',        n: 2, uso: 'Antes y después',            filas: [{ alto: 1, cols: [1] }, { alto: 1, cols: [1] }] },
     r2b: { nombre: 'Dúo lado a lado',    n: 2, uso: 'Dos promociones',            filas: [{ alto: 1, cols: [1, 1] }] },
     r4a: { nombre: 'Cuadrícula 2×2',     n: 4, uso: 'La tarifa clásica',          filas: [{ alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }] },
