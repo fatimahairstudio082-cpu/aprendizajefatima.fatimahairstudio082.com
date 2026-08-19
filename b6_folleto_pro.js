@@ -1,0 +1,936 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOLLETOS PRO · pestaña nueva del Bloque 6
+   ───────────────────────────────────────────────────────────────────────────
+   Folletos con cuadrícula de 2, 4, 6 u 8 cuadros. En cada cuadro se pone una
+   FOTO o un VÍDEO, y se escribe a mano el servicio, la descripción, el precio
+   y la etiqueta — o los escribe solo el cerebro y luego se retocan.
+
+   Se descarga en cuatro formas: imagen, PDF, vídeo con voz y folleto web que
+   se pasa con el dedo.
+
+   · Parche aditivo: se cuelga de #tab-folleto y no toca nada de lo que ya
+     funciona (ni flStartVideo, ni gastar, ni Firebase, ni el CSS).
+   · No cuesta créditos. Es una decisión de la dueña; el resto del bloque sí
+     cobra, esta herramienta no.
+   · El dibujo lo hace b6_folleto_motor.js y los textos b6_folleto_cerebro.js.
+   · Todo se monta en el móvil: ninguna foto ni ningún vídeo sube a internet.
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  if (window._B6_FOLLETO_PRO_LOADED) return;
+  window._B6_FOLLETO_PRO_LOADED = true;
+
+  var MAX_VIDEOS = 4;          // por memoria del móvil
+  var MAX_SEG_VIDEO = 60;      // segundos de cada vídeo subido
+  var TOPE_WEB = 45 * 1024 * 1024;  // lo que se puede incrustar en el folleto web
+
+  var M = null, CB = null;     // motor y cerebro, se resuelven al arrancar
+  var listo = false;
+
+  var FP = {
+    pagina: null,
+    paginas: [],
+    idx: 0,
+    semilla: Math.floor(Math.random() * 1e9),
+    coloresManuales: null,
+    grabando: false,
+    pararGrabacion: null
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function val(id) { var e = $(id); return e ? e.value : ''; }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function estado(msg, clase) {
+    var e = $('fpSt');
+    if (e) e.innerHTML = msg ? '<div class="st ' + (clase || 'proc') + '">' + msg + '</div>' : '';
+  }
+
+  /* ═══════════════════ Estado del folleto ═══════════════════ */
+
+  function nCuadros() {
+    var r = M.REJILLAS[val('fpRejilla')] || M.REJILLAS.r4a;
+    return r.n;
+  }
+
+  function paginaVacia(n) {
+    var celdas = [];
+    for (var i = 0; i < n; i++) celdas.push({ titulo: '', texto: '', precio: '', etiqueta: '', media: null });
+    return {
+      rejilla: 'r4a', formato: 'a4v', tema: 'oro_negro',
+      cabecera: { marca: 'Fátima Hair Studio', titulo: 'Carta de Servicios', subtitulo: '' },
+      pie: { cta: 'Pide tu cita', contacto: '' },
+      celdas: celdas, rubro: 'peluqueria', tono: 'cercano', guion: '',
+      adornos: { grano: true, vineta: true, filetes: true, sombras: true }
+    };
+  }
+
+  /* Copia para guardar como página del folleto. La foto y el vídeo se guardan
+     por referencia: son el mismo archivo, no hace falta duplicarlo en memoria. */
+  function copiar(p) {
+    return {
+      rejilla: p.rejilla, formato: p.formato, tema: p.tema,
+      colores: p.colores ? JSON.parse(JSON.stringify(p.colores)) : null,
+      cabecera: { marca: p.cabecera.marca, titulo: p.cabecera.titulo, subtitulo: p.cabecera.subtitulo },
+      pie: { cta: p.pie.cta, contacto: p.pie.contacto },
+      celdas: p.celdas.map(function (c) {
+        return { titulo: c.titulo, texto: c.texto, precio: c.precio, etiqueta: c.etiqueta, media: c.media };
+      }),
+      rubro: p.rubro, tono: p.tono, guion: p.guion,
+      adornos: { grano: p.adornos.grano, vineta: p.adornos.vineta, filetes: p.adornos.filetes, sombras: p.adornos.sombras }
+    };
+  }
+
+  /* ═══════════════════ El panel ═══════════════════ */
+
+  function opciones(obj, texto) {
+    return Object.keys(obj).map(function (k) {
+      return '<option value="' + k + '">' + esc(texto(k, obj[k])) + '</option>';
+    }).join('');
+  }
+
+  function construir() {
+    var caja = $('tab-folleto');
+    if (!caja) return false;
+
+    caja.innerHTML =
+    '<div class="panel">' +
+      '<div class="p-title">📰 Folletos Pro · tu carta de servicios en una hoja</div>' +
+      '<div style="font-size:10px;color:var(--tx2);margin-bottom:6px">' +
+        'Elige la cuadrícula, pon tus fotos o tus vídeos en cada hueco y escribe tus precios. ' +
+        'Todo se monta en tu móvil y <b>no gasta créditos</b>.' +
+      '</div>' +
+
+      '<div class="row">' +
+        '<span class="lbl">Cuadrícula</span>' +
+        '<select id="fpRejilla">' + opciones(M.REJILLAS, function (k, r) { return r.nombre + ' · ' + r.n + ' cuadros'; }) + '</select>' +
+        '<span class="lbl">Hoja</span>' +
+        '<select id="fpFormato">' + opciones(M.FORMATOS, function (k, f) { return f.nombre; }) + '</select>' +
+      '</div>' +
+
+      '<div class="row">' +
+        '<span class="lbl">Colores</span>' +
+        '<select id="fpTema">' + opciones(M.TEMAS, function (k, t) { return t.nombre + (t.claro ? ' (clara)' : ''); }) + '</select>' +
+        '<button class="btn btn-g" id="fpDado" style="font-size:10px;padding:3px 9px">🎲 Sorpresa</button>' +
+        '<button class="btn btn-g" id="fpVolverTema" style="font-size:10px;padding:3px 9px">↩ Volver</button>' +
+      '</div>' +
+      '<div class="row" id="fpColoresRow">' +
+        '<span class="lbl">A mano</span>' +
+        ['fondo', 'panel', 'tinta', 'tinta2', 'acento', 'acento2'].map(function (k) {
+          return '<label style="font-size:9px;color:var(--tx2)">' + k +
+                 ' <input type="color" id="fpC_' + k + '" style="width:30px;height:24px;padding:0;border:1px solid var(--bd);border-radius:4px;background:var(--bg3)"></label>';
+        }).join('') +
+      '</div>' +
+
+      '<div class="sep"></div>' +
+
+      '<div class="row">' +
+        '<span class="lbl">Tu negocio</span>' +
+        '<select id="fpRubro">' + CB.rubros().map(function (r) { return '<option value="' + r.id + '">' + esc(r.nombre) + '</option>'; }).join('') + '</select>' +
+        '<span class="lbl">Tono</span>' +
+        '<select id="fpTono">' + CB.tonos().map(function (t) { return '<option value="' + t.id + '">' + esc(t.nombre) + '</option>'; }).join('') + '</select>' +
+      '</div>' +
+      '<div class="row">' +
+        '<button class="btn" id="fpEscribir">📝 Escríbelo tú por mí</button>' +
+        '<button class="btn btn-g" id="fpOtra">🔁 Otra versión</button>' +
+        '<span style="font-size:9px;color:var(--tx2)">Luego puedes cambiar cada palabra y cada precio a mano.</span>' +
+      '</div>' +
+
+      '<div class="sep"></div>' +
+
+      '<div class="row"><span class="lbl">Marca</span><input type="text" id="fpMarca" style="flex:1;min-width:120px"></div>' +
+      '<div class="row"><span class="lbl">Título</span><input type="text" id="fpTitulo" style="flex:1;min-width:120px"></div>' +
+      '<div class="row"><span class="lbl">Subtítulo</span><input type="text" id="fpSub" style="flex:1;min-width:120px"></div>' +
+      '<div class="row">' +
+        '<span class="lbl">Contacto</span><input type="text" id="fpContacto" placeholder="📱 600 00 00 00 · @tuinstagram" style="flex:1;min-width:120px">' +
+        '<span class="lbl">Botón</span><input type="text" id="fpCta" style="width:130px">' +
+      '</div>' +
+    '</div>' +
+
+    /* ── Los cuadros ── */
+    '<div class="panel">' +
+      '<div class="p-title">🖼️ Tus cuadros · una foto o un vídeo en cada hueco</div>' +
+      '<div id="fpCeldas"></div>' +
+      '<div style="font-size:9px;color:var(--tx2);margin-top:5px">' +
+        'Se admiten fotos (JPG, PNG) y vídeos (MP4, MOV, WEBM). Máximo ' + MAX_VIDEOS +
+        ' vídeos por folleto y ' + MAX_SEG_VIDEO + ' segundos cada uno, para que no se atragante el móvil.' +
+      '</div>' +
+    '</div>' +
+
+    /* ── Vista previa ── */
+    '<div class="panel">' +
+      '<div class="p-title">👁️ Cómo va quedando</div>' +
+      '<div style="text-align:center"><canvas id="fpLienzo" style="max-width:100%;width:340px;height:auto;border-radius:10px;border:1px solid var(--bd);background:#000"></canvas></div>' +
+      '<div class="row" style="justify-content:center;margin-top:6px">' +
+        '<label style="font-size:10px"><input type="checkbox" id="fpAGrano" checked> grano</label>' +
+        '<label style="font-size:10px"><input type="checkbox" id="fpAVineta" checked> viñeta</label>' +
+        '<label style="font-size:10px"><input type="checkbox" id="fpAFiletes" checked> filetes</label>' +
+        '<label style="font-size:10px"><input type="checkbox" id="fpASombras" checked> sombras</label>' +
+      '</div>' +
+      '<div class="row" style="justify-content:center">' +
+        '<button class="btn btn-g" id="fpAddPag">📚 Guardar como página</button>' +
+        '<span id="fpPags" style="font-size:10px;color:var(--tx2)"></span>' +
+      '</div>' +
+    '</div>' +
+
+    /* ── Descargas ── */
+    '<div class="panel">' +
+      '<div class="p-title">⬇️ Llévatelo</div>' +
+      '<div class="row">' +
+        '<button class="btn btn-ok" id="fpPNG">🖼️ Imagen</button>' +
+        '<button class="btn btn-ok" id="fpPDF">📄 PDF</button>' +
+        '<button class="btn btn-ok" id="fpWeb">🌐 Folleto web</button>' +
+      '</div>' +
+      '<div class="sep"></div>' +
+      '<div class="row">' +
+        '<span class="lbl">Voz del vídeo</span>' +
+        '<select id="fpVoz">' +
+          '<option value="texto_gratis">🗣️ Voz gratis que lee mi folleto</option>' +
+          '<option value="mic">🎤 Narro yo con el micrófono</option>' +
+          '<option value="audio">🎵 Subir música o voz</option>' +
+          '<option value="texto_pro">✨ Voz de estudio (pro · necesita clave)</option>' +
+          '<option value="ninguna">🔇 Sin sonido</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="row" id="fpAudioRow" style="display:none">' +
+        '<span class="lbl">Archivo</span>' +
+        '<input type="file" id="fpAudio" accept="audio/*" style="flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:4px;color:var(--tx);font-size:10px">' +
+      '</div>' +
+      '<div class="row" id="fpGuionRow">' +
+        '<span class="lbl">Lo que dirá</span>' +
+        '<textarea id="fpGuion" rows="3" style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:6px;padding:5px;font-size:11px"></textarea>' +
+      '</div>' +
+      '<div class="row">' +
+        '<span class="lbl">Segundos</span>' +
+        '<input type="number" id="fpDur" value="12" min="4" max="60" step="1" style="width:70px">' +
+        '<span style="font-size:9px;color:var(--tx2)">si hay voz, dura lo que dure la voz</span>' +
+        '<button class="btn" id="fpVideo">🎬 Hacer el vídeo</button>' +
+      '</div>' +
+      '<div id="fpSt"></div>' +
+      '<div style="font-size:9px;color:var(--tx2);margin-top:4px">' +
+        'El vídeo se graba en tiempo real: uno de 12 segundos tarda 12 segundos. No cambies de pestaña mientras lo hace.' +
+      '</div>' +
+    '</div>' +
+
+    '<div id="fpOculto" style="position:absolute;width:0;height:0;overflow:hidden"></div>';
+
+    return true;
+  }
+
+  /* ═══════════════════ Los cuadros ═══════════════════ */
+
+  function pintarCeldas() {
+    var n = nCuadros(), caja = $('fpCeldas'), html = '';
+    for (var i = 0; i < n; i++) {
+      var c = FP.pagina.celdas[i] || { titulo: '', texto: '', precio: '', etiqueta: '' };
+      var nom = c.media ? (c.media.tipo === 'vid' ? '🎬 ' + c.media.nombre : '🖼️ ' + c.media.nombre) : 'sin foto';
+      html +=
+      '<div style="border:1px solid var(--bd);border-radius:8px;padding:7px 8px;margin-bottom:6px;background:var(--bg3)">' +
+        '<div class="row" style="margin:0 0 5px">' +
+          '<b style="font-size:11px;color:var(--ac2);min-width:26px">#' + (i + 1) + '</b>' +
+          '<input type="file" accept="image/*,video/*" data-fpi="' + i + '" class="fpFile" ' +
+                 'style="flex:1;min-width:120px;background:var(--bg2);border:1px solid var(--bd);border-radius:5px;padding:3px;color:var(--tx);font-size:10px">' +
+          '<span style="font-size:9px;color:var(--tx2);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="fpMed' + i + '">' + esc(nom) + '</span>' +
+          '<button class="btn btn-g fpQuita" data-fpi="' + i + '" style="font-size:9px;padding:2px 7px">✕</button>' +
+        '</div>' +
+        '<div class="row" style="margin:0 0 4px">' +
+          '<input type="text" class="fpTit" data-fpi="' + i + '" placeholder="Servicio" value="' + esc(c.titulo) + '" style="flex:2;min-width:110px">' +
+          '<input type="text" class="fpPre" data-fpi="' + i + '" placeholder="Precio" value="' + esc(c.precio) + '" style="width:78px">' +
+          '<input type="text" class="fpEti" data-fpi="' + i + '" placeholder="Etiqueta" value="' + esc(c.etiqueta) + '" style="width:88px">' +
+          '<button class="btn btn-g fpRe" data-fpi="' + i + '" title="Otra redacción" style="font-size:10px;padding:2px 8px">🔁</button>' +
+        '</div>' +
+        '<div class="row" style="margin:0">' +
+          '<input type="text" class="fpTxt" data-fpi="' + i + '" placeholder="Una frase que lo explique" value="' + esc(c.texto) + '" style="flex:1;min-width:150px">' +
+        '</div>' +
+      '</div>';
+    }
+    caja.innerHTML = html;
+
+    caja.querySelectorAll('.fpFile').forEach(function (el) {
+      el.addEventListener('change', function (ev) { subirMedia(parseInt(el.dataset.fpi, 10), ev); });
+    });
+    caja.querySelectorAll('.fpQuita').forEach(function (el) {
+      el.addEventListener('click', function () { quitarMedia(parseInt(el.dataset.fpi, 10)); });
+    });
+    caja.querySelectorAll('.fpRe').forEach(function (el) {
+      el.addEventListener('click', function () { regenerarCelda(parseInt(el.dataset.fpi, 10)); });
+    });
+    ['fpTit', 'fpPre', 'fpEti', 'fpTxt'].forEach(function (cl) {
+      caja.querySelectorAll('.' + cl).forEach(function (el) {
+        el.addEventListener('input', function () {
+          var i = parseInt(el.dataset.fpi, 10), c = FP.pagina.celdas[i];
+          if (!c) return;
+          if (cl === 'fpTit') c.titulo = el.value;
+          else if (cl === 'fpPre') c.precio = el.value;
+          else if (cl === 'fpEti') c.etiqueta = el.value;
+          else c.texto = el.value;
+          repintar();
+        });
+      });
+    });
+  }
+
+  function cuentaVideos() {
+    return FP.pagina.celdas.filter(function (c) { return c.media && c.media.tipo === 'vid'; }).length;
+  }
+
+  function subirMedia(i, ev) {
+    var f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    var esVideo = /^video\//.test(f.type) || /\.(mp4|mov|webm|m4v)$/i.test(f.name);
+    var c = FP.pagina.celdas[i];
+    if (!c) return;
+
+    if (esVideo) {
+      if (c.media && c.media.tipo !== 'vid' && cuentaVideos() >= MAX_VIDEOS ||
+          (!c.media || c.media.tipo !== 'vid') && cuentaVideos() >= MAX_VIDEOS) {
+        estado('Ya hay ' + MAX_VIDEOS + ' vídeos en este folleto. Quita uno antes de poner otro.', 'err');
+        ev.target.value = '';
+        return;
+      }
+      quitarMedia(i, true);
+      var url = URL.createObjectURL(f);
+      var v = document.createElement('video');
+      v.src = url; v.muted = true; v.loop = true; v.playsInline = true;
+      v.setAttribute('playsinline', ''); v.preload = 'auto';
+      // 'loadeddata' y no 'loadedmetadata': con metadata el readyState aún es 1
+      // y todavía no hay fotograma que dibujar
+      v.addEventListener('loadeddata', function () {
+        if (v.duration && v.duration > MAX_SEG_VIDEO) {
+          estado('El vídeo del cuadro ' + (i + 1) + ' dura ' + Math.round(v.duration) + 's; sólo se verán los primeros ' + MAX_SEG_VIDEO + 's.', 'proc');
+        }
+        v.play().catch(function () {});
+        repintar();
+        arrancarBucle();
+      });
+      v.addEventListener('error', function () {
+        estado('No se pudo abrir ese vídeo. Prueba con MP4.', 'err');
+      });
+      $('fpOculto').appendChild(v);
+      c.media = { tipo: 'vid', el: v, url: url, file: f, nombre: f.name };
+      $('fpMed' + i).textContent = '🎬 ' + f.name;
+      estado('');
+      return;
+    }
+
+    var r = new FileReader();
+    r.onload = function (e) {
+      var img = new Image();
+      img.onload = function () {
+        quitarMedia(i, true);
+        c.media = { tipo: 'img', el: img, url: e.target.result, file: f, nombre: f.name };
+        $('fpMed' + i).textContent = '🖼️ ' + f.name;
+        repintar();
+      };
+      img.onerror = function () { estado('Esa imagen no se pudo abrir.', 'err'); };
+      img.src = e.target.result;
+    };
+    r.readAsDataURL(f);
+  }
+
+  function quitarMedia(i, callado) {
+    var c = FP.pagina.celdas[i];
+    if (!c || !c.media) { if (!callado) repintar(); return; }
+    if (c.media.tipo === 'vid') {
+      try { c.media.el.pause(); } catch (e) {}
+      if (c.media.el.parentNode) c.media.el.parentNode.removeChild(c.media.el);
+      try { URL.revokeObjectURL(c.media.url); } catch (e) {}
+    }
+    c.media = null;
+    var et = $('fpMed' + i);
+    if (et) et.textContent = 'sin foto';
+    if (!callado) { repintar(); estado(''); }
+  }
+
+  /* ═══════════════════ Cerebro ═══════════════════ */
+
+  function escribirSolo(nuevaSemilla) {
+    if (nuevaSemilla) FP.semilla = Math.floor(Math.random() * 1e9);
+    var t = CB.generar({
+      rubro: val('fpRubro'), tono: val('fpTono'), n: nCuadros(),
+      negocio: val('fpMarca'), contacto: val('fpContacto'), semilla: FP.semilla
+    });
+    FP.pagina.cabecera.titulo = t.cabecera.titulo;
+    FP.pagina.cabecera.subtitulo = t.cabecera.subtitulo;
+    FP.pagina.pie.cta = t.pie.cta;
+    FP.pagina.guion = t.guion;
+    t.celdas.forEach(function (c, i) {
+      var d = FP.pagina.celdas[i];
+      if (!d) return;
+      d.titulo = c.titulo; d.texto = c.texto; d.precio = c.precio; d.etiqueta = c.etiqueta;
+    });
+    $('fpTitulo').value = t.cabecera.titulo;
+    $('fpSub').value = t.cabecera.subtitulo;
+    $('fpCta').value = t.pie.cta;
+    $('fpGuion').value = t.guion;
+    pintarCeldas();
+    repintar();
+    estado('✓ Escrito. Cambia lo que quieras: es tuyo.', 'done');
+  }
+
+  /* Rellena sólo los cuadros que están en blanco, sin tocar lo que la alumna
+     ya haya escrito y sin repetir un servicio que ya esté en la hoja. */
+  function rellenarVacias() {
+    var n = nCuadros();
+    var t = CB.generar({
+      rubro: val('fpRubro'), tono: val('fpTono'), n: n,
+      negocio: val('fpMarca'), contacto: val('fpContacto'), semilla: FP.semilla
+    });
+    var usados = {};
+    FP.pagina.celdas.forEach(function (c) { if (c.titulo) usados[c.titulo] = true; });
+    var libres = t.celdas.filter(function (c) { return !usados[c.titulo]; });
+    FP.pagina.celdas.forEach(function (c) {
+      if (c.titulo || !libres.length) return;
+      var n2 = libres.shift();
+      c.titulo = n2.titulo; c.texto = n2.texto; c.precio = n2.precio; c.etiqueta = n2.etiqueta;
+    });
+    pintarCeldas();
+    repintar();
+  }
+
+  function regenerarCelda(i) {
+    var c = FP.pagina.celdas[i];
+    if (!c) return;
+    var ctx = { rubro: val('fpRubro'), tono: val('fpTono'), servicio: c.titulo, semilla: Math.floor(Math.random() * 1e9) };
+    c.texto = CB.regenerar('texto', ctx);
+    pintarCeldas();
+    repintar();
+  }
+
+  /* ═══════════════════ Vista previa ═══════════════════ */
+
+  function leerPanel() {
+    var p = FP.pagina;
+    p.rejilla = val('fpRejilla');
+    p.formato = val('fpFormato');
+    p.tema = val('fpTema');
+    p.colores = FP.coloresManuales;
+    p.cabecera.marca = val('fpMarca');
+    p.cabecera.titulo = val('fpTitulo');
+    p.cabecera.subtitulo = val('fpSub');
+    p.pie.contacto = val('fpContacto');
+    p.pie.cta = val('fpCta');
+    p.rubro = val('fpRubro');
+    p.tono = val('fpTono');
+    p.adornos = {
+      grano: $('fpAGrano').checked, vineta: $('fpAVineta').checked,
+      filetes: $('fpAFiletes').checked, sombras: $('fpASombras').checked
+    };
+  }
+
+  function repintar() {
+    if (!listo) return;
+    leerPanel();
+    var F = M.FORMATOS[FP.pagina.formato] || M.FORMATOS.a4v;
+    var cv = $('fpLienzo');
+    cv.width = F.w; cv.height = F.h;
+    cv.style.width = (F.w > F.h ? 400 : 320) + 'px';
+    M.pintar(cv.getContext('2d'), F.w, F.h, FP.pagina, { nPagina: FP.paginas.length + 1 });
+    sincronizarColores();
+  }
+
+  function sincronizarColores() {
+    var c = M.colores({ tema: val('fpTema'), colores: FP.coloresManuales });
+    ['fondo', 'panel', 'tinta', 'tinta2', 'acento', 'acento2'].forEach(function (k) {
+      var e = $('fpC_' + k);
+      if (e && e.value.toLowerCase() !== String(c[k]).toLowerCase()) e.value = c[k];
+    });
+  }
+
+  /* Mientras haya un vídeo puesto, hay que repintar sin parar para que se vea
+     moverse dentro del folleto. Sin vídeos, el bucle se apaga solo. */
+  var bucle = null;
+  function arrancarBucle() {
+    if (bucle) return;
+    (function paso() {
+      if (!listo || FP.grabando) { bucle = null; return; }
+      if (!cuentaVideos()) { bucle = null; return; }
+      var F = M.FORMATOS[FP.pagina.formato] || M.FORMATOS.a4v;
+      var cv = $('fpLienzo');
+      if (cv) M.pintar(cv.getContext('2d'), F.w, F.h, FP.pagina, { nPagina: FP.paginas.length + 1 });
+      bucle = requestAnimationFrame(paso);
+    })();
+  }
+
+  /* ═══════════════════ Páginas ═══════════════════ */
+
+  function añadirPagina() {
+    leerPanel();
+    FP.paginas.push(copiar(FP.pagina));
+    pintarPaginas();
+    estado('✓ Página ' + FP.paginas.length + ' guardada. Cambia las fotos y el texto y guarda la siguiente.', 'done');
+    repintar();
+  }
+
+  function pintarPaginas() {
+    var e = $('fpPags');
+    if (!e) return;
+    if (!FP.paginas.length) { e.innerHTML = 'Sin páginas guardadas · el folleto tendrá sólo esta hoja'; return; }
+    e.innerHTML = FP.paginas.length + ' página' + (FP.paginas.length > 1 ? 's' : '') + ' guardada' +
+      (FP.paginas.length > 1 ? 's' : '') + ' · <a href="#" id="fpBorrarPag" style="color:var(--warn)">borrar la última</a>';
+    var b = $('fpBorrarPag');
+    if (b) b.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      FP.paginas.pop();
+      pintarPaginas();
+      repintar();
+    });
+  }
+
+  /* Las hojas que se exportan: las guardadas, y si no hay ninguna, la de ahora. */
+  function hojas() {
+    leerPanel();
+    return FP.paginas.length ? FP.paginas.concat([copiar(FP.pagina)]) : [copiar(FP.pagina)];
+  }
+
+  function bajar(nombre, href) {
+    var a = document.createElement('a');
+    a.download = nombre; a.href = href;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { document.body.removeChild(a); }, 100);
+  }
+
+  function hoy() {
+    var d = new Date();
+    return d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2) + ('0' + d.getDate()).slice(-2);
+  }
+
+  function lienzoDe(pag, n) {
+    var F = M.FORMATOS[pag.formato] || M.FORMATOS.a4v;
+    var cv = document.createElement('canvas');
+    cv.width = F.w; cv.height = F.h;
+    M.pintar(cv.getContext('2d'), F.w, F.h, pag, { nPagina: n });
+    return cv;
+  }
+
+  /* ═══════════════════ Descargas ═══════════════════ */
+
+  function descargarPNG() {
+    var hs = hojas();
+    hs.forEach(function (p, i) {
+      setTimeout(function () {
+        bajar('folleto_' + hoy() + (hs.length > 1 ? '_hoja' + (i + 1) : '') + '.jpg',
+              lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.95));
+      }, i * 350);
+    });
+    estado('✓ ' + hs.length + (hs.length > 1 ? ' imágenes descargadas.' : ' imagen descargada.'), 'done');
+  }
+
+  function descargarPDF() {
+    var JS = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if (!JS) { estado('No se pudo cargar el motor de PDF. Comprueba la conexión y recarga.', 'err'); return; }
+    var hs = hojas();
+    var pdf = null;
+    hs.forEach(function (p, i) {
+      var F = M.FORMATOS[p.formato] || M.FORMATOS.a4v;
+      var anchoMM = F.mm[0], altoMM = F.mm[1];
+      if (!pdf) pdf = new JS({ orientation: anchoMM > altoMM ? 'landscape' : 'portrait', unit: 'mm', format: [anchoMM, altoMM] });
+      else pdf.addPage([anchoMM, altoMM], anchoMM > altoMM ? 'landscape' : 'portrait');
+      pdf.addImage(lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, anchoMM, altoMM);
+    });
+    pdf.save('folleto_' + hoy() + '.pdf');
+    estado('✓ PDF de ' + hs.length + ' hoja' + (hs.length > 1 ? 's' : '') + ' descargado.', 'done');
+  }
+
+  function comoDataURL(file) {
+    return new Promise(function (ok, ko) {
+      var r = new FileReader();
+      r.onload = function (e) { ok(e.target.result); };
+      r.onerror = ko;
+      r.readAsDataURL(file);
+    });
+  }
+
+  /* Folleto web: un solo .html que se abre en cualquier móvil, se pasa con el
+     dedo, reproduce los vídeos y lee el folleto en voz alta. */
+  function descargarWeb() {
+    var hs = hojas();
+    estado('Preparando el folleto web…', 'proc');
+
+    /* Un mismo vídeo puede estar en varias hojas. Se incrusta UNA sola vez y
+       las hojas lo comparten: si no, un folleto de 4 páginas pesaría el
+       cuádruple por el mismo archivo. */
+    var unicos = [];                 // [{file, hojas:[i…]}]
+    hs.forEach(function (p, i) {
+      p.celdas.forEach(function (c) {
+        if (!c.media || c.media.tipo !== 'vid' || !c.media.file) return;
+        var v = null;
+        unicos.some(function (u) { if (u.file === c.media.file) { v = u; return true; } return false; });
+        if (!v) { v = { file: c.media.file, hojas: [] }; unicos.push(v); }
+        if (v.hojas.indexOf(i) < 0) v.hojas.push(i);
+      });
+    });
+    var pesoVideos = unicos.reduce(function (a, u) { return a + u.file.size; }, 0);
+    var conVideos = pesoVideos > 0 && pesoVideos < TOPE_WEB;
+
+    var tareas = hs.map(function (p, i) {
+      return Promise.resolve({ hoja: i, portada: lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.85) });
+    });
+
+    var videos = conVideos ? unicos.map(function (u, k) {
+      return comoDataURL(u.file).then(function (d) { return { clip: k, hojas: u.hojas, datos: d, nombre: u.file.name }; });
+    }) : [];
+
+    Promise.all(tareas.concat(videos)).then(function (res) {
+      var portadas = [], vids = [];
+      res.forEach(function (r) { if (r.portada) portadas[r.hoja] = r.portada; else vids.push(r); });
+
+      // los datos de cada vídeo se escriben UNA vez en CLIPS y las hojas los
+      // referencian por número; si se pusieran en cada <video src>, el mismo
+      // vídeo repetido en 4 hojas pesaría 4 veces
+      vids.sort(function (a, b) { return a.clip - b.clip; });
+      var listaClips = '[' + vids.map(function (v) { return JSON.stringify(v.datos); }).join(',') + ']';
+
+      var secciones = portadas.map(function (src, i) {
+        var extra = vids.filter(function (v) { return v.hojas.indexOf(i) >= 0; }).map(function (v) {
+          return '<video class="clip" data-clip="' + v.clip + '" controls playsinline preload="metadata"></video>';
+        }).join('');
+        return '<section><img src="' + src + '" alt="Hoja ' + (i + 1) + '">' +
+               (extra ? '<div class="clips"><div class="lbl">Vídeos de esta hoja</div>' + extra + '</div>' : '') +
+               '</section>';
+      }).join('');
+
+      var guion = (val('fpGuion') || FP.pagina.guion || '').replace(/[`\\]/g, '');
+      var titulo = val('fpTitulo') || 'Folleto';
+      var marca = val('fpMarca') || '';
+
+      var doc =
+'<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
+'<meta name="viewport" content="width=device-width,initial-scale=1">' +
+'<title>' + esc(marca + ' · ' + titulo) + '</title><style>' +
+'*{box-sizing:border-box}body{margin:0;background:#0b0b10;color:#eee;font:14px system-ui,"Segoe UI",sans-serif;overflow:hidden}' +
+'#v{display:flex;height:100dvh;transition:transform .32s ease}' +
+'section{min-width:100vw;height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;overflow-y:auto}' +
+'section img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}' +
+'.clips{width:100%;max-width:520px;margin-top:10px}.clips .lbl{font-size:11px;opacity:.6;margin-bottom:5px}' +
+'.clip{width:100%;border-radius:8px;margin-bottom:8px;background:#000}' +
+'#barra{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;align-items:center;justify-content:center;' +
+'padding:9px;background:linear-gradient(0deg,rgba(0,0,0,.85),transparent)}' +
+'button{background:#7c3aed;color:#fff;border:0;border-radius:20px;padding:8px 15px;font-size:13px;cursor:pointer}' +
+'button:disabled{opacity:.35}#num{font-size:12px;opacity:.75;min-width:46px;text-align:center}' +
+'</style></head><body>' +
+'<div id="v">' + secciones + '</div>' +
+'<div id="barra"><button id="a">‹</button><span id="num"></span><button id="b">›</button>' +
+(guion ? '<button id="voz">🔊 Escuchar</button>' : '') + '</div>' +
+'<script>(function(){' +
+'var CLIPS=' + listaClips + ';' +
+'[].forEach.call(document.querySelectorAll("video.clip"),function(e){e.src=CLIPS[+e.dataset.clip]});' +
+'var i=0,n=' + portadas.length + ',v=document.getElementById("v");' +
+'function ir(k){i=Math.max(0,Math.min(n-1,k));v.style.transform="translateX(-"+(i*100)+"vw)";' +
+'document.getElementById("num").textContent=(i+1)+" / "+n;' +
+'document.getElementById("a").disabled=i===0;document.getElementById("b").disabled=i===n-1;}' +
+'document.getElementById("a").onclick=function(){ir(i-1)};' +
+'document.getElementById("b").onclick=function(){ir(i+1)};' +
+'addEventListener("keydown",function(e){if(e.key==="ArrowLeft")ir(i-1);if(e.key==="ArrowRight")ir(i+1)});' +
+'var x0=null;addEventListener("touchstart",function(e){x0=e.touches[0].clientX},{passive:true});' +
+'addEventListener("touchend",function(e){if(x0===null)return;var d=e.changedTouches[0].clientX-x0;' +
+'if(Math.abs(d)>55)ir(i+(d<0?1:-1));x0=null},{passive:true});' +
+(guion ?
+'var hablando=false;document.getElementById("voz").onclick=function(){' +
+'if(hablando){speechSynthesis.cancel();hablando=false;this.textContent="🔊 Escuchar";return;}' +
+'var u=new SpeechSynthesisUtterance(' + JSON.stringify(guion) + ');u.lang="es-ES";u.rate=.95;' +
+'u.onend=function(){hablando=false;document.getElementById("voz").textContent="🔊 Escuchar"};' +
+'speechSynthesis.cancel();speechSynthesis.speak(u);hablando=true;this.textContent="■ Parar";};' : '') +
+'ir(0);})();<\/script></body></html>';
+
+      bajar('folleto_web_' + hoy() + '.html', URL.createObjectURL(new Blob([doc], { type: 'text/html' })));
+      estado('✓ Folleto web descargado' +
+        (pesoVideos > 0 && !conVideos
+          ? '. Los vídeos pesaban ' + Math.round(pesoVideos / 1048576) + ' MB y se han dejado fuera para que el archivo se pueda mandar; se ve su primer fotograma en la hoja.'
+          : conVideos ? ', con los vídeos dentro.' : '.'), 'done');
+    }).catch(function (e) {
+      estado('No se pudo montar el folleto web: ' + (e.message || e), 'err');
+    });
+  }
+
+  /* ═══════════════════ Vídeo con voz ═══════════════════ */
+
+  function prepararVoz(fuente) {
+    if (fuente === 'ninguna') return Promise.resolve(null);
+
+    if (fuente === 'audio') {
+      var f = $('fpAudio').files && $('fpAudio').files[0];
+      if (!f) return Promise.reject(new Error('Sube primero el archivo de música o voz.'));
+      return Promise.resolve({ url: URL.createObjectURL(f), propia: true });
+    }
+
+    if (fuente === 'texto_gratis') {
+      if (!window.B6_VOZ_GRATIS || !window.B6_VOZ_GRATIS.disponible())
+        return Promise.reject(new Error('Este navegador no puede captar la voz gratuita. Prueba en Chrome.'));
+      if (window.B6_VOZ_GRATIS.ocupada && window.B6_VOZ_GRATIS.ocupada())
+        return Promise.reject(new Error('Se está grabando otra voz ahora mismo. Espera a que termine.'));
+      var texto = (val('fpGuion') || '').trim();
+      if (!texto) return Promise.reject(new Error('No hay nada que leer. Pulsa «Escríbelo tú por mí» o escribe el guion.'));
+      return window.B6_VOZ_GRATIS.capturar({
+        texto: texto,
+        aviso: function (m) { estado(m, 'proc'); }
+      }).then(function (r) { return { url: URL.createObjectURL(r.blob), seg: r.segundos, propia: true }; });
+    }
+
+    if (fuente === 'texto_pro') {
+      var t = (val('fpGuion') || '').trim();
+      if (!t) return Promise.reject(new Error('Escribe el guion que quieres que lea la voz.'));
+      estado('🗣️ Generando la voz de estudio…', 'proc');
+      var clave = '';
+      try { clave = localStorage.getItem('fc_key_openai') || localStorage.getItem('fc_oai_key') || ''; } catch (e) {}
+      var cab = { 'Content-Type': 'application/json' };
+      if (clave) cab['Authorization'] = 'Bearer ' + clave;
+      return fetch('/.netlify/functions/tts', {
+        method: 'POST', headers: cab, body: JSON.stringify({ text: t, voice: 'nova', speed: 1 })
+      }).then(function (res) {
+        if (res.ok) return res.blob();
+        return res.json().then(
+          function (j) { throw new Error((j.error || 'El servidor de voz no respondió bien.') + ' · Puedes usar la voz gratis.'); },
+          function () { throw new Error('El servidor de voz no respondió bien. Puedes usar la voz gratis.'); });
+      }).then(function (b) { return { url: URL.createObjectURL(b), propia: true }; });
+    }
+
+    return Promise.resolve(null);   // 'mic' se resuelve en vivo
+  }
+
+  function grabarVideo() {
+    if (FP.grabando) { if (FP.pararGrabacion) FP.pararGrabacion(); return; }
+    if (!window.MediaRecorder) { estado('Este navegador no sabe grabar vídeo. Prueba en Chrome.', 'err'); return; }
+
+    var fuente = val('fpVoz') || 'texto_gratis';
+    var limpieza = [];
+    function limpiar() { limpieza.forEach(function (f) { try { f(); } catch (e) {} }); limpieza = []; }
+    function fallar(msg) {
+      limpiar();
+      FP.grabando = false;
+      $('fpVideo').textContent = '🎬 Hacer el vídeo';
+      estado(msg, 'err');
+    }
+
+    FP.grabando = true;
+    $('fpVideo').textContent = '■ Detener';
+    estado('Preparando…', 'proc');
+
+    prepararVoz(fuente).then(function (voz) {
+      var hs = hojas();
+      var F = M.FORMATOS[hs[0].formato] || M.FORMATOS.a4v;
+      var cv = document.createElement('canvas');
+      cv.width = F.w; cv.height = F.h;
+      var ctx = cv.getContext('2d');
+
+      var ac = new (window.AudioContext || window.webkitAudioContext)();
+      var destino = ac.createMediaStreamDestination();
+      var pistaAudio = null, vozEl = null;
+      limpieza.push(function () { ac.close(); });
+
+      var cadena = Promise.resolve();
+
+      if (fuente === 'mic') {
+        cadena = navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true } }).then(function (st) {
+          limpieza.push(function () { st.getTracks().forEach(function (t) { t.stop(); }); });
+          ac.createMediaStreamSource(st).connect(destino);
+          pistaAudio = destino.stream.getAudioTracks()[0];
+        }, function () { throw new Error('Sin permiso de micrófono no se puede narrar.'); });
+      } else if (voz && voz.url) {
+        vozEl = new Audio(voz.url);
+        vozEl.preload = 'auto';
+        limpieza.push(function () { try { vozEl.pause(); URL.revokeObjectURL(voz.url); } catch (e) {} });
+        cadena = new Promise(function (ok) {
+          vozEl.oncanplaythrough = ok; vozEl.onerror = ok; vozEl.load();
+          setTimeout(ok, 5000);
+        }).then(function () {
+          if (ac.state === 'suspended') return ac.resume();
+        }).then(function () {
+          ac.createMediaElementSource(vozEl).connect(destino);
+          pistaAudio = destino.stream.getAudioTracks()[0];
+        });
+      }
+
+      return cadena.then(function () {
+        var flujo = cv.captureStream(30);
+        if (pistaAudio) flujo.addTrack(pistaAudio);
+
+        var mime = '';
+        ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4',
+         'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].some(function (m) {
+          if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) { mime = m; return true; }
+          return false;
+        });
+        var rec = mime ? new MediaRecorder(flujo, { mimeType: mime, videoBitsPerSecond: 5000000 })
+                       : new MediaRecorder(flujo);
+        var trozos = [];
+        rec.ondataavailable = function (e) { if (e.data && e.data.size) trozos.push(e.data); };
+
+        var dur = Math.max(4, Math.min(60, parseFloat(val('fpDur')) || 12));
+        if (vozEl && vozEl.duration && isFinite(vozEl.duration)) dur = Math.min(90, vozEl.duration + 0.4);
+        var porHoja = dur / hs.length;
+        var t0 = performance.now();
+        var pedido = null;
+
+        rec.onstop = function () {
+          limpiar();
+          FP.grabando = false;
+          $('fpVideo').textContent = '🎬 Hacer el vídeo';
+          var tipo = (mime && mime.indexOf('mp4') >= 0) ? 'mp4' : 'webm';
+          var blob = new Blob(trozos, { type: mime || 'video/webm' });
+          bajar('folleto_' + hoy() + '.' + tipo, URL.createObjectURL(blob));
+          estado('✓ Vídeo descargado' + (tipo === 'webm'
+            ? ' en WebM. Va bien en Android; si en iPhone no se ve, mándalo por Drive en vez de por WhatsApp.'
+            : ' en MP4, listo para WhatsApp e Instagram.'), 'done');
+          arrancarBucle();
+        };
+
+        FP.pararGrabacion = function () {
+          if (pedido) cancelAnimationFrame(pedido);
+          try { if (rec.state !== 'inactive') rec.stop(); } catch (e) {}
+        };
+
+        rec.start();
+        if (vozEl) vozEl.play().catch(function () {});
+        estado(fuente === 'mic' ? '● Grabando · habla ahora y pulsa Detener al terminar.' : '🎬 Grabando el vídeo…', 'proc');
+
+        (function pintar() {
+          var t = (performance.now() - t0) / 1000;
+          var iHoja = Math.min(hs.length - 1, Math.floor(t / porHoja));
+          var tHoja = t - iHoja * porHoja;
+          M.pintar(ctx, F.w, F.h, hs[iHoja], {
+            nPagina: iHoja + 1,
+            revelar: function (i) {
+              // los cuadros entran de uno en uno, subiendo y apareciendo
+              var arranque = 0.25 + i * Math.min(0.32, (porHoja * 0.45) / Math.max(1, hs[iHoja].celdas.length));
+              var f = Math.max(0, Math.min(1, (tHoja - arranque) / 0.45));
+              return { a: f, dy: (1 - f) * F.h * 0.02 };
+            }
+          });
+          if (fuente !== 'mic' && t >= dur) { FP.pararGrabacion(); return; }
+          if (fuente === 'mic' && t >= 90) { FP.pararGrabacion(); return; }
+          if (vozEl && vozEl.ended) { FP.pararGrabacion(); return; }
+          pedido = requestAnimationFrame(pintar);
+        })();
+      });
+    }).catch(function (e) {
+      fallar(e && e.message ? e.message : 'No se pudo hacer el vídeo.');
+    });
+  }
+
+  /* ═══════════════════ Arranque ═══════════════════ */
+
+  function enlazar() {
+    ['fpRejilla', 'fpFormato', 'fpTema', 'fpRubro', 'fpTono'].forEach(function (id) {
+      $(id).addEventListener('change', function () {
+        if (id === 'fpTema') FP.coloresManuales = null;
+        if (id === 'fpRejilla') {
+          // al pasar a una cuadrícula con más huecos, los nuevos se rellenan
+          // solos: nunca deben quedarse en blanco delante de la alumna
+          var n = nCuadros(), faltaban = FP.pagina.celdas.length < n;
+          while (FP.pagina.celdas.length < n) FP.pagina.celdas.push({ titulo: '', texto: '', precio: '', etiqueta: '', media: null });
+          if (faltaban) { rellenarVacias(); return; }
+          pintarCeldas();
+        }
+        repintar();
+      });
+    });
+    ['fpMarca', 'fpTitulo', 'fpSub', 'fpContacto', 'fpCta'].forEach(function (id) {
+      $(id).addEventListener('input', repintar);
+    });
+    ['fpAGrano', 'fpAVineta', 'fpAFiletes', 'fpASombras'].forEach(function (id) {
+      $(id).addEventListener('change', repintar);
+    });
+    ['fondo', 'panel', 'tinta', 'tinta2', 'acento', 'acento2'].forEach(function (k) {
+      $('fpC_' + k).addEventListener('input', function () {
+        FP.coloresManuales = {};
+        ['fondo', 'panel', 'tinta', 'tinta2', 'acento', 'acento2'].forEach(function (j) {
+          FP.coloresManuales[j] = $('fpC_' + j).value;
+        });
+        repintar();
+      });
+    });
+
+    $('fpVolverTema').addEventListener('click', function () { FP.coloresManuales = null; repintar(); });
+    $('fpDado').addEventListener('click', function () {
+      // gira el tono manteniendo la armonía: nunca saca colores que chocan
+      var base = M.colores({ tema: val('fpTema') });
+      var giro = Math.floor(Math.random() * 360);
+      function rotar(hex, extra) {
+        var c = hex.replace('#', '');
+        if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+        var r = parseInt(c.slice(0, 2), 16) / 255, g = parseInt(c.slice(2, 4), 16) / 255, b = parseInt(c.slice(4, 6), 16) / 255;
+        var mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+        var h = 0, s = 0, l = (mx + mn) / 2;
+        if (d) {
+          s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+          h = mx === r ? ((g - b) / d + (g < b ? 6 : 0)) : mx === g ? ((b - r) / d + 2) : ((r - g) / d + 4);
+          h *= 60;
+        }
+        h = (h + giro + (extra || 0)) % 360;
+        function f(n) {
+          var k = (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+          var v = l - a * Math.max(-1, Math.min(Math.min(k - 3, 9 - k), 1));
+          return ('0' + Math.round(v * 255).toString(16)).slice(-2);
+        }
+        return '#' + f(0) + f(8) + f(4);
+      }
+      FP.coloresManuales = {
+        fondo: rotar(base.fondo), panel: rotar(base.panel), tinta: base.tinta,
+        tinta2: base.tinta2, acento: rotar(base.acento), acento2: rotar(base.acento2, 18)
+      };
+      repintar();
+    });
+
+    $('fpEscribir').addEventListener('click', function () { escribirSolo(false); });
+    $('fpOtra').addEventListener('click', function () { escribirSolo(true); });
+    $('fpAddPag').addEventListener('click', añadirPagina);
+    $('fpPNG').addEventListener('click', descargarPNG);
+    $('fpPDF').addEventListener('click', descargarPDF);
+    $('fpWeb').addEventListener('click', descargarWeb);
+    $('fpVideo').addEventListener('click', grabarVideo);
+    $('fpVoz').addEventListener('change', function () {
+      $('fpAudioRow').style.display = (val('fpVoz') === 'audio') ? 'flex' : 'none';
+      $('fpGuionRow').style.display = (val('fpVoz') === 'texto_gratis' || val('fpVoz') === 'texto_pro') ? 'flex' : 'none';
+    });
+    $('fpGuion').addEventListener('input', function () { FP.pagina.guion = $('fpGuion').value; });
+  }
+
+  function abrir() {
+    if (listo) { repintar(); arrancarBucle(); return; }
+
+    M = window.FOLLETO_MOTOR;
+    CB = window.FOLLETO_CEREBRO;
+    var caja = document.getElementById('tab-folleto');
+    if (!caja) return;
+    if (!M || !CB) {
+      caja.innerHTML = '<div class="panel"><div class="p-title">📰 Folletos Pro</div>' +
+        '<div class="st err">No se han podido cargar los archivos del folleto ' +
+        '(b6_folleto_motor.js y b6_folleto_cerebro.js). Recarga la página.</div></div>';
+      return;
+    }
+
+    FP.pagina = paginaVacia(4);
+    if (!construir()) return;
+    listo = true;
+    // los desplegables se ponen donde dice el estado, no donde caiga la 1ª
+    // opción de la lista: si no, arranca en 2 cuadros y descuadra todo
+    $('fpRejilla').value = FP.pagina.rejilla;
+    $('fpFormato').value = FP.pagina.formato;
+    $('fpTema').value = FP.pagina.tema;
+    $('fpRubro').value = FP.pagina.rubro;
+    $('fpTono').value = FP.pagina.tono;
+    pintarCeldas();
+    enlazar();
+    $('fpMarca').value = FP.pagina.cabecera.marca;
+    $('fpTitulo').value = FP.pagina.cabecera.titulo;
+    $('fpCta').value = FP.pagina.pie.cta;
+    pintarPaginas();
+    escribirSolo(false);   // arranca con textos de ejemplo, para que no salga en blanco
+    estado('Pon tus fotos en los huecos y cambia los precios. Nada de esto gasta créditos.', 'done');
+  }
+
+  window.fpOpen = abrir;
+
+  /* Si la pestaña ya está abierta al cargar (o alguien la abre sin pasar por
+     switchMain), se construye igual. Cargar el archivo suelto no hace nada. */
+  function vigilar() {
+    var t = document.getElementById('tab-folleto');
+    if (t && t.classList.contains('act')) abrir();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', vigilar);
+  else vigilar();
+})();

@@ -240,6 +240,7 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
   <button class="main-tab" onclick="switchMain('presentacion',this)">💼 Mi Tarjeta</button>
   <button class="main-tab" onclick="switchMain('recibos',this)">🧾 Recibos</button>
   <button class="main-tab" onclick="switchMain('flyers',this)">📣 Flyers</button>
+  <button class="main-tab" onclick="switchMain('folleto',this)">📰 Folletos Pro</button>
 </div>
 
 <!-- ══ TAB: PROTECCIÓN DIGITAL ══ -->
@@ -676,6 +677,12 @@ select,input[type=text]{background:var(--bg3);border:1px solid var(--bd);color:v
   </div>
 </div>
 
+<!-- ══ TAB: FOLLETOS PRO ══ (lo construye b6_folleto_pro.js) -->
+<div class="tab-content" id="tab-folleto">
+  <div class="panel"><div class="p-title">📰 Folletos Pro</div>
+    <div style="font-size:11px;color:var(--tx2)">Cargando la herramienta de folletos…</div></div>
+</div>
+
 <!-- ══ TAB: CV & CARTAS ══ -->
 <div class="tab-content" id="tab-cv">
   <div class="cv-wrap">
@@ -894,12 +901,13 @@ function switchMain(tab,el){
   document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('act'));
   document.getElementById('tab-'+tab).classList.add('act');
   el.classList.add('act');
-  const guias={digital:'Protección Digital: sube tu archivo, elige la herramienta del panel izquierdo y descarga protegido.',tarjeta:'Tarjeta Segura: introduce tus datos, desliza el dedo sobre la tarjeta para ocultar zonas sensibles, luego descarga.',cv:'CV y Cartas: elige el tipo de documento, la categoría, rellena tus datos y exporta en PDF.',media:'Vídeo y Audio: sube tu archivo, elige calidad y resolución, y descarga optimizado sin perder calidad importante.',presentacion:'Mi Tarjeta: rellena tu nombre, oficio y WhatsApp, elige un diseño y un color, y descarga tu tarjeta de presentación con código QR para compartir con tus clientes.',recibos:'Recibos: elige si quieres un presupuesto, un recibo de pago o una factura; pon tus datos y los del cliente, añade las filas del detalle y descarga en PDF.',flyers:'Flyers: elige el formato de la red, una plantilla, escribe tu título y oferta y sube una foto. Puedes descargar la imagen, o crear un video animado eligiendo un efecto para las letras y una melodía sin derechos de autor.'};
+  const guias={digital:'Protección Digital: sube tu archivo, elige la herramienta del panel izquierdo y descarga protegido.',tarjeta:'Tarjeta Segura: introduce tus datos, desliza el dedo sobre la tarjeta para ocultar zonas sensibles, luego descarga.',cv:'CV y Cartas: elige el tipo de documento, la categoría, rellena tus datos y exporta en PDF.',media:'Vídeo y Audio: sube tu archivo, elige calidad y resolución, y descarga optimizado sin perder calidad importante.',presentacion:'Mi Tarjeta: rellena tu nombre, oficio y WhatsApp, elige un diseño y un color, y descarga tu tarjeta de presentación con código QR para compartir con tus clientes.',recibos:'Recibos: elige si quieres un presupuesto, un recibo de pago o una factura; pon tus datos y los del cliente, añade las filas del detalle y descarga en PDF.',flyers:'Flyers: elige el formato de la red, una plantilla, escribe tu título y oferta y sube una foto. Puedes descargar la imagen, o crear un video animado eligiendo un efecto para las letras y una melodía sin derechos de autor.',folleto:'Folletos Pro: elige una cuadrícula de dos, cuatro, seis u ocho cuadros, pon una foto o un video en cada hueco y escribe tus servicios y tus precios. Si no quieres escribir, pulsa Escríbelo tú por mí. Puedes llevártelo en imagen, en PDF, en video con voz o como folleto web. No gasta créditos.'};
   if(guias[tab])ttsGuia(tab);
   if(tab==='tarjeta')setTimeout(()=>{initDigitSel();renderCardCanvas();},100);
   if(tab==='presentacion')setTimeout(tpOpen,80);
   if(tab==='recibos')setTimeout(rcOpen,80);
   if(tab==='flyers')setTimeout(flOpen,80);
+  if(tab==='folleto')setTimeout(()=>{if(window.fpOpen)fpOpen();},80);
 }
 
 // ══ TTS GUÍA ══
@@ -909,6 +917,7 @@ const TTS_GUIAS = {
   digital:'Protección Digital: sube cualquier imagen o PDF, elige la herramienta del panel izquierdo y aplica marca de agua, compresión, cambio de fondo o codificación.',
   media:'Vídeo y Audio: sube tu archivo MP4, MOV, MP3 o WAV. Elige la calidad deseada. El sistema optimizará el peso inteligentemente en tu propio dispositivo, sin subir nada a internet.',
   tarjeta:'Tarjeta Segura: puedes activar el pincel y deslizar el dedo sobre la tarjeta para tapar lo que quieras. También puedes hacer clic en dígitos individuales para mostrar u ocultar. Cuando termines, descarga en JPG o PNG.',
+  folleto:'Folletos Pro: elige una cuadrícula de dos, cuatro, seis u ocho cuadros, pon una foto o un video en cada hueco y escribe tus servicios y tus precios. Si no quieres escribir, pulsa Escríbelo tú por mí y luego cambias lo que quieras. Puedes llevártelo en imagen, en PDF, en video con voz, o como folleto web que se pasa con el dedo. Esta herramienta no gasta créditos.',
   cv:'CV y Cartas: selecciona el tipo de documento. Para cartas automáticas, el texto se genera pero puedes editarlo directamente haciendo clic sobre cualquier párrafo. Las habilidades solo aparecen en el Currículum Vitae.'
 };
 function ttsGuia(tipo){
@@ -3130,5 +3139,8 @@ setTimeout(()=>{if(document.getElementById('tab-tarjeta').classList.contains('ac
 <script src="b6_melodias_extra.js"></script>
 <script src="b6_voz_video_gratis.js"></script>
 <script src="b6_video_con_voz.js"></script>
+<script src="b6_folleto_cerebro.js"></script>
+<script src="b6_folleto_motor.js"></script>
+<script src="b6_folleto_pro.js"></script>
 </body>
 </html>

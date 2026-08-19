@@ -111,8 +111,12 @@
     ctx.closePath();
   }
 
+  /* Ojo con los vídeos: flCover (el del bloque) mide con img.width, que en un
+     <video> vale 0 porque es el atributo HTML, no el tamaño real. Salía NaN y
+     el cuadro se quedaba en blanco. Los vídeos se miden aquí con videoWidth. */
   function cubrir(ctx, img, x, y, w, h) {
-    if (typeof window.flCover === 'function') return window.flCover(ctx, img, x, y, w, h);
+    var esVideo = !!img.videoWidth;
+    if (!esVideo && typeof window.flCover === 'function') return window.flCover(ctx, img, x, y, w, h);
     var iw = img.videoWidth || img.width, ih = img.videoHeight || img.height;
     if (!iw || !ih) return;
     var ir = iw / ih, rr = w / h, sw, sh, sx, sy;
@@ -501,8 +505,18 @@
       return k;
     });
 
-    // 2ª pasada: dibujar
-    rects.forEach(function (r, i) { cuadro(ctx, r, C, celdas[i], i, ad, op, grupos[medidas[i]]); });
+    // 2ª pasada: dibujar. op.revelar(i) → {a:opacidad, dy:desplazamiento} deja
+    // que el vídeo haga entrar los cuadros de uno en uno sin duplicar el dibujo
+    rects.forEach(function (r, i) {
+      var rev = op.revelar ? op.revelar(i) : null;
+      if (!rev) return cuadro(ctx, r, C, celdas[i], i, ad, op, grupos[medidas[i]]);
+      if (rev.a <= 0.01) return;
+      ctx.save();
+      ctx.globalAlpha = rev.a;
+      if (rev.dy) ctx.translate(0, rev.dy);
+      cuadro(ctx, r, C, celdas[i], i, ad, op, grupos[medidas[i]]);
+      ctx.restore();
+    });
 
     pie(ctx, W, H, M, C, pag, ad, op.nPagina);
     ctx.restore();
