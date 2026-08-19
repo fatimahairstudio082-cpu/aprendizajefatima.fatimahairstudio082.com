@@ -143,8 +143,12 @@ símbolos.
 - **El vídeo se graba en tiempo real**: uno de 12 segundos tarda 12 segundos. Es
   un límite del navegador, no del código. **No cambies de pestaña** mientras lo
   hace, o el dibujo se congela y sale a trompicones.
-- **Formato del vídeo**: intenta **MP4** primero (el que va bien en WhatsApp y en
-  iPhone). Si el navegador no puede, sale WebM y te avisa.
+- **Formato del vídeo**: sale en **WebM** en Android y en el ordenador, y en
+  **MP4** en el iPhone. Se eligió así a propósito: el codificador MP4 de Chrome
+  en el móvil grababa **sólo el primer cuadro y el resto salía negro**, mientras
+  que su WebM es fiable; Safari no sabe hacer WebM, pero su MP4 sí va bien. Si
+  te sale WebM y quieres mandarlo a un iPhone, pásalo por Drive en vez de por
+  WhatsApp.
 - **Topes de vídeo**: máximo **4 vídeos por folleto** y **60 segundos** cada uno,
   para que no se atragante el móvil. Si pones uno más largo, avisa.
 - **Folleto web con vídeos dentro**: si lo incrustado pasa de **45 MB**, los
@@ -204,7 +208,7 @@ guía hablada y los cuatro `<script src>`.
 **No se toca** nada de lo que ya funcionaba: ni `flStartVideo`, ni `gastar()`, ni
 Firebase, ni `firestore.rules`, ni el CSS, ni `index.html` / `fatima_hub.html`.
 
-### Dos trampas que costaron encontrar
+### Trampas que costaron encontrar
 
 1. **`flCover` no vale para vídeos.** El ayudante del bloque mide con
    `img.width`, que en un `<video>` es el atributo HTML y vale 0: salía `NaN` y
@@ -212,6 +216,17 @@ Firebase, ni `firestore.rules`, ni el CSS, ni `index.html` / `fatima_hub.html`.
    lo mide con `videoWidth`; para las fotos sigue reutilizando `flCover`.
 2. **`loadedmetadata` es demasiado pronto.** Ahí el `readyState` todavía es 1 y
    no hay fotograma que dibujar. Hay que esperar a `loadeddata`.
+3. **Un canvas fuera del DOM deja de dar fotogramas.** El lienzo de grabación se
+   creaba con `createElement` y nunca se insertaba: en Android y en tablets
+   `captureStream` entregaba el primer cuadro y luego nada, y **el vídeo salía
+   negro**. Hay que meterlo en el DOM pero fuera de la vista con
+   `position:fixed;left:-99999px` — **ni `display:none` ni `visibility:hidden`**,
+   porque esos también cortan la captura. Además se llama a
+   `pistaVideo.requestFrame()` en cada cuadro cuando el navegador lo soporta.
+4. **El MP4 de Chrome en el móvil grababa un solo cuadro.** Por eso el orden de
+   formatos es **WebM primero** y MP4 después: el WebM de Chromium es fiable en
+   Android y PC, y en el iPhone (que no tiene WebM) cae a MP4, que Safari sí
+   graba bien.
 
 ### Muestrario de diseño
 
