@@ -132,6 +132,8 @@
           <option value="black-forest-labs/flux-dev">flux-dev · equilibrado (recomendado)</option>
           <option value="black-forest-labs/flux-1.1-pro">flux 1.1 pro · máxima calidad</option>
           <option value="black-forest-labs/flux-schnell">flux-schnell · rápido y barato</option>
+          <option value="qwen/qwen-image">Qwen-Image · calidad Alibaba (~$0,03)</option>
+          <option value="qwen/qwen-image#fast">Qwen-Image lightning · económico (~$0,005)</option>
           <option value="stability-ai/stable-diffusion-3.5-large">SD 3.5 large</option>
           <option value="google/imagen-3">Google Imagen 3</option>
           <option value="ideogram-ai/ideogram-v2">Ideogram v2 · bueno con texto</option>
@@ -1422,13 +1424,18 @@ async function genImagen(prompt, opts){
   if(prov!=='replicate') return await genImgOtro(prov, finalPrompt);
 
   // ── Replicate (igual que siempre · por defecto) ──
-  const model = (window.IMG_MODEL) || 'black-forest-labs/flux-dev';
+  let model = (window.IMG_MODEL) || 'black-forest-labs/flux-dev';
+  // Sufijo #fast = variante económica/lightning (p. ej. Qwen). No se envía en la llamada.
+  const goFast = /#fast$/.test(model);
+  model = model.replace(/#fast$/,'');
   const input = {prompt: finalPrompt, aspect_ratio:'3:4', output_format:'jpg', num_outputs:1};
   // ajustes por familia de modelo
   if(/flux/.test(model)){ input.guidance=3.5; input.num_inference_steps=30; }
-  // lámina de referencia (image-to-image) — solo en Replicate/flux.
+  // Qwen-Image (Alibaba): no acepta num_outputs; go_fast=lightning (más barato/rápido).
+  else if(/qwen/.test(model)){ delete input.num_outputs; input.go_fast=goFast; input.num_inference_steps=goFast?8:50; input.guidance=4; }
+  // lámina de referencia (image-to-image) — solo en Replicate/flux (Qwen-Image estándar no toma image).
   // Las láminas de fitness NO usan referencia (opts.noRef): cada panel es SU ejercicio.
-  if(window.REF_IMG && !opts.noRef){
+  if(window.REF_IMG && !opts.noRef && !/qwen/.test(model)){
     input.image = window.REF_IMG;
     input.image_prompt = window.REF_IMG;
     const f = (typeof window.REF_STRENGTH==='number')?window.REF_STRENGTH:0.65;
@@ -1655,9 +1662,10 @@ window.REF_NOTAS='';
 function setRefNotas(){ window.REF_NOTAS=(document.getElementById('refNotas')||{}).value||''; }
 function setImgModel(){
   window.IMG_MODEL=document.getElementById('imgModel').value;
+  const limpio=window.IMG_MODEL.replace(/#fast$/,'')+(/#fast$/.test(window.IMG_MODEL)?' lightning':'');
   const pill=document.getElementById('pillEngine');
-  if(pill) pill.textContent='⚙️ Replicate · '+window.IMG_MODEL.split('/').pop();
-  logLine('🎨 Modelo: '+window.IMG_MODEL,'info');
+  if(pill) pill.textContent='⚙️ Replicate · '+limpio.split('/').pop();
+  logLine('🎨 Modelo: '+limpio,'info');
 }
 function setVidModel(){
   window.VID_MODEL=document.getElementById('vidModel').value;

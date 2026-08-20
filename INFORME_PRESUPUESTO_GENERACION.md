@@ -65,20 +65,26 @@ Corte              = módulos_faltantes × precio_imagen
 TOTAL              = suma de las 6 líneas de arriba
 ```
 
-## 4. LIMITACIÓN CRÍTICA: los precios son estimados, no verificados
+## 4. Precios (actualizado ago 2026 · Qwen + Wan verificados en Replicate)
 
-Se revisó **todo el repositorio** (código de `motor_auto.html`, `motor_prompts.js`,
-`motor_inventario.js`, `netlify/functions/replicate.js`, `netlify/functions/aiproxy.js`
-y todos los `LEEME*.md/.txt`) buscando algún precio en dólares ya guardado. **No existe
-ninguno.** Lo único que el sistema ya calculaba antes de esta herramienta era un conteo
-de *llamadas a la IA* (no de dinero), en `motor_inventario.js`.
+Los campos de precio de la herramienta siguen siendo **editables** (confírmalos siempre en
+[replicate.com/pricing](https://replicate.com/pricing) antes de una decisión de negocio),
+pero ya no son cifras al azar: se verificaron contra Replicate en agosto de 2026.
 
-Por eso, la herramienta nueva trae 2 campos de precio editables con valores de partida
-(`$0.03` por imagen, `$0.05` por clip de video) que **debes verificar tú** en
-[replicate.com/pricing](https://replicate.com/pricing) (o en el panel del proveedor que
-uses si generas con OpenAI/Stability/fal.ai/Luma) antes de tomar cualquier decisión de
-negocio con el total que te muestre. Los modelos que usa tu sistema por defecto son
-`black-forest-labs/flux-dev` (imagen) y `wan-video/wan-2.2-t2v-fast` (video).
+| Modelo | Uso | Precio |
+|---|---|---|
+| `qwen/qwen-image` (estándar) | Imagen calidad Alibaba | **≈ $0,030 / imagen** |
+| `qwen/qwen-image` lightning (`go_fast`) | Imagen económica | **≈ $0,005 / imagen** |
+| `black-forest-labs/flux-dev` (default histórico) | Imagen | ≈ $0,025–0,03 / imagen |
+| `wan-video/wan-2.2-t2v-fast` (default de video) | Video 5 s | **≈ $0,05 / clip** |
+
+**Presupuesto orientativo del catálogo completo desde cero** (≈1.001 imágenes + ≈1.446
+clips de 5 s): **~$77 en modo económico** (Qwen lightning + Wan), **~$102 en modo calidad**
+(Qwen estándar + Wan). Con ~25 % de margen por regeneraciones/descartes: **~$80–130 una
+sola vez**. Generando solo lo que falta por tanda, gastas mucho menos.
+
+Nota: `motor_inventario.js` ya contaba *llamadas a la IA* (no dinero) desde antes; esta
+herramienta es la que traduce ese universo a dólares.
 
 ## 5. Discrepancia encontrada: "299" vs "360" clases
 
@@ -120,3 +126,12 @@ TÚ abres la herramienta en tu navegador e inicias sesión con tu correo de admi
 - `escaner_presupuesto_generacion.html` (nuevo)
 - `centro_admin.html` (1 línea añadida al array `TOOLS`, nada más se tocó)
 - `INFORME_PRESUPUESTO_GENERACION.md` (este documento)
+
+## 9. Integración de Qwen en el motor (ago 2026)
+
+Se añadió **Qwen-Image (Alibaba)** al selector de imagen de `motor_auto.html` como dos
+opciones nuevas — `qwen/qwen-image` (calidad) y `qwen/qwen-image#fast` (lightning
+económico) — sin quitar ningún modelo existente: flux-dev sigue siendo el default y todos
+los demás (flux 1.1 pro, flux-schnell, SD 3.5, Imagen 3, Ideogram) permanecen. El video ya
+usaba Wan (`wan-video/wan-2.2-t2v-fast`), así que no cambió. Replicate sigue siendo el
+proveedor y el proxy. Cambio 100 % aditivo, en el estilo del repo.
