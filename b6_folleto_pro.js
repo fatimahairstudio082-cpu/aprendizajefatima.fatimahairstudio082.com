@@ -360,9 +360,12 @@
       '<div class="row">' +
         '<button class="btn btn-ok" id="fpCarImg">🎠 Descargar el carrusel</button>' +
         '<button class="btn btn-g" id="fpVerCarrusel">▶ Ver</button>' +
-        '<button class="btn" id="fpCarVid">🎬 Vídeo del carrusel</button>' +
+        '<button class="btn" id="fpCarVid">🎬 Descargar vídeo 3D</button>' +
         '<span id="fpCarInfo" style="font-size:9px;color:var(--tx2)"></span>' +
       '</div>' +
+      '<div class="row" style="margin-top:-2px"><span style="font-size:9px;color:var(--tx2)">' +
+        'El vídeo 3D (cubo, zoom, iris…) se descarga con la voz y la música puestas, igual que el vídeo normal.' +
+      '</span></div>' +
     '</div>' +
 
     /* ── Descargas ── */
@@ -448,7 +451,7 @@
         '<input type="number" id="fpDur" value="12" min="4" max="60" step="1" style="width:70px">' +
         '<span style="font-size:9px;color:var(--tx2)">si hay voz, dura lo que dure la voz</span>' +
         '<button class="btn btn-g" id="fpVerVideo">▶ Ver</button>' +
-        '<button class="btn" id="fpVideo">🎬 Hacer el vídeo</button>' +
+        '<button class="btn" id="fpVideo">🎬 Descargar vídeo</button>' +
       '</div>' +
       '<div id="fpSt"></div>' +
       '<div style="font-size:9px;color:var(--tx2);margin-top:4px">' +
@@ -1601,7 +1604,7 @@
     var fuente = val('fpVoz') || 'texto_gratis';
     // el botón que se pulsó es el que pasa a «Detener», para poder pararlo
     var boton = carrusel ? ($('fpCarVid') || $('fpVideo')) : $('fpVideo');
-    var textoBoton = carrusel ? '🎬 Vídeo del carrusel' : '🎬 Hacer el vídeo';
+    var textoBoton = carrusel ? '🎬 Descargar vídeo 3D' : '🎬 Descargar vídeo';
     function soltarBoton() { if (boton) boton.textContent = textoBoton; }
 
     var limpieza = [];

@@ -578,22 +578,32 @@
     });
   }
 
-  function dibujarQR(ctx, W, H, C, M, op) {
-    var qr = op.qr;
-    if (!qr) return;
-    var listo = qr.complete !== false && (qr.naturalWidth || qr.width);
-    if (!listo) return;
+  // Medidas de la tarjetita del QR. Fuente única de la verdad: la usan
+  // dibujarQR (para pintar) y pintar (para reservarle una banda limpia y que
+  // NO tape las tarjetas ni la lista de precios de abajo).
+  function medidasQR(W, H, M, op) {
+    op = op || {};
     // QR discreto: antes ocupaba el 15% del ancho y tapaba el diseño. Al 10%
     // (tope pequeño) sigue leyéndose bien con el móvil sin comerse la hoja.
     var s = Math.max(96, Math.min(W * 0.10, H * 0.13));
     var pad = W * 0.014;
     var lbl = W * 0.024;
+    var cardW = s + pad * 2;
     // Centrado horizontal: la tarjetita del QR queda simétrica en la hoja,
     // no pegada a una esquina (op.qrPos:'derecha' recupera el comportamiento viejo).
-    var cardW = s + pad * 2;
     var x = (op.qrPos === 'derecha') ? (W - M - s) : ((W - cardW) / 2 + pad);
     var yLineaPie = H - M - W * 0.052;
     var y = yLineaPie - s - lbl - pad * 2 - W * 0.014;
+    return { s: s, pad: pad, lbl: lbl, x: x, y: y, top: y - pad };
+  }
+
+  function dibujarQR(ctx, W, H, C, M, op) {
+    var qr = op.qr;
+    if (!qr) return;
+    var listo = qr.complete !== false && (qr.naturalWidth || qr.width);
+    if (!listo) return;
+    var q = medidasQR(W, H, M, op);
+    var s = q.s, pad = q.pad, lbl = q.lbl, x = q.x, y = q.y;
 
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,.35)';
@@ -627,6 +637,12 @@
 
     var yCab = cabecera(ctx, W, H, M, C, pag, ad);
     var yPie = H - M - W * 0.075;
+    // Si hay QR, la rejilla (y la lista de precios) terminan POR ENCIMA de la
+    // tarjetita del QR, con un respiro, para que el QR no tape nada.
+    if (op.qr) {
+      var qTop = medidasQR(W, H, M, op).top;
+      yPie = Math.min(yPie, qTop - W * 0.012);
+    }
     var hueco = Math.round(Math.min(W, H) * 0.020);
     var rects = (pag.rejilla === 'rlista') ? [] : rejilla(pag.rejilla || 'r4a', M, yCab, W - M * 2, yPie - yCab, hueco);
 

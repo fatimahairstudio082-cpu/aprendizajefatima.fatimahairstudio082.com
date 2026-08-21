@@ -74,8 +74,10 @@ la vida, muy legible en el móvil y en papel.
 - **Ken Burns**: en el vídeo, las fotos hacen un zoom y paneo lento, con vida.
   Los vídeos ya se mueven solos, así que no reciben Ken Burns.
 - **Texto animado**: los títulos y precios entran subiendo y apareciendo.
-- **Código QR centrado**: la tarjetita del QR queda centrada abajo, simétrica en
-  la hoja.
+- **Código QR centrado y sin tapar nada**: la tarjetita del QR queda centrada
+  abajo, simétrica en la hoja, y el motor le **reserva una banda limpia**: las
+  tarjetas y la lista de precios terminan por encima del QR, así **el QR no tapa
+  ningún diseño ni ningún precio**.
 
 ### 🎠 Carrusel para redes
 
@@ -92,7 +94,7 @@ como los carruseles de Instagram, Facebook, TikTok o Telegram.
 | Botón | Qué sale |
 |---|---|
 | **🎠 Descargar el carrusel** | Un **ZIP** con las tarjetas numeradas (`01_`, `02_`…). Las subes en ese orden y ya está. Máximo 20, que es el tope de Instagram. |
-| **🎬 Vídeo del carrusel** | El mismo carrusel en **vídeo**: las tarjetas se deslizan solas de una a otra, como al pasar el dedo, con la voz y la música dentro. |
+| **🎬 Descargar vídeo 3D** | El mismo carrusel en **vídeo**: las tarjetas se deslizan solas de una a otra, como al pasar el dedo, con el efecto 3D (cubo, zoom, iris…) y **con la voz y la música dentro**. Es un botón de *descarga*, igual que el vídeo normal: una cosa es el folleto y otra el vídeo. |
 
 En el vídeo del carrusel, la primera tarjeta hace entrar sus cuadros con el
 efecto que hayas elegido y las demás llegan con la **transición** que elijas.
@@ -104,7 +106,7 @@ lo que se ve es lo que sale en el vídeo.
 
 ### ▶ Ver la animación antes de descargar
 
-Al lado de **🎬 Hacer el vídeo** (y de **🎬 Vídeo del carrusel**) hay un botón
+Al lado de **🎬 Descargar vídeo** (y de **🎬 Descargar vídeo 3D**) hay un botón
 **▶ Ver**. Lo pulsas y la **vista previa se anima en pantalla, en bucle**, con tu
 foto, tus precios y tu texto ya puestos — el cubo 3D, las olas, el Ken Burns, el
 texto que entra… **sin grabar nada**. Así compruebas «cómo quedó» y, cuando te
@@ -115,7 +117,7 @@ cambias algo del diseño y la vista previa vuelve a quedar fija.
 
 ### ✨ Los efectos del vídeo
 
-Antes de darle a **🎬 Hacer el vídeo**, elige cómo quieres que entren los
+Antes de darle a **🎬 Descargar vídeo**, elige cómo quieres que entren los
 cuadros:
 
 | Efecto | Cómo se ve |
@@ -138,7 +140,7 @@ paleta), y el sonido —la voz y la música— se graba dentro del vídeo igual.
 | **🖼️ Imagen** | Una hoja sale en JPG; si hay varias, salen juntas en un **ZIP** (una sola descarga, con cada hoja como un JPG dentro — así el móvil no bloquea las descargas). |
 | **📄 PDF** | Todas las hojas en un PDF, cada una a su tamaño real. Para imprimir. |
 | **🌐 Folleto web** | Un solo archivo `.html` que se abre en cualquier móvil, se pasa con el dedo, reproduce los vídeos y lee el folleto en voz alta al pulsar 🔊. |
-| **🎬 Hacer el vídeo** | El folleto animado, con los cuadros entrando de uno en uno y la voz leyendo. |
+| **🎬 Descargar vídeo** | El folleto animado, con los cuadros entrando de uno en uno y la voz leyendo. (El vídeo 3D del carrusel se descarga desde su propio botón **🎬 Descargar vídeo 3D**.) |
 
 ### La música de fondo (gratis)
 
@@ -217,7 +219,9 @@ Cuatro archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
   `p`), y de ahí salen los siete efectos. `op.ken`/`op.t`/`op.kenAmp` activan el
   **Ken Burns** en fotos; `op.textoRev(i)` hace **entrar el texto**. `op.qr` es
   la `<img>` del código QR, centrado abajo (`op.qrPos:'derecha'` lo lleva a la
-  esquina).
+  esquina). `medidasQR()` es la fuente única de sus medidas: la usan `dibujarQR`
+  (para pintar) y `pintar` (para **bajar el fondo de la rejilla** `yPie` cuando
+  hay QR, reservándole una banda limpia para que no tape tarjetas ni precios).
 - **`b6_folleto_cerebro.js`** — los textos. 32 rubros × 8 servicios (belleza y
   muchos otros sectores, más «✍️ Otra»), 5 tonos, precios de referencia y el
   guion para la voz. Bolsa sin reposición: en una hoja de 8 cuadros no se repite
