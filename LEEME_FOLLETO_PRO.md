@@ -102,6 +102,17 @@ efecto que hayas elegido y las demás llegan con la **transición** que elijas.
 🌫️ Desenfoque y ➡️ Deslizar (la clásica). Se componen en el momento, así que
 lo que se ve es lo que sale en el vídeo.
 
+### ▶ Ver la animación antes de descargar
+
+Al lado de **🎬 Hacer el vídeo** (y de **🎬 Vídeo del carrusel**) hay un botón
+**▶ Ver**. Lo pulsas y la **vista previa se anima en pantalla, en bucle**, con tu
+foto, tus precios y tu texto ya puestos — el cubo 3D, las olas, el Ken Burns, el
+texto que entra… **sin grabar nada**. Así compruebas «cómo quedó» y, cuando te
+gusta, le das a 🎬 para descargarlo. **Lo que ves en el ▶ Ver es exactamente lo
+que sale en el vídeo** (usan el mismo motor). Es híbrido: se mueve igual con
+vídeos, con solo fotos o solo con el diseño. Vuelves a pulsar (**■ Parar**) o
+cambias algo del diseño y la vista previa vuelve a quedar fija.
+
 ### ✨ Los efectos del vídeo
 
 Antes de darle a **🎬 Hacer el vídeo**, elige cómo quieres que entren los
