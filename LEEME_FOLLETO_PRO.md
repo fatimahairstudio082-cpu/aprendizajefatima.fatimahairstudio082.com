@@ -59,6 +59,26 @@ el folleto aparece una tarjetita blanca con el código y la palabra
 - El QR sale en **todo**: la vista previa, la imagen, el PDF, el folleto web y
   el vídeo.
 
+### 📖 Foto + lista de precios
+
+Una plantilla nueva (estilo **«Foto + lista de precios»** o cuadrícula
+**rlista**): una **foto grande a un lado** y la **tarifa en lista al otro**, con
+líneas de puntos entre el nombre y el precio. Es la carta de peluquería de toda
+la vida, muy legible en el móvil y en papel.
+
+### ✨ Tipografía y movimiento
+
+- **Tipografía premium por tema**: cada paleta trae su pareja de fuentes
+  (Playfair Display, Cormorant Garamond, Space Grotesk, Manrope). Se cargan
+  solas desde el propio motor; sin internet caen a Georgia/Segoe y todo sigue.
+- **Ken Burns**: en el vídeo, las fotos hacen un zoom y paneo lento, con vida.
+  Los vídeos ya se mueven solos, así que no reciben Ken Burns.
+- **Texto animado**: los títulos y precios entran subiendo y apareciendo.
+- **Código QR centrado y sin tapar nada**: la tarjetita del QR queda centrada
+  abajo, simétrica en la hoja, y el motor le **reserva una banda limpia**: las
+  tarjetas y la lista de precios terminan por encima del QR, así **el QR no tapa
+  ningún diseño ni ningún precio**.
+
 ### 🎠 Carrusel para redes
 
 Convierte el folleto en una **secuencia de tarjetas** que se pasan con el dedo,
@@ -74,15 +94,30 @@ como los carruseles de Instagram, Facebook, TikTok o Telegram.
 | Botón | Qué sale |
 |---|---|
 | **🎠 Descargar el carrusel** | Un **ZIP** con las tarjetas numeradas (`01_`, `02_`…). Las subes en ese orden y ya está. Máximo 20, que es el tope de Instagram. |
-| **🎬 Vídeo del carrusel** | El mismo carrusel en **vídeo**: las tarjetas se deslizan solas de una a otra, como al pasar el dedo, con la voz y la música dentro. |
+| **🎬 Descargar vídeo 3D** | El mismo carrusel en **vídeo**: las tarjetas se deslizan solas de una a otra, como al pasar el dedo, con el efecto 3D (cubo, zoom, iris…) y **con la voz y la música dentro**. Es un botón de *descarga*, igual que el vídeo normal: una cosa es el folleto y otra el vídeo. |
 
 En el vídeo del carrusel, la primera tarjeta hace entrar sus cuadros con el
-efecto que hayas elegido y las demás llegan deslizándose — el movimiento es el
-propio paso de tarjeta, que es como se ve en las redes.
+efecto que hayas elegido y las demás llegan con la **transición** que elijas.
+
+**Ocho transiciones de tarjeta a tarjeta** (selector *Transición*): 🧊 Cubo 3D,
+💥 Zoom punch, ⭕ Iris, 🎭 Cortina partida, ✨ Barrido de luz, 🎚️ Persiana,
+🌫️ Desenfoque y ➡️ Deslizar (la clásica). Se componen en el momento, así que
+lo que se ve es lo que sale en el vídeo.
+
+### ▶ Ver la animación antes de descargar
+
+Al lado de **🎬 Descargar vídeo** (y de **🎬 Descargar vídeo 3D**) hay un botón
+**▶ Ver**. Lo pulsas y la **vista previa se anima en pantalla, en bucle**, con tu
+foto, tus precios y tu texto ya puestos — el cubo 3D, las olas, el Ken Burns, el
+texto que entra… **sin grabar nada**. Así compruebas «cómo quedó» y, cuando te
+gusta, le das a 🎬 para descargarlo. **Lo que ves en el ▶ Ver es exactamente lo
+que sale en el vídeo** (usan el mismo motor). Es híbrido: se mueve igual con
+vídeos, con solo fotos o solo con el diseño. Vuelves a pulsar (**■ Parar**) o
+cambias algo del diseño y la vista previa vuelve a quedar fija.
 
 ### ✨ Los efectos del vídeo
 
-Antes de darle a **🎬 Hacer el vídeo**, elige cómo quieres que entren los
+Antes de darle a **🎬 Descargar vídeo**, elige cómo quieres que entren los
 cuadros:
 
 | Efecto | Cómo se ve |
@@ -105,7 +140,7 @@ paleta), y el sonido —la voz y la música— se graba dentro del vídeo igual.
 | **🖼️ Imagen** | Una hoja sale en JPG; si hay varias, salen juntas en un **ZIP** (una sola descarga, con cada hoja como un JPG dentro — así el móvil no bloquea las descargas). |
 | **📄 PDF** | Todas las hojas en un PDF, cada una a su tamaño real. Para imprimir. |
 | **🌐 Folleto web** | Un solo archivo `.html` que se abre en cualquier móvil, se pasa con el dedo, reproduce los vídeos y lee el folleto en voz alta al pulsar 🔊. |
-| **🎬 Hacer el vídeo** | El folleto animado, con los cuadros entrando de uno en uno y la voz leyendo. |
+| **🎬 Descargar vídeo** | El folleto animado, con los cuadros entrando de uno en uno y la voz leyendo. (El vídeo 3D del carrusel se descarga desde su propio botón **🎬 Descargar vídeo 3D**.) |
 
 ### La música de fondo (gratis)
 
@@ -162,9 +197,9 @@ símbolos.
 
 Cuatro archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
 
-- **`b6_folleto_disenos.js`** — el cerebro de diseño: 25 estilos profesionales
-  agrupados por uso (carta y cartel, catálogo, redes, **bodas** —8 diseños—,
-  elegante, escaparate). Cada estilo es una
+- **`b6_folleto_disenos.js`** — el cerebro de diseño: 26 estilos profesionales
+  agrupados por uso (carta y cartel, catálogo —incluye **Foto + lista de
+  precios**—, redes, **bodas** —8 diseños—, elegante, escaparate). Cada estilo es una
   combinación de paleta + cuadrícula + hoja + acabados que ya sabe dibujar el
   motor; no inventa nada nuevo en el lienzo. Expone `FOLLETO_DISENOS.lista()`,
   `.grupos()` y `.get(id)`. Es opcional: si no carga, la herramienta funciona
@@ -172,14 +207,21 @@ Cuatro archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
 
 - **`b6_folleto_motor.js`** — el dibujo, en canvas 2D. Es la única fuente de
   verdad: la vista previa, el JPG, el PDF, el vídeo y las portadas del folleto
-  web llaman todos a `FOLLETO_MOTOR.pintar()`. Trae los 4 formatos, las 10
-  paletas y las 8 rejillas. `rejilla(id,x,y,w,h,hueco)` es una función pura que
+  web llaman todos a `FOLLETO_MOTOR.pintar()`. Trae los 5 formatos, las 10
+  paletas (cada una con su **pareja tipográfica** título/cuerpo, cargada por
+  `garantizarFuentes()` desde Google Fonts con fallback a Georgia/Segoe) y las
+  rejillas, incluida **`rlista`** (foto + lista de precios, que dibuja
+  `dibujarLista()`). `rejilla(id,x,y,w,h,hueco)` es una función pura que
   devuelve los rectángulos; en hoja apaisada la calcula en vertical y la gira
   90°, así una 2×3 pasa a 3×2 sola. `op.revelar(i)` es lo que usa el vídeo para
   hacer entrar los cuadros sin duplicar el dibujo: devuelve `a` (opacidad),
   `dx`/`dy`, `escala` y `recorte` (`'circulo'` o `'persiana'`, con avance en
-  `p`), y de ahí salen los siete efectos. `op.qr` es la `<img>` del código QR,
-  que se dibuja en una tarjetita en la esquina inferior derecha.
+  `p`), y de ahí salen los siete efectos. `op.ken`/`op.t`/`op.kenAmp` activan el
+  **Ken Burns** en fotos; `op.textoRev(i)` hace **entrar el texto**. `op.qr` es
+  la `<img>` del código QR, centrado abajo (`op.qrPos:'derecha'` lo lleva a la
+  esquina). `medidasQR()` es la fuente única de sus medidas: la usan `dibujarQR`
+  (para pintar) y `pintar` (para **bajar el fondo de la rejilla** `yPie` cuando
+  hay QR, reservándole una banda limpia para que no tape tarjetas ni precios).
 - **`b6_folleto_cerebro.js`** — los textos. 32 rubros × 8 servicios (belleza y
   muchos otros sectores, más «✍️ Otra»), 5 tonos, precios de referencia y el
   guion para la voz. Bolsa sin reposición: en una hoja de 8 cuadros no se repite

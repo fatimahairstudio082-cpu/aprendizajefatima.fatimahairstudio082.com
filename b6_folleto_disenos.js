@@ -56,6 +56,9 @@
     { id: 'revista', cat: 'Catálogo y tarifa', nombre: '📰 Portada de revista',
       desc: 'Un servicio estrella grande arriba y tres debajo.',
       tema: 'violeta', rejilla: 'r4b', formato: 'a4v', adornos: TODO },
+    { id: 'lista_precios', cat: 'Catálogo y tarifa', nombre: '📖 Foto + lista de precios',
+      desc: 'Foto grande a un lado y la tarifa en lista al otro. Muy de peluquería.',
+      tema: 'nude', rejilla: 'rlista', formato: 'a4v', adornos: IMPRESO },
 
     /* ── Redes sociales (cuadrado e historia) ── */
     { id: 'ig_post', cat: 'Redes sociales', nombre: '📸 Post de Instagram',

@@ -341,14 +341,31 @@
         '</select>' +
       '</div>' +
       '<div class="row">' +
+        '<span class="lbl">✨ Transición</span>' +
+        '<select id="fpCarTransicion" style="flex:1;min-width:150px">' +
+          '<option value="cubo">🧊 Cubo 3D</option>' +
+          '<option value="zoom">💥 Zoom punch</option>' +
+          '<option value="iris">⭕ Iris</option>' +
+          '<option value="cortina">🎭 Cortina partida</option>' +
+          '<option value="luz">✨ Barrido de luz</option>' +
+          '<option value="persiana">🎚️ Persiana</option>' +
+          '<option value="blur">🌫️ Desenfoque</option>' +
+          '<option value="desliza" selected>➡️ Deslizar (clásico)</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="row">' +
         '<label style="font-size:10px"><input type="checkbox" id="fpCarUno" checked> una tarjeta por servicio</label>' +
         '<label style="font-size:10px"><input type="checkbox" id="fpCarPortada" checked> con portada</label>' +
       '</div>' +
       '<div class="row">' +
         '<button class="btn btn-ok" id="fpCarImg">🎠 Descargar el carrusel</button>' +
-        '<button class="btn" id="fpCarVid">🎬 Vídeo del carrusel</button>' +
+        '<button class="btn btn-g" id="fpVerCarrusel">▶ Ver</button>' +
+        '<button class="btn" id="fpCarVid">🎬 Descargar vídeo 3D</button>' +
         '<span id="fpCarInfo" style="font-size:9px;color:var(--tx2)"></span>' +
       '</div>' +
+      '<div class="row" style="margin-top:-2px"><span style="font-size:9px;color:var(--tx2)">' +
+        'El vídeo 3D (cubo, zoom, iris…) se descarga con la voz y la música puestas, igual que el vídeo normal.' +
+      '</span></div>' +
     '</div>' +
 
     /* ── Descargas ── */
@@ -433,7 +450,8 @@
         '<span class="lbl">Segundos</span>' +
         '<input type="number" id="fpDur" value="12" min="4" max="60" step="1" style="width:70px">' +
         '<span style="font-size:9px;color:var(--tx2)">si hay voz, dura lo que dure la voz</span>' +
-        '<button class="btn" id="fpVideo">🎬 Hacer el vídeo</button>' +
+        '<button class="btn btn-g" id="fpVerVideo">▶ Ver</button>' +
+        '<button class="btn" id="fpVideo">🎬 Descargar vídeo</button>' +
       '</div>' +
       '<div id="fpSt"></div>' +
       '<div style="font-size:9px;color:var(--tx2);margin-top:4px">' +
@@ -709,7 +727,7 @@
   function arrancarBucle() {
     if (bucle) return;
     (function paso() {
-      if (!listo || FP.grabando) { bucle = null; return; }
+      if (!listo || FP.grabando || animPrev) { bucle = null; return; }
       if (!cuentaVideos()) { bucle = null; return; }
       var F = M.FORMATOS[FP.pagina.formato] || M.FORMATOS.a4v;
       var cv = $('fpLienzo');
@@ -1422,19 +1440,171 @@
     return { a: f, dy: (1 - s) * F.h * 0.02 };
   }
 
+  /* Transiciones de tarjeta a tarjeta del carrusel-vídeo. Reciben las dos
+     tarjetas YA dibujadas en canvas (A sale, B entra) y el avance p (0..1),
+     y componen el paso. Todo es canvas 2D, sin librerías. */
+  function transicionCarrusel(ctx, A, B, p, W, H, ef) {
+    if (ef === 'zoom') {
+      var sa = 1 + p * 0.25;
+      ctx.save(); ctx.globalAlpha = 1 - p; ctx.translate(W / 2, H / 2); ctx.scale(sa, sa); ctx.drawImage(A, -W / 2, -H / 2); ctx.restore();
+      var sb = 0.75 + p * 0.25;
+      ctx.save(); ctx.globalAlpha = p; ctx.translate(W / 2, H / 2); ctx.scale(sb, sb); ctx.drawImage(B, -W / 2, -H / 2); ctx.restore();
+      return;
+    }
+    if (ef === 'cubo') {
+      var aw = W * (1 - p);
+      ctx.save(); ctx.drawImage(A, 0, 0, W, H, 0, 0, aw, H); ctx.fillStyle = 'rgba(0,0,0,' + (p * 0.6) + ')'; ctx.fillRect(0, 0, aw, H); ctx.restore();
+      var bw = W * p;
+      ctx.save(); ctx.drawImage(B, 0, 0, W, H, W - bw, 0, bw, H); ctx.fillStyle = 'rgba(0,0,0,' + ((1 - p) * 0.6) + ')'; ctx.fillRect(W - bw, 0, bw, H); ctx.restore();
+      return;
+    }
+    if (ef === 'iris') {
+      ctx.drawImage(A, 0, 0);
+      var r = Math.sqrt(W * W + H * H) / 2 * p;
+      ctx.save(); ctx.beginPath(); ctx.arc(W / 2, H / 2, r, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(B, 0, 0); ctx.restore();
+      return;
+    }
+    if (ef === 'cortina') {
+      ctx.drawImage(A, 0, 0);
+      var hh = H / 2 * p;
+      ctx.save(); ctx.beginPath(); ctx.rect(0, H / 2 - hh, W, hh); ctx.rect(0, H / 2, W, hh); ctx.clip(); ctx.drawImage(B, 0, 0); ctx.restore();
+      return;
+    }
+    if (ef === 'persiana') {
+      ctx.drawImage(A, 0, 0);
+      var nb = 7, sh = H / nb, ab = sh * p;
+      ctx.save(); ctx.beginPath(); for (var k = 0; k < nb; k++) ctx.rect(0, k * sh, W, ab); ctx.clip(); ctx.drawImage(B, 0, 0); ctx.restore();
+      return;
+    }
+    if (ef === 'blur') {
+      ctx.save(); ctx.globalAlpha = 1 - p; ctx.filter = 'blur(' + (p * 14).toFixed(1) + 'px)'; ctx.drawImage(A, 0, 0); ctx.restore();
+      ctx.save(); ctx.globalAlpha = p; ctx.filter = 'blur(' + ((1 - p) * 14).toFixed(1) + 'px)'; ctx.drawImage(B, 0, 0); ctx.restore();
+      ctx.filter = 'none';
+      return;
+    }
+    if (ef === 'luz') {
+      ctx.globalAlpha = 1 - p; ctx.drawImage(A, 0, 0); ctx.globalAlpha = p; ctx.drawImage(B, 0, 0); ctx.globalAlpha = 1;
+      var lx = (p * 1.6 - 0.3) * W, bw2 = W * 0.35;
+      var g = ctx.createLinearGradient(lx, 0, lx + bw2, H);
+      g.addColorStop(0, 'rgba(255,255,255,0)');
+      g.addColorStop(0.5, 'rgba(255,255,255,' + (0.55 * Math.sin(p * Math.PI)) + ')');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore();
+      return;
+    }
+    // 'desliza' (clásico): A sale por la izquierda, B entra por la derecha
+    ctx.drawImage(A, -p * W, 0);
+    ctx.drawImage(B, (1 - p) * W, 0);
+  }
+
   /* Los dos botones de vídeo: el normal y el de carrusel. Se separan para que
      el manejador del clic nunca se cuele como opciones. */
+  /* ═══════════════════ Animación compartida (vídeo + vista previa) ═══════════════════
+     Dibuja UN fotograma del folleto animado en el lienzo que se le pase. La usan
+     por igual la grabación del vídeo y el botón «▶ Ver», así que lo que se ve en
+     la vista previa es exactamente lo que sale en el vídeo. Es híbrido: anima con
+     vídeos, con fotos (Ken Burns) o sólo con el diseño (texto que entra). */
+  function animHoja(destino, F, hs, idx, tDentro, tGlobal, carrusel, efecto, porHoja) {
+    var op = conQR({ nPagina: idx + 1 });
+    op.ken = true; op.t = tGlobal; op.kenAmp = 1;   // Ken Burns en las fotos
+    if (!carrusel || idx === 0) {
+      op.revelar = function (i) { return revelado(efecto, i, hs[idx].celdas.length, tDentro, porHoja, F); };
+      op.textoRev = function (i) {
+        var paso = Math.min(0.30, (porHoja * 0.45) / Math.max(1, hs[idx].celdas.length));
+        var arr = 0.25 + i * paso + 0.18;   // el texto entra tras la foto
+        return (tDentro - arr) / 0.5;
+      };
+    }
+    M.pintar(destino, F.w, F.h, hs[idx], op);
+  }
+
+  function animOpts(carrusel, F, porHoja) {
+    var ocA = document.createElement('canvas'), ocB = document.createElement('canvas');
+    ocA.width = ocB.width = F.w; ocA.height = ocB.height = F.h;
+    return {
+      carrusel: carrusel,
+      efecto: val('fpEfecto') || 'uno_a_uno',
+      efCar: val('fpCarTransicion') || 'desliza',
+      porHoja: porHoja,
+      PASO: Math.min(0.55, porHoja * 0.28),   // lo que dura la transición de tarjeta
+      ocA: ocA, ocB: ocB, octxA: ocA.getContext('2d'), octxB: ocB.getContext('2d')
+    };
+  }
+
+  function animFotograma(ctx, F, hs, t, o) {
+    var iHoja = Math.min(hs.length - 1, Math.floor(t / o.porHoja));
+    var tHoja = t - iHoja * o.porHoja;
+    var queda = o.porHoja - tHoja;
+    if (o.carrusel && iHoja < hs.length - 1 && queda < o.PASO) {
+      // las dos tarjetas se componen con la transición elegida (cubo, iris…)
+      var q = 1 - queda / o.PASO;
+      var e = q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
+      o.octxA.clearRect(0, 0, F.w, F.h); animHoja(o.octxA, F, hs, iHoja, tHoja, t, o.carrusel, o.efecto, o.porHoja);
+      o.octxB.clearRect(0, 0, F.w, F.h); animHoja(o.octxB, F, hs, iHoja + 1, o.porHoja, t, o.carrusel, o.efecto, o.porHoja);
+      ctx.clearRect(0, 0, F.w, F.h); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, F.w, F.h);
+      transicionCarrusel(ctx, o.ocA, o.ocB, e, F.w, F.h, o.efCar);
+    } else {
+      animHoja(ctx, F, hs, iHoja, tHoja, t, o.carrusel, o.efecto, o.porHoja);
+    }
+  }
+
+  /* ── Botón «▶ Ver»: reproduce la animación en la vista previa, en bucle, sin
+       grabar nada, para revisar cómo queda antes de descargar el vídeo. ── */
+  var animPrev = null;
+  function pararPreviewAnim() {
+    if (!animPrev) return;
+    try { cancelAnimationFrame(animPrev.raf); } catch (e) {}
+    animPrev = null;
+    var b1 = $('fpVerVideo'), b2 = $('fpVerCarrusel');
+    if (b1) b1.textContent = '▶ Ver';
+    if (b2) b2.textContent = '▶ Ver';
+    repintar();          // restaura la vista previa fija normal
+    arrancarBucle();     // y si hay vídeos, que vuelvan a moverse
+  }
+  function verAnimacion(carrusel) {
+    if (!listo) return;
+    if (animPrev) { var eraCar = animPrev.carrusel; pararPreviewAnim(); if (eraCar === carrusel) return; }
+    var reduce = false;
+    try { reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    if (reduce) { estado('Tu dispositivo pide menos animación; se muestra el folleto fijo.', 'proc'); return; }
+
+    var hs = carrusel ? tarjetasCarrusel() : hojas();
+    var F = M.FORMATOS[hs[0].formato] || M.FORMATOS.a4v;
+    var cv = $('fpLienzo');
+    cv.width = F.w; cv.height = F.h;
+    cv.style.width = (F.w > F.h ? 400 : 320) + 'px';
+    var ctx = cv.getContext('2d');
+    var dur = Math.max(4, Math.min(60, parseFloat(val('fpDur')) || 12));
+    if (carrusel) dur = Math.max(dur, Math.min(90, hs.length * 2.2));
+    var o = animOpts(carrusel, F, dur / hs.length);
+
+    var btn = carrusel ? $('fpVerCarrusel') : $('fpVerVideo');
+    if (btn) btn.textContent = '■ Parar';
+    estado('▶ Así se moverá el vídeo. Cuando te guste, dale a 🎬 para descargarlo.', 'done');
+    var t0 = performance.now();
+    animPrev = { carrusel: carrusel, raf: 0 };
+    (function paso() {
+      if (!animPrev) return;
+      var t = ((performance.now() - t0) / 1000) % dur;   // en bucle continuo
+      animFotograma(ctx, F, hs, t, o);
+      animPrev.raf = requestAnimationFrame(paso);
+    })();
+  }
+  function verAnimacionNormal() { verAnimacion(false); }
+  function verAnimacionCarrusel() { verAnimacion(true); }
+
   function grabarVideoNormal() { grabarVideo(false); }
   function grabarVideoCarrusel() { grabarVideo(true); }
 
   function grabarVideo(carrusel) {
     if (FP.grabando) { if (FP.pararGrabacion) FP.pararGrabacion(); return; }
     if (!window.MediaRecorder) { estado('Este navegador no sabe grabar vídeo. Prueba en Chrome.', 'err'); return; }
+    pararPreviewAnim();   // si estaba la vista previa animada, se detiene
 
     var fuente = val('fpVoz') || 'texto_gratis';
     // el botón que se pulsó es el que pasa a «Detener», para poder pararlo
     var boton = carrusel ? ($('fpCarVid') || $('fpVideo')) : $('fpVideo');
-    var textoBoton = carrusel ? '🎬 Vídeo del carrusel' : '🎬 Hacer el vídeo';
+    var textoBoton = carrusel ? '🎬 Descargar vídeo 3D' : '🎬 Descargar vídeo';
     function soltarBoton() { if (boton) boton.textContent = textoBoton; }
 
     var limpieza = [];
@@ -1567,38 +1737,12 @@
         if (vozEl) vozEl.play().catch(function () {});
         estado(fuente === 'mic' ? '● Grabando · habla ahora y pulsa Detener al terminar.' : '🎬 Grabando el vídeo…', 'proc');
 
-        var efecto = val('fpEfecto') || 'uno_a_uno';
-        var PASO = Math.min(0.55, porHoja * 0.28);   // lo que dura el deslizamiento
-
-        /* Dibuja una tarjeta. En carrusel, sólo la primera hace entrar sus
-           cuadros: las demás llegan ya montadas, porque la animación es el
-           propio deslizamiento (si no, parpadearían al aterrizar). */
-        function hoja(idx, tDentro) {
-          var op = conQR({ nPagina: idx + 1 });
-          if (!carrusel || idx === 0) {
-            op.revelar = function (i) {
-              return revelado(efecto, i, hs[idx].celdas.length, tDentro, porHoja, F);
-            };
-          }
-          M.pintar(ctx, F.w, F.h, hs[idx], op);
-        }
+        // el MISMO motor de animación que usa el botón «▶ Ver» (WYSIWYG)
+        var oAnim = animOpts(carrusel, F, porHoja);
 
         (function pintar() {
           var t = (performance.now() - t0) / 1000;
-          var iHoja = Math.min(hs.length - 1, Math.floor(t / porHoja));
-          var tHoja = t - iHoja * porHoja;
-          var queda = porHoja - tHoja;
-
-          if (carrusel && iHoja < hs.length - 1 && queda < PASO) {
-            // las dos tarjetas se dibujan pegadas y se desplazan juntas: la de
-            // ahora sale por la izquierda y la siguiente entra por la derecha
-            var q = 1 - queda / PASO;
-            var e = q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
-            ctx.save(); ctx.translate(-e * F.w, 0); hoja(iHoja, tHoja); ctx.restore();
-            ctx.save(); ctx.translate((1 - e) * F.w, 0); hoja(iHoja + 1, porHoja); ctx.restore();
-          } else {
-            hoja(iHoja, tHoja);
-          }
+          animFotograma(ctx, F, hs, t, oAnim);
           empujarCuadro();
           if (fuente !== 'mic' && t >= dur) { FP.pararGrabacion(); return; }
           if (fuente === 'mic' && t >= 90) { FP.pararGrabacion(); return; }
@@ -1616,6 +1760,7 @@
   function enlazar() {
     ['fpRejilla', 'fpFormato', 'fpTema', 'fpRubro', 'fpTono'].forEach(function (id) {
       $(id).addEventListener('change', function () {
+        pararPreviewAnim();   // un cambio de diseño detiene la vista previa animada
         if (id === 'fpTema') FP.coloresManuales = null;
         if (id === 'fpRejilla') {
           // al pasar a una cuadrícula con más huecos, los nuevos se rellenan
@@ -1677,6 +1822,7 @@
 
     if (DIS && $('fpDiseno')) {
       $('fpDiseno').addEventListener('change', function () {
+        pararPreviewAnim();
         var id = val('fpDiseno');
         if (id) aplicarDiseno(id);
       });
@@ -1702,10 +1848,12 @@
     $('fpPDF').addEventListener('click', descargarPDF);
     $('fpWeb').addEventListener('click', descargarWeb);
     $('fpVideo').addEventListener('click', grabarVideoNormal);
+    if ($('fpVerVideo')) $('fpVerVideo').addEventListener('click', verAnimacionNormal);
     if ($('fpCarImg')) $('fpCarImg').addEventListener('click', descargarCarrusel);
     if ($('fpCarVid')) $('fpCarVid').addEventListener('click', grabarVideoCarrusel);
+    if ($('fpVerCarrusel')) $('fpVerCarrusel').addEventListener('click', verAnimacionCarrusel);
     ['fpCarFormato', 'fpCarUno', 'fpCarPortada'].forEach(function (id) {
-      if ($(id)) $(id).addEventListener('change', contarCarrusel);
+      if ($(id)) $(id).addEventListener('change', function () { pararPreviewAnim(); contarCarrusel(); });
     });
     $('fpVoz').addEventListener('change', function () {
       var v = val('fpVoz');
@@ -1761,6 +1909,12 @@
     pintarCeldas();
     llenarMusica();
     enlazar();
+    // las fuentes premium llegan por red: al estar listas se redibuja para que
+    // la vista previa muestre ya la tipografía del tema, no la de reserva
+    try {
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { repintar(); });
+      setTimeout(repintar, 700);
+    } catch (e) {}
     // la voz por defecto es la gratis: se muestra el player y se cargan las voces
     // (a veces llegan tarde; el listener 'voiceschanged' las repone solo)
     if ($('fpVozGratisPanel')) $('fpVozGratisPanel').style.display = 'block';
