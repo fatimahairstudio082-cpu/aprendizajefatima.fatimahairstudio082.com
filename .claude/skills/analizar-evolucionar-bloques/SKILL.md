@@ -3,9 +3,11 @@ name: analizar-evolucionar-bloques
 description: >-
   Analiza y hace evolucionar cualquier bloque de la app Fátima Pro (corte,
   colorimetría, academia, nutrición, fitness, herramientas, construcción,
-  ejercicios y el hub). Audita el bloque, cruza oportunidades de negocio y — con
-  tu OK — implementa la mejora de forma aditiva sin romper los duplicados
-  (index↔hub, bloque3↔peluqueria) ni los contratos de datos de Firebase. Úsala
+  ejercicios y el hub). Audita el bloque, cruza oportunidades de negocio con
+  control estricto de costes y — con tu OK — implementa la mejora de forma
+  aditiva sin romper los duplicados (index↔hub, bloque3↔peluqueria) ni los
+  contratos de datos de Firebase. Nunca introduce gasto externo sin informe
+  económico y aprobación explícita. Úsala
   SIEMPRE que alguien pida analizar, mejorar, modernizar, hacer crecer o
   "evolucionar" un bloque, agregarle algo, monetizar la app, proponer bloques
   nuevos o montar automatizaciones. Dispárala aunque no digan "skill": frases
@@ -37,6 +39,81 @@ tradición o romperás datos de alumnas y flujos que ya funcionan.
 4. **Texto visible siempre en español.**
 5. **`firestore.rules` se despliega a mano** (pegando en la consola de Firebase). Pushear
    a Netlify NO lo actualiza. Si tu cambio necesita nuevas reglas, dilo explícitamente.
+6. **Coste bajo control (regla económica, abajo).** Ninguna propuesta que pueda gastar
+   dinero avanza sin informe económico y aprobación explícita.
+
+## Regla económica (obligatoria y no negociable)
+
+Antes de **proponer o implementar** cualquier funcionalidad que pueda generar costes
+externos —IA, Replicate, APIs, WhatsApp, correo, almacenamiento, Firebase, Netlify,
+schedulers, generación de imágenes o vídeos, servicios de terceros, etc.— la skill DEBE:
+
+1. **Identificar el servicio externo** que utilizaría.
+2. **Indicar su modelo de precio:** gratuito, de pago por uso, o recurrente.
+3. **Identificar quién asume el coste** (el owner, la alumna, un tercero).
+4. **Estimar el coste por operación o por usuario** cuando sea posible.
+5. **Estimar escenarios de 10, 100 y 1.000 usuarios** cuando sea relevante.
+6. **Indicar el posible coste mensual.**
+7. **Buscar primero una alternativa gratuita, local o de coste mínimo.**
+8. **Proponer límites de uso, cuotas, créditos, rate limits** o mecanismos de protección.
+9. **Identificar riesgos de consumo inesperado.**
+10. **Pedir aprobación explícita** antes de implementar cualquier cosa que pueda gastar.
+
+Si el precio real no está disponible, **indícalo claramente como "coste pendiente de
+determinar". Nunca inventes precios.**
+
+### Regla de no gasto silencioso
+Ninguna evolución debe introducir **llamadas ilimitadas** a servicios externos. Toda
+funcionalidad que pueda generar coste debe contemplar, cuando corresponda: límite de
+llamadas · límite diario · límite mensual · timeout · control de reintentos · protección
+contra loops · control de errores · registro del consumo · mecanismo de desactivación ·
+presupuesto/cuota máxima cuando el proveedor lo permita. **Una automatización nunca debe
+poder ejecutarse indefinidamente y generar costes en silencio.**
+
+### Informe económico obligatorio
+Cuando una propuesta pueda generar costes, preséntala con esta ficha (usa "pendiente de
+determinar" donde falten datos, nunca cifras inventadas):
+
+- **Problema**
+- **Solución**
+- **Coste de construcción**
+- **Coste por operación**
+- **Coste por usuario**
+- **Coste mensual estimado** (con escenarios 10 / 100 / 1.000 usuarios si aplica)
+- **Proveedor o servicio implicado**
+- **Quién paga**
+- **Cómo se recupera el coste**
+- **Alternativa gratuita o de bajo coste**
+- **Riesgos** (incluido consumo inesperado)
+- **Límites recomendados**
+- **Recomendación final**
+
+### Control de IA
+Toda propuesta que use IA debe analizar antes: qué parte necesita **realmente** IA · si se
+puede resolver con JavaScript, reglas, plantillas, datos existentes o lógica determinista ·
+si hay alternativa gratuita · coste por ejecución · cómo limitar el consumo · si se pueden
+cobrar créditos por esa acción · qué margen hace falta para que sea rentable. **No uses IA
+cuando una solución determinista resuelva el mismo problema correctamente.**
+
+### Regla de rentabilidad
+Toda funcionalidad con coste variable necesita una estrategia para cubrirlo. Comprueba:
+
+> **INGRESO POR USO > COSTE REAL POR USO** (considerando también almacenamiento,
+> procesamiento, APIs y mantenimiento).
+
+Si una función puede generar pérdidas, márcala como
+**🔴 NO RECOMENDADA HASTA CAMBIAR EL MODELO ECONÓMICO.**
+
+### Separación entre skill y producto
+Distingue siempre:
+- **A. Herramientas internas** que usa la skill para analizar, diseñar y evolucionar el
+  sistema (subagentes, diagnósticos, planes).
+- **B. Funcionalidades que *podrían* incorporarse al producto** (chatbot, CRM, WhatsApp,
+  generación de media, automatizaciones, etc.).
+
+Nada del grupo B se considera existente ni gratuito por el hecho de aparecer en esta
+documentación: es una **propuesta que requiere análisis técnico y económico** antes de
+implementarse.
 
 ## Cómo trabajar una petición
 
@@ -50,10 +127,15 @@ tradición o romperás datos de alumnas y flujos que ya funcionan.
    datos, seguridad, rendimiento, i18n, sincronía de duplicados).
 4. **Cruza oportunidades** con `references/monetizacion.md`,
    `references/bloques_autonomos.md` y `references/automatizaciones.md`.
-5. **Presenta diagnóstico + propuesta priorizada** (impacto vs esfuerzo) y **pide OK**
-   antes de escribir código. No implementes cambios grandes sin confirmación.
-6. **Implementa con el OK**, siguiendo `references/evolucion_playbook.md`.
-7. **Verifica** antes de dar por hecho:
+5. **Filtra por coste (obligatorio).** Si la propuesta puede gastar dinero, aplica la
+   **Regla económica** de arriba y adjunta el **informe económico**. Si puede generar
+   pérdidas, márcala 🔴. Prefiere siempre la variante determinista o gratuita.
+6. **Presenta diagnóstico + propuesta priorizada** (impacto vs esfuerzo **vs coste**) y
+   **pide OK** antes de escribir código. Para cualquier cosa que gaste dinero, pide
+   **aprobación explícita del gasto**, no solo del cambio.
+7. **Implementa con el OK**, siguiendo `references/evolucion_playbook.md`. Toda llamada
+   externa lleva sus límites (no gasto silencioso) desde la primera versión.
+8. **Verifica** antes de dar por hecho:
    - `guardian-firebase` si tocaste datos/Firestore/Drive.
    - `guardian-seguridad` si tocaste login, permisos, reglas, claves o tokens.
    - `revisor-fatima` **siempre** (duplicados sincronizados, español, estilo aditivo).
@@ -64,10 +146,11 @@ tradición o romperás datos de alumnas y flujos que ya funcionan.
 - `diagnostico.md` — checklist de auditoría por ejes para puntuar un bloque.
 - `evolucion_playbook.md` — cómo evolucionar sin romper (patrón patch-script, duplicados,
   contratos, Drive, reglas).
-- `monetizacion.md` — 10 ideas de monetización que resuelven problemas reales + cómo
-  priorizarlas.
-- `bloques_autonomos.md` — categorías de bloques autónomos nuevos a agregar.
-- `automatizaciones.md` — catálogo de automatizaciones para el sistema.
+- `monetizacion.md` — modelos de monetización priorizados por economía real (la suscripción
+  es la última opción, solo con justificación); ideas con su implicación de coste.
+- `bloques_autonomos.md` — categorías de bloques autónomos, clasificadas por nivel de coste.
+- `automatizaciones.md` — catálogo de automatizaciones, cada una con su bandera de coste y su
+  mecanismo de control obligatorio.
 
 ## Encaje con el ecosistema
 

@@ -1,45 +1,58 @@
-# Categorías de bloques autónomos a agregar
+# Categorías de bloques autónomos (clasificadas por coste)
 
-"Autónomo" = un bloque que aporta valor **sin intervención manual constante del admin**: o se
-alimenta solo del contenido de las usuarias, o se auto-actualiza, o responde 24/7. Cuatro
-categorías, con bloques concretos por categoría.
+"Autónomo" = aporta valor **sin intervención manual constante del admin**. Pero autónomo **no**
+significa gratis: un bloque que corre solo con IA o APIs puede gastar solo. Por eso cada
+propuesta se clasifica por **coste externo** y **no se recomienda IA/automatización solo porque
+sea técnicamente posible**. La prioridad es **resolver problemas reales con el menor coste
+operativo**. Todo lo 🟠/🔴 exige informe económico + límites antes de implementarse.
 
-## A. Gestión del negocio de la alumna
-Convierte la app de "academia" a "sistema operativo del salón". Alto valor y fideliza.
-- **CRM de clientas** — ficha por clienta con **historial de fórmula/color** (nivel, volumen,
-  marca, resultado) y notas. Autónomo: recuerda la última fórmula al volver.
-- **Agenda / reservas** — citas con confirmación y recordatorio automático por WhatsApp.
-- **Finanzas del salón** — registro de ingresos/gastos con dashboards automáticos (mensual,
-  servicio más rentable).
-- **Portafolio público auto-generado** — página del trabajo de la alumna creada sola desde las
-  fotos que sube; enlace para compartir con clientas.
+Niveles: 🟢 autónomo **sin** coste externo · 🟡 coste **bajo** · 🟠 coste **variable** · 🔴 riesgo
+de coste **elevado**.
+
+Recordatorio (separación skill/producto): ninguna de estas funcionalidades existe todavía; son
+**propuestas** que requieren análisis técnico y económico.
+
+## A. Gestión del negocio de la alumna  → **la de mayor prioridad**
+La que más fideliza y, además, la de menor coste: casi todo es lógica determinista sobre datos
+que ya se guardan.
+- **CRM de clientas** — 🟢 historial de fórmula/color y notas por clienta (escrituras/lecturas
+  Firestore que ya se pagan). Sin IA ni APIs.
+- **Agenda / reservas** — 🟢 la agenda en sí; el **recordatorio** es 🟢 si es enlace `wa.me`
+  manual, 🟠/🔴 si es envío automático por API de pago (ver `automatizaciones.md` #3).
+- **Finanzas del salón** — 🟢 registro y dashboards calculados en cliente.
+- **Portafolio público auto-generado** — 🟢 en generación (HTML desde fotos ya subidas); vigila
+  solo el **coste de almacenamiento** de las imágenes (🟡 si crece mucho).
 
 ## B. Comunidad y engagement
-Se alimenta del contenido de las propias usuarias → crece sin trabajo del admin.
-- **Foro / comunidad** entre alumnas (preguntas, antes/después, dudas de técnica).
-- **Retos y plan semanal auto-generado** — un reto nuevo cada semana sin que nadie lo suba a
-  mano (extiende el "Plan Semanal" de `bloque9_ejercicios.html`).
-- **Ranking / logros** — tabla de progreso y racha; combina con la gamificación de
-  monetización #10.
+Se alimenta del contenido de las usuarias.
+- **Foro / comunidad** — 🟢 en coste externo (Firestore). El coste real es de **moderación**
+  (tiempo/seguridad), no de infraestructura; contempla anti-abuso.
+- **Retos y plan semanal auto-generado** — 🟢 si el reto se arma con **plantillas/lógica**
+  (extiende el "Plan Semanal" de `bloque9_ejercicios.html`); 🟠 solo si se genera con IA — y ahí
+  hay que justificar por qué la IA es necesaria frente a una rotación de plantillas.
+- **Ranking y logros** — 🟢 datos ya en Firestore.
 
-## C. Inteligencia / asistente autónomo
-Responde y se actualiza solo.
-- **Chatbot experto 24/7** — responde dudas de las alumnas basándose en el catálogo `MOTOR`
-  (360 clases) y el conocimiento (`app.js`). Reduce soporte manual.
-- **Bloque de tendencias auto-actualizado** — trae novedades de colorimetría/corte y las
-  publica solo (reusa la colección `noticias` existente).
+## C. Inteligencia / asistente autónomo  → **la de mayor riesgo de coste**
+- **Chatbot experto 24/7** — 🔴 si responde con un LLM por cada mensaje: coste por conversación,
+  escalable con el número de usuarias, con riesgo de consumo inesperado. *Antes de proponerlo*
+  aplica **Control de IA**: ¿basta una **búsqueda determinista** sobre el catálogo `MOTOR` (360
+  clases) y FAQ con respuestas predefinidas? Suele bastar y es 🟢. Si se usa LLM: límite de
+  mensajes por usuaria/día, créditos que cubran el coste, timeout, y aprobación explícita.
+- **Tendencias auto-actualizado** — 🟢 si el owner publica en `noticias` (manual/curado); 🟠/🔴
+  si "trae tendencias solo" vía API/scraping/IA. Preferir curado o fuente gratuita.
 
 ## D. Comercio
-Genera ingreso de forma pasiva.
-- **Tienda / catálogo de productos** — autoservicio con enlaces de compra/afiliación
-  (monetización #8).
-- **Marketplace de clases sueltas** — escaparate de packs a la carta (monetización #3).
+- **Tienda / catálogo de productos** — 🟢 en coste externo (enlaces de compra/afiliación).
+- **Marketplace de clases sueltas** — 🟢 (reusa catálogo + créditos existentes).
 
 ## Cómo elegir el siguiente bloque
-1. ¿Resuelve un problema que la alumna tiene **todos los días** (no solo mientras estudia)?
-   → categoría A suele ganar (la retiene aunque termine el curso).
-2. ¿Puede funcionar **sin que el admin lo alimente**? Si no, no es autónomo — replantéalo.
-3. ¿Reusa Firebase + créditos + header común? Cuanto más reuse, más barato de construir.
-4. Constrúyelo **aditivo**: nuevo archivo `bloqueN_xxx.html` + registro como iframe en el hub
-   (recordar sincronizar `index.html` y `fatima_hub.html`) + colección Firestore nueva con sus
-   reglas (que se pegan a mano en la consola).
+1. ¿Resuelve un problema que la alumna/peluquera tiene **todos los días** (no solo mientras
+   estudia)? → la categoría **A** suele ganar, y encima es la más barata.
+2. ¿Funciona **sin que el admin lo alimente** y **sin coste externo por uso**? Si necesita IA o
+   APIs de pago, replantéalo: primero la variante determinista.
+3. ¿Reusa Firebase + créditos + header común? Cuanto más reuse, menor coste de construcción.
+4. Constrúyelo **aditivo**: nuevo `bloqueN_xxx.html` + registro como iframe en el hub (sincroniza
+   `index.html` y `fatima_hub.html`) + colección Firestore nueva con sus reglas (que se pegan a
+   mano en la consola).
+5. Para cualquier bloque 🟠/🔴: **informe económico + límites + aprobación explícita** antes de
+   una sola línea de integración con el servicio de pago.

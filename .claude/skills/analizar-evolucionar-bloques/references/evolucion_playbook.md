@@ -3,6 +3,10 @@
 La app es estática, sin build, con archivos HTML enormes y contratos de datos vivos entre el
 lado admin y las alumnas. Cada mejora histórica ha sido **aditiva**. Sigue estas reglas.
 
+> **Antes de escribir código que pueda gastar dinero:** aplica la **Regla económica** del
+> `SKILL.md` (informe económico + aprobación explícita) y la sección 11 de abajo. No hay
+> excepciones.
+
 ## 1. Prefiere el patch-script antes que reescribir
 En vez de editar un HTML de 3000 líneas, agrega un `<script src="mi_parche.js">` al final del
 `<body>` y monkey-parchea al cargar. Protégelo con un guard para que sea idempotente:
@@ -62,5 +66,24 @@ común (pill de créditos, toggle TTS, logout) y los patrones de tarjeta/ficha e
 
 ## 10. Cierre: verifica siempre
 Antes de decir "listo": corre `revisor-fatima` (duplicados sincronizados, español, aditivo);
-`guardian-firebase` si tocaste datos; `guardian-seguridad` si tocaste seguridad. Recuerda que
+`guardian-firebase` si tocaste datos; `guardian-seguridad` si tocaste seguridad. Si tu cambio
+introdujo alguna llamada externa, revisa que lleve todos sus límites (sección 11). Recuerda que
 el deploy a `main` es automático por Netlify (~1 min), así que no subas nada a medias.
+
+## 11. Coste externo: nunca sin límites (regla de no gasto silencioso)
+Toda funcionalidad que llame a un servicio externo de pago (IA, Replicate, APIs, WhatsApp,
+correo, almacenamiento, schedulers) DEBE incluir, desde la primera versión, lo que aplique:
+límite de llamadas · límite diario · límite mensual · timeout · tope de reintentos (con
+backoff, sin loops) · control de errores · registro del consumo · mecanismo de desactivación
+(flag) · presupuesto/cuota máxima cuando el proveedor lo permita.
+
+- **Preferir la solución determinista/gratuita** (JS, reglas, plantillas, datos ya guardados,
+  enlace `wa.me` manual) antes que IA o envíos automáticos de pago. Ver **Control de IA** en el
+  `SKILL.md`.
+- **Ningún scheduler** (Netlify Scheduled Functions, GitHub Actions cron) sin frecuencia
+  justificada y sin interruptor de apagado: un cron mal puesto es la vía más común de gasto
+  silencioso.
+- **El failover de hosting** (`puente_inteligente.js`) cambia de puerta cuando una se queda sin
+  crédito; **no** autoriza a reintentar sin tope.
+- Cualquier acción con coste variable se cobra de forma que **INGRESO POR USO > COSTE REAL POR
+  USO**; si no, no se enciende (🔴).

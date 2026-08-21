@@ -1,44 +1,61 @@
-# Catálogo de automatizaciones
+# Catálogo de automatizaciones (con bandera de coste y control)
 
-Automatizaciones que ahorran trabajo al owner y evitan errores. Cada una dice qué resuelve y
-sobre qué pieza existente se monta. Priorizadas de más fácil/alto valor a más elaboradas.
+**Regla de no gasto silencioso (del `SKILL.md`):** ninguna automatización puede ejecutarse
+indefinidamente ni hacer llamadas externas ilimitadas. Cada una lleva su **bandera de coste** y
+su **mecanismo de control obligatorio**. Antes de encender cualquiera 🟡/🔴, completa el
+**informe económico**.
 
-## Operación diaria (alto valor, bajo esfuerzo)
-1. **Generación de media desatendida por lotes** — programar tandas de `motor_auto.html`
-   ("generar solo N que falten", "omitir las que ya están") para no generar a mano ni duplicar
-   coste.
-2. **Escáner de faltantes proactivo** — sobre `escaner_faltantes_total.html` /
-   `escaner_clips_faltantes.html`: en vez de mirar el dashboard, que **avise** qué media falta
-   (resumen automático por Academia, Corte, Hub, Fitness).
-3. **Onboarding y recordatorios por WhatsApp** — mensajes automáticos: bienvenida al registrarse,
-   "te quedan X créditos", "no entras hace N días". Extiende la recarga por WhatsApp existente
-   (`_waRecharge`, `abrirWA`).
+Banderas: 🟢 sin coste externo · 🟡 coste bajo/acotable · 🟠 coste variable · 🔴 riesgo de coste
+elevado si no se controla.
 
-## Integridad del sistema (previene romper cosas)
-4. **Chequeo de sincronía de duplicados** — avisa si `index.html`↔`fatima_hub.html` o
-   `bloque3_academia_pagos.html`↔`fatima_peluqueria.html` divergen. Puede correr en el workflow
-   de GitHub (`.github/workflows/`) o como paso del subagente `revisor-fatima`.
-5. **Backup automático de Firestore/Storage** — copia periódica de datos de alumnas y media.
-6. **Health-check de deploy** — tras cada publicación, verificar que las funciones Netlify
-   (`replicate.js`, `aiproxy.js`) responden y que una lectura de prueba en Firestore no rompió
-   por un cambio de reglas.
-7. **Conversión automática de links de Drive** — forzar el formato correcto (imágenes
-   `thumbnail?...w1400`, videos `.../preview`) en **todo** punto de guardado, no solo en
-   `biblioteca.js`. Reusa la lógica de los `*_drive_fix.js`.
-8. **Retry / regeneración automática de media fallida** — reintentar las generaciones que
-   fallaron (con failover de hosting vía `puente_inteligente.js`).
+## Operación diaria
+1. **Generación de media desatendida por lotes** — 🔴 (Replicate/APIs de imagen/vídeo por
+   operación). *Control obligatorio:* tope de N por tanda, "omitir las que ya están", límite
+   diario y mensual, timeout por llamada, control de reintentos (máx. 1–2), registro del
+   consumo, botón/flag de desactivación, y **aprobación explícita** del tamaño de tanda.
+   *Alternativa:* generar solo lo que falta (nunca regenerar en masa). Se apoya en las tandas
+   que ya ofrece `motor_auto.html`.
+2. **Escáner de faltantes proactivo** — 🟢 (solo lecturas Firestore que ya se hacen).
+   *Control:* frecuencia acotada (p.ej. diaria), no dispara generación por sí mismo; solo
+   informa. Riesgo real: coste de lecturas si se abusa de la frecuencia → cachear resultado.
+3. **Onboarding y recordatorios por WhatsApp** — 🟠/🔴 según proveedor: WhatsApp vía API de
+   terceros suele ser **de pago por mensaje**; un enlace `wa.me`/`abrirWA` que abre el chat es
+   🟢 (lo envía la persona, no el sistema). *Control obligatorio si es API:* límite de mensajes
+   por usuario y por día, deduplicación, plantilla aprobada, registro de envíos, desactivación.
+   *Coste:* **pendiente de determinar** (depende del proveedor). *Preferir* el enlace manual
+   `wa.me` (gratis) frente al envío automático de pago.
 
-## Negocio y retención
-9. **Emisión automática de certificado** al completar el 100% de un módulo (enlaza con
-   monetización #2, certificado con QR).
-10. **Reporte semanal al owner** — resumen automático: alumnas activas, créditos consumidos,
-    clases más vistas, media que falta. Un correo/WhatsApp los lunes.
+## Integridad del sistema
+4. **Chequeo de sincronía de duplicados** — 🟢 (comparación de archivos en el repo). *Control:*
+   corre en el workflow de GitHub o como paso de `revisor-fatima`; sin coste externo.
+5. **Backup automático de Firestore/Storage** — 🟠 (coste de almacenamiento del backup + posible
+   coste de operaciones de lectura/exportación). *Control obligatorio:* frecuencia acotada,
+   retención limitada (borrar backups viejos), tamaño vigilado, registro. *Coste:* pendiente de
+   determinar según destino.
+6. **Emisión automática de certificado** — 🟢 (jsPDF en cliente + una escritura Firestore).
+   *Control:* se dispara una sola vez por módulo completado (idempotente); sin coste externo.
+7. **Health-check de deploy** — 🟢/🟡 (peticiones a funciones Netlify y una lectura de prueba).
+   *Control:* frecuencia baja, timeout, no reintentar en bucle. Coste marginal.
+8. **Conversión automática de links de Drive** — 🟢 (transformación de strings en cliente, reusa
+   `*_drive_fix.js`). Sin coste externo.
+9. **Retry / regeneración automática de media fallida** — 🔴 (cada retry es otra llamada de
+   pago). *Control obligatorio y estricto:* **máximo de reintentos duro** (1–2), backoff,
+   protección contra loops, no reintentar errores no transitorios, registro del consumo,
+   desactivación. El failover de hosting (`puente_inteligente.js`) cambia de puerta, **no**
+   autoriza a reintentar sin límite.
 
-## Cómo implementarlas
-- Muchas viven en el **cliente** (patch-scripts que corren al cargar) o en las **funciones
-  Netlify** (único código de servidor). Las programadas (backup, reporte, escáner) necesitan
-  un scheduler externo (Netlify Scheduled Functions, GitHub Actions cron, o similar).
-- Cualquier automatización que **escriba** en Firestore debe respetar `firestore.rules` (que se
-  despliega a mano) y las formas de documento existentes.
-- Empieza por la #2 (escáner proactivo) y la #3 (recordatorios): máximo ahorro de tiempo con lo
-  que ya existe.
+## Negocio
+10. **Reporte semanal al owner** — 🟢/🟡 (agrega lecturas que en su mayoría ya ocurren; si se
+    envía por email/WhatsApp de pago, hereda ese coste). *Control:* una ejecución semanal,
+    consulta acotada, canal preferente gratuito.
+
+## Reglas transversales para cualquier automatización
+- **Todo scheduler** (Netlify Scheduled Functions, GitHub Actions cron, etc.) debe tener
+  frecuencia mínima justificada y un interruptor de apagado. Un cron mal puesto es la vía más
+  común de gasto silencioso.
+- **Toda llamada externa** lleva: timeout, tope de reintentos, control de errores y registro del
+  consumo, desde la primera versión.
+- **Toda automatización con IA/APIs de pago** completa el informe económico y espera aprobación
+  explícita antes de activarse.
+- Prioriza siempre la variante **determinista/gratuita** (escáner que informa vs. generación que
+  gasta; enlace `wa.me` vs. envío automático de pago).

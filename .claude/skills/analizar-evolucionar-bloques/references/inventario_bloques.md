@@ -15,6 +15,12 @@ Ejes reutilizables que comparten casi todos:
   no-op y la página funciona sola.
 - **Salida al hub** uniforme: `postMessage({tipo:'salirBloque', destino:'index.html'})`.
 
+**Puntos de coste externo (dónde ya se gasta dinero hoy):** la generación IA vía **Replicate**
+(sobre todo `bloque5_fitness.html` y las funciones Netlify `replicate.js`/`aiproxy.js`) es el
+principal coste por operación; el resto (Firestore, Storage, CDNs) es coste de uso más bajo pero
+no nulo. Cualquier evolución que aumente estas llamadas cae bajo la **Regla económica** del
+`SKILL.md`. Este inventario es descriptivo: no implica que ninguna función nueva sea gratuita.
+
 ## Ficha por bloque
 
 ### bloque1_motor_corte.html — Corte / visajismo (~832 líneas) · COMPLETO

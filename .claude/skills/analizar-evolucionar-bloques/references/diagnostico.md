@@ -1,7 +1,7 @@
 # Checklist de diagnóstico de un bloque
 
-Recorre estos 7 ejes. Para cada uno da un veredicto (🟢 bien / 🟡 mejorable / 🔴 problema) y
-una nota concreta. Al final, prioriza por **impacto vs esfuerzo**.
+Recorre estos 8 ejes. Para cada uno da un veredicto (🟢 bien / 🟡 mejorable / 🔴 problema) y
+una nota concreta. Al final, prioriza por **impacto vs esfuerzo vs coste**.
 
 ## 1. UX / claridad
 - ¿La primera pantalla explica en 5 segundos qué hace el bloque y qué gana la alumna?
@@ -10,10 +10,13 @@ una nota concreta. Al final, prioriza por **impacto vs esfuerzo**.
 - ¿Funciona bien en móvil (es una PWA)? ¿Botones tocables, sin scroll horizontal?
 
 ## 2. Monetización
-- ¿El bloque cobra créditos por sus acciones de valor, o regala lo caro?
-- ¿Hay un momento natural de "upgrade" (justo cuando la alumna ve el valor)?
-- ¿Se puede convertir una acción educativa en un servicio de pago (ver `monetizacion.md`)?
-- ¿El coste real (IA/Replicate, generación) está cubierto por lo que cobra?
+- ¿El bloque cobra por sus acciones de valor, o regala lo caro?
+- ¿El modelo elegido encaja con el problema y el coste real, sin asumir suscripción por defecto
+  (ver el orden de preferencia en `monetizacion.md`)?
+- ¿Hay un momento natural de cobro (justo cuando la alumna ve el valor)?
+- ¿Se puede convertir una acción educativa en un servicio de pago?
+- ¿El coste real (IA/Replicate, generación) está **cubierto** por lo que cobra
+  (**INGRESO POR USO > COSTE REAL POR USO**)? Si no, es 🔴.
 
 ## 3. Datos / contratos Firebase
 - ¿Lee/escribe claves de documentos que otras páginas dependen? (No cambiar formas existentes.)
@@ -46,7 +49,18 @@ una nota concreta. Al final, prioriza por **impacto vs esfuerzo**.
   `bloque3_academia_pagos.html`).
 - ¿El cambio depende de un motor/bridge compartido que otros bloques también usan?
 
+## 8. Coste y economía externa
+- ¿El bloque hace (o la mejora haría) llamadas a servicios externos de pago (IA, Replicate,
+  APIs, WhatsApp, correo, almacenamiento, schedulers)?
+- ¿Esas llamadas tienen límites (por llamada / diario / mensual), timeout, tope de reintentos y
+  registro del consumo, o pueden gastar en silencio? (Ver `automatizaciones.md`.)
+- ¿Se está usando IA donde una solución **determinista** (JS, reglas, plantillas, datos
+  existentes) resolvería lo mismo? (Ver **Control de IA** en `SKILL.md`.)
+- ¿Hay riesgo de consumo inesperado (loops, retries sin tope, cron mal puesto)?
+
 ## Salida del diagnóstico
 Entrega una tabla corta: eje · veredicto · nota, y luego **3 propuestas priorizadas**
 (1 rápida de alto impacto, 1 media, 1 estratégica), cada una con: problema que resuelve,
-qué se cambia, cómo se implementa aditivamente, y si toca datos/reglas.
+qué se cambia, cómo se implementa aditivamente, y si toca datos/reglas. **Para cada propuesta
+que pueda gastar dinero, adjunta el informe económico del `SKILL.md` y su bandera de coste
+(🟢/🟡/🟠/🔴); si puede dar pérdidas, márcala 🔴 NO RECOMENDADA hasta cambiar el modelo.**
