@@ -358,6 +358,10 @@
           '<option value="luz">✨ Barrido de luz</option>' +
           '<option value="persiana">🎚️ Persiana</option>' +
           '<option value="blur">🌫️ Desenfoque</option>' +
+          '<option value="volteo">🔄 Volteo 3D</option>' +
+          '<option value="empuje">⬆️ Empuje vertical</option>' +
+          '<option value="giro">🌀 Giro</option>' +
+          '<option value="desvanecer">🫧 Fundido cruzado</option>' +
           '<option value="desliza" selected>➡️ Deslizar (clásico)</option>' +
         '</select>' +
       '</div>' +
@@ -442,6 +446,9 @@
           '<option value="deslizar">➡️ Deslizar</option>' +
           '<option value="persiana">🎚️ Persiana</option>' +
           '<option value="fundido">🎞️ Fundido</option>' +
+          '<option value="aterriza">🎯 Aterrizar (suave)</option>' +
+          '<option value="caida">⬇️ Caída</option>' +
+          '<option value="rebote">🪀 Rebote</option>' +
         '</select>' +
       '</div>' +
       '<div class="row">' +
@@ -1444,6 +1451,20 @@
     if (efecto === 'persiana') {
       return { a: Math.min(1, f * 1.5), recorte: 'persiana', p: s };
     }
+    if (efecto === 'aterriza') {
+      // entra un pelín más grande y se asienta: elegante, "de estudio"
+      return { a: f, escala: 1.14 - s * 0.14 };
+    }
+    if (efecto === 'caida') {
+      // cae desde arriba con suavidad
+      return { a: f, dy: -(1 - s) * F.h * 0.14 };
+    }
+    if (efecto === 'rebote') {
+      // entra con un pequeño rebote (overshoot) que da vida sin marear
+      var c1 = 1.70158, c3 = c1 + 1;
+      var eb = 1 + c3 * Math.pow(f - 1, 3) + c1 * Math.pow(f - 1, 2);
+      return { a: f, escala: 0.6 + eb * 0.4 };
+    }
     // 'uno_a_uno': el de siempre, subiendo y apareciendo
     return { a: f, dy: (1 - s) * F.h * 0.02 };
   }
@@ -1498,6 +1519,45 @@
       g.addColorStop(0.5, 'rgba(255,255,255,' + (0.55 * Math.sin(p * Math.PI)) + ')');
       g.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore();
+      return;
+    }
+    if (ef === 'volteo') {
+      // giro 3D: la tarjeta A se cierra sobre su eje y la B se abre
+      if (p < 0.5) {
+        var wa = W * (1 - p * 2);
+        ctx.save(); ctx.translate((W - wa) / 2, 0);
+        ctx.drawImage(A, 0, 0, W, H, 0, 0, wa, H);
+        ctx.fillStyle = 'rgba(0,0,0,' + (p * 0.5) + ')'; ctx.fillRect(0, 0, wa, H); ctx.restore();
+      } else {
+        var wb = W * ((p - 0.5) * 2);
+        ctx.save(); ctx.translate((W - wb) / 2, 0);
+        ctx.drawImage(B, 0, 0, W, H, 0, 0, wb, H);
+        ctx.fillStyle = 'rgba(0,0,0,' + ((1 - p) * 0.5) + ')'; ctx.fillRect(0, 0, wb, H); ctx.restore();
+      }
+      return;
+    }
+    if (ef === 'empuje') {
+      // empuje vertical: A sube y sale, B entra empujando desde abajo
+      ctx.drawImage(A, 0, -p * H);
+      ctx.drawImage(B, 0, (1 - p) * H);
+      return;
+    }
+    if (ef === 'desvanecer') {
+      // fundido cruzado suave (dissolve), muy elegante y neutro
+      ctx.globalAlpha = 1 - p; ctx.drawImage(A, 0, 0);
+      ctx.globalAlpha = p; ctx.drawImage(B, 0, 0);
+      ctx.globalAlpha = 1;
+      return;
+    }
+    if (ef === 'giro') {
+      // A se va girando y encogiendo, B llega girando y creciendo
+      ctx.save(); ctx.translate(W / 2, H / 2); ctx.globalAlpha = 1 - p;
+      ctx.rotate(p * 0.35); var sa = 1 - p * 0.25; ctx.scale(sa, sa);
+      ctx.drawImage(A, -W / 2, -H / 2); ctx.restore();
+      ctx.save(); ctx.translate(W / 2, H / 2); ctx.globalAlpha = p;
+      ctx.rotate((p - 1) * 0.35); var sb = 0.75 + p * 0.25; ctx.scale(sb, sb);
+      ctx.drawImage(B, -W / 2, -H / 2); ctx.restore();
+      ctx.globalAlpha = 1;
       return;
     }
     // 'desliza' (clásico): A sale por la izquierda, B entra por la derecha
@@ -1771,6 +1831,16 @@
         (function pintar() {
           var t = (performance.now() - t0) / 1000;
           animFotograma(ctx, F, hs, t, oAnim);
+          // Cierre profesional: entra desde negro y termina fundiendo a negro,
+          // para que el vídeo abra y cierre suave en vez de cortar en seco.
+          var FADE = 0.6;
+          var aFade = 0;
+          if (t < FADE) aFade = 1 - t / FADE;                       // apertura
+          else if (fuente !== 'mic' && t > dur - FADE) aFade = Math.min(1, (t - (dur - FADE)) / FADE); // cierre
+          if (aFade > 0) {
+            ctx.save(); ctx.globalAlpha = aFade; ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, F.w, F.h); ctx.restore();
+          }
           empujarCuadro();
           // Se para al llegar a la duración calculada (que ya incluye la voz
           // entera + la cola). NO se para en cuanto la voz termina: así la

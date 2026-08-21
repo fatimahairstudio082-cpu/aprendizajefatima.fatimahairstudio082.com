@@ -28,7 +28,9 @@
     a4h:      { nombre: 'A4 horizontal',        w: 1754, h: 1240, mm: [297, 210] },
     cuadrado: { nombre: 'Cuadrado · Instagram', w: 1080, h: 1080, mm: [210, 210] },
     vertical: { nombre: 'Vertical 4:5 · feed',  w: 1080, h: 1350, mm: [190, 238] },
-    historia: { nombre: 'Historia · WhatsApp',  w: 1080, h: 1920, mm: [160, 284] }
+    historia: { nombre: 'Historia · WhatsApp',  w: 1080, h: 1920, mm: [160, 284] },
+    youtube:  { nombre: 'YouTube 16:9 · web',   w: 1920, h: 1080, mm: [297, 167] },
+    pinterest:{ nombre: 'Pinterest 2:3',        w: 1000, h: 1500, mm: [170, 255] }
   };
 
   /* ───────────────────────── Paletas ─────────────────────────
