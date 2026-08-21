@@ -3115,7 +3115,9 @@ async function flStartVideo(){
     flDraw();
   };
   let dur=parseFloat(flVal('flDur'))||6; dur=Math.max(2,Math.min(20,dur));
-  if((mode==='upload'||mode==='voz_ia')&&flAudioEl){try{await flAudioEl.play();}catch(e){} if(flAudioEl.duration&&isFinite(flAudioEl.duration))dur=Math.min(60,flAudioEl.duration+0.3);}
+  // La narración manda: si hay voz/audio, el vídeo dura lo que dure ENTERO,
+  // más una cola para que no corte en seco (antes topaba a 60 s y recortaba).
+  if((mode==='upload'||mode==='voz_ia')&&flAudioEl){try{await flAudioEl.play();}catch(e){} if(flAudioEl.duration&&isFinite(flAudioEl.duration))dur=Math.min(180,flAudioEl.duration+1.2);}
   if(st)st.innerHTML='<div class="st proc">'+(mode==='mic'?'● Grabando con micrófono… habla ahora y pulsa Detener al terminar.':mode==='voz_ia'?'🗣️ Grabando video con voz IA…':'🎬 Grabando video…')+'</div>';
   const t0=performance.now();
   flRec.start();
@@ -3124,7 +3126,8 @@ async function flStartVideo(){
     flDrawFrame(ctx,W,H,bg,el,dur);
     if(mode!=='mic'&&el>=dur){flStopVideo();return;}
     if(mode==='mic'&&el>=30){flStopVideo();return;}
-    if((mode==='upload'||mode==='voz_ia')&&flAudioEl&&flAudioEl.ended){flStopVideo();return;}
+    // No se para en flAudioEl.ended: se deja llegar a 'dur' (voz entera + cola)
+    // para que la narración nunca quede cortada.
     flAnimReq=requestAnimationFrame(loop);
   })();
 }

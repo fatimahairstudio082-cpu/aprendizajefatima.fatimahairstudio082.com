@@ -24,6 +24,14 @@
   var MAX_SEG_VIDEO = 60;      // segundos de cada vídeo subido
   var TOPE_WEB = 45 * 1024 * 1024;  // lo que se puede incrustar en el folleto web
 
+  /* ── Ritmo del vídeo (sincronía voz ↔ tarjetas) ──
+     La NARRACIÓN manda: el vídeo dura lo que dure la voz entera. Estas
+     constantes garantizan que la voz nunca se corte y que cada tarjeta se
+     quede el tiempo suficiente para leerse/oírse con calma. */
+  var MIN_POR_TARJETA = 3.6;   // segundos mínimos que cada tarjeta permanece visible
+  var COLA_FIN        = 1.2;   // aire tras la última palabra (la última tarjeta respira)
+  var TOPE_SEG_VIDEO  = 180;   // tope de seguridad, amplio: una narración larga cabe entera
+
   var M = null, CB = null;     // motor y cerebro, se resuelven al arrancar
   var DIS = null;              // cerebro de diseño (FOLLETO_DISENOS), opcional
   var MEL = null, NOTE = null; // música gratis (FL_MELODIES / FL_NOTE), opcional
@@ -350,6 +358,10 @@
           '<option value="luz">✨ Barrido de luz</option>' +
           '<option value="persiana">🎚️ Persiana</option>' +
           '<option value="blur">🌫️ Desenfoque</option>' +
+          '<option value="volteo">🔄 Volteo 3D</option>' +
+          '<option value="empuje">⬆️ Empuje vertical</option>' +
+          '<option value="giro">🌀 Giro</option>' +
+          '<option value="desvanecer">🫧 Fundido cruzado</option>' +
           '<option value="desliza" selected>➡️ Deslizar (clásico)</option>' +
         '</select>' +
       '</div>' +
@@ -434,6 +446,9 @@
           '<option value="deslizar">➡️ Deslizar</option>' +
           '<option value="persiana">🎚️ Persiana</option>' +
           '<option value="fundido">🎞️ Fundido</option>' +
+          '<option value="aterriza">🎯 Aterrizar (suave)</option>' +
+          '<option value="caida">⬇️ Caída</option>' +
+          '<option value="rebote">🪀 Rebote</option>' +
         '</select>' +
       '</div>' +
       '<div class="row">' +
@@ -1406,9 +1421,9 @@
   function revelado(efecto, i, n, tHoja, porHoja, F) {
     n = Math.max(1, n);
     // el retardo escalonado es lo que hace que entren en cascada y no de golpe
-    var paso = Math.min(0.30, (porHoja * 0.45) / n);
-    var salida = 0.45;                       // lo que tarda un cuadro en entrar
-    var arranque = 0.25 + i * paso;
+    var paso = Math.min(0.40, (porHoja * 0.45) / n);
+    var salida = 0.85;                       // lo que tarda un cuadro en entrar (más lento = más profesional)
+    var arranque = 0.30 + i * paso;
     var f = Math.max(0, Math.min(1, (tHoja - arranque) / salida));
     // suavizado: arranca y frena despacio, que es lo que se ve "caro"
     var s = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
@@ -1435,6 +1450,20 @@
     }
     if (efecto === 'persiana') {
       return { a: Math.min(1, f * 1.5), recorte: 'persiana', p: s };
+    }
+    if (efecto === 'aterriza') {
+      // entra un pelín más grande y se asienta: elegante, "de estudio"
+      return { a: f, escala: 1.14 - s * 0.14 };
+    }
+    if (efecto === 'caida') {
+      // cae desde arriba con suavidad
+      return { a: f, dy: -(1 - s) * F.h * 0.14 };
+    }
+    if (efecto === 'rebote') {
+      // entra con un pequeño rebote (overshoot) que da vida sin marear
+      var c1 = 1.70158, c3 = c1 + 1;
+      var eb = 1 + c3 * Math.pow(f - 1, 3) + c1 * Math.pow(f - 1, 2);
+      return { a: f, escala: 0.6 + eb * 0.4 };
     }
     // 'uno_a_uno': el de siempre, subiendo y apareciendo
     return { a: f, dy: (1 - s) * F.h * 0.02 };
@@ -1492,6 +1521,45 @@
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore();
       return;
     }
+    if (ef === 'volteo') {
+      // giro 3D: la tarjeta A se cierra sobre su eje y la B se abre
+      if (p < 0.5) {
+        var wa = W * (1 - p * 2);
+        ctx.save(); ctx.translate((W - wa) / 2, 0);
+        ctx.drawImage(A, 0, 0, W, H, 0, 0, wa, H);
+        ctx.fillStyle = 'rgba(0,0,0,' + (p * 0.5) + ')'; ctx.fillRect(0, 0, wa, H); ctx.restore();
+      } else {
+        var wb = W * ((p - 0.5) * 2);
+        ctx.save(); ctx.translate((W - wb) / 2, 0);
+        ctx.drawImage(B, 0, 0, W, H, 0, 0, wb, H);
+        ctx.fillStyle = 'rgba(0,0,0,' + ((1 - p) * 0.5) + ')'; ctx.fillRect(0, 0, wb, H); ctx.restore();
+      }
+      return;
+    }
+    if (ef === 'empuje') {
+      // empuje vertical: A sube y sale, B entra empujando desde abajo
+      ctx.drawImage(A, 0, -p * H);
+      ctx.drawImage(B, 0, (1 - p) * H);
+      return;
+    }
+    if (ef === 'desvanecer') {
+      // fundido cruzado suave (dissolve), muy elegante y neutro
+      ctx.globalAlpha = 1 - p; ctx.drawImage(A, 0, 0);
+      ctx.globalAlpha = p; ctx.drawImage(B, 0, 0);
+      ctx.globalAlpha = 1;
+      return;
+    }
+    if (ef === 'giro') {
+      // A se va girando y encogiendo, B llega girando y creciendo
+      ctx.save(); ctx.translate(W / 2, H / 2); ctx.globalAlpha = 1 - p;
+      ctx.rotate(p * 0.35); var sa = 1 - p * 0.25; ctx.scale(sa, sa);
+      ctx.drawImage(A, -W / 2, -H / 2); ctx.restore();
+      ctx.save(); ctx.translate(W / 2, H / 2); ctx.globalAlpha = p;
+      ctx.rotate((p - 1) * 0.35); var sb = 0.75 + p * 0.25; ctx.scale(sb, sb);
+      ctx.drawImage(B, -W / 2, -H / 2); ctx.restore();
+      ctx.globalAlpha = 1;
+      return;
+    }
     // 'desliza' (clásico): A sale por la izquierda, B entra por la derecha
     ctx.drawImage(A, -p * W, 0);
     ctx.drawImage(B, (1 - p) * W, 0);
@@ -1510,9 +1578,9 @@
     if (!carrusel || idx === 0) {
       op.revelar = function (i) { return revelado(efecto, i, hs[idx].celdas.length, tDentro, porHoja, F); };
       op.textoRev = function (i) {
-        var paso = Math.min(0.30, (porHoja * 0.45) / Math.max(1, hs[idx].celdas.length));
-        var arr = 0.25 + i * paso + 0.18;   // el texto entra tras la foto
-        return (tDentro - arr) / 0.5;
+        var paso = Math.min(0.40, (porHoja * 0.45) / Math.max(1, hs[idx].celdas.length));
+        var arr = 0.30 + i * paso + 0.22;   // el texto entra tras la foto
+        return (tDentro - arr) / 0.8;        // más lento y suave que antes (0.5)
       };
     }
     M.pintar(destino, F.w, F.h, hs[idx], op);
@@ -1526,7 +1594,10 @@
       efecto: val('fpEfecto') || 'uno_a_uno',
       efCar: val('fpCarTransicion') || 'desliza',
       porHoja: porHoja,
-      PASO: Math.min(0.55, porHoja * 0.28),   // lo que dura la transición de tarjeta
+      // Transición entre tarjetas (cubo, iris, luz…): más lenta y fluida que antes
+      // (antes tope 0.55 s, se sentía brusca). Nunca ocupa más de ~40% de la
+      // tarjeta, y nunca es tan corta que parezca un salto seco.
+      PASO: Math.min(porHoja * 0.45, Math.max(0.9, Math.min(1.6, porHoja * 0.40))),
       ocA: ocA, ocB: ocB, octxA: ocA.getContext('2d'), octxB: ocB.getContext('2d')
     };
   }
@@ -1574,8 +1645,11 @@
     cv.width = F.w; cv.height = F.h;
     cv.style.width = (F.w > F.h ? 400 : 320) + 'px';
     var ctx = cv.getContext('2d');
-    var dur = Math.max(4, Math.min(60, parseFloat(val('fpDur')) || 12));
-    if (carrusel) dur = Math.max(dur, Math.min(90, hs.length * 2.2));
+    // La vista previa no capta voz, pero usa el mismo ritmo pausado que el vídeo
+    // final (mínimo por tarjeta) para que lo que se ve aquí sea lo que se graba.
+    var dur = Math.max(4, parseFloat(val('fpDur')) || 12);
+    if (carrusel) dur = Math.max(dur, hs.length * MIN_POR_TARJETA);
+    dur = Math.min(TOPE_SEG_VIDEO, dur);
     var o = animOpts(carrusel, F, dur / hs.length);
 
     var btn = carrusel ? $('fpVerCarrusel') : $('fpVerVideo');
@@ -1664,12 +1738,26 @@
       }
 
       return cadena.then(function () {
-        // la duración se decide antes de nada: la manda la voz si la hay, y con
-        // ella se programa la música para que cuadren
-        var dur = Math.max(4, Math.min(60, parseFloat(val('fpDur')) || 12));
-        // en carrusel, cada tarjeta necesita su tiempo para poder leerse
-        if (carrusel) dur = Math.max(dur, Math.min(90, hs.length * 2.2));
-        if (vozEl && vozEl.duration && isFinite(vozEl.duration)) dur = Math.min(90, vozEl.duration + 0.4);
+        // La duración se decide antes de nada y la MANDA la narración: el vídeo
+        // dura lo que dure la voz ENTERA (medida de forma fiable), más una cola
+        // para que la última tarjeta no se corte en seco. Con esa duración se
+        // programa la música para que cuadren.
+        //   segVoz preferente: los segundos medidos del WAV que devuelve la
+        //   captura (voz.seg) son de fiar; vozEl.duration es el respaldo.
+        var segVoz = 0;
+        if (voz && voz.seg && isFinite(voz.seg)) segVoz = voz.seg;
+        else if (vozEl && vozEl.duration && isFinite(vozEl.duration)) segVoz = vozEl.duration;
+
+        var dur;
+        if (segVoz > 0) {
+          dur = segVoz + COLA_FIN;                       // la voz completa manda
+        } else {
+          dur = Math.max(4, parseFloat(val('fpDur')) || 12);
+        }
+        // Pase lo que pase, cada tarjeta del carrusel necesita su tiempo mínimo
+        // para poder leerse/oírse con calma (nada de divisiones demasiado cortas).
+        if (carrusel) dur = Math.max(dur, hs.length * MIN_POR_TARJETA);
+        dur = Math.min(TOPE_SEG_VIDEO, dur);             // tope de seguridad amplio
 
         // música gratis: suena por debajo de la voz (0.32) o sola (0.9) si no
         // hay voz. Se enchufa al mismo destino que se graba, así entra en el MP4
@@ -1743,10 +1831,22 @@
         (function pintar() {
           var t = (performance.now() - t0) / 1000;
           animFotograma(ctx, F, hs, t, oAnim);
+          // Cierre profesional: entra desde negro y termina fundiendo a negro,
+          // para que el vídeo abra y cierre suave en vez de cortar en seco.
+          var FADE = 0.6;
+          var aFade = 0;
+          if (t < FADE) aFade = 1 - t / FADE;                       // apertura
+          else if (fuente !== 'mic' && t > dur - FADE) aFade = Math.min(1, (t - (dur - FADE)) / FADE); // cierre
+          if (aFade > 0) {
+            ctx.save(); ctx.globalAlpha = aFade; ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, F.w, F.h); ctx.restore();
+          }
           empujarCuadro();
+          // Se para al llegar a la duración calculada (que ya incluye la voz
+          // entera + la cola). NO se para en cuanto la voz termina: así la
+          // última tarjeta respira y la narración nunca queda cortada.
           if (fuente !== 'mic' && t >= dur) { FP.pararGrabacion(); return; }
-          if (fuente === 'mic' && t >= 90) { FP.pararGrabacion(); return; }
-          if (vozEl && vozEl.ended) { FP.pararGrabacion(); return; }
+          if (fuente === 'mic' && t >= TOPE_SEG_VIDEO) { FP.pararGrabacion(); return; }
           pedido = requestAnimationFrame(pintar);
         })();
       });

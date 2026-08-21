@@ -49,7 +49,7 @@
   var COLA_SEG    = 0.45;  // silencio que se deja al final antes de parar
   var CUENTA      = 3;     // cuenta atrás antes de empezar a hablar
   var PICO_MINIMO = 0.02;  // por debajo de esto, el micro no oyó nada
-  var MAX_SEG     = 60;    // tope duro de seguridad
+  var MAX_SEG     = 120;   // tope duro de seguridad (una narración larga cabe entera)
 
   var ocupado = false;
   var cancelador = null;
@@ -108,9 +108,12 @@
 
     // Vigilante: hay navegadores (y móviles sin voces instaladas) en los que
     // la voz nunca avisa de que terminó. Sin esto, la grabación se quedaría
-    // colgada para siempre. Se calcula un tope generoso por el largo del texto.
+    // colgada para siempre. Se calcula un tope GENEROSO por el largo del texto:
+    // más vale esperar de sobra a que la voz termine que cortarla a media frase.
+    // (~9 caracteres/seg es una lectura tranquila; antes /11 iba demasiado justo
+    // y podía cancelar narraciones largas antes de acabar.)
     var letras = trozos.join(' ').length;
-    var tope = Math.min(MAX_SEG, Math.max(8, (letras / 11) / Math.max(0.5, vel) + 6)) * 1000;
+    var tope = Math.min(MAX_SEG, Math.max(10, (letras / 9) / Math.max(0.5, vel) + 8)) * 1000;
     var vigilante = setTimeout(function () { try { speechSynthesis.cancel(); } catch (e) {} fin(i > 0); }, tope);
 
     function fin(ok) {
