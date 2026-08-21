@@ -341,6 +341,19 @@
         '</select>' +
       '</div>' +
       '<div class="row">' +
+        '<span class="lbl">✨ Transición</span>' +
+        '<select id="fpCarTransicion" style="flex:1;min-width:150px">' +
+          '<option value="cubo">🧊 Cubo 3D</option>' +
+          '<option value="zoom">💥 Zoom punch</option>' +
+          '<option value="iris">⭕ Iris</option>' +
+          '<option value="cortina">🎭 Cortina partida</option>' +
+          '<option value="luz">✨ Barrido de luz</option>' +
+          '<option value="persiana">🎚️ Persiana</option>' +
+          '<option value="blur">🌫️ Desenfoque</option>' +
+          '<option value="desliza" selected>➡️ Deslizar (clásico)</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="row">' +
         '<label style="font-size:10px"><input type="checkbox" id="fpCarUno" checked> una tarjeta por servicio</label>' +
         '<label style="font-size:10px"><input type="checkbox" id="fpCarPortada" checked> con portada</label>' +
       '</div>' +
@@ -1422,6 +1435,63 @@
     return { a: f, dy: (1 - s) * F.h * 0.02 };
   }
 
+  /* Transiciones de tarjeta a tarjeta del carrusel-vídeo. Reciben las dos
+     tarjetas YA dibujadas en canvas (A sale, B entra) y el avance p (0..1),
+     y componen el paso. Todo es canvas 2D, sin librerías. */
+  function transicionCarrusel(ctx, A, B, p, W, H, ef) {
+    if (ef === 'zoom') {
+      var sa = 1 + p * 0.25;
+      ctx.save(); ctx.globalAlpha = 1 - p; ctx.translate(W / 2, H / 2); ctx.scale(sa, sa); ctx.drawImage(A, -W / 2, -H / 2); ctx.restore();
+      var sb = 0.75 + p * 0.25;
+      ctx.save(); ctx.globalAlpha = p; ctx.translate(W / 2, H / 2); ctx.scale(sb, sb); ctx.drawImage(B, -W / 2, -H / 2); ctx.restore();
+      return;
+    }
+    if (ef === 'cubo') {
+      var aw = W * (1 - p);
+      ctx.save(); ctx.drawImage(A, 0, 0, W, H, 0, 0, aw, H); ctx.fillStyle = 'rgba(0,0,0,' + (p * 0.6) + ')'; ctx.fillRect(0, 0, aw, H); ctx.restore();
+      var bw = W * p;
+      ctx.save(); ctx.drawImage(B, 0, 0, W, H, W - bw, 0, bw, H); ctx.fillStyle = 'rgba(0,0,0,' + ((1 - p) * 0.6) + ')'; ctx.fillRect(W - bw, 0, bw, H); ctx.restore();
+      return;
+    }
+    if (ef === 'iris') {
+      ctx.drawImage(A, 0, 0);
+      var r = Math.sqrt(W * W + H * H) / 2 * p;
+      ctx.save(); ctx.beginPath(); ctx.arc(W / 2, H / 2, r, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(B, 0, 0); ctx.restore();
+      return;
+    }
+    if (ef === 'cortina') {
+      ctx.drawImage(A, 0, 0);
+      var hh = H / 2 * p;
+      ctx.save(); ctx.beginPath(); ctx.rect(0, H / 2 - hh, W, hh); ctx.rect(0, H / 2, W, hh); ctx.clip(); ctx.drawImage(B, 0, 0); ctx.restore();
+      return;
+    }
+    if (ef === 'persiana') {
+      ctx.drawImage(A, 0, 0);
+      var nb = 7, sh = H / nb, ab = sh * p;
+      ctx.save(); ctx.beginPath(); for (var k = 0; k < nb; k++) ctx.rect(0, k * sh, W, ab); ctx.clip(); ctx.drawImage(B, 0, 0); ctx.restore();
+      return;
+    }
+    if (ef === 'blur') {
+      ctx.save(); ctx.globalAlpha = 1 - p; ctx.filter = 'blur(' + (p * 14).toFixed(1) + 'px)'; ctx.drawImage(A, 0, 0); ctx.restore();
+      ctx.save(); ctx.globalAlpha = p; ctx.filter = 'blur(' + ((1 - p) * 14).toFixed(1) + 'px)'; ctx.drawImage(B, 0, 0); ctx.restore();
+      ctx.filter = 'none';
+      return;
+    }
+    if (ef === 'luz') {
+      ctx.globalAlpha = 1 - p; ctx.drawImage(A, 0, 0); ctx.globalAlpha = p; ctx.drawImage(B, 0, 0); ctx.globalAlpha = 1;
+      var lx = (p * 1.6 - 0.3) * W, bw2 = W * 0.35;
+      var g = ctx.createLinearGradient(lx, 0, lx + bw2, H);
+      g.addColorStop(0, 'rgba(255,255,255,0)');
+      g.addColorStop(0.5, 'rgba(255,255,255,' + (0.55 * Math.sin(p * Math.PI)) + ')');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore();
+      return;
+    }
+    // 'desliza' (clásico): A sale por la izquierda, B entra por la derecha
+    ctx.drawImage(A, -p * W, 0);
+    ctx.drawImage(B, (1 - p) * W, 0);
+  }
+
   /* Los dos botones de vídeo: el normal y el de carrusel. Se separan para que
      el manejador del clic nunca se cuele como opciones. */
   function grabarVideoNormal() { grabarVideo(false); }
@@ -1569,33 +1639,48 @@
 
         var efecto = val('fpEfecto') || 'uno_a_uno';
         var PASO = Math.min(0.55, porHoja * 0.28);   // lo que dura el deslizamiento
+        var efCar = val('fpCarTransicion') || 'desliza';
+        // lienzos auxiliares para componer las transiciones de tarjeta a tarjeta
+        var ocA = document.createElement('canvas'), ocB = document.createElement('canvas');
+        ocA.width = ocB.width = F.w; ocA.height = ocB.height = F.h;
+        var octxA = ocA.getContext('2d'), octxB = ocB.getContext('2d');
+        var tGlobal = 0;   // segundos desde el inicio, para el Ken Burns
 
-        /* Dibuja una tarjeta. En carrusel, sólo la primera hace entrar sus
-           cuadros: las demás llegan ya montadas, porque la animación es el
-           propio deslizamiento (si no, parpadearían al aterrizar). */
-        function hoja(idx, tDentro) {
+        /* Dibuja una tarjeta en el lienzo que se le pase (el de grabación o uno
+           auxiliar). En carrusel, sólo la primera hace entrar sus cuadros: las
+           demás llegan ya montadas, porque la animación es la propia transición. */
+        function hoja(idx, tDentro, destino) {
           var op = conQR({ nPagina: idx + 1 });
+          op.ken = true; op.t = tGlobal; op.kenAmp = 1;   // Ken Burns en las fotos
           if (!carrusel || idx === 0) {
             op.revelar = function (i) {
               return revelado(efecto, i, hs[idx].celdas.length, tDentro, porHoja, F);
             };
+            op.textoRev = function (i) {
+              var paso = Math.min(0.30, (porHoja * 0.45) / Math.max(1, hs[idx].celdas.length));
+              var arr = 0.25 + i * paso + 0.18;   // el texto entra tras la foto
+              return (tDentro - arr) / 0.5;
+            };
           }
-          M.pintar(ctx, F.w, F.h, hs[idx], op);
+          M.pintar(destino || ctx, F.w, F.h, hs[idx], op);
         }
 
         (function pintar() {
           var t = (performance.now() - t0) / 1000;
+          tGlobal = t;
           var iHoja = Math.min(hs.length - 1, Math.floor(t / porHoja));
           var tHoja = t - iHoja * porHoja;
           var queda = porHoja - tHoja;
 
           if (carrusel && iHoja < hs.length - 1 && queda < PASO) {
-            // las dos tarjetas se dibujan pegadas y se desplazan juntas: la de
-            // ahora sale por la izquierda y la siguiente entra por la derecha
+            // las dos tarjetas se componen con la transición elegida
             var q = 1 - queda / PASO;
             var e = q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
-            ctx.save(); ctx.translate(-e * F.w, 0); hoja(iHoja, tHoja); ctx.restore();
-            ctx.save(); ctx.translate((1 - e) * F.w, 0); hoja(iHoja + 1, porHoja); ctx.restore();
+            octxA.clearRect(0, 0, F.w, F.h); hoja(iHoja, tHoja, octxA);
+            octxB.clearRect(0, 0, F.w, F.h); hoja(iHoja + 1, porHoja, octxB);
+            ctx.clearRect(0, 0, F.w, F.h);
+            ctx.fillStyle = '#000'; ctx.fillRect(0, 0, F.w, F.h);
+            transicionCarrusel(ctx, ocA, ocB, e, F.w, F.h, efCar);
           } else {
             hoja(iHoja, tHoja);
           }
@@ -1761,6 +1846,12 @@
     pintarCeldas();
     llenarMusica();
     enlazar();
+    // las fuentes premium llegan por red: al estar listas se redibuja para que
+    // la vista previa muestre ya la tipografía del tema, no la de reserva
+    try {
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { repintar(); });
+      setTimeout(repintar, 700);
+    } catch (e) {}
     // la voz por defecto es la gratis: se muestra el player y se cargan las voces
     // (a veces llegan tarde; el listener 'voiceschanged' las repone solo)
     if ($('fpVozGratisPanel')) $('fpVozGratisPanel').style.display = 'block';

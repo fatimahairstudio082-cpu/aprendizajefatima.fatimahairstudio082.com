@@ -35,18 +35,42 @@
      claro:true  → pensada para imprimir en papel
      claro:false → luce más en la pantalla del móvil                     */
 
+  /* Parejas tipográficas premium. Cada tema elige una fuente de título (con
+     carácter) y una de cuerpo (limpia y legible). Es lo que hace que todas las
+     categorías se vean profesionales y no «hechas a máquina». */
+  var _SERIF_A = '"Playfair Display", Georgia, serif';
+  var _SERIF_B = '"Cormorant Garamond", Georgia, serif';
+  var _SANS_D  = '"Space Grotesk", "Segoe UI", sans-serif';
+  var _SANS_B  = 'Manrope, "Segoe UI", Arial, sans-serif';
+
   var TEMAS = {
-    oro_negro:  { nombre: 'Oro & Negro',      claro: false, fondo: '#0B0B0D', panel: '#17171B', tinta: '#F5F1E8', tinta2: '#A79E8C', acento: '#C9A227', acento2: '#8C6D1F' },
-    rosa:       { nombre: 'Rosa Studio',      claro: true,  fondo: '#FFF5F7', panel: '#FFFFFF', tinta: '#2B1B22', tinta2: '#7A6470', acento: '#E8547C', acento2: '#F2A0B8' },
-    nude:       { nombre: 'Nude Elegante',    claro: true,  fondo: '#F3EAE3', panel: '#FFFDFB', tinta: '#3A2E28', tinta2: '#8A776B', acento: '#B08968', acento2: '#DDC3AC' },
-    burdeos:    { nombre: 'Burdeos',          claro: false, fondo: '#2A0E17', panel: '#3D1622', tinta: '#F6E9EC', tinta2: '#C39BA6', acento: '#9B2242', acento2: '#D96E86' },
-    botanico:   { nombre: 'Verde Botánico',   claro: false, fondo: '#101E18', panel: '#162C22', tinta: '#EAF3ED', tinta2: '#9DBCA9', acento: '#2E7D5B', acento2: '#7FC8A0' },
-    corporativo:{ nombre: 'Azul Corporativo', claro: true,  fondo: '#F4F7FB', panel: '#FFFFFF', tinta: '#10233A', tinta2: '#5B7392', acento: '#1E5AA8', acento2: '#4E93D9' },
-    cian:       { nombre: 'Cian Neón',        claro: false, fondo: '#07131A', panel: '#0E2029', tinta: '#E6FAFF', tinta2: '#7FB3C4', acento: '#06B6D4', acento2: '#22E3B0' },
-    coral:      { nombre: 'Coral Cálido',     claro: true,  fondo: '#FFF6F0', panel: '#FFFFFF', tinta: '#3A211A', tinta2: '#8B6A5C', acento: '#F2683C', acento2: '#FFB08A' },
-    minimal:    { nombre: 'Blanco Minimal',   claro: true,  fondo: '#FFFFFF', panel: '#F7F7F5', tinta: '#141414', tinta2: '#6E6E6E', acento: '#141414', acento2: '#C9C9C4' },
-    violeta:    { nombre: 'Violeta Fátima',   claro: false, fondo: '#0D0D1A', panel: '#18183A', tinta: '#E2E8F0', tinta2: '#94A3B8', acento: '#7C3AED', acento2: '#A855F7' }
+    oro_negro:  { nombre: 'Oro & Negro',      claro: false, fondo: '#0B0B0D', panel: '#17171B', tinta: '#F5F1E8', tinta2: '#A79E8C', acento: '#C9A227', acento2: '#8C6D1F', titulo: _SERIF_A, cuerpo: _SANS_B },
+    rosa:       { nombre: 'Rosa Studio',      claro: true,  fondo: '#FFF5F7', panel: '#FFFFFF', tinta: '#2B1B22', tinta2: '#7A6470', acento: '#E8547C', acento2: '#F2A0B8', titulo: _SERIF_B, cuerpo: _SANS_B },
+    nude:       { nombre: 'Nude Elegante',    claro: true,  fondo: '#F3EAE3', panel: '#FFFDFB', tinta: '#3A2E28', tinta2: '#8A776B', acento: '#B08968', acento2: '#DDC3AC', titulo: _SERIF_B, cuerpo: _SANS_B },
+    burdeos:    { nombre: 'Burdeos',          claro: false, fondo: '#2A0E17', panel: '#3D1622', tinta: '#F6E9EC', tinta2: '#C39BA6', acento: '#9B2242', acento2: '#D96E86', titulo: _SERIF_A, cuerpo: _SANS_B },
+    botanico:   { nombre: 'Verde Botánico',   claro: false, fondo: '#101E18', panel: '#162C22', tinta: '#EAF3ED', tinta2: '#9DBCA9', acento: '#2E7D5B', acento2: '#7FC8A0', titulo: _SERIF_B, cuerpo: _SANS_B },
+    corporativo:{ nombre: 'Azul Corporativo', claro: true,  fondo: '#F4F7FB', panel: '#FFFFFF', tinta: '#10233A', tinta2: '#5B7392', acento: '#1E5AA8', acento2: '#4E93D9', titulo: _SANS_D, cuerpo: _SANS_B },
+    cian:       { nombre: 'Cian Neón',        claro: false, fondo: '#07131A', panel: '#0E2029', tinta: '#E6FAFF', tinta2: '#7FB3C4', acento: '#06B6D4', acento2: '#22E3B0', titulo: _SANS_D, cuerpo: _SANS_B },
+    coral:      { nombre: 'Coral Cálido',     claro: true,  fondo: '#FFF6F0', panel: '#FFFFFF', tinta: '#3A211A', tinta2: '#8B6A5C', acento: '#F2683C', acento2: '#FFB08A', titulo: _SERIF_A, cuerpo: _SANS_B },
+    minimal:    { nombre: 'Blanco Minimal',   claro: true,  fondo: '#FFFFFF', panel: '#F7F7F5', tinta: '#141414', tinta2: '#6E6E6E', acento: '#141414', acento2: '#C9C9C4', titulo: _SANS_D, cuerpo: _SANS_D },
+    violeta:    { nombre: 'Violeta Fátima',   claro: false, fondo: '#0D0D1A', panel: '#18183A', tinta: '#E2E8F0', tinta2: '#94A3B8', acento: '#7C3AED', acento2: '#A855F7', titulo: _SANS_D, cuerpo: _SANS_B }
   };
+
+  /* Fuentes activas de la hoja que se está pintando. Las fija pintar() según el
+     tema; los ayudantes de texto (versalitas, píldora, encajar) las leen. */
+  var FUENTE_T = _SANS_D, FUENTE_C = _SANS_B;
+  function fijarFuentes(C) { FUENTE_T = (C && C.titulo) || _SANS_D; FUENTE_C = (C && C.cuerpo) || _SANS_B; }
+
+  /* Carga las fuentes web una sola vez, desde el propio motor, para no depender
+     de que el HTML anfitrión las incluya. Si no hay internet, el navegador cae
+     a Georgia/Segoe y todo sigue funcionando. */
+  function garantizarFuentes() {
+    if (typeof document === 'undefined' || document.getElementById('fpFuentes')) return;
+    var l = document.createElement('link');
+    l.id = 'fpFuentes'; l.rel = 'stylesheet';
+    l.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Cormorant+Garamond:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap';
+    document.head.appendChild(l);
+  }
 
   /* ───────────────────────── Rejillas ─────────────────────────
      Cada rejilla es una lista de filas: alto = peso vertical de la fila,
@@ -62,7 +86,8 @@
     r6a: { nombre: 'Catálogo 2×3',       n: 6, uso: 'La carta completa',          filas: [{ alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }] },
     r6b: { nombre: 'Escaparate',         n: 6, uso: 'Lo caro arriba, ofertas abajo', filas: [{ alto: 1.2, cols: [1] }, { alto: 1, cols: [1, 1] }, { alto: 0.85, cols: [1, 1, 1] }] },
     r8a: { nombre: 'Mosaico 2×4',        n: 8, uso: 'Tarifa larga',               filas: [{ alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }] },
-    r8b: { nombre: 'Lookbook',           n: 8, uso: 'Catálogo con jerarquía',     filas: [{ alto: 1.25, cols: [1, 1] }, { alto: 1, cols: [1, 1, 1, 1] }, { alto: 1.05, cols: [1, 1] }] }
+    r8b: { nombre: 'Lookbook',           n: 8, uso: 'Catálogo con jerarquía',     filas: [{ alto: 1.25, cols: [1, 1] }, { alto: 1, cols: [1, 1, 1, 1] }, { alto: 1.05, cols: [1, 1] }] },
+    rlista: { nombre: 'Foto + lista de precios', n: 6, uso: 'Foto grande y tarifa al lado', filas: [{ alto: 1, cols: [1] }] }
   };
 
   function repartir(filas, x, y, w, h, g) {
@@ -116,11 +141,32 @@
   /* Ojo con los vídeos: flCover (el del bloque) mide con img.width, que en un
      <video> vale 0 porque es el atributo HTML, no el tamaño real. Salía NaN y
      el cuadro se quedaba en blanco. Los vídeos se miden aquí con videoWidth. */
-  function cubrir(ctx, img, x, y, w, h) {
+  /* ken (opcional) = { t:segundos, seed:nº de cuadro, amp:0..1.6 } activa el
+     efecto Ken Burns —zoom y paneo lentos— SÓLO en fotos. Los vídeos ya se
+     mueven solos, así que nunca reciben Ken Burns. Sin `ken`, dibuja igual
+     que siempre (compatibilidad total con lo que ya llamaba a cubrir). */
+  function cubrir(ctx, img, x, y, w, h, ken) {
     var esVideo = !!img.videoWidth;
-    if (!esVideo && typeof window.flCover === 'function') return window.flCover(ctx, img, x, y, w, h);
     var iw = img.videoWidth || img.width, ih = img.videoHeight || img.height;
     if (!iw || !ih) return;
+
+    if (ken && !esVideo) {
+      var ph = (ken.seed || 0) * 1.3, mv = (ken.amp == null ? 1 : ken.amp), t = ken.t || 0;
+      var z = 1.04 + (0.05 + 0.05 * mv) * (0.5 + 0.5 * Math.sin(t * 0.5 + ph));
+      var dx = Math.sin(t * 0.35 + ph) * w * 0.05 * mv;
+      var dy = Math.cos(t * 0.30 + ph) * h * 0.05 * mv;
+      var zw = w * z, zh = h * z;
+      var ir0 = iw / ih, rr0 = zw / zh, sw0, sh0, sx0, sy0;
+      if (ir0 > rr0) { sh0 = ih; sw0 = sh0 * rr0; sx0 = (iw - sw0) / 2; sy0 = 0; }
+      else { sw0 = iw; sh0 = sw0 / rr0; sx0 = 0; sy0 = (ih - sh0) / 2; }
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+      ctx.drawImage(img, sx0, sy0, sw0, sh0, x - (zw - w) / 2 + dx, y - (zh - h) / 2 + dy, zw, zh);
+      ctx.restore();
+      return;
+    }
+
+    if (!esVideo && typeof window.flCover === 'function') return window.flCover(ctx, img, x, y, w, h);
     var ir = iw / ih, rr = w / h, sw, sh, sx, sy;
     if (ir > rr) { sh = ih; sw = sh * rr; sx = (iw - sw) / 2; sy = 0; }
     else { sw = iw; sh = sw / rr; sx = 0; sy = (ih - sh) / 2; }
@@ -141,12 +187,13 @@
 
   /* Encoge la letra hasta que el texto cabe en las líneas permitidas. Es lo
      que evita que un nombre de servicio largo se salga del cuadro pequeño. */
-  function encajar(ctx, texto, maxW, maxLineas, tam, peso, minTam) {
+  function encajar(ctx, texto, maxW, maxLineas, tam, peso, minTam, fuente) {
     minTam = minTam || 9;
+    fuente = fuente || FUENTE_C;
     if (minTam > tam) minTam = tam;
     var t = tam, lineas;
     for (;;) {
-      ctx.font = peso + ' ' + t.toFixed(1) + 'px Segoe UI,Arial,sans-serif';
+      ctx.font = peso + ' ' + t.toFixed(1) + 'px ' + fuente;
       lineas = partirLineas(ctx, texto, maxW);
       if (lineas.length <= maxLineas || t <= minTam) break;
       t = Math.max(minTam, t - Math.max(0.5, t * 0.06));
@@ -175,7 +222,7 @@
 
   function versalitas(ctx, texto, x, y, tam, color, sep) {
     ctx.fillStyle = color;
-    ctx.font = '700 ' + tam.toFixed(1) + 'px Segoe UI,Arial,sans-serif';
+    ctx.font = '700 ' + tam.toFixed(1) + 'px ' + FUENTE_C;
     ctx.textAlign = 'left';
     var t = String(texto || '').toUpperCase(), cx = x;
     sep = (sep == null) ? tam * 0.16 : sep;
@@ -187,7 +234,7 @@
   }
 
   function anchoVersalitas(ctx, texto, tam, sep) {
-    ctx.font = '700 ' + tam.toFixed(1) + 'px Segoe UI,Arial,sans-serif';
+    ctx.font = '700 ' + tam.toFixed(1) + 'px ' + FUENTE_C;
     var t = String(texto || '').toUpperCase(), w = 0;
     sep = (sep == null) ? tam * 0.16 : sep;
     for (var i = 0; i < t.length; i++) w += ctx.measureText(t[i]).width + sep;
@@ -195,7 +242,7 @@
   }
 
   function pildora(ctx, texto, x, y, tam, fondo, tintaTexto, alinear) {
-    ctx.font = '700 ' + tam.toFixed(1) + 'px Segoe UI,Arial,sans-serif';
+    ctx.font = '700 ' + tam.toFixed(1) + 'px ' + FUENTE_C;
     var tw = ctx.measureText(texto).width;
     var padX = tam * 0.75, h = tam * 1.9, w = tw + padX * 2;
     var px = (alinear === 'derecha') ? x - w : x;
@@ -214,7 +261,8 @@
     var base = TEMAS[(pag && pag.tema)] || TEMAS.oro_negro;
     var c = {
       claro: base.claro, fondo: base.fondo, panel: base.panel,
-      tinta: base.tinta, tinta2: base.tinta2, acento: base.acento, acento2: base.acento2
+      tinta: base.tinta, tinta2: base.tinta2, acento: base.acento, acento2: base.acento2,
+      titulo: base.titulo, cuerpo: base.cuerpo
     };
     if (pag && pag.colores) {
       ['fondo', 'panel', 'tinta', 'tinta2', 'acento', 'acento2'].forEach(function (k) {
@@ -311,7 +359,7 @@
       y += W * 0.020;   // aire entre la marca y el título
     }
 
-    var t = encajar(ctx, cab.titulo || '', W - M * 2, 2, W * 0.058, '800', W * 0.034);
+    var t = encajar(ctx, cab.titulo || '', W - M * 2, 2, W * 0.058, '800', W * 0.034, FUENTE_T);
     y += t.tam;
     ctx.fillStyle = C.tinta; ctx.textAlign = 'left';
     t.lineas.forEach(function (l, i) { ctx.fillText(l, M, y + i * t.tam * 1.10); });
@@ -340,7 +388,7 @@
 
     if (p.contacto) {
       ctx.fillStyle = C.tinta2;
-      ctx.font = '600 ' + tam.toFixed(1) + 'px Segoe UI,Arial,sans-serif';
+      ctx.font = '600 ' + tam.toFixed(1) + 'px ' + FUENTE_C;
       ctx.textAlign = 'left';
       ctx.fillText(p.contacto, M, yTexto);
     }
@@ -349,7 +397,7 @@
     }
     if (nPag) {
       ctx.fillStyle = rgba(C.tinta2, 0.7);
-      ctx.font = '700 ' + (tam * 0.9).toFixed(1) + 'px Segoe UI,Arial,sans-serif';
+      ctx.font = '700 ' + (tam * 0.9).toFixed(1) + 'px ' + FUENTE_C;
       ctx.textAlign = 'center';
       ctx.fillText(String(nPag), W / 2, yTexto);
     }
@@ -376,7 +424,7 @@
     celda = celda || {};
     var G = geometria(r);
     return {
-      titulo: celda.titulo ? encajar(ctx, celda.titulo, G.maxW, 2, G.titulo, '800', G.minTitulo).tam : G.titulo,
+      titulo: celda.titulo ? encajar(ctx, celda.titulo, G.maxW, 2, G.titulo, '800', G.minTitulo, FUENTE_T).tam : G.titulo,
       texto: (celda.texto && r.h > G.lado * 0.55)
         ? encajar(ctx, celda.texto, G.maxW, 2, G.texto, '400', G.minTexto).tam : G.texto
     };
@@ -410,7 +458,7 @@
       var listo = (med.tipo === 'vid')
         ? (med.el.readyState >= 2)
         : (med.el.complete !== false && (med.el.naturalWidth || med.el.width));
-      if (listo) { cubrir(ctx, med.el, r.x, r.y, r.w, r.h); pintada = true; }
+      if (listo) { cubrir(ctx, med.el, r.x, r.y, r.w, r.h, op.ken ? { t: op.t || 0, seed: idx + 1, amp: op.kenAmp } : null); pintada = true; }
     }
     if (!pintada) fotoDemo(ctx, r.x, r.y, r.w, r.h, idx + 1 + (op.semillaFoto || 0), C);
 
@@ -428,6 +476,11 @@
 
     // se escribe de abajo arriba: primero el precio, luego la descripción y
     // por último el título, así ninguno se come al de abajo
+    // op.textoRev(i) → 0..1: hace ENTRAR el texto (sube y aparece) en el vídeo.
+    // Sin op.textoRev el texto sale fijo, exactamente como antes.
+    var trev = op.textoRev ? Math.max(0, Math.min(1, op.textoRev(idx))) : 1;
+    ctx.save();
+    if (trev < 1) { ctx.globalAlpha = trev; ctx.translate(0, (1 - trev) * lado * 0.18); }
     if (celda.precio) {
       var tamP = G.tamPrecio;
       pildora(ctx, celda.precio, r.x + r.w - pad, y - tamP * 1.9, tamP, C.acento, C.sobreAcento, 'derecha');
@@ -448,13 +501,14 @@
 
     // título del servicio
     if (celda.titulo) {
-      var t = encajar(ctx, celda.titulo, maxW, 2, forz.titulo, '800', forz.titulo);
+      var t = encajar(ctx, celda.titulo, maxW, 2, forz.titulo, '800', forz.titulo, FUENTE_T);
       ctx.fillStyle = C.tinta; ctx.textAlign = 'left';
       for (var j = t.lineas.length - 1; j >= 0; j--) {
         ctx.fillText(t.lineas[j], r.x + pad, y);
         y -= t.tam * 1.14;
       }
     }
+    ctx.restore();
 
     // etiqueta de esquina
     if (celda.etiqueta) {
@@ -476,6 +530,54 @@
      op.qr es una <img> ya generada (por la herramienta) con el QR del
      teléfono/WhatsApp. Se dibuja como una tarjetita blanca en la esquina
      inferior derecha, con la etiqueta «Escanéame». */
+  function dibujarLista(ctx, x, y, w, h, W, H, C, ad, celdas, op) {
+    var gap = w * 0.05;
+    var fotoW = w * 0.46;
+    cuadro(ctx, { x: x, y: y, w: fotoW, h: h }, C, celdas[0] || {}, 0, ad, op, null);
+    var lx = x + fotoW + gap, lw = w - fotoW - gap;
+    var items = celdas.slice(1).filter(function (c) { return c && (c.titulo || c.texto || c.precio); });
+    if (!items.length) return;
+    var filaH = h / items.length;
+    var tamT = Math.min(w * 0.033, filaH * 0.32);
+    var tamP = tamT * 0.98, tamD = tamT * 0.64;
+    items.forEach(function (c, i) {
+      var cy = y + i * filaH, midY = cy + filaH * 0.42;
+      var precio = c.precio || '';
+      ctx.font = '800 ' + tamP.toFixed(1) + 'px ' + FUENTE_C;
+      var pw = precio ? ctx.measureText(precio).width : 0;
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = C.tinta; ctx.font = '700 ' + tamT.toFixed(1) + 'px ' + FUENTE_T;
+      var tit = c.titulo || '', maxTit = lw - pw - w * 0.03, cortado = false;
+      while (tit && ctx.measureText(tit).width > maxTit && tit.length > 4) { tit = tit.slice(0, -1); cortado = true; }
+      if (cortado) tit = tit.replace(/\s+$/, '') + '…';
+      ctx.fillText(tit, lx, midY);
+      var titW = ctx.measureText(tit).width;
+      if (precio) {
+        ctx.textAlign = 'right'; ctx.fillStyle = C.acento;
+        ctx.font = '800 ' + tamP.toFixed(1) + 'px ' + FUENTE_C;
+        ctx.fillText(precio, lx + lw, midY);
+      }
+      if (ad.filetes) {
+        ctx.strokeStyle = rgba(C.tinta2, 0.4); ctx.lineWidth = Math.max(1, w * 0.0015);
+        ctx.setLineDash([2, w * 0.008]);
+        ctx.beginPath(); ctx.moveTo(lx + titW + w * 0.012, midY - tamT * 0.3); ctx.lineTo(lx + lw - pw - w * 0.012, midY - tamT * 0.3); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      if (c.texto) {
+        ctx.textAlign = 'left'; ctx.fillStyle = C.tinta2;
+        ctx.font = '400 ' + tamD.toFixed(1) + 'px ' + FUENTE_C;
+        var d = c.texto, cd = false;
+        while (ctx.measureText(d).width > lw && d.length > 6) { d = d.slice(0, -1); cd = true; }
+        if (cd) d = d.replace(/\s+$/, '') + '…';
+        ctx.fillText(d, lx, midY + tamT * 0.9);
+      }
+      if (ad.filetes && i < items.length - 1) {
+        ctx.strokeStyle = rgba(C.tinta2, 0.18); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(lx, cy + filaH - 1); ctx.lineTo(lx + lw, cy + filaH - 1); ctx.stroke();
+      }
+    });
+  }
+
   function dibujarQR(ctx, W, H, C, M, op) {
     var qr = op.qr;
     if (!qr) return;
@@ -486,7 +588,10 @@
     var s = Math.max(96, Math.min(W * 0.10, H * 0.13));
     var pad = W * 0.014;
     var lbl = W * 0.024;
-    var x = W - M - s;
+    // Centrado horizontal: la tarjetita del QR queda simétrica en la hoja,
+    // no pegada a una esquina (op.qrPos:'derecha' recupera el comportamiento viejo).
+    var cardW = s + pad * 2;
+    var x = (op.qrPos === 'derecha') ? (W - M - s) : ((W - cardW) / 2 + pad);
     var yLineaPie = H - M - W * 0.052;
     var y = yLineaPie - s - lbl - pad * 2 - W * 0.014;
 
@@ -510,6 +615,8 @@
     op = op || {};
     pag = pag || {};
     var C = colores(pag);
+    garantizarFuentes();
+    fijarFuentes(C);
     var ad = pag.adornos || {};
     ad = { grano: ad.grano !== false, vineta: ad.vineta !== false, filetes: ad.filetes !== false, sombras: ad.sombras !== false };
 
@@ -521,9 +628,19 @@
     var yCab = cabecera(ctx, W, H, M, C, pag, ad);
     var yPie = H - M - W * 0.075;
     var hueco = Math.round(Math.min(W, H) * 0.020);
-    var rects = rejilla(pag.rejilla || 'r4a', M, yCab, W - M * 2, yPie - yCab, hueco);
+    var rects = (pag.rejilla === 'rlista') ? [] : rejilla(pag.rejilla || 'r4a', M, yCab, W - M * 2, yPie - yCab, hueco);
 
     var celdas = pag.celdas || [];
+
+    // layout especial de tarifa lateral: dibuja y termina (mantiene cabecera,
+    // pie y QR igual que el resto)
+    if (pag.rejilla === 'rlista') {
+      dibujarLista(ctx, M, yCab, W - M * 2, yPie - yCab, W, H, C, ad, celdas, op);
+      pie(ctx, W, H, M, C, pag, ad, op.nPagina);
+      dibujarQR(ctx, W, H, C, M, op);
+      ctx.restore();
+      return rects;
+    }
 
     // 1ª pasada: los cuadros del mismo tamaño se quedan con la letra más
     // pequeña de todos ellos, para que la hoja lleve una sola tipografía

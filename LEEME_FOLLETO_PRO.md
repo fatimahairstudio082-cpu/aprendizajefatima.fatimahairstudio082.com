@@ -59,6 +59,24 @@ el folleto aparece una tarjetita blanca con el código y la palabra
 - El QR sale en **todo**: la vista previa, la imagen, el PDF, el folleto web y
   el vídeo.
 
+### 📖 Foto + lista de precios
+
+Una plantilla nueva (estilo **«Foto + lista de precios»** o cuadrícula
+**rlista**): una **foto grande a un lado** y la **tarifa en lista al otro**, con
+líneas de puntos entre el nombre y el precio. Es la carta de peluquería de toda
+la vida, muy legible en el móvil y en papel.
+
+### ✨ Tipografía y movimiento
+
+- **Tipografía premium por tema**: cada paleta trae su pareja de fuentes
+  (Playfair Display, Cormorant Garamond, Space Grotesk, Manrope). Se cargan
+  solas desde el propio motor; sin internet caen a Georgia/Segoe y todo sigue.
+- **Ken Burns**: en el vídeo, las fotos hacen un zoom y paneo lento, con vida.
+  Los vídeos ya se mueven solos, así que no reciben Ken Burns.
+- **Texto animado**: los títulos y precios entran subiendo y apareciendo.
+- **Código QR centrado**: la tarjetita del QR queda centrada abajo, simétrica en
+  la hoja.
+
 ### 🎠 Carrusel para redes
 
 Convierte el folleto en una **secuencia de tarjetas** que se pasan con el dedo,
@@ -77,8 +95,12 @@ como los carruseles de Instagram, Facebook, TikTok o Telegram.
 | **🎬 Vídeo del carrusel** | El mismo carrusel en **vídeo**: las tarjetas se deslizan solas de una a otra, como al pasar el dedo, con la voz y la música dentro. |
 
 En el vídeo del carrusel, la primera tarjeta hace entrar sus cuadros con el
-efecto que hayas elegido y las demás llegan deslizándose — el movimiento es el
-propio paso de tarjeta, que es como se ve en las redes.
+efecto que hayas elegido y las demás llegan con la **transición** que elijas.
+
+**Ocho transiciones de tarjeta a tarjeta** (selector *Transición*): 🧊 Cubo 3D,
+💥 Zoom punch, ⭕ Iris, 🎭 Cortina partida, ✨ Barrido de luz, 🎚️ Persiana,
+🌫️ Desenfoque y ➡️ Deslizar (la clásica). Se componen en el momento, así que
+lo que se ve es lo que sale en el vídeo.
 
 ### ✨ Los efectos del vídeo
 
@@ -162,9 +184,9 @@ símbolos.
 
 Cuatro archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
 
-- **`b6_folleto_disenos.js`** — el cerebro de diseño: 25 estilos profesionales
-  agrupados por uso (carta y cartel, catálogo, redes, **bodas** —8 diseños—,
-  elegante, escaparate). Cada estilo es una
+- **`b6_folleto_disenos.js`** — el cerebro de diseño: 26 estilos profesionales
+  agrupados por uso (carta y cartel, catálogo —incluye **Foto + lista de
+  precios**—, redes, **bodas** —8 diseños—, elegante, escaparate). Cada estilo es una
   combinación de paleta + cuadrícula + hoja + acabados que ya sabe dibujar el
   motor; no inventa nada nuevo en el lienzo. Expone `FOLLETO_DISENOS.lista()`,
   `.grupos()` y `.get(id)`. Es opcional: si no carga, la herramienta funciona
@@ -172,14 +194,19 @@ Cuatro archivos nuevos, todos parches aditivos con guarda `window._B6_*_LOADED`:
 
 - **`b6_folleto_motor.js`** — el dibujo, en canvas 2D. Es la única fuente de
   verdad: la vista previa, el JPG, el PDF, el vídeo y las portadas del folleto
-  web llaman todos a `FOLLETO_MOTOR.pintar()`. Trae los 4 formatos, las 10
-  paletas y las 8 rejillas. `rejilla(id,x,y,w,h,hueco)` es una función pura que
+  web llaman todos a `FOLLETO_MOTOR.pintar()`. Trae los 5 formatos, las 10
+  paletas (cada una con su **pareja tipográfica** título/cuerpo, cargada por
+  `garantizarFuentes()` desde Google Fonts con fallback a Georgia/Segoe) y las
+  rejillas, incluida **`rlista`** (foto + lista de precios, que dibuja
+  `dibujarLista()`). `rejilla(id,x,y,w,h,hueco)` es una función pura que
   devuelve los rectángulos; en hoja apaisada la calcula en vertical y la gira
   90°, así una 2×3 pasa a 3×2 sola. `op.revelar(i)` es lo que usa el vídeo para
   hacer entrar los cuadros sin duplicar el dibujo: devuelve `a` (opacidad),
   `dx`/`dy`, `escala` y `recorte` (`'circulo'` o `'persiana'`, con avance en
-  `p`), y de ahí salen los siete efectos. `op.qr` es la `<img>` del código QR,
-  que se dibuja en una tarjetita en la esquina inferior derecha.
+  `p`), y de ahí salen los siete efectos. `op.ken`/`op.t`/`op.kenAmp` activan el
+  **Ken Burns** en fotos; `op.textoRev(i)` hace **entrar el texto**. `op.qr` es
+  la `<img>` del código QR, centrado abajo (`op.qrPos:'derecha'` lo lleva a la
+  esquina).
 - **`b6_folleto_cerebro.js`** — los textos. 32 rubros × 8 servicios (belleza y
   muchos otros sectores, más «✍️ Otra»), 5 tonos, precios de referencia y el
   guion para la voz. Bolsa sin reposición: en una hoja de 8 cuadros no se repite
