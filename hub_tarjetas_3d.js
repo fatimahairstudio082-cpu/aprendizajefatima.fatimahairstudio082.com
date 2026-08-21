@@ -70,7 +70,7 @@
       '.bloque-card.cubo:hover .cubo-detras::after,.bloque-card.cubo.volteada .cubo-detras::after{opacity:0;}',
 
       /* Contenido de la cara trasera */
-      '.cubo-detras-inner{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;gap:9px;padding:20px 18px 0;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(2,4,8,.55));}',
+      '.cubo-detras-inner{position:relative;z-index:1;flex:1;min-height:0;display:flex;flex-direction:column;gap:9px;padding:20px 18px 0;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(2,4,8,.55));}',
       '.cubo-detras-tit{font-size:17px;color:#fff;font-weight:700;letter-spacing:.3px;}',
       '.cubo-detras-desc{font-size:11px;color:rgba(255,255,255,.72);line-height:1.65;flex:1;overflow:hidden;}',
       '.cubo-detras .nivel-badges{padding:0 0 4px;}',
