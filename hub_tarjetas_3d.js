@@ -61,6 +61,15 @@
       '.cubo-frente{position:relative;}',
       '.cubo-detras{position:absolute;inset:0;transform:rotateY(180deg);}',
 
+      /* IMPORTANTE: la cara oculta sigue capturando clics aunque no se
+         pinte (backface-visibility no desactiva el hit-testing). Cambiamos
+         pointer-events según la cara visible para que los botones de la
+         cara mostrada sí reciban el clic (abrir bloque, niveles, TTS). */
+      '.cubo-frente{pointer-events:auto;}',
+      '.cubo-detras{pointer-events:none;}',
+      '.bloque-card.cubo:hover .cubo-frente,.bloque-card.cubo.volteada .cubo-frente{pointer-events:none;}',
+      '.bloque-card.cubo:hover .cubo-detras,.bloque-card.cubo.volteada .cubo-detras{pointer-events:auto;}',
+
       /* Iluminación simulada: la cara que se aleja de la luz se oscurece,
          la que aparece se ilumina (mismo tiempo que el giro) */
       '.cubo-cara::after{content:"";position:absolute;inset:0;z-index:5;pointer-events:none;border-radius:inherit;background:linear-gradient(115deg,rgba(0,0,0,.62),rgba(0,0,0,.12) 60%);transition:opacity '+FS+' '+EASE+';}',
@@ -123,10 +132,6 @@
     frente.appendChild(imgWrap);
     var glare = document.createElement('div'); glare.className = 'card-glare';
     frente.appendChild(glare);
-    if (TOUCH){
-      var hint = document.createElement('div'); hint.className = 'cubo-flip-hint'; hint.textContent = '⟳';
-      frente.appendChild(hint);
-    }
 
     /* Cara trasera = detalle + niveles + botones */
     var bin = document.createElement('div'); bin.className = 'cubo-detras-inner';
@@ -145,13 +150,16 @@
     card.appendChild(inner);
     card.classList.add('cubo');
 
-    /* Táctil: tocar la tarjeta (fuera de botones/niveles) la voltea */
-    if (TOUCH){
-      card.addEventListener('click', function(e){
-        if (e.target.closest('button, a, .nivel-b')) return;
-        card.classList.toggle('volteada');
-      });
-    }
+    /* Abrir el bloque al pulsar en cualquier parte de la tarjeta (imagen,
+       cara trasera o botón "Abrir Bloque"). Se respetan las acciones
+       propias: badges de nivel (enviarWA) y botón Escuchar (TTS).
+       En escritorio el giro se ve al pasar el ratón; en táctil, tocar
+       la tarjeta abre el bloque directamente. */
+    var num = parseInt(card.dataset.bloqueNum, 10);
+    card.addEventListener('click', function(e){
+      if (e.target.closest('.nivel-b, .bloque-card-tts, .bloque-card-btn, a')) return;
+      if (!isNaN(num) && typeof window.cambiarBloque === 'function') window.cambiarBloque(num);
+    });
   }
 
   /* ── 3. Tilt 3D siguiendo el puntero (delegado en el grid) ── */
