@@ -302,3 +302,21 @@ Tres cosas que fallaban tras las últimas modificaciones:
    las **tarjetas planas** con todo visible de un vistazo y un solo toque; el
    include queda comentado en `index.html` y `fatima_hub.html`, y el archivo se
    conserva por si se quiere reactivar.
+
+### Arreglo · el vídeo se quedaba pegado (imagen congelada, audio corriendo)
+
+Síntoma real (analizado sobre un vídeo de muestra): la voz salía entera (3,1 s)
+pero la imagen sólo tenía **6 fotogramas** en los primeros 0,34 s y luego se
+quedaba **congelada**. No era la sincronía (el audio iba bien): era la **captura
+de fotogramas** del `canvas`. El navegador (Android/tablets sobre todo) deja de
+"pintar" —y de entregar cuadros a `captureStream`— un lienzo que no está de
+verdad visible; esconderlo a 1px con `opacity≈0` fuera de pantalla NO bastaba.
+
+Arreglo (en `b6_folleto_pro.js`, dentro de `grabarVideo`):
+1. El lienzo de grabación ahora se **muestra de verdad** mientras graba (modesto,
+   arriba-centro, con un cartel «🎬 Grabando…»), así el navegador lo mantiene
+   pintado y la captura no se congela. Se graba a plena resolución (la fija
+   `canvas.width/height`, no el tamaño en pantalla) y se retira al terminar.
+2. Donde el navegador lo soporta (Chromium/Android) se usa `captureStream(0)`
+   (captura **manual**) y se empuja **cada** cuadro pintado con `requestFrame()`;
+   en Safari/iOS se mantiene la captura automática a 30 fps.

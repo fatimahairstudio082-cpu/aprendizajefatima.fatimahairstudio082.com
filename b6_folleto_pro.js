@@ -1713,13 +1713,36 @@
       var cv = document.createElement('canvas');
       cv.width = F.w; cv.height = F.h;
       var ctx = cv.getContext('2d');
-      // El canvas de grabación va al DOM pero fuera de la vista: un canvas
-      // "suelto" (sin insertar) deja de entregar cuadros a captureStream tras
-      // el primero en Android/tablets y el vídeo sale negro. No se usa
-      // display:none ni visibility:hidden porque eso también corta la captura.
-      cv.style.cssText = 'position:fixed;left:-99999px;top:0;width:1px;height:1px;opacity:0.001;pointer-events:none;z-index:-1';
+      // CLAVE PARA QUE NO SE CONGELE EL VÍDEO:
+      // El navegador (sobre todo Android/tablets) deja de "pintar" —y por tanto
+      // de entregar cuadros a captureStream— un canvas que no está de verdad
+      // visible. Esconderlo a 1px con opacity≈0 fuera de pantalla NO basta: la
+      // captura se congela tras los primeros cuadros y sale la imagen pegada con
+      // el audio corriendo. Por eso el lienzo de grabación se muestra DE VERDAD,
+      // centrado y a tamaño visible, mientras se graba (además sirve de vista
+      // previa en vivo). Se retira al terminar. La resolución del vídeo la fija
+      // cv.width/height (F.w×F.h), no el tamaño en pantalla, así que se ve
+      // reducido pero se graba a plena resolución.
+      // Tamaño en pantalla modesto y anclado ARRIBA-centro: se ve el vídeo
+      // montándose (y así el navegador lo mantiene "pintado" y no se congela),
+      // pero sin tapar los controles de abajo (el botón Detener del micrófono).
+      // pointer-events:none para no bloquear ningún clic.
+      var maxW = Math.min(260, (window.innerWidth || 360) * 0.6);
+      var escala = Math.min(1, maxW / F.w);
+      cv.style.cssText = 'position:fixed;left:50%;top:10px;transform:translateX(-50%);' +
+        'width:' + Math.round(F.w * escala) + 'px;height:' + Math.round(F.h * escala) + 'px;' +
+        'max-width:60vw;border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.7);' +
+        'background:#000;z-index:99999;pointer-events:none;';
       document.body.appendChild(cv);
-      limpieza.push(function () { try { cv.remove(); } catch (e) {} });
+      // Cartel de "grabando" para que se entienda que hay que dejarlo quieto.
+      var aviso = document.createElement('div');
+      aviso.textContent = '🎬 Grabando… déjalo quieto, no cambies de pestaña';
+      aviso.style.cssText = 'position:fixed;left:50%;top:' + (Math.round(F.h * escala) + 18) + 'px;' +
+        'transform:translateX(-50%);background:rgba(0,0,0,.82);color:#fff;' +
+        'font:600 11px system-ui,sans-serif;padding:6px 14px;border-radius:20px;' +
+        'z-index:100000;pointer-events:none;white-space:nowrap;';
+      document.body.appendChild(aviso);
+      limpieza.push(function () { try { cv.remove(); } catch (e) {} try { aviso.remove(); } catch (e) {} });
 
       var ac = new (window.AudioContext || window.webkitAudioContext)();
       var destino = ac.createMediaStreamDestination();
@@ -1790,10 +1813,21 @@
           if (!pistaAudio) pistaAudio = destino.stream.getAudioTracks()[0];
         }
 
-        var flujo = cv.captureStream(30);
+        // Si el navegador sabe empujar cuadros a mano (Chromium/Android), se usa
+        // captureStream(0) = captura MANUAL: cada cuadro pintado se empuja con
+        // requestFrame(), así ni uno se pierde y no depende de que el navegador
+        // decida "refrescar" el canvas (que es lo que fallaba y congelaba la
+        // imagen). Si no lo soporta (Safari/iOS), se usa captura automática a 30.
+        var soportaManual = false;
+        try {
+          soportaManual = !!(window.CanvasCaptureMediaStreamTrack &&
+            window.CanvasCaptureMediaStreamTrack.prototype &&
+            typeof window.CanvasCaptureMediaStreamTrack.prototype.requestFrame === 'function');
+        } catch (e) {}
+        var flujo = soportaManual ? cv.captureStream(0) : cv.captureStream(30);
         var pistaVideo = flujo.getVideoTracks()[0];
-        // Además de tener el canvas en el DOM, empujamos cada cuadro a mano
-        // cuando el navegador lo permite: así ni un fotograma se pierde.
+        // Empuja un cuadro a mano cuando el navegador lo permite: así ni un
+        // fotograma se pierde y la imagen no se queda pegada.
         var empujarCuadro = (pistaVideo && typeof pistaVideo.requestFrame === 'function')
           ? function () { try { pistaVideo.requestFrame(); } catch (e) {} }
           : function () {};
