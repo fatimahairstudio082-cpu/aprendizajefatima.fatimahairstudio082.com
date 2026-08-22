@@ -276,3 +276,29 @@ Firebase, ni `firestore.rules`, ni el CSS, ni `index.html` / `fatima_hub.html`.
 paletas dibujadas, para elegir y descartar diseños. Usa el mismo motor, así que
 lo que se ve ahí es lo que sale en la herramienta. No hace falta para que
 Folletos Pro funcione; se queda como referencia.
+
+### Arreglo · efectos unificados + sincronía voz↔vídeo (22-08-2026)
+
+Tres cosas que fallaban tras las últimas modificaciones:
+
+1. **Efectos repartidos en dos sitios.** El «Efecto» del vídeo normal y la
+   «Transición» del carrusel eran dos desplegables distintos con listas
+   distintas. Ahora hay **un solo menú «✨ Efecto del vídeo»** con TODOS los
+   efectos, en dos grupos: *cómo aparece cada tarjeta* (revelado) y *cómo pasa
+   de una tarjeta a otra* (transición del carrusel). El mismo menú vale para el
+   vídeo normal y para el del carrusel. (Los valores de transición llevan
+   prefijo `t_` para poder enrutarlos; el aspecto que no elijas usa un valor
+   por defecto elegante.)
+2. **El vídeo cortaba la narración / no sincronizaba.** Con audio subido o voz
+   de estudio, si el navegador tardaba en saber la duración, el vídeo caía a
+   12 s y cortaba la voz. Ahora: (a) se espera a `loadedmetadata` con margen
+   amplio; (b) si aún no se sabe la duración, manda el evento `ended` de la voz
+   y el vídeo se para poco después (COLA_FIN), nunca a media frase; (c) el reloj
+   de la animación arranca JUNTO con la grabación, así el dibujo no va por
+   delante del audio. El carrusel sigue respetando el tiempo mínimo por tarjeta.
+3. **Tarjetas del hub.** El cubo 3D (`hub_tarjetas_3d.js`) escondía la
+   descripción, los niveles y los botones «Abrir»/«Escuchar» detrás de un
+   volteo que sólo funcionaba con ratón (en móvil no se podían ver). Se vuelve a
+   las **tarjetas planas** con todo visible de un vistazo y un solo toque; el
+   include queda comentado en `index.html` y `fatima_hub.html`, y el archivo se
+   conserva por si se quiere reactivar.
