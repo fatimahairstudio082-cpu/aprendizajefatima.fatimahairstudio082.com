@@ -436,3 +436,8 @@ de 9 fotogramas a **176 (30,0 fps)**.
 - **El lienzo que se ve mientras graba** mezclaba píxeles fijos con
   `max-width:60vw` y en móviles estrechos se veía achatado. Ancho y alto salen
   ya de la misma escala.
+- **«Escanéame» se salía de la tarjetita del QR** en todas las hojas: 4 o 5
+  píxeles en la mayoría y 21 en la A4 apaisada, así que las letras negras caían
+  sobre el fondo oscuro, donde no se leen. La palabra se encoge ahora hasta
+  caber dentro de la tarjeta blanca, con su respiro a cada lado. Se vio al
+  revisar un JPG exportado de verdad, no estaba en la auditoría inicial.

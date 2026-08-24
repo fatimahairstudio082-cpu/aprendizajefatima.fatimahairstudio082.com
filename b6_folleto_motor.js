@@ -775,8 +775,19 @@
     ctx.drawImage(qr, x, y, s, s);
     ctx.fillStyle = '#111111';
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    ctx.font = '700 ' + lbl.toFixed(1) + 'px Segoe UI,Arial,sans-serif';
-    ctx.fillText(op.qrTexto || 'Escanéame', x + s / 2, y + s + lbl * 1.25);
+    // La palabra se encoge hasta caber DENTRO de la tarjetita blanca. Con el
+    // tamaño fijo se salía por los lados en todas las hojas —4 o 5 píxeles en
+    // la mayoría, 21 en la A4 apaisada— y las letras negras caían sobre el
+    // fondo oscuro, donde no se leen.
+    var texto = op.qrTexto || 'Escanéame';
+    var anchoUtil = s + pad * 2 - pad;          // la tarjeta menos un respiro a cada lado
+    var tam = lbl;
+    for (var v = 0; v < 24; v++) {
+      ctx.font = '700 ' + tam.toFixed(1) + 'px Segoe UI,Arial,sans-serif';
+      if (ctx.measureText(texto).width <= anchoUtil || tam <= lbl * 0.55) break;
+      tam -= lbl * 0.04;
+    }
+    ctx.fillText(texto, x + s / 2, y + s + lbl * 1.25);
   }
 
   /* ───────────────────────── Pintar la hoja entera ───────────────────────── */
