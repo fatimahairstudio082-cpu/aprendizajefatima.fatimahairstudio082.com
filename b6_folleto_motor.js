@@ -66,7 +66,10 @@
   /* Carga las fuentes web una sola vez, desde el propio motor, para no depender
      de que el HTML anfitrión las incluya. Si no hay internet, el navegador cae
      a Georgia/Segoe y todo sigue funcionando. */
+  var _fuentesPedidas = false;
   function garantizarFuentes() {
+    if (_fuentesPedidas) return;                 // se llama una vez por fotograma: no repetir el trabajo
+    _fuentesPedidas = true;
     if (typeof document === 'undefined' || document.getElementById('fpFuentes')) return;
     var l = document.createElement('link');
     l.id = 'fpFuentes'; l.rel = 'stylesheet';
@@ -331,14 +334,94 @@
       ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
     }
     if (ad.grano) {
+      // Grano con semilla FIJA, no Math.random(). Antes se resorteaba en cada
+      // fotograma: en el vídeo el grano "hervía" por toda la hoja y, además, le
+      // arruinaba el trabajo al compresor (que vive de que un fotograma se
+      // parezca al anterior). Con semilla fija el grano es el mismo siempre.
+      var s = ((W * 73856093) ^ (H * 19349663)) >>> 0;
+      if (!s) s = 12345;
+      var az = function () { s = (s * 16807) % 2147483647; return s / 2147483647; };
       var n = Math.floor(W * H * 0.00045);
       for (var i = 0; i < n; i++) {
-        var a = 0.02 + Math.random() * 0.05;
-        ctx.fillStyle = (Math.random() < 0.5 ? 'rgba(255,255,255,' : 'rgba(0,0,0,') + a + ')';
-        ctx.fillRect(Math.random() * W, Math.random() * H, 1.5, 1.5);
+        var a = 0.02 + az() * 0.05;
+        ctx.fillStyle = (az() < 0.5 ? 'rgba(255,255,255,' : 'rgba(0,0,0,') + a.toFixed(3) + ')';
+        ctx.fillRect(az() * W, az() * H, 1.5, 1.5);
       }
     }
   }
+
+  /* ── Caché de la capa que NO se mueve ──
+     El fondo (degradado + halo + viñeta + grano) es idéntico en los mil
+     fotogramas de una misma hoja y cuesta ~37 ms de los ~95 que tarda una hoja
+     A4 completa. Pintarlo UNA vez en un lienzo auxiliar y copiarlo con
+     drawImage cuesta 1,4 ms. La clave sólo incluye lo que el fondo mira, así
+     que escribir en el título o cambiar un precio NO invalida la caché.
+
+     Sólo se cachea el fondo: la cabecera, el pie y el QR se siguen pintando en
+     vivo y DESPUÉS de los cuadros, para que ningún efecto que desplace un
+     cuadro hacia abajo pueda taparlos. */
+  var _fondoCache = [], MAX_FONDO = 3;
+
+  function claveFondo(W, H, C, ad) {
+    return [W, H, C.fondo, C.panel, C.acento, C.tinta, C.claro ? 1 : 0,
+            ad.grano ? 1 : 0, ad.vineta ? 1 : 0].join('|');
+  }
+
+  function alFrente(lista, item) {
+    var i = lista.indexOf(item);
+    if (i > 0) { lista.splice(i, 1); lista.unshift(item); }
+  }
+
+  function fondoCacheado(ctx, W, H, C, ad) {
+    // Hojas descomunales: no merece la pena guardarlas en memoria. Y hojas
+    // diminutas (las miniaturas del muestrario): tampoco, porque cada una
+    // tiene un tamaño distinto y la caché sólo daría vueltas.
+    if (typeof document === 'undefined' || W * H > 12e6 || W * H < 15e4) return fondo(ctx, W, H, C, ad);
+    var k = claveFondo(W, H, C, ad), hit = null, i;
+    for (i = 0; i < _fondoCache.length; i++) if (_fondoCache[i].k === k) { hit = _fondoCache[i]; break; }
+    if (hit) { alFrente(_fondoCache, hit); ctx.drawImage(hit.cv, 0, 0); return; }
+    var cv;
+    try {
+      cv = document.createElement('canvas');
+      cv.width = W; cv.height = H;
+      fondo(cv.getContext('2d'), W, H, C, ad);
+    } catch (e) { return fondo(ctx, W, H, C, ad); }   // sin memoria: se pinta como siempre
+    _fondoCache.unshift({ k: k, cv: cv });
+    while (_fondoCache.length > MAX_FONDO) _fondoCache.pop();
+    ctx.drawImage(cv, 0, 0);
+  }
+
+  /* Los cuadros vacíos dibujan una imagen abstracta con tres degradados
+     radiales cada uno, en CADA fotograma. Como es determinista (depende sólo
+     del tamaño, la semilla y la paleta), se guarda dibujada y se copia. */
+  var _demoCache = [], MAX_DEMO = 12;
+
+  function fotoDemoCacheada(ctx, x, y, w, h, semilla, C) {
+    // Se guarda y se copia a TAMAÑO ENTERO y en posición entera: así el copiado
+    // es exacto, sin reescalar ni interpolar, y no se nota ninguna diferencia
+    // con dibujarla a mano. El píxel de más por lado evita que asome el fondo
+    // por el borde cuando el cuadro cae en una coordenada con decimales.
+    var px = Math.floor(x), py = Math.floor(y);
+    var W = Math.max(1, Math.ceil(x + w) - px + 1), H = Math.max(1, Math.ceil(y + h) - py + 1);
+    if (typeof document === 'undefined' || W * H > 3e6) return fotoDemo(ctx, x, y, w, h, semilla, C);
+    var k = W + 'x' + H + '|' + semilla + '|' + C.panel + C.acento + C.acento2 + C.tinta;
+    var hit = null, i;
+    for (i = 0; i < _demoCache.length; i++) if (_demoCache[i].k === k) { hit = _demoCache[i]; break; }
+    if (!hit) {
+      var cv;
+      try {
+        cv = document.createElement('canvas');
+        cv.width = W; cv.height = H;
+        fotoDemo(cv.getContext('2d'), 0, 0, W, H, semilla, C);
+      } catch (e) { return fotoDemo(ctx, x, y, w, h, semilla, C); }
+      hit = { k: k, cv: cv };
+      _demoCache.unshift(hit);
+      while (_demoCache.length > MAX_DEMO) _demoCache.pop();
+    } else alFrente(_demoCache, hit);
+    ctx.drawImage(hit.cv, px, py);
+  }
+
+  function limpiarCache() { _fondoCache = []; _demoCache = []; }
 
   /* ───────────────────────── Cabecera y pie ───────────────────────── */
 
@@ -462,7 +545,7 @@
         : (med.el.complete !== false && (med.el.naturalWidth || med.el.width));
       if (listo) { cubrir(ctx, med.el, r.x, r.y, r.w, r.h, op.ken ? { t: op.t || 0, seed: idx + 1, amp: op.kenAmp } : null); pintada = true; }
     }
-    if (!pintada) fotoDemo(ctx, r.x, r.y, r.w, r.h, idx + 1 + (op.semillaFoto || 0), C);
+    if (!pintada) fotoDemoCacheada(ctx, r.x, r.y, r.w, r.h, idx + 1 + (op.semillaFoto || 0), C);
 
     // velo degradado: lo que hace que el texto se lea con foto clara u oscura
     var alto = r.h * (r.h > r.w * 1.4 ? 0.50 : 0.62);
@@ -532,18 +615,73 @@
      op.qr es una <img> ya generada (por la herramienta) con el QR del
      teléfono/WhatsApp. Se dibuja como una tarjetita blanca en la esquina
      inferior derecha, con la etiqueta «Escanéame». */
+  /* Aplica el "revelado" de un elemento (cómo entra en el vídeo) alrededor de
+     cualquier dibujo. Es la MISMA transformación que ya usaba la rejilla; se
+     saca a una función para que la use también la lista de precios y no haya
+     dos maneras distintas de hacer entrar las cosas.
+       a       opacidad (0..1)
+       dx, dy  desplazamiento en píxeles (deslizar, olas)
+       escala  1 = tamaño normal; menos, entra creciendo (mosaico)
+       recorte 'circulo' | 'persiana', con avance en rev.p (0..1)              */
+  function conRevelado(ctx, rev, r, dibujo) {
+    if (!rev) return dibujo();
+    if (rev.a <= 0.01) return;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, rev.a));
+    if (rev.dx || rev.dy) ctx.translate(rev.dx || 0, rev.dy || 0);
+    if (rev.escala && rev.escala !== 1) {
+      var cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+      ctx.translate(cx, cy); ctx.scale(rev.escala, rev.escala); ctx.translate(-cx, -cy);
+    }
+    if (rev.recorte === 'circulo') {
+      // el cuadro aparece desde el centro en un círculo que crece
+      var rad = Math.sqrt(r.w * r.w + r.h * r.h) / 2 * Math.max(0, Math.min(1, rev.p));
+      ctx.beginPath();
+      ctx.arc(r.x + r.w / 2, r.y + r.h / 2, rad, 0, Math.PI * 2);
+      ctx.clip();
+    } else if (rev.recorte === 'persiana') {
+      // seis franjas horizontales que se abren a la vez
+      var n = 6, alto = r.h / n, abre = alto * Math.max(0, Math.min(1, rev.p));
+      ctx.beginPath();
+      for (var k = 0; k < n; k++) ctx.rect(r.x, r.y + k * alto, r.w, abre);
+      ctx.clip();
+    }
+    dibujo();
+    ctx.restore();
+  }
+
   function dibujarLista(ctx, x, y, w, h, W, H, C, ad, celdas, op) {
     var gap = w * 0.05;
     var fotoW = w * 0.46;
-    cuadro(ctx, { x: x, y: y, w: fotoW, h: h }, C, celdas[0] || {}, 0, ad, op, null);
+    var rFoto = { x: x, y: y, w: fotoW, h: h };
+    // La foto grande entra con el efecto elegido, igual que un cuadro normal.
+    conRevelado(ctx, op.revelar ? op.revelar(0) : null, rFoto, function () {
+      cuadro(ctx, rFoto, C, celdas[0] || {}, 0, ad, op, null);
+    });
     var lx = x + fotoW + gap, lw = w - fotoW - gap;
-    var items = celdas.slice(1).filter(function (c) { return c && (c.titulo || c.texto || c.precio); });
+    // Tope de filas: la rejilla declara cuántos huecos tiene y el panel dibuja
+    // esas casillas. Sin este recorte, las celdas que sobraban de una
+    // cuadrícula anterior (8 cuadros) se imprimían igual, y la alumna veía en
+    // la hoja servicios y precios que no podía editar ni quitar desde ningún
+    // sitio. No se borra nada: las celdas siguen en memoria por si vuelve a
+    // una cuadrícula grande; sólo dejan de dibujarse.
+    var tope = (REJILLAS.rlista && REJILLAS.rlista.n) || 6;
+    var items = celdas.slice(1, tope).filter(function (c) { return c && (c.titulo || c.texto || c.precio); });
     if (!items.length) return;
     var filaH = h / items.length;
     var tamT = Math.min(w * 0.033, filaH * 0.32);
     var tamP = tamT * 0.98, tamD = tamT * 0.64;
     items.forEach(function (c, i) {
       var cy = y + i * filaH, midY = cy + filaH * 0.42;
+      // Cada línea de la tarifa entra con el efecto elegido. Antes esta
+      // plantilla ignoraba op.revelar por completo y el menú «✨ Efecto del
+      // vídeo» no hacía absolutamente nada aquí: la hoja se quedaba quieta.
+      conRevelado(ctx, op.revelar ? op.revelar(i + 1) : null,
+                  { x: lx, y: cy, w: lw, h: filaH },
+                  function () { fila(c, i, cy, midY); });
+    });
+
+    function fila(c, i, cy, midY) {
       var precio = c.precio || '';
       ctx.font = '800 ' + tamP.toFixed(1) + 'px ' + FUENTE_C;
       var pw = precio ? ctx.measureText(precio).width : 0;
@@ -577,7 +715,7 @@
         ctx.strokeStyle = rgba(C.tinta2, 0.18); ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(lx, cy + filaH - 1); ctx.lineTo(lx + lw, cy + filaH - 1); ctx.stroke();
       }
-    });
+    }
   }
 
   // Medidas de la tarjetita del QR. Fuente única de la verdad: la usan
@@ -635,7 +773,7 @@
     var M = Math.round(W * 0.052);
     ctx.save();
     ctx.textBaseline = 'alphabetic';
-    fondo(ctx, W, H, C, ad);
+    fondoCacheado(ctx, W, H, C, ad);
 
     var yCab = cabecera(ctx, W, H, M, C, pag, ad);
     var yPie = H - M - W * 0.075;
@@ -681,31 +819,9 @@
     //   escala  1 = tamaño normal; menos, entra creciendo (mosaico)
     //   recorte 'circulo' | 'persiana', con avance en rev.p (0..1)
     rects.forEach(function (r, i) {
-      var rev = op.revelar ? op.revelar(i) : null;
-      if (!rev) return cuadro(ctx, r, C, celdas[i], i, ad, op, grupos[medidas[i]]);
-      if (rev.a <= 0.01) return;
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, Math.min(1, rev.a));
-      if (rev.dx || rev.dy) ctx.translate(rev.dx || 0, rev.dy || 0);
-      if (rev.escala && rev.escala !== 1) {
-        var cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-        ctx.translate(cx, cy); ctx.scale(rev.escala, rev.escala); ctx.translate(-cx, -cy);
-      }
-      if (rev.recorte === 'circulo') {
-        // el cuadro aparece desde el centro en un círculo que crece
-        var rad = Math.sqrt(r.w * r.w + r.h * r.h) / 2 * Math.max(0, Math.min(1, rev.p));
-        ctx.beginPath();
-        ctx.arc(r.x + r.w / 2, r.y + r.h / 2, rad, 0, Math.PI * 2);
-        ctx.clip();
-      } else if (rev.recorte === 'persiana') {
-        // seis franjas horizontales que se abren a la vez
-        var n = 6, alto = r.h / n, abre = alto * Math.max(0, Math.min(1, rev.p));
-        ctx.beginPath();
-        for (var k = 0; k < n; k++) ctx.rect(r.x, r.y + k * alto, r.w, abre);
-        ctx.clip();
-      }
-      cuadro(ctx, r, C, celdas[i], i, ad, op, grupos[medidas[i]]);
-      ctx.restore();
+      conRevelado(ctx, op.revelar ? op.revelar(i) : null, r, function () {
+        cuadro(ctx, r, C, celdas[i], i, ad, op, grupos[medidas[i]]);
+      });
     });
 
     pie(ctx, W, H, M, C, pag, ad, op.nPagina);
@@ -727,6 +843,8 @@
     cubrir: cubrir,
     pildora: pildora,
     mezclar: mezclar,
-    rgba: rgba
+    rgba: rgba,
+    conRevelado: conRevelado,
+    limpiarCache: limpiarCache
   };
 })();

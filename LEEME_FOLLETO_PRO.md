@@ -178,6 +178,12 @@ símbolos.
 - **El vídeo se graba en tiempo real**: uno de 12 segundos tarda 12 segundos. Es
   un límite del navegador, no del código. **No cambies de pestaña** mientras lo
   hace, o el dibujo se congela y sale a trompicones.
+- **🎚️ Calidad del vídeo**: déjalo en **Fluido**. El vídeo se dibuja en directo,
+  un fotograma cada 33 milésimas de segundo, y a tamaño de imprenta no da tiempo
+  —la imagen se queda pegada—. «Fluido» lo graba a medida de vídeo y va suave;
+  debajo del selector se ve el tamaño exacto que va a salir. **La imagen, el PDF
+  y el folleto web salen siempre al tamaño real de la hoja**, esto sólo cambia
+  el vídeo. «Máxima» conserva el tamaño completo por si alguna vez hace falta.
 - **Formato del vídeo**: sale en **WebM** en Android y en el ordenador, y en
   **MP4** en el iPhone. Se eligió así a propósito: el codificador MP4 de Chrome
   en el móvil grababa **sólo el primer cuadro y el resto salía negro**, mientras
@@ -320,3 +326,112 @@ Arreglo (en `b6_folleto_pro.js`, dentro de `grabarVideo`):
 2. Donde el navegador lo soporta (Chromium/Android) se usa `captureStream(0)`
    (captura **manual**) y se empuja **cada** cuadro pintado con `requestFrame()`;
    en Safari/iOS se mantiene la captura automática a 30 fps.
+
+### Auditoría · el vídeo seguía sin llegar a 30 fps (24-08-2026)
+
+Los dos arreglos anteriores resolvieron la **captura** de fotogramas. Faltaba
+medir cuánto tarda en **pintarse** cada uno. Medido de verdad, ejecutando el
+motor en Chromium y cronometrando `pintar()` con el rasterizado forzado:
+
+| Hoja | ms por fotograma | fps que da |
+|---|---|---|
+| A4 vertical 1240×1754 (lo que se grababa) | 94,7 | 10,6 |
+| Vertical 4:5 1080×1350 | 61,9 | 16,2 |
+| A4 al 60 % 744×1052 | 37,9 | 26,4 |
+
+El grabador pide un fotograma cada **33 ms**. El coste es proporcional a los
+píxeles (~43 ms por megapíxel), y un A4 son 2,17 megapíxeles — medida de
+imprenta para un vídeo que se ve en un móvil. Grabando un vídeo real de 6 s y
+contando los fotogramas del archivo: a 1240×1754 salían **9 fotogramas en 5,75 s
+(1,6 fps)**; el codificador de vídeo tampoco da abasto a ese tamaño en tiempo
+real. Ese era el «se queda pegado» que quedaba.
+
+**1 · Caché de la capa que no se mueve** (`b6_folleto_motor.js`). El fondo
+—degradado, halo, viñeta y grano— es idéntico en los mil fotogramas de una
+hoja y costaba ~37 ms de los ~95. Ahora se pinta una vez en un lienzo auxiliar
+(`fondoCacheado`, 3 entradas) y se copia con `drawImage`: 1,4 ms. La clave sólo
+mira lo que el fondo mira, así que escribir en el título **no** invalida la
+caché. Los cuadros vacíos hacen lo mismo con su imagen de ejemplo
+(`fotoDemoCacheada`, tamaño y posición enteros para que el copiado sea exacto,
+sin reescalar). La cabecera, el pie y el QR se siguen pintando en vivo y
+**después** de los cuadros, para que ningún efecto que desplace un cuadro hacia
+abajo pueda taparlos. `FOLLETO_MOTOR.limpiarCache()` la vacía. Resultado
+medido: **87,7 → 30,6 ms** por fotograma, con el dibujo visualmente idéntico.
+
+**2 · El grano ya no se resortea** en cada fotograma: usaba `Math.random()` y
+402 de cada 160 000 píxeles cambiaban entre dos fotogramas que deberían ser
+iguales — ruido que bullía por la hoja y que además le arruinaba el trabajo al
+compresor. Ahora la semilla depende del tamaño de la hoja y el grano es siempre
+el mismo (0 píxeles parpadeando).
+
+**3 · Selector «🎚️ Calidad»** (`b6_folleto_pro.js`). El vídeo se graba a medida
+de vídeo y no de imprenta. **Fluido** (por defecto) tope 1,0 Mpx y 1280 px de
+lado; **Alta** 1,7 Mpx; **Máxima** sin reducir, que es el comportamiento de
+siempre y no se ha quitado. Debajo del selector se dice el tamaño exacto que va
+a salir. La imagen, el PDF, el carrusel y las portadas del folleto web **no
+cambian**: `lienzoDe()` sigue exportando al tamaño real de la hoja. La vista
+previa fija también se dibuja a medida de pantalla (1200 px de lado), que es
+lo que quita el retardo al escribir. Con «Fluido», el mismo vídeo de 6 s pasa
+de 9 fotogramas a **176 (30,0 fps)**.
+
+### Arreglo · lo que se imprimía y lo que prometían los mandos (24-08-2026)
+
+- **La última hoja salía repetida.** `hojas()` devolvía las páginas guardadas
+  *más* la de pantalla, y «📚 Guardar como página» dejaba la copia original
+  delante. Quien seguía el mensaje («guardada; cambia y guarda la siguiente»)
+  acababa con la última hoja duplicada en el PDF, el ZIP, el folleto web, el
+  carrusel y el vídeo. Ahora `hojas()` compara la huella (`firmaHoja`) de la
+  hoja de pantalla con la última guardada y no la añade si son idénticas. No se
+  pierde nada: en cuanto se cambia algo vuelve a contar como hoja aparte. El
+  contador dice ya cuántas hojas van a salir de verdad.
+- **«Foto + lista de precios» imprimía filas que no se podían editar.** La
+  rejilla `rlista` declara 6 huecos y el panel dibuja 6 casillas, pero
+  `dibujarLista()` recorría `celdas.slice(1)` sin tope: viniendo de una
+  cuadrícula de 8, salían 7 filas y dos servicios con precio que la alumna veía
+  y no podía tocar. Ahora se recorta a `REJILLAS.rlista.n`. Las celdas siguen en
+  memoria por si vuelve a una cuadrícula grande; sólo dejan de dibujarse.
+- **Esa misma plantilla se quedaba quieta en el vídeo.** `dibujarLista()` no
+  miraba `op.revelar` ni `op.textoRev`, así que el menú «✨ Efecto del vídeo» no
+  hacía nada en ella (comprobado: `revelar` se llamaba 6 veces en `r6a` y 0 en
+  `rlista`). La transformación del revelado se ha sacado a `conRevelado()`, que
+  usan por igual el bucle de la rejilla y la lista: entra la foto grande y entra
+  cada línea de la tarifa.
+- **Elegir «🧊 Cubo 3D» para el vídeo normal daba un fundido.** `efCar` se
+  calculaba y sólo se usaba en el carrusel. Ahora, si se elige una transición,
+  se aplica también entre hojas del vídeo normal — que además pasaba de una hoja
+  a la siguiente con un corte seco. Los lienzos auxiliares sólo se crean si hace
+  falta.
+- **«▶ Ver» no enseñaba el ritmo real.** La vista previa usaba la casilla
+  Segundos (12 por defecto) mientras el vídeo duraba lo que durase la voz.
+  Ahora `duracionPrevista()` reutiliza los segundos medidos de la última voz
+  grabada (mientras no cambien guion, velocidad ni archivo) y, si aún no se ha
+  grabado ninguna, estima a ~14 caracteres por segundo y lo dice: «aproximados».
+- **Un folleto de varias hojas con formatos distintos salía deformado.** El
+  vídeo tomaba las medidas de la primera hoja y pintaba las demás dentro.
+  `mismoFormato()` las iguala de verdad antes de animar.
+- **El contador del carrusel se quedaba desfasado**: sólo se recalculaba al
+  tocar sus tres mandos. Ahora se refresca también desde `repintar()`, con un
+  respiro de 200 ms para no rehacer la cuenta en cada tecla.
+
+### Arreglo · higiene (24-08-2026)
+
+- **El tope de 45 MB del folleto web se medía mal**: se comparaba el tamaño del
+  archivo, pero los vídeos entran en base64 y abultan un tercio más, así que un
+  conjunto de 44 MB pasaba el filtro y salía un HTML de 59 MB. Ahora se compara
+  `pesoVideos * 4 / 3`.
+- **`</script>` en el guion rompía el folleto web**: `JSON.stringify` escapa las
+  comillas pero no escapa esa etiqueta. Se escapa el `<` como `<`.
+- **Memoria que no se soltaba**: `bajar()` no revocaba los blobs (cada ZIP, cada
+  vídeo y cada folleto web se quedaban hasta recargar); al abrir un diseño
+  guardado, los vídeos compartidos con páginas guardadas quedaban protegidos por
+  `mediaEnUso()` y acto seguido `FP.paginas` se sustituía, dejando esos
+  `<video>` en `#fpOculto` para siempre; y el `<input type="file">` no se
+  limpiaba al quitar una foto, así que volver a elegir la misma no hacía nada.
+- **El QR podía faltar en la descarga**: si se pulsaba Descargar justo después de
+  escribir el número, la `<img>` aún no estaba decodificada y el QR salía en la
+  vista previa pero no en el JPG ni en el PDF. `qrListo()` lo espera.
+- **Las entradas del ZIP llevaban fecha cero** (1980), que algunos
+  descompresores marcan como raro. Ahora llevan la hora y la fecha reales.
+- **El lienzo que se ve mientras graba** mezclaba píxeles fijos con
+  `max-width:60vw` y en móviles estrechos se veía achatado. Ancho y alto salen
+  ya de la misma escala.
