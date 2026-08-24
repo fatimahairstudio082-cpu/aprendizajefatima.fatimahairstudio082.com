@@ -70,7 +70,7 @@
     var ch = buf.getChannelData(0), n = ch.length, i;
     var pico = 0;
     for (i = 0; i < n; i++) { var a = Math.abs(ch[i]); if (a > pico) pico = a; }
-    if (pico < PICO_MINIMO) return { pico: pico, buffer: null };
+    if (pico < PICO_MINIMO) return { pico: pico, buffer: null, ini: 0 };
 
     var umbral = Math.max(0.012, pico * 0.06);
     var ini = 0, fin = n - 1;
@@ -88,7 +88,9 @@
     var salida = ac.createBuffer(1, largo, buf.sampleRate);
     var dst = salida.getChannelData(0);
     for (i = 0; i < largo; i++) dst[i] = Math.max(-1, Math.min(1, ch[ini + i] * ganancia));
-    return { pico: pico, buffer: salida };
+    // 'ini' = muestras de silencio recortadas al principio. Sirve para alinear
+    // las marcas por tarjeta (medidas desde rec.start) con el WAV ya recortado.
+    return { pico: pico, buffer: salida, ini: ini };
   }
 
   function aWav(buffer) {
@@ -97,8 +99,10 @@
     throw new Error('Falta audioBufferToWav en la página.');
   }
 
-  /* ─────────── Habla el texto con la voz gratuita ─────────── */
-  function hablar(trozos, voz, vel, tono, alTerminar) {
+  /* ─────────── Habla el texto con la voz gratuita ───────────
+     alTrozo(idx, tnow) · opcional: avisa al terminar CADA trozo con el reloj
+     (performance.now) del momento, para poder marcar dónde acaba cada tarjeta. */
+  function hablar(trozos, voz, vel, tono, alTerminar, alTrozo) {
     var i = 0, vivo = true;
     var keepAlive = setInterval(function () {
       if (speechSynthesis.speaking && !speechSynthesis.paused) {
@@ -130,7 +134,10 @@
       var u = new SpeechSynthesisUtterance(trozos[i]);
       if (voz) { u.voice = voz; u.lang = voz.lang; } else { u.lang = 'es-ES'; }
       u.rate = vel; u.pitch = tono;
-      u.onend = function () { i++; siguiente(); };
+      u.onend = function () {
+        if (alTrozo) { try { alTrozo(i, performance.now()); } catch (e) {} }
+        i++; siguiente();
+      };
       u.onerror = function () { fin(i > 0); };   // si ya dijo algo, se aprovecha
       speechSynthesis.speak(u);
     })();
@@ -150,10 +157,20 @@
     if (ocupado) throw new Error('Ya se está capturando una voz. Espera a que termine.');
     if (!disponible()) throw new Error('Este navegador no puede captar la voz. Prueba en Chrome (Android o PC).');
 
+    // Si vienen 'segmentos' (una frase por tarjeta del carrusel), se habla un
+    // trozo por tarjeta y se devuelven las MARCAS de dónde acaba cada una, para
+    // que el vídeo cambie de tarjeta justo cuando la voz la nombra.
+    var segmentos = Array.isArray(op.segmentos)
+      ? op.segmentos.map(function (s) { return String(s == null ? '' : s).trim(); }).filter(function (s) { return s; })
+      : null;
+
     var texto = String(op.texto || '').trim();
+    if (!texto && segmentos && segmentos.length) texto = segmentos.join('. ');
     if (!texto) throw new Error('Escribe primero el texto que quieres que diga la voz.');
 
-    var trozos = (typeof window._vzTrocear === 'function') ? window._vzTrocear(texto) : [texto];
+    var trozos = (segmentos && segmentos.length)
+      ? segmentos.slice()
+      : ((typeof window._vzTrocear === 'function') ? window._vzTrocear(texto) : [texto]);
     if (!trozos.length) throw new Error('El texto está vacío.');
 
     var voz  = op.voz || ((typeof window._vzGetVoice === 'function') ? window._vzGetVoice() : null);
@@ -162,6 +179,7 @@
 
     ocupado = true;
     var stream = null, rec = null, cortarVoz = null, cancelado = false;
+    var rawEnds = [], t0cap = 0;   // fin de cada trozo (s desde rec.start), para las marcas
 
     function soltar() {
       ocupado = false;
@@ -209,11 +227,14 @@
       if (cancelado) throw new Error('Cancelado.');
 
       rec.start();
+      t0cap = performance.now();   // origen del reloj de las marcas (= inicio del WAV bruto)
       await esperar(300);   // colchón de silencio al principio
       aviso('● Grabando la voz… no hables ni tapes el micrófono.');
 
       var hablado = await new Promise(function (res) {
-        cortarVoz = hablar(trozos, voz, vel, tono, function (ok) { res(ok); });
+        cortarVoz = hablar(trozos, voz, vel, tono, function (ok) { res(ok); }, function (idx, tnow) {
+          rawEnds[idx] = (tnow - t0cap) / 1000;   // fin del trozo idx, en segundos del WAV bruto
+        });
       });
       cortarVoz = null;
       if (cancelado) throw new Error('Cancelado.');
@@ -238,6 +259,22 @@
 
       var wav = aWav(r.buffer);
       var seg = r.buffer.length / r.buffer.sampleRate;
+
+      // Marcas por tarjeta: fin de cada trozo, corrido al eje del WAV ya recortado
+      // (se resta el silencio inicial que quitó limpiar()). Monótonas y acotadas.
+      if (segmentos && segmentos.length) {
+        var leadTrim = (r.ini || 0) / r.buffer.sampleRate;
+        var marcas = [], prev = 0;
+        for (var mi = 0; mi < trozos.length; mi++) {
+          var m = (typeof rawEnds[mi] === 'number') ? (rawEnds[mi] - leadTrim) : prev;
+          if (!(m > prev)) m = prev + 0.2;         // nunca hacia atrás; avance mínimo
+          if (m > seg) m = seg;
+          marcas.push(m);
+          prev = m;
+        }
+        marcas[marcas.length - 1] = seg;           // la última cierra en el fin real
+        return { blob: wav, segundos: seg, marcas: marcas };
+      }
       return { blob: wav, segundos: seg };
     } finally {
       soltar();

@@ -1365,9 +1365,67 @@
     catch (e) { estado('No se pudo probar la voz: ' + (e.message || e), 'err'); }
   }
 
+  /* ═══════════════════ Guion por tarjeta (sincronía voz↔tarjeta) ═══════════════════
+     La voz lee la ficha de cada tarjeta y, con las MARCAS que devuelve la
+     captura, el vídeo cambia de tarjeta justo cuando la voz la nombra. */
+  function limpiarVoz(s) {
+    return String(s == null ? '' : s)
+      .replace(/€/g, ' euros')
+      .replace(/[#*_`~|<>{}\[\]]/g, ' ')
+      .replace(/\s+/g, ' ').trim();
+  }
+  function precioVoz(p) {
+    var t = limpiarVoz(p);
+    if (!t) return '';
+    if (/euro/i.test(t)) return t;
+    if (/\d/.test(t)) return t + ' euros';
+    return t;
+  }
+  /* Una frase por tarjeta del carrusel, en el mismo orden que tarjetasCarrusel().
+     Nunca devuelve vacío: si la ficha está en blanco, cae a la cabecera. */
+  function guionPorTarjeta(hs) {
+    return hs.map(function (card) {
+      var cel = card.celdas || [];
+      var marca = limpiarVoz(card.cabecera && card.cabecera.marca);
+      var titCab = limpiarVoz(card.cabecera && card.cabecera.titulo);
+      if (cel.length !== 1) {
+        // portada / rejilla con varias celdas: presentación con la cabecera
+        var intro = [marca, titCab, limpiarVoz(card.cabecera && card.cabecera.subtitulo)]
+          .filter(Boolean).join('. ');
+        return intro || titCab || marca || 'Nuestros servicios';
+      }
+      var c = cel[0] || {};
+      var frase = [limpiarVoz(c.titulo), limpiarVoz(c.texto), precioVoz(c.precio)]
+        .filter(Boolean).join('. ');
+      return frase || titCab || marca || 'Servicio';
+    });
+  }
+  /* Estima los segundos de narración por el largo del guion (~13 c/s de lectura
+     tranquila), para no dejar que el ritmo se dispare cuando no se conoce la
+     duración real de la voz (voz de estudio, audio subido). */
+  function estimarSegGuion() {
+    var g = (val('fpGuion') || '').trim();
+    if (!g) return 0;
+    var vel = parseFloat(val('fpVozVel')) || 1;
+    return Math.min(TOPE_SEG_VIDEO, Math.max(6, (g.length / 13) / Math.max(0.5, vel)));
+  }
+
+  /* Barra fina de progreso abajo del lienzo (relojito): avanza con el vídeo.
+     Se pinta en la grabación y en «▶ Ver», así lo que se ve es lo que sale. */
+  function barraProgreso(ctx, F, frac) {
+    frac = Math.max(0, Math.min(1, frac || 0));
+    var h = Math.max(3, Math.round(F.h * 0.008));
+    var col = '#d4af37';
+    try { col = M.colores({ tema: val('fpTema'), colores: FP.coloresManuales }).acento || col; } catch (e) {}
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fillRect(0, F.h - h, F.w, h);
+    ctx.fillStyle = col; ctx.fillRect(0, F.h - h, F.w * frac, h);
+    ctx.restore();
+  }
+
   /* ═══════════════════ Vídeo con voz ═══════════════════ */
 
-  function prepararVoz(fuente) {
+  function prepararVoz(fuente, hsCarrusel) {
     if (fuente === 'ninguna') return Promise.resolve(null);
 
     if (fuente === 'audio') {
@@ -1382,15 +1440,22 @@
       if (window.B6_VOZ_GRATIS.ocupada && window.B6_VOZ_GRATIS.ocupada())
         return Promise.reject(new Error('Se está grabando otra voz ahora mismo. Espera a que termine.'));
       var texto = (val('fpGuion') || '').trim();
-      if (!texto) return Promise.reject(new Error('No hay nada que leer. Pulsa «Escríbelo tú por mí» o escribe el guion.'));
+      // En el vídeo de tarjetas, la voz lee una ficha por tarjeta y devuelve las
+      // MARCAS para sincronizar. En el vídeo normal, lee el guion de corrido.
+      var segmentos = (hsCarrusel && hsCarrusel.length) ? guionPorTarjeta(hsCarrusel) : null;
+      if (!texto && !(segmentos && segmentos.length))
+        return Promise.reject(new Error('No hay nada que leer. Pulsa «Escríbelo tú por mí» o escribe el guion.'));
       try { speechSynthesis.cancel(); } catch (e) {}   // corta la preescucha si sonaba
-      return window.B6_VOZ_GRATIS.capturar({
-        texto: texto,
+      var opCap = {
         voz: vozGratisElegida(),
         vel: parseFloat(val('fpVozVel')) || 1,
         tono: parseFloat(val('fpVozTono')) || 1,
         aviso: function (m) { estado(m, 'proc'); }
-      }).then(function (r) { return { url: URL.createObjectURL(r.blob), seg: r.segundos, propia: true }; });
+      };
+      if (segmentos && segmentos.length) opCap.segmentos = segmentos; else opCap.texto = texto;
+      return window.B6_VOZ_GRATIS.capturar(opCap).then(function (r) {
+        return { url: URL.createObjectURL(r.blob), seg: r.segundos, marcas: r.marcas || null, propia: true };
+      });
     }
 
     if (fuente === 'texto_pro') {
@@ -1614,20 +1679,42 @@
     };
   }
 
+  /* PASO de la transición para una tarjeta de duración 'ph' segundos. */
+  function pasoDe(ph) {
+    return Math.min(ph * 0.45, Math.max(0.9, Math.min(1.6, ph * 0.40)));
+  }
+
   function animFotograma(ctx, F, hs, t, o) {
-    var iHoja = Math.min(hs.length - 1, Math.floor(t / o.porHoja));
-    var tHoja = t - iHoja * o.porHoja;
-    var queda = o.porHoja - tHoja;
-    if (o.carrusel && iHoja < hs.length - 1 && queda < o.PASO) {
+    var iHoja, inicio, porHoja, fin;
+    if (o.tiempos) {
+      // Línea de tiempo por tarjeta: 'tiempos[i]' es el segundo en que ACABA la
+      // tarjeta i (las marcas de la voz). La tarjeta activa es la primera cuya
+      // frontera aún no se ha pasado, así cada una dura lo que dura su locución.
+      iHoja = 0;
+      while (iHoja < o.tiempos.length - 1 && t >= o.tiempos[iHoja]) iHoja++;
+      inicio = iHoja > 0 ? o.tiempos[iHoja - 1] : 0;
+      fin = o.tiempos[iHoja];
+      porHoja = Math.max(0.2, fin - inicio);
+    } else {
+      iHoja = Math.min(hs.length - 1, Math.floor(t / o.porHoja));
+      inicio = iHoja * o.porHoja;
+      fin = inicio + o.porHoja;
+      porHoja = o.porHoja;
+    }
+    var tHoja = t - inicio;
+    var queda = fin - t;
+    var PASO = pasoDe(porHoja);
+    if (o.carrusel && iHoja < hs.length - 1 && queda < PASO) {
       // las dos tarjetas se componen con la transición elegida (cubo, iris…)
-      var q = 1 - queda / o.PASO;
+      var phSig = o.tiempos ? Math.max(0.2, o.tiempos[iHoja + 1] - o.tiempos[iHoja]) : o.porHoja;
+      var q = 1 - queda / PASO;
       var e = q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
-      o.octxA.clearRect(0, 0, F.w, F.h); animHoja(o.octxA, F, hs, iHoja, tHoja, t, o.carrusel, o.efecto, o.porHoja);
-      o.octxB.clearRect(0, 0, F.w, F.h); animHoja(o.octxB, F, hs, iHoja + 1, o.porHoja, t, o.carrusel, o.efecto, o.porHoja);
+      o.octxA.clearRect(0, 0, F.w, F.h); animHoja(o.octxA, F, hs, iHoja, tHoja, t, o.carrusel, o.efecto, porHoja);
+      o.octxB.clearRect(0, 0, F.w, F.h); animHoja(o.octxB, F, hs, iHoja + 1, phSig, t, o.carrusel, o.efecto, phSig);
       ctx.clearRect(0, 0, F.w, F.h); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, F.w, F.h);
       transicionCarrusel(ctx, o.ocA, o.ocB, e, F.w, F.h, o.efCar);
     } else {
-      animHoja(ctx, F, hs, iHoja, tHoja, t, o.carrusel, o.efecto, o.porHoja);
+      animHoja(ctx, F, hs, iHoja, tHoja, t, o.carrusel, o.efecto, porHoja);
     }
   }
 
@@ -1644,8 +1731,13 @@
     repintar();          // restaura la vista previa fija normal
     arrancarBucle();     // y si hay vídeos, que vuelvan a moverse
   }
-  function verAnimacion(carrusel) {
+  function verAnimacion(carruselPedido) {
     if (!listo) return;
+    // Igual que el vídeo: si el efecto elegido es una transición (cubo, iris…),
+    // se previsualiza como carrusel, que es donde luce, para que el ▶ Ver
+    // muestre exactamente lo que va a salir en el vídeo.
+    var efSel = val('fpEfecto') || 'uno_a_uno';
+    var carrusel = carruselPedido || efSel.indexOf('t_') === 0;
     if (animPrev) { var eraCar = animPrev.carrusel; pararPreviewAnim(); if (eraCar === carrusel) return; }
     var reduce = false;
     try { reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
@@ -1664,7 +1756,7 @@
     dur = Math.min(TOPE_SEG_VIDEO, dur);
     var o = animOpts(carrusel, F, dur / hs.length);
 
-    var btn = carrusel ? $('fpVerCarrusel') : $('fpVerVideo');
+    var btn = carruselPedido ? $('fpVerCarrusel') : $('fpVerVideo');
     if (btn) btn.textContent = '■ Parar';
     estado('▶ Así se moverá el vídeo. Cuando te guste, dale a 🎬 para descargarlo.', 'done');
     var t0 = performance.now();
@@ -1673,6 +1765,7 @@
       if (!animPrev) return;
       var t = ((performance.now() - t0) / 1000) % dur;   // en bucle continuo
       animFotograma(ctx, F, hs, t, o);
+      barraProgreso(ctx, F, t / dur);
       animPrev.raf = requestAnimationFrame(paso);
     })();
   }
@@ -1682,16 +1775,26 @@
   function grabarVideoNormal() { grabarVideo(false); }
   function grabarVideoCarrusel() { grabarVideo(true); }
 
-  function grabarVideo(carrusel) {
+  function grabarVideo(carruselPedido) {
     if (FP.grabando) { if (FP.pararGrabacion) FP.pararGrabacion(); return; }
     if (!window.MediaRecorder) { estado('Este navegador no sabe grabar vídeo. Prueba en Chrome.', 'err'); return; }
     pararPreviewAnim();   // si estaba la vista previa animada, se detiene
 
+    // El cubo y las transiciones (t_*) sólo lucen pasando de una tarjeta a otra:
+    // si se eligen para el vídeo normal, se hace el vídeo de tarjetas para que se
+    // vean, en vez de dejar el folleto quieto.
+    var efSel = val('fpEfecto') || 'uno_a_uno';
+    var carrusel = carruselPedido || efSel.indexOf('t_') === 0;
+
     var fuente = val('fpVoz') || 'texto_gratis';
     // el botón que se pulsó es el que pasa a «Detener», para poder pararlo
-    var boton = carrusel ? ($('fpCarVid') || $('fpVideo')) : $('fpVideo');
-    var textoBoton = carrusel ? '🎬 Descargar vídeo 3D' : '🎬 Descargar vídeo';
+    var boton = carruselPedido ? ($('fpCarVid') || $('fpVideo')) : $('fpVideo');
+    var textoBoton = carruselPedido ? '🎬 Descargar vídeo 3D' : '🎬 Descargar vídeo';
     function soltarBoton() { if (boton) boton.textContent = textoBoton; }
+
+    // Las tarjetas/hojas se calculan ya, para poder armar el guion por tarjeta
+    // (una frase por tarjeta) que la voz leerá sincronizada.
+    var hs = carrusel ? tarjetasCarrusel() : hojas();
 
     var limpieza = [];
     function limpiar() { limpieza.forEach(function (f) { try { f(); } catch (e) {} }); limpieza = []; }
@@ -1704,11 +1807,13 @@
 
     FP.grabando = true;
     if (boton) boton.textContent = '■ Detener';
-    estado('Preparando…', 'proc');
+    estado((carrusel && !carruselPedido)
+      ? 'Ese efecto (cubo, iris…) luce pasando de una tarjeta a otra: te preparo el vídeo de tarjetas.'
+      : 'Preparando…', 'proc');
 
-    prepararVoz(fuente).then(function (voz) {
-      // en modo carrusel el vídeo va tarjeta a tarjeta, como al pasar el dedo
-      var hs = carrusel ? tarjetasCarrusel() : hojas();
+    // En el vídeo de tarjetas, la voz gratis lee una ficha por tarjeta y devuelve
+    // las marcas para sincronizar; en el normal, lee el guion de corrido.
+    prepararVoz(fuente, carrusel ? hs : null).then(function (voz) {
       var F = M.FORMATOS[hs[0].formato] || M.FORMATOS.a4v;
       var cv = document.createElement('canvas');
       cv.width = F.w; cv.height = F.h;
@@ -1786,22 +1891,40 @@
         if (voz && voz.seg && isFinite(voz.seg)) segVoz = voz.seg;
         else if (vozEl && vozEl.duration && isFinite(vozEl.duration)) segVoz = vozEl.duration;
 
-        var dur;
+        // Se separan DOS cosas que antes estaban pegadas:
+        //   · dur      = cuándo PARAR el vídeo (tope). Con audio subido o voz de
+        //                estudio se deja amplio y manda el evento 'ended' de la
+        //                voz, así nunca corta la locución.
+        //   · durRitmo = cómo se REPARTE el tiempo entre las tarjetas. NUNCA vale
+        //                180: si no se conoce la duración se ESTIMA por el guion,
+        //                para que no salga cada tarjeta congelada ~30 s (el bug
+        //                que dejaba el vídeo «paralizado» y con sólo 3-4 efectos).
+        var dur, durRitmo;
         if (segVoz > 0) {
           dur = segVoz + COLA_FIN;                       // la voz completa manda
+          durRitmo = dur;
         } else if (vozEl) {
-          // Hay voz pero aún no se conoce su duración (audio subido o voz de
-          // estudio con metadatos lentos). Antes caía a 12 s y CORTABA la
-          // narración: ahora se usa el tope amplio y manda el evento 'ended'
-          // de la voz (más abajo), así el vídeo nunca corta la locución.
-          dur = TOPE_SEG_VIDEO;
+          dur = TOPE_SEG_VIDEO;                          // tope; para con 'ended'
+          var estim = estimarSegGuion();
+          durRitmo = estim > 0 ? estim
+            : Math.max(parseFloat(val('fpDur')) || 12, carrusel ? hs.length * MIN_POR_TARJETA : 0);
         } else {
           dur = Math.max(4, parseFloat(val('fpDur')) || 12);
+          durRitmo = dur;
         }
-        // Pase lo que pase, cada tarjeta del carrusel necesita su tiempo mínimo
-        // para poder leerse/oírse con calma (nada de divisiones demasiado cortas).
-        if (carrusel) dur = Math.max(dur, hs.length * MIN_POR_TARJETA);
+
+        // Marcas por tarjeta (voz gratis): definen el ritmo EXACTO — cada tarjeta
+        // dura lo que dura su locución. Sólo si el nº de marcas cuadra con el nº
+        // de tarjetas. Sin marcas, se reparte parejo con un mínimo por tarjeta.
+        var tiempos = null;
+        if (carrusel && voz && voz.marcas && voz.marcas.length === hs.length) {
+          tiempos = voz.marcas.slice();
+        } else if (carrusel) {
+          dur = Math.max(dur, hs.length * MIN_POR_TARJETA);
+          durRitmo = Math.max(durRitmo, hs.length * MIN_POR_TARJETA);
+        }
         dur = Math.min(TOPE_SEG_VIDEO, dur);             // tope de seguridad amplio
+        durRitmo = Math.min(TOPE_SEG_VIDEO, Math.max(2, durRitmo));
 
         // música gratis: suena por debajo de la voz (0.32) o sola (0.9) si no
         // hay voz. Se enchufa al mismo destino que se graba, así entra en el MP4
@@ -1854,7 +1977,7 @@
         var trozos = [];
         rec.ondataavailable = function (e) { if (e.data && e.data.size) trozos.push(e.data); };
 
-        var porHoja = dur / hs.length;
+        var porHoja = durRitmo / hs.length;
         var t0 = 0;                 // se fija al arrancar la grabación (reloj alineado)
         var pedido = null;
         // La voz avisa cuando termina: el vídeo se para poco después (COLA_FIN),
@@ -1891,6 +2014,7 @@
 
         // el MISMO motor de animación que usa el botón «▶ Ver» (WYSIWYG)
         var oAnim = animOpts(carrusel, F, porHoja);
+        if (tiempos) oAnim.tiempos = tiempos;   // sincronía voz↔tarjeta
 
         (function pintar() {
           var t = (performance.now() - t0) / 1000;
@@ -1904,7 +2028,9 @@
           if (fuente === 'mic') {
             stopT = TOPE_SEG_VIDEO;
           } else {
-            var minCar = carrusel ? hs.length * MIN_POR_TARJETA : 0;
+            // Con marcas (sincronía) la voz ya define la duración de cada tarjeta,
+            // así que no se fuerza el mínimo por tarjeta: se para justo con la voz.
+            var minCar = (carrusel && !tiempos) ? hs.length * MIN_POR_TARJETA : 0;
             var limVoz = vozAcabo ? Math.max(tVozFin + COLA_FIN, minCar) : Infinity;
             stopT = Math.min(dur, limVoz);
           }
@@ -1919,6 +2045,9 @@
             ctx.save(); ctx.globalAlpha = aFade; ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, F.w, F.h); ctx.restore();
           }
+          // Relojito: barra fina abajo que avanza con el vídeo (no en modo micro,
+          // que no tiene duración conocida hasta que se pulsa Detener).
+          if (fuente !== 'mic' && isFinite(stopT) && stopT > 0) barraProgreso(ctx, F, t / stopT);
           empujarCuadro();
           // NO se para en cuanto la voz termina: se deja la cola (COLA_FIN) para
           // que la última tarjeta respire y la narración nunca quede cortada.
