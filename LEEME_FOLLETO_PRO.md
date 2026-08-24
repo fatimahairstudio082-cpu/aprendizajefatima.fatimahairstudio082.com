@@ -277,88 +277,20 @@ paletas dibujadas, para elegir y descartar diseños. Usa el mismo motor, así qu
 lo que se ve ahí es lo que sale en la herramienta. No hace falta para que
 Folletos Pro funcione; se queda como referencia.
 
-### Arreglo · efectos unificados + sincronía voz↔vídeo (22-08-2026)
+### Sincronía voz↔tarjeta (proporcional) + relojito
 
-Tres cosas que fallaban tras las últimas modificaciones:
+En el **vídeo del carrusel con voz gratis**, la voz lee **una ficha por tarjeta,
+en orden** (`guionPorTarjeta()` la arma desde el título, la frase y el precio de
+cada tarjeta; `b6_voz_video_gratis.js` acepta ahora `segmentos` y los habla en
+orden). El vídeo reparte el tiempo **proporcional al texto de cada tarjeta** y lo
+estira a la duración real de la voz: `tiemposProporcionales(segmentos, seg)`
+devuelve los tiempos de fin de cada tarjeta (monótonos, con un mínimo por
+tarjeta). `animFotograma` usa esos `tiempos` cuando existen, y el reparto parejo
+(`porHoja`) cuando no. Es **determinista**: cada tarjeta dura lo que dura su
+locución, con la transición (cubo, iris…) en cada cambio, y **nunca se colapsa ni
+se queda clavada** en la última tarjeta.
 
-1. **Efectos repartidos en dos sitios.** El «Efecto» del vídeo normal y la
-   «Transición» del carrusel eran dos desplegables distintos con listas
-   distintas. Ahora hay **un solo menú «✨ Efecto del vídeo»** con TODOS los
-   efectos, en dos grupos: *cómo aparece cada tarjeta* (revelado) y *cómo pasa
-   de una tarjeta a otra* (transición del carrusel). El mismo menú vale para el
-   vídeo normal y para el del carrusel. (Los valores de transición llevan
-   prefijo `t_` para poder enrutarlos; el aspecto que no elijas usa un valor
-   por defecto elegante.)
-2. **El vídeo cortaba la narración / no sincronizaba.** Con audio subido o voz
-   de estudio, si el navegador tardaba en saber la duración, el vídeo caía a
-   12 s y cortaba la voz. Ahora: (a) se espera a `loadedmetadata` con margen
-   amplio; (b) si aún no se sabe la duración, manda el evento `ended` de la voz
-   y el vídeo se para poco después (COLA_FIN), nunca a media frase; (c) el reloj
-   de la animación arranca JUNTO con la grabación, así el dibujo no va por
-   delante del audio. El carrusel sigue respetando el tiempo mínimo por tarjeta.
-3. **Tarjetas del hub.** El cubo 3D (`hub_tarjetas_3d.js`) escondía la
-   descripción, los niveles y los botones «Abrir»/«Escuchar» detrás de un
-   volteo que sólo funcionaba con ratón (en móvil no se podían ver). Se vuelve a
-   las **tarjetas planas** con todo visible de un vistazo y un solo toque; el
-   include queda comentado en `index.html` y `fatima_hub.html`, y el archivo se
-   conserva por si se quiere reactivar.
-
-### Arreglo · el vídeo se quedaba pegado (imagen congelada, audio corriendo)
-
-Síntoma real (analizado sobre un vídeo de muestra): la voz salía entera (3,1 s)
-pero la imagen sólo tenía **6 fotogramas** en los primeros 0,34 s y luego se
-quedaba **congelada**. No era la sincronía (el audio iba bien): era la **captura
-de fotogramas** del `canvas`. El navegador (Android/tablets sobre todo) deja de
-"pintar" —y de entregar cuadros a `captureStream`— un lienzo que no está de
-verdad visible; esconderlo a 1px con `opacity≈0` fuera de pantalla NO bastaba.
-
-Arreglo (en `b6_folleto_pro.js`, dentro de `grabarVideo`):
-1. El lienzo de grabación ahora se **muestra de verdad** mientras graba (modesto,
-   arriba-centro, con un cartel «🎬 Grabando…»), así el navegador lo mantiene
-   pintado y la captura no se congela. Se graba a plena resolución (la fija
-   `canvas.width/height`, no el tamaño en pantalla) y se retira al terminar.
-2. Donde el navegador lo soporta (Chromium/Android) se usa `captureStream(0)`
-   (captura **manual**) y se empuja **cada** cuadro pintado con `requestFrame()`;
-   en Safari/iOS se mantiene la captura automática a 30 fps.
-
-### Arreglo · sincronía voz↔tarjeta + destrabar el ritmo + relojito (24-08-2026)
-
-Síntomas: el vídeo se veía **paralizado** (el 🧊 Cubo 3D se quedaba pegado), sólo
-salían **3-4 efectos** en vez de todos, y la **narración no cuadraba** con lo que
-mostraba la pantalla.
-
-Causa raíz (en `b6_folleto_pro.js`): cuando no se conocía la duración de la voz
-(voz de estudio o audio subido), `dur` saltaba a **180 s** y **todo el ritmo** se
-derivaba de ahí (`porHoja = dur / nº tarjetas`): cada tarjeta aparecía en <0,4 s y
-se quedaba quieta ~30 s, y el corte por el evento `ended` de la voz truncaba el
-pase dejando casi todas las tarjetas sin salir. Además el cubo (y las
-transiciones `t_*`) sólo se dibujaban en el vídeo del carrusel, así que elegirlo
-para el vídeo normal daba un fundido y luego imagen quieta.
-
-Arreglo:
-
-1. **Ritmo desacoplado del tope.** Ahora hay dos cosas separadas: `dur` (cuándo
-   PARAR el vídeo, gobernado por la voz) y `durRitmo` (cómo se REPARTE el tiempo
-   entre tarjetas). `durRitmo` **nunca vale 180**: si no se conoce la duración se
-   **estima por el guion** (~13 caracteres/seg). `TOPE_SEG_VIDEO` queda sólo como
-   tope duro de seguridad de la parada.
-2. **Sincronía voz↔tarjeta (voz gratis + carrusel).** La captura de voz gratis
-   (`b6_voz_video_gratis.js`) acepta ahora `segmentos` (una frase por tarjeta,
-   armada con `guionPorTarjeta()` desde la ficha de cada cuadro: título, frase y
-   «precio euros») y devuelve las **marcas** de dónde acaba cada tarjeta —medidas
-   por el `onend` de cada frase y corregidas por el silencio inicial que recorta
-   `limpiar()`. El vídeo usa esas marcas como **línea de tiempo**: cada tarjeta
-   dura lo que dura su locución, con una transición (cubo, iris…) en cada cambio.
-   Así se acabó el "sólo 3-4 efectos": el cubo gira en **cada** tarjeta.
-3. **El cubo también desde el vídeo normal.** Si se elige una transición `t_*` y
-   se pulsa «🎬 Descargar vídeo» (o «▶ Ver»), se enruta al vídeo de tarjetas —
-   que es donde luce— con un aviso de una línea. El vídeo normal de rejilla
-   conserva su Ken Burns y su revelado.
-4. **Relojito de progreso.** Una barra fina abajo del lienzo avanza con el vídeo
-   (`barraProgreso()`), tanto en la grabación como en «▶ Ver».
-
-La sincronía por tarjeta es exclusiva de la **voz gratis** (las demás fuentes no
-dan tiempos por palabra); ahí no hay sincronía fina, pero el destrabado del ritmo
-y el corte limpio por `ended` aplican igual. El alineado de las marcas es
-aproximado (±~0,2 s por las pausas entre frases del navegador), suficiente para
-que cada tarjeta caiga con su locución.
+Un **relojito** (`barraProgreso()`) pinta una barra fina abajo del lienzo que
+avanza con el vídeo, en la grabación y en «▶ Ver». Se conserva la mecánica de
+captura visible (lienzo a la vista + `captureStream(0)`/`requestFrame`) para que
+no se congele en Android.

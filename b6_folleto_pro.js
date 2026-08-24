@@ -349,6 +349,23 @@
         '</select>' +
       '</div>' +
       '<div class="row">' +
+        '<span class="lbl">✨ Transición</span>' +
+        '<select id="fpCarTransicion" style="flex:1;min-width:150px">' +
+          '<option value="cubo">🧊 Cubo 3D</option>' +
+          '<option value="zoom">💥 Zoom punch</option>' +
+          '<option value="iris">⭕ Iris</option>' +
+          '<option value="cortina">🎭 Cortina partida</option>' +
+          '<option value="luz">✨ Barrido de luz</option>' +
+          '<option value="persiana">🎚️ Persiana</option>' +
+          '<option value="blur">🌫️ Desenfoque</option>' +
+          '<option value="volteo">🔄 Volteo 3D</option>' +
+          '<option value="empuje">⬆️ Empuje vertical</option>' +
+          '<option value="giro">🌀 Giro</option>' +
+          '<option value="desvanecer">🫧 Fundido cruzado</option>' +
+          '<option value="desliza" selected>➡️ Deslizar (clásico)</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="row">' +
         '<label style="font-size:10px"><input type="checkbox" id="fpCarUno" checked> una tarjeta por servicio</label>' +
         '<label style="font-size:10px"><input type="checkbox" id="fpCarPortada" checked> con portada</label>' +
       '</div>' +
@@ -359,8 +376,7 @@
         '<span id="fpCarInfo" style="font-size:9px;color:var(--tx2)"></span>' +
       '</div>' +
       '<div class="row" style="margin-top:-2px"><span style="font-size:9px;color:var(--tx2)">' +
-        'El vídeo 3D se descarga con la voz y la música puestas, igual que el vídeo normal. ' +
-        'El efecto (cubo, zoom, iris, olas…) se elige abajo, en <b>✨ Efecto del vídeo</b>: es el mismo para el vídeo normal y para el carrusel.' +
+        'El vídeo 3D (cubo, zoom, iris…) se descarga con la voz y la música puestas, igual que el vídeo normal.' +
       '</span></div>' +
     '</div>' +
 
@@ -421,40 +437,20 @@
         '<textarea id="fpGuion" rows="3" style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:6px;padding:5px;font-size:11px"></textarea>' +
       '</div>' +
       '<div class="row">' +
-        '<span class="lbl">✨ Efecto del vídeo</span>' +
+        '<span class="lbl">✨ Efecto</span>' +
         '<select id="fpEfecto" style="flex:1;min-width:160px">' +
-          '<optgroup label="— Cómo aparece cada tarjeta —">' +
-            '<option value="uno_a_uno" selected>Cuadros de uno en uno</option>' +
-            '<option value="fundido">🎞️ Fundido</option>' +
-            '<option value="olas">🌊 Olas</option>' +
-            '<option value="circulos">⭕ Círculos</option>' +
-            '<option value="cuadros">🔲 Mosaico</option>' +
-            '<option value="deslizar">➡️ Deslizar (cascada)</option>' +
-            '<option value="persiana">🎚️ Persiana</option>' +
-            '<option value="aterriza">🎯 Aterrizar (suave)</option>' +
-            '<option value="caida">⬇️ Caída</option>' +
-            '<option value="rebote">🪀 Rebote</option>' +
-          '</optgroup>' +
-          '<optgroup label="— Cómo pasa de una tarjeta a otra (carrusel) —">' +
-            '<option value="t_cubo">🧊 Cubo 3D</option>' +
-            '<option value="t_zoom">💥 Zoom punch</option>' +
-            '<option value="t_iris">⭕ Iris</option>' +
-            '<option value="t_cortina">🎭 Cortina partida</option>' +
-            '<option value="t_luz">✨ Barrido de luz</option>' +
-            '<option value="t_persiana">🎚️ Persiana (barrido)</option>' +
-            '<option value="t_blur">🌫️ Desenfoque</option>' +
-            '<option value="t_volteo">🔄 Volteo 3D</option>' +
-            '<option value="t_empuje">⬆️ Empuje vertical</option>' +
-            '<option value="t_giro">🌀 Giro</option>' +
-            '<option value="t_desvanecer">🫧 Fundido cruzado</option>' +
-            '<option value="t_desliza">➡️ Deslizar (clásico)</option>' +
-          '</optgroup>' +
+          '<option value="uno_a_uno">Cuadros de uno en uno</option>' +
+          '<option value="olas">🌊 Olas</option>' +
+          '<option value="circulos">⭕ Círculos</option>' +
+          '<option value="cuadros">🔲 Mosaico</option>' +
+          '<option value="deslizar">➡️ Deslizar</option>' +
+          '<option value="persiana">🎚️ Persiana</option>' +
+          '<option value="fundido">🎞️ Fundido</option>' +
+          '<option value="aterriza">🎯 Aterrizar (suave)</option>' +
+          '<option value="caida">⬇️ Caída</option>' +
+          '<option value="rebote">🪀 Rebote</option>' +
         '</select>' +
       '</div>' +
-      '<div class="row" style="margin-top:-2px"><span style="font-size:9px;color:var(--tx2)">' +
-        'Todos los efectos en un solo sitio. Los de arriba lucen en el vídeo normal; ' +
-        'los de abajo, en el vídeo del carrusel (al pasar de una tarjeta a otra).' +
-      '</span></div>' +
       '<div class="row">' +
         '<span class="lbl">📼 Formato</span>' +
         '<select id="fpVidFormato" style="flex:1;min-width:160px">' +
@@ -1365,9 +1361,11 @@
     catch (e) { estado('No se pudo probar la voz: ' + (e.message || e), 'err'); }
   }
 
-  /* ═══════════════════ Guion por tarjeta (sincronía voz↔tarjeta) ═══════════════════
-     La voz lee la ficha de cada tarjeta y, con las MARCAS que devuelve la
-     captura, el vídeo cambia de tarjeta justo cuando la voz la nombra. */
+  /* ═══════════════════ Sincronía voz↔tarjeta (carrusel) ═══════════════════
+     La voz gratis lee una ficha por tarjeta EN ORDEN y el vídeo reparte el
+     tiempo PROPORCIONAL al texto de cada tarjeta, estirado a lo que dura la voz.
+     Es determinista: nunca colapsa ni se congela (a diferencia de fiarse de los
+     tiempos que avisa el navegador, que salían mal). */
   function limpiarVoz(s) {
     return String(s == null ? '' : s)
       .replace(/€/g, ' euros')
@@ -1381,15 +1379,14 @@
     if (/\d/.test(t)) return t + ' euros';
     return t;
   }
-  /* Una frase por tarjeta del carrusel, en el mismo orden que tarjetasCarrusel().
-     Nunca devuelve vacío: si la ficha está en blanco, cae a la cabecera. */
+  /* Una frase por tarjeta del carrusel, en el MISMO orden que tarjetasCarrusel().
+     Nunca vacía: si la ficha está en blanco, cae a la cabecera. */
   function guionPorTarjeta(hs) {
     return hs.map(function (card) {
       var cel = card.celdas || [];
       var marca = limpiarVoz(card.cabecera && card.cabecera.marca);
       var titCab = limpiarVoz(card.cabecera && card.cabecera.titulo);
       if (cel.length !== 1) {
-        // portada / rejilla con varias celdas: presentación con la cabecera
         var intro = [marca, titCab, limpiarVoz(card.cabecera && card.cabecera.subtitulo)]
           .filter(Boolean).join('. ');
         return intro || titCab || marca || 'Nuestros servicios';
@@ -1400,14 +1397,25 @@
       return frase || titCab || marca || 'Servicio';
     });
   }
-  /* Estima los segundos de narración por el largo del guion (~13 c/s de lectura
-     tranquila), para no dejar que el ritmo se dispare cuando no se conoce la
-     duración real de la voz (voz de estudio, audio subido). */
-  function estimarSegGuion() {
-    var g = (val('fpGuion') || '').trim();
-    if (!g) return 0;
-    var vel = parseFloat(val('fpVozVel')) || 1;
-    return Math.min(TOPE_SEG_VIDEO, Math.max(6, (g.length / 13) / Math.max(0.5, vel)));
+  /* Reparte 'total' segundos entre las tarjetas, proporcional al largo de cada
+     texto, con un mínimo por tarjeta para que ninguna pase de refilón. Devuelve
+     los tiempos ACUMULADOS de fin de cada tarjeta (monótonos, el último = total). */
+  function tiemposProporcionales(segmentos, total) {
+    var n = segmentos.length;
+    if (n <= 1) return [total];
+    var lens = segmentos.map(function (s) { return Math.max(3, String(s || '').length); });
+    var suma = lens.reduce(function (a, b) { return a + b; }, 0);
+    var t = [], acc = 0;
+    for (var i = 0; i < n; i++) { acc += lens[i]; t.push(total * acc / suma); }
+    var MINW = Math.min(1.4, (total / n) * 0.6);   // avance mínimo por tarjeta
+    for (var j = 0; j < n; j++) {
+      var prev = j > 0 ? t[j - 1] : 0;
+      if (t[j] - prev < MINW) t[j] = prev + MINW;
+    }
+    var last = t[n - 1];
+    if (last > total && last > 0) { var k = total / last; for (var m = 0; m < n; m++) t[m] *= k; }
+    t[n - 1] = total;
+    return t;
   }
 
   /* Barra fina de progreso abajo del lienzo (relojito): avanza con el vídeo.
@@ -1440,8 +1448,8 @@
       if (window.B6_VOZ_GRATIS.ocupada && window.B6_VOZ_GRATIS.ocupada())
         return Promise.reject(new Error('Se está grabando otra voz ahora mismo. Espera a que termine.'));
       var texto = (val('fpGuion') || '').trim();
-      // En el vídeo de tarjetas, la voz lee una ficha por tarjeta y devuelve las
-      // MARCAS para sincronizar. En el vídeo normal, lee el guion de corrido.
+      // En el vídeo de tarjetas, la voz lee una ficha por tarjeta (para poder
+      // sincronizar). En el vídeo normal, lee el guion de corrido.
       var segmentos = (hsCarrusel && hsCarrusel.length) ? guionPorTarjeta(hsCarrusel) : null;
       if (!texto && !(segmentos && segmentos.length))
         return Promise.reject(new Error('No hay nada que leer. Pulsa «Escríbelo tú por mí» o escribe el guion.'));
@@ -1452,9 +1460,10 @@
         tono: parseFloat(val('fpVozTono')) || 1,
         aviso: function (m) { estado(m, 'proc'); }
       };
-      if (segmentos && segmentos.length) opCap.segmentos = segmentos; else opCap.texto = texto;
+      if (segmentos && segmentos.length) { opCap.segmentos = segmentos; opCap.texto = texto; }
+      else opCap.texto = texto;
       return window.B6_VOZ_GRATIS.capturar(opCap).then(function (r) {
-        return { url: URL.createObjectURL(r.blob), seg: r.segundos, marcas: r.marcas || null, propia: true };
+        return { url: URL.createObjectURL(r.blob), seg: r.segundos, segmentos: segmentos, propia: true };
       });
     }
 
@@ -1658,18 +1667,10 @@
   function animOpts(carrusel, F, porHoja) {
     var ocA = document.createElement('canvas'), ocB = document.createElement('canvas');
     ocA.width = ocB.width = F.w; ocA.height = ocB.height = F.h;
-    // Un único desplegable «✨ Efecto del vídeo» decide todo. Los valores con
-    // prefijo «t_» son transiciones entre tarjetas (carrusel); el resto son
-    // revelados de cómo aparece cada tarjeta. Se enruta cada uno a su motor y
-    // el aspecto complementario usa un valor por defecto elegante, de modo que
-    // cualquier efecto de la lista funciona tanto en el vídeo normal como en el
-    // carrusel.
-    var sel  = val('fpEfecto') || 'uno_a_uno';
-    var esTr = sel.indexOf('t_') === 0;
     return {
       carrusel: carrusel,
-      efecto: esTr ? 'fundido' : sel,             // revelado por tarjeta
-      efCar:  esTr ? sel.slice(2) : 'desvanecer', // transición entre tarjetas
+      efecto: val('fpEfecto') || 'uno_a_uno',
+      efCar: val('fpCarTransicion') || 'desliza',
       porHoja: porHoja,
       // Transición entre tarjetas (cubo, iris, luz…): más lenta y fluida que antes
       // (antes tope 0.55 s, se sentía brusca). Nunca ocupa más de ~40% de la
@@ -1679,7 +1680,7 @@
     };
   }
 
-  /* PASO de la transición para una tarjeta de duración 'ph' segundos. */
+  /* PASO (duración de la transición) para una tarjeta que dura 'ph' segundos. */
   function pasoDe(ph) {
     return Math.min(ph * 0.45, Math.max(0.9, Math.min(1.6, ph * 0.40)));
   }
@@ -1687,9 +1688,9 @@
   function animFotograma(ctx, F, hs, t, o) {
     var iHoja, inicio, porHoja, fin;
     if (o.tiempos) {
-      // Línea de tiempo por tarjeta: 'tiempos[i]' es el segundo en que ACABA la
-      // tarjeta i (las marcas de la voz). La tarjeta activa es la primera cuya
-      // frontera aún no se ha pasado, así cada una dura lo que dura su locución.
+      // Línea de tiempo por tarjeta (sincronía con la voz): 'tiempos[i]' es el
+      // segundo en que ACABA la tarjeta i. La activa es la primera cuya frontera
+      // aún no se ha pasado, así cada una dura lo que dura su locución.
       iHoja = 0;
       while (iHoja < o.tiempos.length - 1 && t >= o.tiempos[iHoja]) iHoja++;
       inicio = iHoja > 0 ? o.tiempos[iHoja - 1] : 0;
@@ -1703,7 +1704,7 @@
     }
     var tHoja = t - inicio;
     var queda = fin - t;
-    var PASO = pasoDe(porHoja);
+    var PASO = o.tiempos ? pasoDe(porHoja) : o.PASO;
     if (o.carrusel && iHoja < hs.length - 1 && queda < PASO) {
       // las dos tarjetas se componen con la transición elegida (cubo, iris…)
       var phSig = o.tiempos ? Math.max(0.2, o.tiempos[iHoja + 1] - o.tiempos[iHoja]) : o.porHoja;
@@ -1731,13 +1732,8 @@
     repintar();          // restaura la vista previa fija normal
     arrancarBucle();     // y si hay vídeos, que vuelvan a moverse
   }
-  function verAnimacion(carruselPedido) {
+  function verAnimacion(carrusel) {
     if (!listo) return;
-    // Igual que el vídeo: si el efecto elegido es una transición (cubo, iris…),
-    // se previsualiza como carrusel, que es donde luce, para que el ▶ Ver
-    // muestre exactamente lo que va a salir en el vídeo.
-    var efSel = val('fpEfecto') || 'uno_a_uno';
-    var carrusel = carruselPedido || efSel.indexOf('t_') === 0;
     if (animPrev) { var eraCar = animPrev.carrusel; pararPreviewAnim(); if (eraCar === carrusel) return; }
     var reduce = false;
     try { reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
@@ -1756,7 +1752,7 @@
     dur = Math.min(TOPE_SEG_VIDEO, dur);
     var o = animOpts(carrusel, F, dur / hs.length);
 
-    var btn = carruselPedido ? $('fpVerCarrusel') : $('fpVerVideo');
+    var btn = carrusel ? $('fpVerCarrusel') : $('fpVerVideo');
     if (btn) btn.textContent = '■ Parar';
     estado('▶ Así se moverá el vídeo. Cuando te guste, dale a 🎬 para descargarlo.', 'done');
     var t0 = performance.now();
@@ -1775,26 +1771,16 @@
   function grabarVideoNormal() { grabarVideo(false); }
   function grabarVideoCarrusel() { grabarVideo(true); }
 
-  function grabarVideo(carruselPedido) {
+  function grabarVideo(carrusel) {
     if (FP.grabando) { if (FP.pararGrabacion) FP.pararGrabacion(); return; }
     if (!window.MediaRecorder) { estado('Este navegador no sabe grabar vídeo. Prueba en Chrome.', 'err'); return; }
     pararPreviewAnim();   // si estaba la vista previa animada, se detiene
 
-    // El cubo y las transiciones (t_*) sólo lucen pasando de una tarjeta a otra:
-    // si se eligen para el vídeo normal, se hace el vídeo de tarjetas para que se
-    // vean, en vez de dejar el folleto quieto.
-    var efSel = val('fpEfecto') || 'uno_a_uno';
-    var carrusel = carruselPedido || efSel.indexOf('t_') === 0;
-
     var fuente = val('fpVoz') || 'texto_gratis';
     // el botón que se pulsó es el que pasa a «Detener», para poder pararlo
-    var boton = carruselPedido ? ($('fpCarVid') || $('fpVideo')) : $('fpVideo');
-    var textoBoton = carruselPedido ? '🎬 Descargar vídeo 3D' : '🎬 Descargar vídeo';
+    var boton = carrusel ? ($('fpCarVid') || $('fpVideo')) : $('fpVideo');
+    var textoBoton = carrusel ? '🎬 Descargar vídeo 3D' : '🎬 Descargar vídeo';
     function soltarBoton() { if (boton) boton.textContent = textoBoton; }
-
-    // Las tarjetas/hojas se calculan ya, para poder armar el guion por tarjeta
-    // (una frase por tarjeta) que la voz leerá sincronizada.
-    var hs = carrusel ? tarjetasCarrusel() : hojas();
 
     var limpieza = [];
     function limpiar() { limpieza.forEach(function (f) { try { f(); } catch (e) {} }); limpieza = []; }
@@ -1807,31 +1793,23 @@
 
     FP.grabando = true;
     if (boton) boton.textContent = '■ Detener';
-    estado((carrusel && !carruselPedido)
-      ? 'Ese efecto (cubo, iris…) luce pasando de una tarjeta a otra: te preparo el vídeo de tarjetas.'
-      : 'Preparando…', 'proc');
+    estado('Preparando…', 'proc');
 
-    // En el vídeo de tarjetas, la voz gratis lee una ficha por tarjeta y devuelve
-    // las marcas para sincronizar; en el normal, lee el guion de corrido.
+    // en modo carrusel el vídeo va tarjeta a tarjeta, como al pasar el dedo; se
+    // calcula ya para poder armar el guion por tarjeta que la voz leerá en orden
+    var hs = carrusel ? tarjetasCarrusel() : hojas();
+
     prepararVoz(fuente, carrusel ? hs : null).then(function (voz) {
       var F = M.FORMATOS[hs[0].formato] || M.FORMATOS.a4v;
       var cv = document.createElement('canvas');
       cv.width = F.w; cv.height = F.h;
       var ctx = cv.getContext('2d');
-      // CLAVE PARA QUE NO SE CONGELE EL VÍDEO:
-      // El navegador (sobre todo Android/tablets) deja de "pintar" —y por tanto
-      // de entregar cuadros a captureStream— un canvas que no está de verdad
-      // visible. Esconderlo a 1px con opacity≈0 fuera de pantalla NO basta: la
-      // captura se congela tras los primeros cuadros y sale la imagen pegada con
-      // el audio corriendo. Por eso el lienzo de grabación se muestra DE VERDAD,
-      // centrado y a tamaño visible, mientras se graba (además sirve de vista
-      // previa en vivo). Se retira al terminar. La resolución del vídeo la fija
-      // cv.width/height (F.w×F.h), no el tamaño en pantalla, así que se ve
-      // reducido pero se graba a plena resolución.
-      // Tamaño en pantalla modesto y anclado ARRIBA-centro: se ve el vídeo
-      // montándose (y así el navegador lo mantiene "pintado" y no se congela),
-      // pero sin tapar los controles de abajo (el botón Detener del micrófono).
-      // pointer-events:none para no bloquear ningún clic.
+      // CLAVE PARA QUE NO SE CONGELE (Android/tablets): el navegador deja de
+      // "pintar" —y de entregar cuadros a captureStream— un canvas que no está
+      // de verdad visible (esconderlo a 1px/opacity≈0 NO basta). Por eso el
+      // lienzo de grabación se MUESTRA de verdad, arriba-centro y modesto,
+      // mientras graba (sirve también de vista previa en vivo). Se retira al
+      // terminar. La resolución la fija cv.width/height, no el tamaño en pantalla.
       var maxW = Math.min(260, (window.innerWidth || 360) * 0.6);
       var escala = Math.min(1, maxW / F.w);
       cv.style.cssText = 'position:fixed;left:50%;top:10px;transform:translateX(-50%);' +
@@ -1839,7 +1817,6 @@
         'max-width:60vw;border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.7);' +
         'background:#000;z-index:99999;pointer-events:none;';
       document.body.appendChild(cv);
-      // Cartel de "grabando" para que se entienda que hay que dejarlo quieto.
       var aviso = document.createElement('div');
       aviso.textContent = '🎬 Grabando… déjalo quieto, no cambies de pestaña';
       aviso.style.cssText = 'position:fixed;left:50%;top:' + (Math.round(F.h * escala) + 18) + 'px;' +
@@ -1867,11 +1844,8 @@
         vozEl.preload = 'auto';
         limpieza.push(function () { try { vozEl.pause(); URL.revokeObjectURL(voz.url); } catch (e) {} });
         cadena = new Promise(function (ok) {
-          // Se espera a conocer la DURACIÓN real (loadedmetadata), no sólo a que
-          // se pueda reproducir: si se sigue sin saber la duración, el vídeo caía
-          // al valor por defecto (12 s) y cortaba la narración. Margen amplio.
-          vozEl.onloadedmetadata = ok; vozEl.oncanplaythrough = ok; vozEl.onerror = ok; vozEl.load();
-          setTimeout(ok, 8000);
+          vozEl.oncanplaythrough = ok; vozEl.onerror = ok; vozEl.load();
+          setTimeout(ok, 5000);
         }).then(function () {
           if (ac.state === 'suspended') return ac.resume();
         }).then(function () {
@@ -1891,40 +1865,24 @@
         if (voz && voz.seg && isFinite(voz.seg)) segVoz = voz.seg;
         else if (vozEl && vozEl.duration && isFinite(vozEl.duration)) segVoz = vozEl.duration;
 
-        // Se separan DOS cosas que antes estaban pegadas:
-        //   · dur      = cuándo PARAR el vídeo (tope). Con audio subido o voz de
-        //                estudio se deja amplio y manda el evento 'ended' de la
-        //                voz, así nunca corta la locución.
-        //   · durRitmo = cómo se REPARTE el tiempo entre las tarjetas. NUNCA vale
-        //                180: si no se conoce la duración se ESTIMA por el guion,
-        //                para que no salga cada tarjeta congelada ~30 s (el bug
-        //                que dejaba el vídeo «paralizado» y con sólo 3-4 efectos).
-        var dur, durRitmo;
+        var dur;
         if (segVoz > 0) {
           dur = segVoz + COLA_FIN;                       // la voz completa manda
-          durRitmo = dur;
-        } else if (vozEl) {
-          dur = TOPE_SEG_VIDEO;                          // tope; para con 'ended'
-          var estim = estimarSegGuion();
-          durRitmo = estim > 0 ? estim
-            : Math.max(parseFloat(val('fpDur')) || 12, carrusel ? hs.length * MIN_POR_TARJETA : 0);
         } else {
           dur = Math.max(4, parseFloat(val('fpDur')) || 12);
-          durRitmo = dur;
         }
-
-        // Marcas por tarjeta (voz gratis): definen el ritmo EXACTO — cada tarjeta
-        // dura lo que dura su locución. Sólo si el nº de marcas cuadra con el nº
-        // de tarjetas. Sin marcas, se reparte parejo con un mínimo por tarjeta.
-        var tiempos = null;
-        if (carrusel && voz && voz.marcas && voz.marcas.length === hs.length) {
-          tiempos = voz.marcas.slice();
-        } else if (carrusel) {
-          dur = Math.max(dur, hs.length * MIN_POR_TARJETA);
-          durRitmo = Math.max(durRitmo, hs.length * MIN_POR_TARJETA);
-        }
+        // Pase lo que pase, cada tarjeta del carrusel necesita su tiempo mínimo
+        // para poder leerse/oírse con calma (nada de divisiones demasiado cortas).
+        if (carrusel) dur = Math.max(dur, hs.length * MIN_POR_TARJETA);
         dur = Math.min(TOPE_SEG_VIDEO, dur);             // tope de seguridad amplio
-        durRitmo = Math.min(TOPE_SEG_VIDEO, Math.max(2, durRitmo));
+
+        // Sincronía voz↔tarjeta: si la voz gratis leyó una ficha por tarjeta y
+        // conocemos su duración real, se reparte el tiempo PROPORCIONAL al texto
+        // de cada tarjeta (determinista, nunca colapsa). Sin esto, reparto parejo.
+        var tiempos = null;
+        if (carrusel && segVoz > 0 && voz && voz.segmentos && voz.segmentos.length === hs.length) {
+          tiempos = tiemposProporcionales(voz.segmentos, segVoz);   // acaba en segVoz; la cola queda en la última
+        }
 
         // música gratis: suena por debajo de la voz (0.32) o sola (0.9) si no
         // hay voz. Se enchufa al mismo destino que se graba, así entra en el MP4
@@ -1936,11 +1894,10 @@
           if (!pistaAudio) pistaAudio = destino.stream.getAudioTracks()[0];
         }
 
-        // Si el navegador sabe empujar cuadros a mano (Chromium/Android), se usa
+        // Donde el navegador sabe empujar cuadros a mano (Chromium/Android) se usa
         // captureStream(0) = captura MANUAL: cada cuadro pintado se empuja con
         // requestFrame(), así ni uno se pierde y no depende de que el navegador
-        // decida "refrescar" el canvas (que es lo que fallaba y congelaba la
-        // imagen). Si no lo soporta (Safari/iOS), se usa captura automática a 30.
+        // decida "refrescar" el canvas. En Safari/iOS se usa captura a 30 fps.
         var soportaManual = false;
         try {
           soportaManual = !!(window.CanvasCaptureMediaStreamTrack &&
@@ -1949,8 +1906,6 @@
         } catch (e) {}
         var flujo = soportaManual ? cv.captureStream(0) : cv.captureStream(30);
         var pistaVideo = flujo.getVideoTracks()[0];
-        // Empuja un cuadro a mano cuando el navegador lo permite: así ni un
-        // fotograma se pierde y la imagen no se queda pegada.
         var empujarCuadro = (pistaVideo && typeof pistaVideo.requestFrame === 'function')
           ? function () { try { pistaVideo.requestFrame(); } catch (e) {} }
           : function () {};
@@ -1977,12 +1932,9 @@
         var trozos = [];
         rec.ondataavailable = function (e) { if (e.data && e.data.size) trozos.push(e.data); };
 
-        var porHoja = durRitmo / hs.length;
-        var t0 = 0;                 // se fija al arrancar la grabación (reloj alineado)
+        var porHoja = dur / hs.length;
+        var t0 = performance.now();
         var pedido = null;
-        // La voz avisa cuando termina: el vídeo se para poco después (COLA_FIN),
-        // así la locución nunca queda cortada aunque no se supiera su duración.
-        var vozAcabo = false, tVozFin = 0;
 
         rec.onstop = function () {
           limpiar();
@@ -2003,13 +1955,7 @@
         };
 
         rec.start();
-        // El reloj de la animación arranca JUNTO con la grabación (antes se fijaba
-        // durante el montaje del MediaRecorder y el vídeo iba por delante del audio).
-        t0 = performance.now();
-        if (vozEl) {
-          vozEl.onended = function () { vozAcabo = true; tVozFin = (performance.now() - t0) / 1000; };
-          vozEl.play().catch(function () {});
-        }
+        if (vozEl) vozEl.play().catch(function () {});
         estado(fuente === 'mic' ? '● Grabando · habla ahora y pulsa Detener al terminar.' : '🎬 Grabando el vídeo…', 'proc');
 
         // el MISMO motor de animación que usa el botón «▶ Ver» (WYSIWYG)
@@ -2019,39 +1965,24 @@
         (function pintar() {
           var t = (performance.now() - t0) / 1000;
           animFotograma(ctx, F, hs, t, oAnim);
-
-          // Momento de parada efectivo: el MENOR de la duración calculada y el
-          // fin real de la voz (+cola). En carrusel, nunca antes de mostrar todas
-          // las tarjetas (su tiempo mínimo), para no cortar el pase. Con el micro,
-          // hasta el tope de seguridad o hasta que se pulse Detener a mano.
-          var stopT;
-          if (fuente === 'mic') {
-            stopT = TOPE_SEG_VIDEO;
-          } else {
-            // Con marcas (sincronía) la voz ya define la duración de cada tarjeta,
-            // así que no se fuerza el mínimo por tarjeta: se para justo con la voz.
-            var minCar = (carrusel && !tiempos) ? hs.length * MIN_POR_TARJETA : 0;
-            var limVoz = vozAcabo ? Math.max(tVozFin + COLA_FIN, minCar) : Infinity;
-            stopT = Math.min(dur, limVoz);
-          }
-
           // Cierre profesional: entra desde negro y termina fundiendo a negro,
           // para que el vídeo abra y cierre suave en vez de cortar en seco.
           var FADE = 0.6;
           var aFade = 0;
-          if (t < FADE) aFade = 1 - t / FADE;                                           // apertura
-          else if (fuente !== 'mic' && t > stopT - FADE) aFade = Math.min(1, (t - (stopT - FADE)) / FADE); // cierre
+          if (t < FADE) aFade = 1 - t / FADE;                       // apertura
+          else if (fuente !== 'mic' && t > dur - FADE) aFade = Math.min(1, (t - (dur - FADE)) / FADE); // cierre
           if (aFade > 0) {
             ctx.save(); ctx.globalAlpha = aFade; ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, F.w, F.h); ctx.restore();
           }
-          // Relojito: barra fina abajo que avanza con el vídeo (no en modo micro,
-          // que no tiene duración conocida hasta que se pulsa Detener).
-          if (fuente !== 'mic' && isFinite(stopT) && stopT > 0) barraProgreso(ctx, F, t / stopT);
+          // Relojito: barra de progreso (no en micro, que no tiene fin conocido).
+          if (fuente !== 'mic' && dur > 0) barraProgreso(ctx, F, t / dur);
           empujarCuadro();
-          // NO se para en cuanto la voz termina: se deja la cola (COLA_FIN) para
-          // que la última tarjeta respire y la narración nunca quede cortada.
-          if (t >= stopT) { FP.pararGrabacion(); return; }
+          // Se para al llegar a la duración calculada (que ya incluye la voz
+          // entera + la cola). NO se para en cuanto la voz termina: así la
+          // última tarjeta respira y la narración nunca queda cortada.
+          if (fuente !== 'mic' && t >= dur) { FP.pararGrabacion(); return; }
+          if (fuente === 'mic' && t >= TOPE_SEG_VIDEO) { FP.pararGrabacion(); return; }
           pedido = requestAnimationFrame(pintar);
         })();
       });
