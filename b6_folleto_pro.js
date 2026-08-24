@@ -870,17 +870,28 @@
     });
   }
 
+  /* Huella de una foto o un vídeo. NO basta con el nombre del archivo: al abrir
+     un diseño guardado, todas las fotos restauradas se llaman igual («foto
+     guardada»), así que dos hojas que sólo se diferencien en la foto —un antes
+     y un después, un lookbook con los mismos servicios— darían la misma huella
+     y la hoja de pantalla se descartaría al exportar. Se añade la medida y el
+     final del enlace, que sí distinguen una imagen de otra (y en los vídeos el
+     blob es único de por sí). Es barato: no recorre el data URL entero. */
+  function firmaMedia(m) {
+    if (!m) return '';
+    var u = m.url || '';
+    return m.tipo + '·' + (m.nombre || '') + '·' + u.length + ':' + u.slice(-24);
+  }
+
   /* Huella de una hoja: sirve para saber si la que está en pantalla es la misma
-     que la última que se guardó. No mira los objetos de foto/vídeo (que se
-     comparten por referencia), sino su nombre y su tipo. */
+     que la última que se guardó. */
   function firmaHoja(p) {
     try {
       return JSON.stringify({
         r: p.rejilla, f: p.formato, t: p.tema, c: p.colores || null,
         cab: p.cabecera, pie: p.pie, ad: p.adornos,
         cel: p.celdas.map(function (c) {
-          return [c.titulo || '', c.texto || '', c.precio || '', c.etiqueta || '',
-                  c.media ? (c.media.tipo + '·' + (c.media.nombre || '')) : ''];
+          return [c.titulo || '', c.texto || '', c.precio || '', c.etiqueta || '', firmaMedia(c.media)];
         })
       });
     } catch (e) { return String(Math.random()); }   // ante la duda, no se considera repetida
@@ -939,7 +950,9 @@
     var F = M.FORMATOS[pag.formato] || M.FORMATOS.a4v;
     var cv = document.createElement('canvas');
     cv.width = F.w; cv.height = F.h;
-    M.pintar(cv.getContext('2d'), F.w, F.h, pag, conQR({ nPagina: n }));
+    // sinCache: cada hoja se pinta una sola vez y a tamaño de imprenta, así que
+    // guardarla en memoria no ahorra nada y deja lienzos de varios MB retenidos.
+    M.pintar(cv.getContext('2d'), F.w, F.h, pag, conQR({ nPagina: n, sinCache: true }));
     return cv;
   }
 
@@ -1083,6 +1096,8 @@
     });
     FP.paginas = [];
     FP.pagina.celdas.forEach(function (c, i) { if (c.media) quitarMedia(i, true); });
+
+    if (M.limpiarCache) M.limpiarCache();   // otro folleto: lo guardado ya no sirve
 
     var pags = it.paginas.map(deserializarPagina);
     FP.paginas = pags.slice(0, pags.length - 1);
@@ -1851,6 +1866,24 @@
     return f;
   }
 
+  /* Al elegir un archivo de música o de voz se mide su duración en el momento,
+     y se guarda como si ya se hubiera grabado: así «▶ Ver» enseña el ritmo real
+     desde la primera vez, sin tener que descargar el vídeo para descubrirlo. */
+  function medirAudioSubido() {
+    var e = $('fpAudio'), f = e && e.files && e.files[0];
+    if (!f) return;
+    var url = URL.createObjectURL(f);
+    var a = new Audio();
+    var fin = function () {
+      if (a.duration && isFinite(a.duration)) FP.vozUltima = { seg: a.duration, clave: claveVoz() };
+      try { URL.revokeObjectURL(url); } catch (er) {}
+    };
+    a.onloadedmetadata = fin;
+    a.onerror = function () { try { URL.revokeObjectURL(url); } catch (er) {} };
+    a.preload = 'metadata';
+    a.src = url;
+  }
+
   /* Cuánto va a durar el vídeo. Manda la narración, igual que en la grabación.
      Devuelve además si la cifra es exacta (ya se grabó esa voz y se midió) o
      una estimación, para poder decirlo y no prometer un «es exactamente esto»
@@ -2269,13 +2302,18 @@
     }
     // Cambiar la calidad o el formato de la hoja cambia el tamaño del vídeo:
     // se detiene la vista previa animada y se actualiza el rótulo de medidas.
-    ['fpVidCalidad', 'fpVidFormato'].forEach(function (id) {
-      if ($(id)) $(id).addEventListener('change', function () { pararPreviewAnim(); mostrarMedidasVideo(); });
+    // Sólo la calidad cambia el tamaño del vídeo (fpVidFormato elige MP4 o WebM,
+    // que no afecta a las medidas y no tiene por qué cortar la vista previa).
+    if ($('fpVidCalidad')) $('fpVidCalidad').addEventListener('change', function () {
+      pararPreviewAnim(); mostrarMedidasVideo();
     });
     // Y cambiar el guion, la velocidad de la voz o los segundos cambia lo que
     // va a durar: la vista previa animada se para para no enseñar un ritmo viejo.
-    ['fpVoz', 'fpDur', 'fpVozVel', 'fpGuion', 'fpAudio'].forEach(function (id) {
+    ['fpVoz', 'fpDur', 'fpVozVel', 'fpGuion'].forEach(function (id) {
       if ($(id)) $(id).addEventListener('change', pararPreviewAnim);
+    });
+    if ($('fpAudio')) $('fpAudio').addEventListener('change', function () {
+      pararPreviewAnim(); medirAudioSubido();
     });
     if ($('fpMusPrev')) $('fpMusPrev').addEventListener('click', previewMusica);
     if ($('fpMusica')) $('fpMusica').addEventListener('change', pararPreview);

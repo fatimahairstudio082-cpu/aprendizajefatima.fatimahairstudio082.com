@@ -391,11 +391,12 @@ de 9 fotogramas a **176 (30,0 fps)**.
   y no podía tocar. Ahora se recorta a `REJILLAS.rlista.n`. Las celdas siguen en
   memoria por si vuelve a una cuadrícula grande; sólo dejan de dibujarse.
 - **Esa misma plantilla se quedaba quieta en el vídeo.** `dibujarLista()` no
-  miraba `op.revelar` ni `op.textoRev`, así que el menú «✨ Efecto del vídeo» no
-  hacía nada en ella (comprobado: `revelar` se llamaba 6 veces en `r6a` y 0 en
-  `rlista`). La transformación del revelado se ha sacado a `conRevelado()`, que
-  usan por igual el bucle de la rejilla y la lista: entra la foto grande y entra
-  cada línea de la tarifa.
+  miraba `op.revelar`, así que el menú «✨ Efecto del vídeo» no hacía nada en
+  ella (comprobado: `revelar` se llamaba 6 veces en `r6a` y 0 en `rlista`). La
+  transformación del revelado se ha sacado a `conRevelado()`, que usan por igual
+  el bucle de la rejilla y la lista: entra la foto grande y entra cada línea de
+  la tarifa. Las filas usan sólo `revelar` (que ya las hace aparecer y subir);
+  `op.textoRev` lo aplica `cuadro()` al texto de la foto grande, como siempre.
 - **Elegir «🧊 Cubo 3D» para el vídeo normal daba un fundido.** `efCar` se
   calculaba y sólo se usaba en el carrusel. Ahora, si se elige una transición,
   se aplica también entre hojas del vídeo normal — que además pasaba de una hoja
@@ -420,7 +421,7 @@ de 9 fotogramas a **176 (30,0 fps)**.
   conjunto de 44 MB pasaba el filtro y salía un HTML de 59 MB. Ahora se compara
   `pesoVideos * 4 / 3`.
 - **`</script>` en el guion rompía el folleto web**: `JSON.stringify` escapa las
-  comillas pero no escapa esa etiqueta. Se escapa el `<` como `<`.
+  comillas pero no escapa esa etiqueta. Se escapa el `<` como `\u003c`.
 - **Memoria que no se soltaba**: `bajar()` no revocaba los blobs (cada ZIP, cada
   vídeo y cada folleto web se quedaban hasta recargar); al abrir un diseño
   guardado, los vídeos compartidos con páginas guardadas quedaban protegidos por

@@ -69,8 +69,8 @@
   var _fuentesPedidas = false;
   function garantizarFuentes() {
     if (_fuentesPedidas) return;                 // se llama una vez por fotograma: no repetir el trabajo
-    _fuentesPedidas = true;
     if (typeof document === 'undefined' || document.getElementById('fpFuentes')) return;
+    _fuentesPedidas = true;                      // se marca sólo cuando de verdad se han pedido
     var l = document.createElement('link');
     l.id = 'fpFuentes'; l.rel = 'stylesheet';
     l.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Cormorant+Garamond:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap';
@@ -360,6 +360,11 @@
      Sólo se cachea el fondo: la cabecera, el pie y el QR se siguen pintando en
      vivo y DESPUÉS de los cuadros, para que ningún efecto que desplace un
      cuadro hacia abajo pueda taparlos. */
+  /* La caché existe para el VÍDEO y la vista previa, donde la misma hoja se
+     repinta cientos de veces. Las exportaciones (JPG, PDF, portadas del folleto
+     web, carrusel) pintan cada hoja UNA vez y a tamaño de imprenta: guardar ahí
+     no ahorra nada y deja lienzos de varios MB retenidos. Por eso `op.sinCache`
+     las deja fuera. */
   var _fondoCache = [], MAX_FONDO = 3;
 
   function claveFondo(W, H, C, ad) {
@@ -372,11 +377,11 @@
     if (i > 0) { lista.splice(i, 1); lista.unshift(item); }
   }
 
-  function fondoCacheado(ctx, W, H, C, ad) {
-    // Hojas descomunales: no merece la pena guardarlas en memoria. Y hojas
-    // diminutas (las miniaturas del muestrario): tampoco, porque cada una
-    // tiene un tamaño distinto y la caché sólo daría vueltas.
-    if (typeof document === 'undefined' || W * H > 12e6 || W * H < 15e4) return fondo(ctx, W, H, C, ad);
+  function fondoCacheado(ctx, W, H, C, ad, sinCache) {
+    // Fuera de la caché: las exportaciones (sinCache), las hojas descomunales
+    // —no merece la pena tenerlas en memoria— y las de menos de 150.000 píxeles,
+    // demasiado baratas de pintar para que compense guardarlas.
+    if (sinCache || typeof document === 'undefined' || W * H > 12e6 || W * H < 15e4) return fondo(ctx, W, H, C, ad);
     var k = claveFondo(W, H, C, ad), hit = null, i;
     for (i = 0; i < _fondoCache.length; i++) if (_fondoCache[i].k === k) { hit = _fondoCache[i]; break; }
     if (hit) { alFrente(_fondoCache, hit); ctx.drawImage(hit.cv, 0, 0); return; }
@@ -394,16 +399,30 @@
   /* Los cuadros vacíos dibujan una imagen abstracta con tres degradados
      radiales cada uno, en CADA fotograma. Como es determinista (depende sólo
      del tamaño, la semilla y la paleta), se guarda dibujada y se copia. */
-  var _demoCache = [], MAX_DEMO = 12;
+  /* Tope por PÍXELES y no sólo por número de entradas: doce cuadros grandes
+     ocuparían decenas de MB. Con 4 millones de píxeles (unos 16 MB) caben de
+     sobra los ocho cuadros de una hoja a medida de vídeo. */
+  var _demoCache = [], MAX_DEMO = 12, MAX_DEMO_PX = 4e6, _demoPx = 0;
 
-  function fotoDemoCacheada(ctx, x, y, w, h, semilla, C) {
+  function podarDemo() {
+    while (_demoCache.length && (_demoCache.length > MAX_DEMO || _demoPx > MAX_DEMO_PX)) {
+      var f = _demoCache.pop();
+      _demoPx -= f.cv.width * f.cv.height;
+    }
+  }
+
+  function fotoDemoCacheada(ctx, x, y, w, h, semilla, C, sinCache) {
     // Se guarda y se copia a TAMAÑO ENTERO y en posición entera: así el copiado
     // es exacto, sin reescalar ni interpolar, y no se nota ninguna diferencia
     // con dibujarla a mano. El píxel de más por lado evita que asome el fondo
     // por el borde cuando el cuadro cae en una coordenada con decimales.
     var px = Math.floor(x), py = Math.floor(y);
     var W = Math.max(1, Math.ceil(x + w) - px + 1), H = Math.max(1, Math.ceil(y + h) - py + 1);
-    if (typeof document === 'undefined' || W * H > 3e6) return fotoDemo(ctx, x, y, w, h, semilla, C);
+    // Cuando no se cachea se dibuja con LA MISMA geometría entera, no con la
+    // original de decimales: si no, la imagen de ejemplo saldría un pelín
+    // distinta en el JPG y en el vídeo, y el motor dejaría de ser una sola
+    // fuente de verdad para los dos.
+    if (sinCache || typeof document === 'undefined' || W * H > 2e6) return fotoDemo(ctx, px, py, W, H, semilla, C);
     var k = W + 'x' + H + '|' + semilla + '|' + C.panel + C.acento + C.acento2 + C.tinta;
     var hit = null, i;
     for (i = 0; i < _demoCache.length; i++) if (_demoCache[i].k === k) { hit = _demoCache[i]; break; }
@@ -416,12 +435,13 @@
       } catch (e) { return fotoDemo(ctx, x, y, w, h, semilla, C); }
       hit = { k: k, cv: cv };
       _demoCache.unshift(hit);
-      while (_demoCache.length > MAX_DEMO) _demoCache.pop();
+      _demoPx += W * H;
+      podarDemo();
     } else alFrente(_demoCache, hit);
     ctx.drawImage(hit.cv, px, py);
   }
 
-  function limpiarCache() { _fondoCache = []; _demoCache = []; }
+  function limpiarCache() { _fondoCache = []; _demoCache = []; _demoPx = 0; }
 
   /* ───────────────────────── Cabecera y pie ───────────────────────── */
 
@@ -545,7 +565,7 @@
         : (med.el.complete !== false && (med.el.naturalWidth || med.el.width));
       if (listo) { cubrir(ctx, med.el, r.x, r.y, r.w, r.h, op.ken ? { t: op.t || 0, seed: idx + 1, amp: op.kenAmp } : null); pintada = true; }
     }
-    if (!pintada) fotoDemoCacheada(ctx, r.x, r.y, r.w, r.h, idx + 1 + (op.semillaFoto || 0), C);
+    if (!pintada) fotoDemoCacheada(ctx, r.x, r.y, r.w, r.h, idx + 1 + (op.semillaFoto || 0), C, op.sinCache);
 
     // velo degradado: lo que hace que el texto se lea con foto clara u oscura
     var alto = r.h * (r.h > r.w * 1.4 ? 0.50 : 0.62);
@@ -773,7 +793,7 @@
     var M = Math.round(W * 0.052);
     ctx.save();
     ctx.textBaseline = 'alphabetic';
-    fondoCacheado(ctx, W, H, C, ad);
+    fondoCacheado(ctx, W, H, C, ad, op.sinCache);
 
     var yCab = cabecera(ctx, W, H, M, C, pag, ad);
     var yPie = H - M - W * 0.075;
