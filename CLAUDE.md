@@ -23,6 +23,18 @@ The hub lazily loads each learning block into an `<iframe class="bloque-frame" d
 - `bloque3_academia_pagos.html` — the official academy (video classes). `fatima_peluqueria.html` is a backup duplicate the hub does NOT use — always edit `bloque3_academia_pagos.html`.
 - `bloque4_nutricion.html`, `bloque5_fitness.html`, `bloque6_herramientas.html`, `bloque8_construccion.html`, `bloque9_ejercicios.html`
 
+`estudio_universal.html` is the **premium Business block** ("Estudio Universal"): plantilla grid →
+folleto editor → 3D video studio → QR → saved projects, gated by a `free`/`pro` plan. It is a loose
+page that reuses the Block 6 engines untouched (`b6_folleto_motor.js`, `b6_folleto_cerebro.js`,
+`b6_folleto_disenos.js`, `b6_voz_video_gratis.js`, `netlify/functions/tts.js`) and adds `eu_*.js`,
+one file per screen, each guarded by `window._EU_X_LOADED`. It ships in the hub as a
+fourth card in the **🧰 HERRAMIENTAS PRO** strip (`TOOLS_DATA`), not in the learning-category grid,
+plus its own `frame21` — deliberately outside the 11–20 pool that `hub_bloques_dinamicos.js` hands to
+dynamic cards. That means `index.html` ↔ `fatima_hub.html` both carry the change and must stay in
+sync (note `fatima_hub.html` is CRLF and `index.html` is LF — preserve each file's line endings).
+It also has a tab in `centro_admin.html`. Data contract and the
+list of what is still missing live in `LEEME_ESTUDIO_UNIVERSAL.md`.
+
 Cross-frame communication is done by "bridge" scripts using `postMessage` and `localStorage`. Every bridge is written defensively: loaded standalone (no hub parent) it must be a no-op and the page keeps working alone. Key bridges:
 
 - `hub_core_parche.js` — central credit rules (`window.REGLAS_CONTROL_CREDITOS`, per-block tariffs); the dashboard only observes Firebase, never debits.
@@ -68,6 +80,10 @@ fitness_videos/{grupo}_{obj}_{equipo}_{nej}_{NN}_{ejercicio}   (1 clip/ejercicio
 clases_imgs/{claseId}                              (url_jpg, url, url_video)
 academia/{slug}/{claseId}/imagen.jpg | video.mp4 | paso_01.mp4, paso_02.mp4…
 hub_tarjetas/{n}   (imgUrl)        corte_modulos/{M1..M7}   (imgUrl)
+
+usuarios/{uid}.plan     'free' | 'pro'   (Estudio Universal · solo el admin escribe)
+usuarios/{uid}.marca    {nombre,tel,mail,web,dir,c1,c2}
+proyectos/{uid}/items/{id}   (tipo, nombre, pagina, mini, creado, tocado)
 ```
 
 Google Drive links must be converted before storage: images to the `thumbnail?...w1400` format, videos to `https://drive.google.com/file/d/{ID}/preview` (raw share or `uc?export=download` links render black). `biblioteca.js` auto-converts and rejects non-`https://` input on save; `conversor_drive.html` does manual conversion.
