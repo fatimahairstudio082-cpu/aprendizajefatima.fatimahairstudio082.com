@@ -21,6 +21,30 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // La ficha de negocio del Estudio Universal: mapa cerrado y textos cortos.
+    // Si no viene 'marca' en la escritura, no estorba.
+    function marcaSana() {
+      return !('marca' in request.resource.data)
+        || (
+             request.resource.data.marca is map
+             && request.resource.data.marca.keys().hasOnly(['nombre','tel','mail','web','dir','c1','c2'])
+             && request.resource.data.marca.get('nombre', '') is string
+             && request.resource.data.marca.get('nombre', '').size() <= 60
+             && request.resource.data.marca.get('tel', '') is string
+             && request.resource.data.marca.get('tel', '').size() <= 30
+             && request.resource.data.marca.get('mail', '') is string
+             && request.resource.data.marca.get('mail', '').size() <= 60
+             && request.resource.data.marca.get('web', '') is string
+             && request.resource.data.marca.get('web', '').size() <= 60
+             && request.resource.data.marca.get('dir', '') is string
+             && request.resource.data.marca.get('dir', '').size() <= 60
+             && request.resource.data.marca.get('c1', '') is string
+             && request.resource.data.marca.get('c1', '').size() <= 9
+             && request.resource.data.marca.get('c2', '') is string
+             && request.resource.data.marca.get('c2', '').size() <= 9
+           );
+    }
+
     // ── USUARIOS · cada quien SOLO su propio documento ──
     match /usuarios/{uid} {
       // Lee su doc el propio dueño o el admin
@@ -45,12 +69,18 @@ service cloud.firestore {
       //  · la ALUMNA solo puede tocar 'creditos' (para gastarlos, nunca subirlos) y
       //    'ultimoAcceso'. NO puede tocar acceso_clases, activo, email ni nombre.
       //    Esto cierra el hueco: la alumna NO puede desbloquearse clases ella sola.
+      //  · desde el Estudio Universal la alumna guarda también su ficha de
+      //    negocio en 'marca'. Se valida campo a campo (mapa con claves
+      //    conocidas y textos cortos) porque esos datos se pintan luego en
+      //    paneles: mismo motivo por el que 'nombre' va acotado arriba.
+      //    'plan' NO está en la lista: solo el admin sube a Pro.
       allow update: if esAdmin()
         || (
              request.auth.uid == uid
              && request.resource.data.creditos <= resource.data.creditos
              && request.resource.data.diff(resource.data)
-                  .affectedKeys().hasOnly(['creditos', 'ultimoAcceso'])
+                  .affectedKeys().hasOnly(['creditos', 'ultimoAcceso', 'marca'])
+             && marcaSana()
            );
 
       allow delete: if esAdmin();
@@ -90,6 +120,13 @@ service cloud.firestore {
     match /clases_imgs/{doc}    { allow read: if logueado(); allow write: if esAdmin(); }
     match /clases_videos/{doc}  { allow read: if logueado(); allow write: if esAdmin(); }
     match /clases/{doc}         { allow read: if logueado(); allow write: if esAdmin(); }
+
+    // ── PROYECTOS del Estudio Universal · cada quien SOLO los suyos ──
+    //  proyectos/{uid}/items/{id} = un folleto, vídeo o QR guardado.
+    //  No hay lectura cruzada: ni siquiera entre alumnas de la misma clase.
+    match /proyectos/{uid}/items/{id} {
+      allow read, write: if request.auth.uid == uid || esAdmin();
+    }
 
     // ── PROGRESO de cada alumna · solo el suyo ──
     match /progreso/{uid}       { allow read:  if request.auth.uid == uid || esAdmin();

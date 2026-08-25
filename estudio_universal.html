@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Estudio Universal · Fátima Pro</title>
+<meta name="theme-color" content="#0d0d1a">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   ESTUDIO UNIVERSAL · bloque premium Business
+   Misma piel que el resto del hub (violeta sobre negro), pero con el
+   lienzo siempre mandando: el panel solo mueve mandos del motor.
+   ═══════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#0d0d1a;--bg2:#13132a;--bg3:#1a1a35;--ac:#7c3aed;--ac2:#a855f7;--ac3:#06b6d4;
+  --tx:#e2e8f0;--tx2:#94a3b8;--bd:#2d2d4a;--ok:#10b981;--warn:#f59e0b;--err:#ef4444;
+  --card:#18183a;--card2:#22224a;--oro:#c9a227;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font:13px 'Segoe UI',system-ui,sans-serif;padding-bottom:74px;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font-family:inherit}
+a{color:var(--ac2)}
+
+/* ── Cabecera ── */
+header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:linear-gradient(135deg,var(--bg2),var(--card));border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:30}
+.logo{width:38px;height:38px;flex:none;border-radius:10px;background:linear-gradient(135deg,var(--ac),var(--ac3));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;letter-spacing:.5px}
+.tit{flex:1;min-width:0}
+.tit h1{margin:0;font-size:16px;font-weight:700;background:linear-gradient(90deg,var(--ac2),var(--ac3));-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tit p{margin:1px 0 0;font-size:11px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip-plan{flex:none;font-size:10px;font-weight:700;letter-spacing:.08em;padding:4px 10px;border-radius:20px;border:1px solid var(--bd);color:var(--tx2);background:var(--bg3);cursor:pointer}
+.chip-plan.pro{border-color:var(--ac2);color:#fff;background:linear-gradient(135deg,var(--ac),var(--ac2))}
+
+/* ── Pestañas de escritorio ── */
+nav.tabs{display:flex;gap:4px;padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--bd);overflow-x:auto;position:sticky;top:63px;z-index:29;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{flex:none;background:transparent;border:1px solid transparent;color:var(--tx2);border-radius:20px;padding:7px 14px;font-size:12px;cursor:pointer;white-space:nowrap}
+nav.tabs button:hover{color:var(--tx)}
+nav.tabs button.on{background:var(--card2);border-color:var(--ac);color:#fff;font-weight:600}
+
+/* ── Pestañas de móvil (abajo) ── */
+nav.mtabs{display:none;position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--bg2);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom)}
+nav.mtabs button{flex:1;background:none;border:0;color:var(--tx2);padding:9px 0 8px;font-size:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:52px}
+nav.mtabs button i{font-style:normal;font-size:17px;line-height:1}
+nav.mtabs button.on{color:var(--ac2)}
+
+.wrap{max-width:1280px;margin:0 auto;padding:14px 14px 30px}
+section.pantalla{display:none}
+section.pantalla.on{display:block}
+
+h2.tit2{font-size:14px;margin:0 0 3px;color:var(--ac2)}
+p.ayuda{margin:0 0 12px;font-size:11.5px;color:var(--tx2);line-height:1.6;max-width:760px}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.panel>h3{margin:0 0 8px;font-size:10.5px;letter-spacing:.12em;color:var(--tx2);font-weight:700;text-transform:uppercase}
+.fila{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:7px 0}
+label.lb{font-size:11px;color:var(--tx2);min-width:74px}
+input[type=text],input[type=email],input[type=password],input[type=number],input[type=tel],select,textarea{
+  background:var(--bg3);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:8px 10px;font-size:12.5px;width:100%;max-width:100%}
+textarea{resize:vertical;line-height:1.5}
+input[type=color]{width:38px;height:30px;padding:0;border:1px solid var(--bd);border-radius:6px;background:var(--bg3);cursor:pointer;flex:none}
+input[type=range]{width:100%;accent-color:var(--ac2)}
+.btn{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;border:0;border-radius:9px;padding:9px 15px;font-size:12.5px;font-weight:600;cursor:pointer;min-height:40px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-g{background:transparent;border:1px solid var(--bd);color:var(--tx2)}
+.btn-ok{background:linear-gradient(135deg,#059669,var(--ok))}
+.btn-sm{padding:5px 10px;font-size:11px;min-height:0;border-radius:7px}
+.pill{display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx2);border-radius:20px;padding:6px 12px;font-size:11.5px;cursor:pointer;white-space:nowrap;min-height:34px}
+.pill.on{border-color:var(--ac2);color:#fff;background:var(--card2)}
+.pill.pro-lock{opacity:.75}
+.tira{display:flex;gap:6px;flex-wrap:wrap}
+.tira.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.tira.scroll::-webkit-scrollbar{display:none}
+.badge-pro{font-size:9px;font-weight:800;letter-spacing:.06em;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;border-radius:4px;padding:1px 5px;margin-left:5px}
+.st{border-radius:8px;padding:8px 11px;font-size:11.5px;line-height:1.55;margin-top:8px}
+.st.proc{background:rgba(124,58,237,.14);border:1px solid rgba(124,58,237,.4);color:#d8c9ff}
+.st.ok{background:rgba(16,185,129,.13);border:1px solid rgba(16,185,129,.4);color:#a7f3d0}
+.st.err{background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.4);color:#fecaca}
+.st.avi{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:#fde3b3}
+
+/* ── Parrilla de plantillas ── */
+.eu-cols{display:grid;grid-template-columns:230px 1fr;gap:16px;align-items:start}
+.eu-filtros{position:sticky;top:120px}
+.rejilla-tarj{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+.tarj{background:var(--card);border:1px solid var(--bd);border-radius:10px;overflow:hidden;cursor:pointer;transition:.15s}
+.tarj:hover{border-color:var(--ac2);transform:translateY(-2px)}
+.tarj canvas{display:block;width:100%;height:auto;background:#000}
+.tarj .pie{padding:7px 9px;font-size:11px}
+.tarj .pie b{display:block;font-size:11.5px;color:var(--tx)}
+.tarj .pie span{color:var(--tx2);font-size:10px}
+
+/* ── Editor ── */
+.ed-cols{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
+.lienzo-caja{background:#0a0a14;border:1px solid var(--bd);border-radius:12px;padding:14px;display:flex;justify-content:center;align-items:flex-start;min-height:200px}
+.lienzo-caja canvas{max-width:100%;height:auto;border-radius:6px;box-shadow:0 14px 40px rgba(0,0,0,.6);background:#000}
+.ed-panel{background:var(--card);border:1px solid var(--bd);border-radius:12px;overflow:hidden;position:sticky;top:120px}
+.ed-tabs{display:flex;border-bottom:1px solid var(--bd);background:var(--bg2)}
+.ed-tabs button{flex:1;background:none;border:0;border-bottom:2px solid transparent;color:var(--tx2);padding:9px 0;font-size:11px;cursor:pointer;min-height:38px}
+.ed-tabs button.on{color:#fff;border-bottom-color:var(--ac2);background:var(--card)}
+.ed-cuerpo{padding:12px;max-height:calc(100vh - 260px);overflow-y:auto}
+.ed-barra{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.mini-rej{display:flex;flex-direction:column;gap:2px;width:30px;height:38px;border:1px solid var(--bd);border-radius:4px;padding:2px;background:var(--bg3);cursor:pointer;flex:none}
+.mini-rej.on{border-color:var(--ac2);box-shadow:0 0 0 1px var(--ac2) inset}
+.mini-rej i{background:var(--tx2);border-radius:1px;display:block;width:100%;height:100%}
+.mini-rej span{display:grid;gap:1px;width:100%;min-height:3px}
+.paleta-b{width:100%;border:1px solid var(--bd);border-radius:8px;padding:6px;background:var(--bg3);cursor:pointer;text-align:left}
+.paleta-b.on{border-color:var(--ac2)}
+.paleta-b .muestras{display:flex;gap:3px;margin-top:4px}
+.paleta-b .muestras i{width:100%;height:12px;border-radius:2px;display:block}
+.celda-fila{border:1px solid var(--bd);border-radius:9px;padding:9px;margin-bottom:8px;background:var(--bg3)}
+.celda-fila .cab{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px}
+.celda-fila .cab b{font-size:11.5px}
+.mini-lbl{font-size:10px;color:var(--tx2);margin:6px 0 3px;display:block;letter-spacing:.06em;text-transform:uppercase}
+
+/* ── Vídeo ── */
+.vd-cols{display:grid;grid-template-columns:1fr 320px;gap:14px;align-items:start}
+.escena{border:1px solid var(--bd);border-radius:9px;padding:9px;margin-bottom:7px;background:var(--bg3)}
+.escena.sel{border-color:var(--ac2)}
+.escena .cab{display:flex;justify-content:space-between;gap:6px;align-items:center}
+.escena .cab b{font-size:11.5px}
+.escena .cab span{font-size:10.5px;color:var(--tx2)}
+
+/* ── QR ── */
+.qr-cols{display:grid;grid-template-columns:230px 1fr;gap:16px;align-items:start}
+#qrLienzo{background:#fff;border-radius:10px;padding:10px;display:inline-block;min-width:150px;min-height:150px}
+#qrLienzo canvas,#qrLienzo img{display:block;width:100%;height:auto}
+
+/* ── Proyectos ── */
+.proy-tarj{background:var(--card);border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+.proy-tarj canvas{display:block;width:100%;height:auto;background:#000}
+.proy-tarj .pie{padding:8px 10px}
+
+/* ── Planes ── */
+.planes{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.plan-c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px}
+.plan-c.pro{border-color:var(--ac2);box-shadow:0 0 0 1px var(--ac2) inset}
+.plan-c h4{margin:0 0 8px;font-size:15px}
+.plan-c ul{margin:0;padding-left:17px;font-size:12px;line-height:1.85;color:var(--tx2)}
+
+/* ── Muro de pago ── */
+.velo{position:fixed;inset:0;background:rgba(5,5,12,.82);backdrop-filter:blur(4px);z-index:60;display:none;align-items:center;justify-content:center;padding:18px}
+.velo.on{display:flex}
+.velo .caja{background:var(--card);border:1px solid var(--ac2);border-radius:14px;padding:20px;max-width:420px;width:100%}
+.velo h3{margin:0 0 8px;font-size:16px;color:var(--ac2)}
+
+/* ── Login ── */
+#euLogin{position:fixed;inset:0;background:var(--bg);z-index:70;display:none;align-items:center;justify-content:center;padding:20px}
+#euLogin.on{display:flex}
+#euLogin .caja{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:22px;max-width:360px;width:100%}
+
+/* ── Aviso flotante ── */
+#euToast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:80;pointer-events:none;display:flex;flex-direction:column;gap:6px;align-items:center;width:calc(100% - 28px);max-width:420px}
+#euToast div{background:var(--card2);border:1px solid var(--ac);border-radius:22px;padding:9px 16px;font-size:12px;box-shadow:0 8px 26px rgba(0,0,0,.6);text-align:center}
+
+@media(max-width:900px){
+  .eu-cols,.ed-cols,.vd-cols,.qr-cols{grid-template-columns:1fr}
+  .eu-filtros,.ed-panel{position:static}
+  .ed-cuerpo{max-height:none}
+  nav.tabs{display:none}
+  nav.mtabs{display:flex}
+  .wrap{padding:12px 12px 24px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">EU</div>
+  <div class="tit">
+    <h1>Estudio Universal</h1>
+    <p id="euSub">folletos · vídeo · QR · facturas</p>
+  </div>
+  <button class="chip-plan" id="euChipPlan" onclick="EU.ir('plan')">FREE</button>
+</header>
+
+<nav class="tabs" id="euTabs">
+  <button data-p="plantillas" class="on">🗂 Plantillas</button>
+  <button data-p="editor">✏️ Editor</button>
+  <button data-p="video">🎬 Vídeo</button>
+  <button data-p="qr">🔳 QR</button>
+  <button data-p="mios">📁 Míos</button>
+  <button data-p="plan">💜 Plan</button>
+</nav>
+
+<div class="wrap">
+
+  <!-- ══════════ P1 · PARRILLA DE PLANTILLAS ══════════ -->
+  <section class="pantalla on" id="pPlantillas">
+    <h2 class="tit2">Elige por dónde empezar</h2>
+    <p class="ayuda">Diez cuadrículas × diez paletas × siete hojas, y el cerebro ya escribe el texto con
+      <b>tus datos dentro</b>: al entrar al editor no hay página en blanco nunca. Sirve para cualquier
+      negocio o celebración — venta, boda, bautizo, restaurante, taller, curso o la que tú escribas.</p>
+
+    <div class="eu-cols">
+      <div class="eu-filtros">
+        <div class="panel">
+          <h3>Tu negocio</h3>
+          <div id="euMarcaResumen" style="font-size:11.5px;line-height:1.6;color:var(--tx2)">—</div>
+          <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="EU.abrirMarca()">Cambiar datos</button>
+        </div>
+        <div class="panel">
+          <h3>Categoría</h3>
+          <select id="euRubro"></select>
+          <label class="mini-lbl">Tono del texto</label>
+          <select id="euTono"></select>
+          <label class="mini-lbl">Hoja</label>
+          <select id="euFormato"></select>
+          <label class="mini-lbl">Cuadrícula</label>
+          <div class="tira" id="euFiltroRej" style="margin-top:4px"></div>
+          <label class="mini-lbl">Paleta</label>
+          <div class="tira" id="euFiltroTema" style="margin-top:4px"></div>
+          <button class="btn btn-g btn-sm" style="margin-top:12px;width:100%" onclick="EU_PARRILLA.otraVersion()">🔄 Otra versión del texto</button>
+          <button class="btn btn-g btn-sm" style="margin-top:6px;width:100%" onclick="EU_PARRILLA.enBlanco()">Empezar en blanco</button>
+        </div>
+      </div>
+      <div>
+        <div id="euParrillaEstado"></div>
+        <div class="rejilla-tarj" id="euParrilla"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ P2 · EDITOR ══════════ -->
+  <section class="pantalla" id="pEditor">
+    <div class="ed-cols">
+      <div>
+        <div class="lienzo-caja"><canvas id="euLienzo" width="620" height="877"></canvas></div>
+        <div class="ed-barra">
+          <button class="btn btn-g btn-sm" onclick="EU_EDITOR.deshacer()">↶ Deshacer</button>
+          <button class="btn btn-g btn-sm" onclick="EU_PROYECTOS.guardar()">💾 Guardar</button>
+          <span style="flex:1"></span>
+          <button class="btn btn-g" onclick="EU.ir('video')">🎬 Animar → vídeo</button>
+          <button class="btn" onclick="EU_EDITOR.descargar()">⬇ Descargar</button>
+        </div>
+        <div id="euEdEstado"></div>
+      </div>
+
+      <div class="ed-panel">
+        <div class="ed-tabs" id="euEdTabs">
+          <button data-t="diseno" class="on">Diseño</button>
+          <button data-t="textos">Textos</button>
+          <button data-t="fotos">Fotos</button>
+          <button data-t="qr">QR</button>
+          <button data-t="marca">Marca</button>
+        </div>
+        <div class="ed-cuerpo" id="euEdCuerpo"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ P3 · ESTUDIO DE VÍDEO ══════════ -->
+  <section class="pantalla" id="pVideo">
+    <h2 class="tit2">Estudio de vídeo</h2>
+    <p class="ayuda">Los cuadros de tu folleto entran en 3D, uno por escena, mientras suena la voz.
+      <b>Cada escena dura exactamente lo que su frase</b>, así la palabra cae mientras se ve la foto.</p>
+    <div class="vd-cols">
+      <div>
+        <div class="lienzo-caja"><canvas id="euVideoLienzo" width="540" height="764"></canvas></div>
+        <div class="ed-barra">
+          <button class="btn btn-g btn-sm" onclick="EU_VIDEO.previa()">▶ Ver sin sonido</button>
+          <span style="flex:1"></span>
+          <span id="euVideoDur" style="font-size:11px;color:var(--tx2)"></span>
+          <button class="btn" id="euBtnGrabar" onclick="EU_VIDEO.grabar()">⏺ Grabar el vídeo</button>
+        </div>
+        <div id="euVideoEstado"></div>
+      </div>
+      <div id="euVideoPanel"></div>
+    </div>
+  </section>
+
+  <!-- ══════════ P4 · QR ══════════ -->
+  <section class="pantalla" id="pQR">
+    <h2 class="tit2">Tu QR, sin dar tus datos</h2>
+    <p class="ayuda">El teléfono viaja <b>dentro</b> del código. Si marcas «no imprimir mis datos», en la hoja
+      no sale el número: quien escanea llama, pero no lo ve. Se genera en el móvil, no sube a ningún servidor,
+      y funciona también impreso en blanco y negro.</p>
+    <div class="qr-cols">
+      <div class="panel">
+        <h3>Qué hace al escanear</h3>
+        <div class="tira" id="euQrTipos"></div>
+        <div id="euQrCampos" style="margin-top:10px"></div>
+        <label class="mini-lbl">Texto bajo el código</label>
+        <input type="text" id="euQrLbl" value="Escanéame" maxlength="28">
+        <div class="fila" style="margin-top:10px">
+          <input type="checkbox" id="euQrOculto" checked style="width:auto">
+          <label for="euQrOculto" style="font-size:11.5px;cursor:pointer">No imprimir mis datos en la hoja</label>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <h3>Vista previa</h3>
+          <div id="euQrLienzo"></div>
+          <div class="ed-barra">
+            <button class="btn btn-g btn-sm" onclick="EU_QR.descargar()">⬇ PNG</button>
+            <button class="btn btn-sm" onclick="EU_QR.ponerEnFolleto()">Poner en el folleto</button>
+            <button class="btn btn-g btn-sm" onclick="EU_QR.quitar()">Quitar del folleto</button>
+          </div>
+          <div id="euQrEstado"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ P5 · MIS PROYECTOS ══════════ -->
+  <section class="pantalla" id="pMios">
+    <h2 class="tit2">Mis proyectos</h2>
+    <p class="ayuda">Se guardan en tu cuenta (<code>proyectos/{uid}</code>). Solo tú los ves.</p>
+    <div id="euMiosEstado"></div>
+    <div class="rejilla-tarj" id="euMios"></div>
+  </section>
+
+  <!-- ══════════ P9 · PLANES ══════════ -->
+  <section class="pantalla" id="pPlan">
+    <h2 class="tit2">Tu plan</h2>
+    <p class="ayuda">Diseñar es gratis siempre. El plan solo cambia lo que puedes <b>sacar</b> de aquí.</p>
+    <div class="planes" id="euPlanes"></div>
+    <div class="panel" style="margin-top:14px">
+      <h3>Cómo se sube a Pro</h3>
+      <p style="font-size:11.5px;line-height:1.7;color:var(--tx2);margin:0">
+        Igual que hoy con los créditos: la administración pone <code>plan: 'pro'</code> en tu ficha desde el
+        panel. Desde aquí nadie puede subirse el plan solo — la regla de Firestore no lo permite.</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- ══════════ Pestañas de móvil ══════════ -->
+<nav class="mtabs" id="euMTabs">
+  <button data-p="plantillas" class="on"><i>🗂</i>Crear</button>
+  <button data-p="editor"><i>✏️</i>Editor</button>
+  <button data-p="video"><i>🎬</i>Vídeo</button>
+  <button data-p="qr"><i>🔳</i>QR</button>
+  <button data-p="mios"><i>📁</i>Míos</button>
+</nav>
+
+<!-- ══════════ Muro de pago ══════════ -->
+<div class="velo" id="euMuro">
+  <div class="caja">
+    <h3>Esto es del plan Pro</h3>
+    <p id="euMuroTxt" style="font-size:12.5px;line-height:1.7;color:var(--tx2)"></p>
+    <div class="ed-barra">
+      <button class="btn btn-g" onclick="EU_PLAN.cerrarMuro()">Ahora no</button>
+      <button class="btn" onclick="EU_PLAN.cerrarMuro();EU.ir('plan')">Ver el plan Pro</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ Ficha del negocio ══════════ -->
+<div class="velo" id="euMarcaVelo">
+  <div class="caja" style="max-width:460px">
+    <h3>Ficha de tu negocio</h3>
+    <p style="font-size:11.5px;color:var(--tx2);line-height:1.6;margin:0 0 12px">
+      Se escribe una vez y aparece en todo: folleto, vídeo, QR y factura.</p>
+    <label class="mini-lbl">Nombre</label><input type="text" id="euMNombre" maxlength="60">
+    <label class="mini-lbl">Teléfono</label><input type="tel" id="euMTel" maxlength="30">
+    <label class="mini-lbl">Correo</label><input type="email" id="euMMail" maxlength="60">
+    <label class="mini-lbl">Web</label><input type="text" id="euMWeb" maxlength="60">
+    <label class="mini-lbl">Dirección o ciudad</label><input type="text" id="euMDir" maxlength="60">
+    <div class="fila" style="margin-top:10px">
+      <label class="lb">Colores</label>
+      <input type="color" id="euMC1" value="#7c3aed">
+      <input type="color" id="euMC2" value="#a855f7">
+      <span style="font-size:10.5px;color:var(--tx2)">se usan si eliges «mis colores»</span>
+    </div>
+    <div id="euMarcaEstado"></div>
+    <div class="ed-barra">
+      <button class="btn btn-g" onclick="EU.cerrarMarca()">Cancelar</button>
+      <button class="btn" onclick="EU.guardarMarca()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ Login ══════════ -->
+<div id="euLogin">
+  <div class="caja">
+    <div class="logo" style="margin:0 auto 12px">EU</div>
+    <h3 style="margin:0 0 4px;text-align:center;font-size:16px">Estudio Universal</h3>
+    <p style="text-align:center;font-size:11.5px;color:var(--tx2);margin:0 0 14px">Entra con tu cuenta de Fátima Pro.</p>
+    <label class="mini-lbl">Correo</label><input type="email" id="euEmail" autocomplete="username">
+    <label class="mini-lbl">Contraseña</label><input type="password" id="euPass" autocomplete="current-password">
+    <div id="euLoginEstado"></div>
+    <button class="btn" style="width:100%;margin-top:10px" id="euBtnEntrar" onclick="EU.entrar()">Entrar</button>
+    <p style="font-size:11px;color:var(--tx2);text-align:center;margin:12px 0 0;line-height:1.6">
+      Sin cuenta puedes mirar las plantillas, pero no descargar ni guardar.</p>
+    <button class="btn btn-g btn-sm" style="width:100%;margin-top:8px" onclick="EU.mirarSinCuenta()">Solo mirar</button>
+  </div>
+</div>
+
+<div id="euToast"></div>
+<div id="euOculto" style="position:absolute;left:-9999px;top:-9999px"></div>
+
+<!-- ══════════ Librerías ══════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- ══════════ Motores que ya existen (no se tocan) ══════════ -->
+<script src="b6_folleto_motor.js"></script>
+<script src="b6_folleto_cerebro.js"></script>
+<script src="b6_folleto_disenos.js"></script>
+<script src="b6_voz_video_gratis.js"></script>
+
+<!-- ══════════ Piezas del Estudio Universal ══════════ -->
+<script src="eu_nucleo.js"></script>
+<script src="eu_plan.js"></script>
+<script src="eu_parrilla.js"></script>
+<script src="eu_editor.js"></script>
+<script src="eu_qr.js"></script>
+<script src="eu_video3d.js"></script>
+<script src="eu_proyectos.js"></script>
+</body>
+</html>
