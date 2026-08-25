@@ -46,11 +46,22 @@
     sf.value = '';
     sf.onchange = function () { P.repintar(); };
 
+    // Por número de cuadros, no por rejilla: hay dos de 2, dos de 4, dos de 6 y
+    // dos de 8, y una tira «1 2 2 4 4 6 6 8 8» no dice nada. Al pulsar «4»
+    // salen las dos de cuatro cuadros, que es lo que la persona quiere ver.
     var fr = EU.$('euFiltroRej');
+    var cuentas = [];
+    Object.keys(M.REJILLAS).forEach(function (k) {
+      if (k === 'rlista') return;
+      if (cuentas.indexOf(M.REJILLAS[k].n) < 0) cuentas.push(M.REJILLAS[k].n);
+    });
+    cuentas.sort(function (a, b) { return a - b; });
     fr.innerHTML = '<button class="pill on" data-r="">Todas</button>' +
-      Object.keys(M.REJILLAS).map(function (k) {
-        return '<button class="pill" data-r="' + k + '">' + M.REJILLAS[k].n + '</button>';
-      }).join('');
+      cuentas.map(function (n) {
+        return '<button class="pill" data-r="n' + n + '">' + n +
+          (n === 1 ? ' cuadro' : ' cuadros') + '</button>';
+      }).join('') +
+      '<button class="pill" data-r="rlista">lista</button>';
     fr.onclick = function (e) {
       var b = e.target.closest && e.target.closest('button[data-r]');
       if (!b) return;
@@ -106,8 +117,13 @@
 
   function filtradas() {
     var lista = EU.disenos ? EU.disenos.lista() : [];
+    var M = EU.motor;
     return lista.filter(function (d) {
-      if (filtroRej && d.rejilla !== filtroRej) return false;
+      if (filtroRej === 'rlista' && d.rejilla !== 'rlista') return false;
+      if (filtroRej && filtroRej.charAt(0) === 'n') {
+        var n = parseInt(filtroRej.slice(1), 10);
+        if (d.rejilla === 'rlista' || !M.REJILLAS[d.rejilla] || M.REJILLAS[d.rejilla].n !== n) return false;
+      }
       if (filtroTema && d.tema !== filtroTema) return false;
       return true;
     });
