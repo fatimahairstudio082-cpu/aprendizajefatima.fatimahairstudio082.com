@@ -27,9 +27,12 @@ The hub lazily loads each learning block into an `<iframe class="bloque-frame" d
 folleto editor → 3D video studio → QR → saved projects, gated by a `free`/`pro` plan. It is a loose
 page that reuses the Block 6 engines untouched (`b6_folleto_motor.js`, `b6_folleto_cerebro.js`,
 `b6_folleto_disenos.js`, `b6_voz_video_gratis.js`, `netlify/functions/tts.js`) and adds `eu_*.js`,
-one file per screen, each guarded by `window._EU_X_LOADED`. It is **not** wired into the hub HTML:
-it is published as a dynamic hub card (Biblioteca → Bloques del Hub) pointing at
-`estudio_universal.html`, so `index.html` ↔ `fatima_hub.html` stay untouched. Data contract and the
+one file per screen, each guarded by `window._EU_X_LOADED`. It ships in the hub as a
+fourth card in the **🧰 HERRAMIENTAS PRO** strip (`TOOLS_DATA`), not in the learning-category grid,
+plus its own `frame21` — deliberately outside the 11–20 pool that `hub_bloques_dinamicos.js` hands to
+dynamic cards. That means `index.html` ↔ `fatima_hub.html` both carry the change and must stay in
+sync (note `fatima_hub.html` is CRLF and `index.html` is LF — preserve each file's line endings).
+It also has a tab in `centro_admin.html`. Data contract and the
 list of what is still missing live in `LEEME_ESTUDIO_UNIVERSAL.md`.
 
 Cross-frame communication is done by "bridge" scripts using `postMessage` and `localStorage`. Every bridge is written defensively: loaded standalone (no hub parent) it must be a no-op and the page keeps working alone. Key bridges:

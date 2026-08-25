@@ -10,24 +10,25 @@ ni una línea suya.
 
 ---
 
-## Cómo se pone en el hub (sin tocar index.html ni fatima_hub.html)
+## Dónde aparece (ya viene puesto, no hay que configurar nada)
 
-Centro Admin → Biblioteca → pestaña **🚀 Bloques del Hub** → ＋ Nueva categoría:
+**En el hub de las alumnas** — como cuarta tarjeta de la tira **🧰 Herramientas Pro**, junto a la
+Calculadora de Color, Ejercicios y Construcción. Ahí, y no en la parrilla de categorías de arriba,
+porque el Estudio Universal no es un bloque de aprendizaje: es una herramienta.
 
-| Campo | Valor |
-| --- | --- |
-| nombre | Estudio Universal |
-| icono | 🎬 |
-| color | `#7c3aed` |
-| tipo | 🧩 Bloque HTML |
-| contenido | `estudio_universal.html` |
+**En el Centro Admin** — pestaña `🎬 Estudio Universal`, al lado del Conversor Drive.
 
-Guardar y publicar → la tarjeta aparece en el hub al instante, hereda la sesión
-y usa uno de los slots `frame11..frame20`. Los dos gemelos del hub quedan
-intactos, así que **no hay nada que sincronizar** entre `index.html` y
-`fatima_hub.html`.
+Nada de esto se crea desde Biblioteca → Bloques del Hub: va en el código y se publica con el resto.
 
----
+### Detalle técnico del hueco
+
+La tarjeta abre `frame21`, un iframe propio añadido a `index.html` **y** a `fatima_hub.html`. Se ha
+elegido el 21 a propósito: los slots **11–20 son el pool** que `hub_bloques_dinamicos.js` reparte
+entre las categorías dinámicas, y meterse ahí se las comería.
+
+> Los dos gemelos del hub llevan el mismo cambio y **hay que mantenerlos sincronizados**. Ojo al
+> editarlos: `fatima_hub.html` usa saltos de línea CRLF y `index.html` usa LF. Si se cambian sin
+> querer, el diff sale entero aunque no hayas tocado nada.
 
 ## ⚠️ Hay que publicar las reglas de Firestore A MANO
 
