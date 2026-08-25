@@ -401,7 +401,7 @@
 
     cv.toBlob(function (b) {
       if (!b) { EU.estado('euEdEstado', 'El navegador no pudo generar la imagen.', 'err'); return; }
-      bajar(b, nombre + '.jpg');
+      E.bajar(b, nombre + '.jpg');
       EU.estado('euEdEstado',
         'JPG descargado.' + (EU_PLAN.puede('pdf')
           ? ' <button class="btn btn-sm" id="euBtnPdf">También en PDF de imprenta</button>'
