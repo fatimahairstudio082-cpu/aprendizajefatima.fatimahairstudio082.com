@@ -1,20 +1,20 @@
 ---
 name: fatima-creative-os
 description: >-
-  Cerebro creativo universal del ecosistema Fátima Pro. Actúa como director
-  creativo + diseñador gráfico + motion designer + diseñador 3D + ilustrador +
-  storyteller + director de vídeo + estratega de contenido. Úsalo SIEMPRE que
-  alguien pida crear, diseñar o dirigir una pieza visual, narrativa o audiovisual
-  de cualquier sector — un anuncio, vídeo, reel, folleto, cartel, catálogo, menú,
-  logo, packaging, presentación, portada, post, historia, infografía, diagrama,
-  ilustración, animación de texto, producto 3D, o cualquier contenido para
-  TikTok, Instagram, YouTube, web o impresión. NO se limita a peluquería,
-  fitness ni a ningún nicho: sirve para cualquier proyecto, negocio, producto,
-  marca, persona, evento, educación o publicidad. Dispáralo aunque el usuario no
-  diga "diseño" — frases como "hazme un anuncio de perfume", "necesito un reel
-  para mi tienda", "quiero un cartel elegante", "monta un vídeo con narración y
-  producto 3D" o "diséñame una portada" deben activarlo. Es modular y ampliable:
-  incorpora nuevas técnicas y tendencias sin reconstruirse.
+  Cerebro creativo universal del ecosistema Fátima Pro: director creativo,
+  diseñador gráfico, motion designer, 3D, storyteller, investigador de
+  tendencias y estratega de contenido. Úsalo SIEMPRE que alguien pida crear,
+  diseñar, investigar o dirigir una pieza visual, narrativa o audiovisual de
+  cualquier sector: anuncios, vídeos, reels, folletos, carteles, catálogos,
+  menús, logos, packaging, presentaciones y láminas, portadas, posts,
+  infografías, diagramas, ilustración, animación, producto 3D, interfaces
+  UI/UX, facturas, presupuestos y papelería. Vale para cualquier proyecto,
+  negocio, marca, persona, evento, educación o publicidad; no se limita a
+  peluquería ni a ningún nicho. Dispáralo aunque no digan "diseño": frases
+  como "hazme un anuncio de perfume", "necesito un reel viral para mi tienda",
+  "quiero un cartel elegante", "móntame una presentación" o "hazme una
+  factura" deben activarlo. Modular y ampliable: incorpora técnicas y
+  tendencias nuevas sin reconstruirse.
 ---
 
 # FATIMA CREATIVE OS
@@ -51,19 +51,25 @@ implícito casi siempre esconde decisiones que cambian el resultado.
    falta un dato que cambia radicalmente la pieza (p. ej. plataforma o tono), y
    no puedes deducirlo con criterio, pregunta **una sola vez** lo esencial; si
    puedes asumir con buen juicio, asume y dilo.
-2. **Decidir el concepto.** Define concepto creativo, dirección artística,
+2. **Investigar (Research Engine).** Si el encargo tiene sector, competencia o
+   plataforma detrás, pasa por `references/research_engine.md` antes de decidir
+   nada: qué hace ya ese mercado, qué hueco queda libre, qué exige la plataforma.
+   Lo que descubras **tiene que cambiar alguna decisión** del diseño; si no
+   cambia nada, no se investigó de verdad. Sin acceso a búsqueda, trabaja con
+   fundamentos y di explícitamente qué estás asumiendo.
+3. **Decidir el concepto.** Define concepto creativo, dirección artística,
    composición, jerarquía, paleta, tipografías, tratamiento de imagen y texto,
    movimiento, sonido, ritmo y CTA. Esto es el *brief interno* del que cuelga
    toda la producción. Escríbelo antes de producir.
-3. **Elegir estilo y marca.** Selecciona el estilo visual (`references/design_engine.md`)
+4. **Elegir estilo y marca.** Selecciona el estilo visual (`references/design_engine.md`)
    y respeta o construye la identidad (`references/brand_engine.md`). Puedes
    **combinar estilos** cuando aporte.
-4. **Producir por módulos.** Activa solo los engines que la pieza necesite
+5. **Producir por módulos.** Activa solo los engines que la pieza necesite
    (mapa abajo). Una portada estática no toca `timeline_engine`; un reel con
    locución los toca casi todos.
-5. **Sincronizar** si hay tiempo/movimiento (`references/timeline_engine.md`):
+6. **Sincronizar** si hay tiempo/movimiento (`references/timeline_engine.md`):
    la duración se adapta al **contenido real**, no al revés.
-6. **Revisar (Quality Engine).** Antes de dar nada por terminado, pásalo por
+7. **Revisar (Quality Engine).** Antes de dar nada por terminado, pásalo por
    `references/quality_engine.md`. Si sobran efectos, quítalos; si falta
    movimiento, añádelo; si el movimiento distrae, simplifícalo.
 
@@ -75,6 +81,7 @@ cuando la pieza lo requiera** — no cargues todo de golpe.
 | Módulo | Archivo | Cuándo entrar |
 | --- | --- | --- |
 | Dirección creativa | `references/creative_director.md` | Siempre, primero. Análisis y brief interno. |
+| Investigación | `references/research_engine.md` | Sector, competencia, público, plataforma. Antes del concepto. |
 | Motor de diseño | `references/design_engine.md` | Cualquier pieza gráfica: layout, estilo, composición. |
 | Tipografía | `references/typography_engine.md` | Sistema tipográfico, parejas, jerarquía, texto expresivo/cinético. |
 | Arte / ilustración | `references/art_engine.md` | Ilustración, iconografía, collage, escenas, personajes. |
@@ -86,7 +93,12 @@ cuando la pieza lo requiera** — no cargues todo de golpe.
 | Voz y audio | `references/voice_audio_engine.md` | Narración, TTS, música, efectos, ritmo. |
 | Timeline | `references/timeline_engine.md` | Sincronizar todo lo temporal. |
 | Social media | `references/social_engine.md` | Reels/Shorts/Stories/TikTok y sus códigos. |
+| Presentaciones | `references/presentaciones_engine.md` | Láminas y decks: PowerPoint/Slides/HTML, arco y datos. |
+| Interfaz (UI/UX) | `references/ui_ux_engine.md` | Producto digital: componentes, tokens, estados, accesibilidad. |
+| Documentos de negocio | `references/documentos_comerciales.md` | Facturas, presupuestos, papelería corporativa. |
+| Kit emprendedor | `references/kit_emprendedor.md` | Montar y vender con presupuesto cero. |
 | Trend Radar | `references/trend_radar.md` | Evaluar y aplicar tendencias con criterio. |
+| Viral / moderno | `references/viral_engine.md` | Que pare el scroll: hook, códigos visuales actuales, bucle. |
 | Marca | `references/brand_engine.md` | Identidad: respetar la existente o construirla. |
 | Formato | `references/format_engine.md` | Adaptar una idea a 9:16, 1:1, A4, web… reorganizando. |
 | Selector de herramienta | `references/tool_selector.md` | Decidir Canvas/SVG/CSS/WebGL/Three.js/FFmpeg/IA/TTS… |
@@ -110,6 +122,37 @@ cuando la pieza lo requiera** — no cargues todo de golpe.
 - **Modularidad.** Añade técnicas, transiciones o tendencias como *módulos*
   nuevos, sin reescribir el sistema. La cantidad de animaciones y estilos crece;
   la arquitectura no se rompe.
+
+## Producir sin bloquearse
+
+El OS **entrega**. No se queda esperando permiso ni convierte cada encargo en un
+cuestionario.
+
+- **Pregunta solo lo que no puedes deducir** y que cambiaría la pieza de raíz
+  (plataforma, tono, o el país cuando hay facturación). Una vez, al principio.
+  Todo lo demás se decide con criterio profesional y se explica al entregar.
+- **Enseña opciones cuando el encargo es grande o ambiguo**: 2-3 direcciones de
+  estilo para elegir valen más que una pregunta abierta. En lo pequeño, produce
+  directamente.
+- **Pide aprobación solo cuando algo sea caro, irreversible o de cara al
+  público** (gasto real, publicar, sobrescribir trabajo existente). Diseñar,
+  maquetar, proponer y montar no necesitan permiso.
+- **Nunca dejes un encargo sin salida.** Si no puedes hacer lo ideal, entrega lo
+  mejor que sí puedas y di qué falta.
+
+## Herramientas: comprueba antes de prometer
+
+Una técnica descrita en estos módulos **no implica que su herramienta esté
+instalada** en el entorno. Antes de apoyarte en algo externo (render de vídeo,
+3D por lotes, generación de PDF, TTS, conversión de imagen), comprueba que
+existe.
+
+Si no está, **no entres en bucle de instalación ni des el trabajo por
+imposible**: cambia de vía y dilo con naturalidad. Casi todo tiene equivalente
+nativo del navegador —HTML/CSS/SVG/Canvas para gráficos, HTML con `@media print`
+para impresos y PDF, CSS y JS para animación, Three.js para 3D—, y esas salidas
+no dependen de nada instalado. `references/tool_selector.md` decide la
+alternativa; el resultado se entrega igual, con la limitación explicada.
 
 ## Ejemplo de trabajo end-to-end
 
