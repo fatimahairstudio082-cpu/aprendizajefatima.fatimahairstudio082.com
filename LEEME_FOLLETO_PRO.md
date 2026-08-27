@@ -277,46 +277,20 @@ paletas dibujadas, para elegir y descartar diseños. Usa el mismo motor, así qu
 lo que se ve ahí es lo que sale en la herramienta. No hace falta para que
 Folletos Pro funcione; se queda como referencia.
 
-### Arreglo · efectos unificados + sincronía voz↔vídeo (22-08-2026)
+### Sincronía voz↔tarjeta (proporcional) + relojito
 
-Tres cosas que fallaban tras las últimas modificaciones:
+En el **vídeo del carrusel con voz gratis**, la voz lee **una ficha por tarjeta,
+en orden** (`guionPorTarjeta()` la arma desde el título, la frase y el precio de
+cada tarjeta; `b6_voz_video_gratis.js` acepta ahora `segmentos` y los habla en
+orden). El vídeo reparte el tiempo **proporcional al texto de cada tarjeta** y lo
+estira a la duración real de la voz: `tiemposProporcionales(segmentos, seg)`
+devuelve los tiempos de fin de cada tarjeta (monótonos, con un mínimo por
+tarjeta). `animFotograma` usa esos `tiempos` cuando existen, y el reparto parejo
+(`porHoja`) cuando no. Es **determinista**: cada tarjeta dura lo que dura su
+locución, con la transición (cubo, iris…) en cada cambio, y **nunca se colapsa ni
+se queda clavada** en la última tarjeta.
 
-1. **Efectos repartidos en dos sitios.** El «Efecto» del vídeo normal y la
-   «Transición» del carrusel eran dos desplegables distintos con listas
-   distintas. Ahora hay **un solo menú «✨ Efecto del vídeo»** con TODOS los
-   efectos, en dos grupos: *cómo aparece cada tarjeta* (revelado) y *cómo pasa
-   de una tarjeta a otra* (transición del carrusel). El mismo menú vale para el
-   vídeo normal y para el del carrusel. (Los valores de transición llevan
-   prefijo `t_` para poder enrutarlos; el aspecto que no elijas usa un valor
-   por defecto elegante.)
-2. **El vídeo cortaba la narración / no sincronizaba.** Con audio subido o voz
-   de estudio, si el navegador tardaba en saber la duración, el vídeo caía a
-   12 s y cortaba la voz. Ahora: (a) se espera a `loadedmetadata` con margen
-   amplio; (b) si aún no se sabe la duración, manda el evento `ended` de la voz
-   y el vídeo se para poco después (COLA_FIN), nunca a media frase; (c) el reloj
-   de la animación arranca JUNTO con la grabación, así el dibujo no va por
-   delante del audio. El carrusel sigue respetando el tiempo mínimo por tarjeta.
-3. **Tarjetas del hub.** El cubo 3D (`hub_tarjetas_3d.js`) escondía la
-   descripción, los niveles y los botones «Abrir»/«Escuchar» detrás de un
-   volteo que sólo funcionaba con ratón (en móvil no se podían ver). Se vuelve a
-   las **tarjetas planas** con todo visible de un vistazo y un solo toque; el
-   include queda comentado en `index.html` y `fatima_hub.html`, y el archivo se
-   conserva por si se quiere reactivar.
-
-### Arreglo · el vídeo se quedaba pegado (imagen congelada, audio corriendo)
-
-Síntoma real (analizado sobre un vídeo de muestra): la voz salía entera (3,1 s)
-pero la imagen sólo tenía **6 fotogramas** en los primeros 0,34 s y luego se
-quedaba **congelada**. No era la sincronía (el audio iba bien): era la **captura
-de fotogramas** del `canvas`. El navegador (Android/tablets sobre todo) deja de
-"pintar" —y de entregar cuadros a `captureStream`— un lienzo que no está de
-verdad visible; esconderlo a 1px con `opacity≈0` fuera de pantalla NO bastaba.
-
-Arreglo (en `b6_folleto_pro.js`, dentro de `grabarVideo`):
-1. El lienzo de grabación ahora se **muestra de verdad** mientras graba (modesto,
-   arriba-centro, con un cartel «🎬 Grabando…»), así el navegador lo mantiene
-   pintado y la captura no se congela. Se graba a plena resolución (la fija
-   `canvas.width/height`, no el tamaño en pantalla) y se retira al terminar.
-2. Donde el navegador lo soporta (Chromium/Android) se usa `captureStream(0)`
-   (captura **manual**) y se empuja **cada** cuadro pintado con `requestFrame()`;
-   en Safari/iOS se mantiene la captura automática a 30 fps.
+Un **relojito** (`barraProgreso()`) pinta una barra fina abajo del lienzo que
+avanza con el vídeo, en la grabación y en «▶ Ver». Se conserva la mecánica de
+captura visible (lienzo a la vista + `captureStream(0)`/`requestFrame`) para que
+no se congele en Android.

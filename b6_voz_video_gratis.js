@@ -150,10 +150,20 @@
     if (ocupado) throw new Error('Ya se está capturando una voz. Espera a que termine.');
     if (!disponible()) throw new Error('Este navegador no puede captar la voz. Prueba en Chrome (Android o PC).');
 
+    // Si vienen 'segmentos' (una frase por tarjeta del carrusel), se leen EN ORDEN,
+    // uno por tarjeta, para que la narración vaya tarjeta a tarjeta. El vídeo
+    // reparte el tiempo proporcional al texto de cada una (lo hace b6_folleto_pro).
+    var segmentos = Array.isArray(op.segmentos)
+      ? op.segmentos.map(function (s) { return String(s == null ? '' : s).trim(); }).filter(function (s) { return s; })
+      : null;
+
     var texto = String(op.texto || '').trim();
+    if (!texto && segmentos && segmentos.length) texto = segmentos.join('. ');
     if (!texto) throw new Error('Escribe primero el texto que quieres que diga la voz.');
 
-    var trozos = (typeof window._vzTrocear === 'function') ? window._vzTrocear(texto) : [texto];
+    var trozos = (segmentos && segmentos.length)
+      ? segmentos.slice()
+      : ((typeof window._vzTrocear === 'function') ? window._vzTrocear(texto) : [texto]);
     if (!trozos.length) throw new Error('El texto está vacío.');
 
     var voz  = op.voz || ((typeof window._vzGetVoice === 'function') ? window._vzGetVoice() : null);

@@ -1548,12 +1548,8 @@ HUB_TTS.init();
 <script src="peluqueria_hub_bridge.js"></script>
 <!-- Bloques dinámicos desde Firestore (hub_tarjetas/din_*) · parche aditivo -->
 <script src="hub_bloques_dinamicos.js"></script>
-<!-- Tarjetas del hub: se dejan PLANAS (foto + descripción + niveles + botones
-     "Abrir" y "Escuchar" visibles de un vistazo, un solo toque, fiable en móvil).
-     El cubo 3D (hub_tarjetas_3d.js) escondía la descripción y los botones detrás
-     de un volteo que sólo funcionaba con ratón; se desactiva. El archivo se
-     conserva por si se quiere reactivar. -->
-<!-- <script src="hub_tarjetas_3d.js"></script> -->
+<!-- Animaciones 3D de las tarjetas del hub · parche aditivo -->
+<script src="hub_tarjetas_3d.js"></script>
 <!-- PWA: registrar service worker (hace instalable la app) -->
 <script>
   if ('serviceWorker' in navigator) {
