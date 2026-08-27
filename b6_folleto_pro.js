@@ -32,6 +32,53 @@
   var COLA_FIN        = 1.2;   // aire tras la última palabra (la última tarjeta respira)
   var TOPE_SEG_VIDEO  = 180;   // tope de seguridad, amplio: una narración larga cabe entera
 
+  /* ── Tamaño del lienzo del vídeo ──
+     El vídeo se dibuja fotograma a fotograma, en tiempo real, y el grabador
+     pide uno cada 33 ms (30 por segundo). Pintar una hoja A4 entera —2,17
+     millones de píxeles, medida de imprenta— no cabe en ese tiempo ni en un
+     ordenador, y de ahí venía la imagen que se quedaba pegada o iba a
+     trompicones. El coste es casi exactamente proporcional a los píxeles, así
+     que el vídeo se graba a medida de VÍDEO y no de imprenta.
+
+     La imagen, el PDF y el folleto web NO cambian: siguen saliendo al tamaño
+     real de la hoja. Esto sólo afecta al lienzo que se graba.
+
+     «Máxima» conserva el comportamiento de siempre, por si alguna vez hace
+     falta el tamaño completo. */
+  var CALIDADES = {
+    fluido: { nombre: 'Fluido · el vídeo va suave (recomendado)', mpx: 1.0, lado: 1280 },
+    alta:   { nombre: 'Alta · más detalle, puede ir a tirones',   mpx: 1.7, lado: 1600 },
+    maxima: { nombre: 'Máxima · tamaño real de la hoja',          mpx: 0,   lado: 0 }
+  };
+
+  /* El lienzo de la vista previa se enseña a 320-400 px en pantalla, así que no
+     tiene sentido dibujarlo a tamaño de imprenta en cada tecla que se pulsa.
+     1200 px de lado largo sobra incluso en pantallas de mucha densidad. */
+  var TOPE_LADO_PANTALLA = 1200;
+
+  function ajustar(F, mpx, lado) {
+    var s = 1;
+    if (mpx) s = Math.min(s, Math.sqrt((mpx * 1e6) / (F.w * F.h)));
+    if (lado) s = Math.min(s, lado / Math.max(F.w, F.h));
+    if (s >= 1) return { w: F.w, h: F.h, nombre: F.nombre, mm: F.mm, escala: 1 };
+    // lados pares: los codificadores de vídeo los prefieren y algunos los exigen
+    return {
+      w: Math.max(2, Math.round(F.w * s / 2) * 2),
+      h: Math.max(2, Math.round(F.h * s / 2) * 2),
+      nombre: F.nombre, mm: F.mm, escala: s
+    };
+  }
+
+  /* Medidas del lienzo que se graba. Devuelve un "formato" completo, así se
+     puede pasar tal cual a la animación: el motor dibuja todo en proporción al
+     ancho y al alto que se le den, de modo que a menor tamaño sale exactamente
+     la misma hoja, sólo que con menos píxeles. */
+  function medidasVideo(F) {
+    var q = CALIDADES[val('fpVidCalidad')] || CALIDADES.fluido;
+    return ajustar(F, q.mpx, q.lado);
+  }
+  function medidasPantalla(F) { return ajustar(F, 0, TOPE_LADO_PANTALLA); }
+
   var M = null, CB = null;     // motor y cerebro, se resuelven al arrancar
   var DIS = null;              // cerebro de diseño (FOLLETO_DISENOS), opcional
   var MEL = null, NOTE = null; // música gratis (FL_MELODIES / FL_NOTE), opcional
@@ -66,7 +113,8 @@
     coloresManuales: null,
     grabando: false,
     pararGrabacion: null,
-    qr: null          // { el:Image, contenido:'...' } cuando se activa el QR
+    qr: null,         // { el:Image, contenido:'...' } cuando se activa el QR
+    vozUltima: null   // { seg, clave } de la última voz grabada, para que «▶ Ver» use el ritmo real
   };
 
   /* Mete el QR (si lo hay) en las opciones de dibujo. Todos los dibujos pasan
@@ -466,6 +514,19 @@
         'Automático elige el formato que tu móvil graba sin fallos. Elige MP4 sólo si vas a subirlo desde la app de Instagram.' +
       '</span></div>' +
       '<div class="row">' +
+        '<span class="lbl">🎚️ Calidad</span>' +
+        '<select id="fpVidCalidad" style="flex:1;min-width:160px">' +
+          Object.keys(CALIDADES).map(function (k) {
+            return '<option value="' + k + '"' + (k === 'fluido' ? ' selected' : '') + '>' + esc(CALIDADES[k].nombre) + '</option>';
+          }).join('') +
+        '</select>' +
+        '<span id="fpVidMedidas" style="font-size:9px;color:var(--tx2)"></span>' +
+      '</div>' +
+      '<div class="row" style="margin-top:-2px"><span style="font-size:9px;color:var(--tx2)">' +
+        'El vídeo se dibuja en directo, un fotograma cada 33 milésimas. A tamaño de imprenta no da tiempo y la imagen se queda pegada: ' +
+        '<b>Fluido</b> lo graba a medida de vídeo y va suave. La imagen, el PDF y el folleto web salen siempre al tamaño real de la hoja.' +
+      '</span></div>' +
+      '<div class="row">' +
         '<span class="lbl">Segundos</span>' +
         '<input type="number" id="fpDur" value="12" min="4" max="60" step="1" style="width:70px">' +
         '<span style="font-size:9px;color:var(--tx2)">si hay voz, dura lo que dure la voz</span>' +
@@ -614,6 +675,12 @@
     c.media = null;
     var et = $('fpMed' + i);
     if (et) et.textContent = 'sin foto';
+    // Se limpia también el selector de archivo: si no, el nombre viejo se
+    // quedaba a la vista y volver a elegir la MISMA foto no hacía nada (el
+    // navegador no avisa de un cambio si el archivo es el mismo).
+    var caja = $('fpCeldas');
+    var inp = caja && caja.querySelector('.fpFile[data-fpi="' + i + '"]');
+    if (inp) { try { inp.value = ''; } catch (e) {} }
     if (!callado) { repintar(); estado(''); }
   }
 
@@ -721,15 +788,32 @@
     };
   }
 
+  /* Dice, debajo del selector de calidad, a qué tamaño va a salir el vídeo.
+     Así no hay que adivinarlo ni descubrirlo al descargarlo. */
+  function mostrarMedidasVideo() {
+    var e = $('fpVidMedidas');
+    if (!e || !listo) return;
+    var F = M.FORMATOS[val('fpFormato')] || M.FORMATOS.a4v;
+    var V = medidasVideo(F);
+    e.textContent = V.w + ' × ' + V.h + ' px' +
+      (V.escala < 1 ? ' (la hoja mide ' + F.w + ' × ' + F.h + ')' : ' · tamaño real');
+  }
+
   function repintar() {
     if (!listo) return;
     leerPanel();
     var F = M.FORMATOS[FP.pagina.formato] || M.FORMATOS.a4v;
+    // La vista previa se dibuja a medida de pantalla, no de imprenta: se ve
+    // igual (se enseña a 320-400 px) y deja de tardar 90 ms en cada tecla.
+    var P = medidasPantalla(F);
     var cv = $('fpLienzo');
-    cv.width = F.w; cv.height = F.h;
+    cv.width = P.w; cv.height = P.h;
     cv.style.width = (F.w > F.h ? 400 : 320) + 'px';
-    M.pintar(cv.getContext('2d'), F.w, F.h, FP.pagina, conQR({ nPagina: FP.paginas.length + 1 }));
+    M.pintar(cv.getContext('2d'), P.w, P.h, FP.pagina, conQR({ nPagina: FP.paginas.length + 1 }));
     sincronizarColores();
+    pintarPaginas();
+    mostrarMedidasVideo();
+    contarCarruselPronto();
   }
 
   function sincronizarColores() {
@@ -748,9 +832,9 @@
     (function paso() {
       if (!listo || FP.grabando || animPrev) { bucle = null; return; }
       if (!cuentaVideos()) { bucle = null; return; }
-      var F = M.FORMATOS[FP.pagina.formato] || M.FORMATOS.a4v;
+      var P = medidasPantalla(M.FORMATOS[FP.pagina.formato] || M.FORMATOS.a4v);
       var cv = $('fpLienzo');
-      if (cv) M.pintar(cv.getContext('2d'), F.w, F.h, FP.pagina, conQR({ nPagina: FP.paginas.length + 1 }));
+      if (cv) M.pintar(cv.getContext('2d'), P.w, P.h, FP.pagina, conQR({ nPagina: FP.paginas.length + 1 }));
       bucle = requestAnimationFrame(paso);
     })();
   }
@@ -769,8 +853,14 @@
     var e = $('fpPags');
     if (!e) return;
     if (!FP.paginas.length) { e.innerHTML = 'Sin páginas guardadas · el folleto tendrá sólo esta hoja'; return; }
+    // Se dice cuántas hojas van a salir DE VERDAD. Antes sólo se decía cuántas
+    // había guardadas, y la exportación añadía además la hoja de pantalla: quien
+    // guardaba sus 3 páginas se encontraba un PDF de 4, con la última repetida.
+    var total = hojas().length;
     e.innerHTML = FP.paginas.length + ' página' + (FP.paginas.length > 1 ? 's' : '') + ' guardada' +
-      (FP.paginas.length > 1 ? 's' : '') + ' · <a href="#" id="fpBorrarPag" style="color:var(--warn)">borrar la última</a>';
+      (FP.paginas.length > 1 ? 's' : '') + ' · <b>el folleto saldrá con ' + total + ' hoja' + (total > 1 ? 's' : '') + '</b>' +
+      (total > FP.paginas.length ? ' (las guardadas + la que tienes en pantalla)' : '') +
+      ' · <a href="#" id="fpBorrarPag" style="color:var(--warn)">borrar la última</a>';
     var b = $('fpBorrarPag');
     if (b) b.addEventListener('click', function (ev) {
       ev.preventDefault();
@@ -780,17 +870,73 @@
     });
   }
 
-  /* Las hojas que se exportan: las guardadas, y si no hay ninguna, la de ahora. */
+  /* Huella de una foto o un vídeo. NO basta con el nombre del archivo: al abrir
+     un diseño guardado, todas las fotos restauradas se llaman igual («foto
+     guardada»), así que dos hojas que sólo se diferencien en la foto —un antes
+     y un después, un lookbook con los mismos servicios— darían la misma huella
+     y la hoja de pantalla se descartaría al exportar. Se añade la medida y el
+     final del enlace, que sí distinguen una imagen de otra (y en los vídeos el
+     blob es único de por sí). Es barato: no recorre el data URL entero. */
+  function firmaMedia(m) {
+    if (!m) return '';
+    var u = m.url || '';
+    return m.tipo + '·' + (m.nombre || '') + '·' + u.length + ':' + u.slice(-24);
+  }
+
+  /* Huella de una hoja: sirve para saber si la que está en pantalla es la misma
+     que la última que se guardó. */
+  function firmaHoja(p) {
+    try {
+      return JSON.stringify({
+        r: p.rejilla, f: p.formato, t: p.tema, c: p.colores || null,
+        cab: p.cabecera, pie: p.pie, ad: p.adornos,
+        cel: p.celdas.map(function (c) {
+          return [c.titulo || '', c.texto || '', c.precio || '', c.etiqueta || '', firmaMedia(c.media)];
+        })
+      });
+    } catch (e) { return String(Math.random()); }   // ante la duda, no se considera repetida
+  }
+
+  /* Las hojas que se exportan: las guardadas, más la que está en pantalla.
+     Si la de pantalla es EXACTAMENTE la última que se guardó, no se añade otra
+     vez: si no, quien seguía el mensaje («guardada; cambia y guarda la
+     siguiente») acababa con la última hoja duplicada en el PDF, en el ZIP, en
+     el folleto web, en el carrusel y en el vídeo. No se pierde nada: en cuanto
+     se cambia algo, la hoja de pantalla vuelve a contar como hoja aparte. */
   function hojas() {
     leerPanel();
-    return FP.paginas.length ? FP.paginas.concat([copiar(FP.pagina)]) : [copiar(FP.pagina)];
+    var actual = copiar(FP.pagina);
+    if (!FP.paginas.length) return [actual];
+    if (firmaHoja(FP.paginas[FP.paginas.length - 1]) === firmaHoja(actual)) return FP.paginas.slice();
+    return FP.paginas.concat([actual]);
+  }
+
+  /* Todas las hojas de un vídeo comparten el formato de la primera. Cada página
+     guardada lleva el suyo, y antes se pintaban todas dentro de las medidas de
+     la primera: una hoja guardada en A4 y otra en Historia salían estiradas una
+     dentro de la otra. Aquí se igualan de verdad. */
+  function mismoFormato(hs, fmt) {
+    fmt = fmt || hs[0].formato;
+    return hs.map(function (p) {
+      if (p.formato === fmt) return p;
+      var q = copiar(p);
+      q.formato = fmt;
+      return q;
+    });
   }
 
   function bajar(nombre, href) {
     var a = document.createElement('a');
     a.download = nombre; a.href = href;
     document.body.appendChild(a); a.click();
-    setTimeout(function () { document.body.removeChild(a); }, 100);
+    // Se suelta el enlace y, si era un blob, también la memoria que ocupaba.
+    // Sin revocarlo, cada ZIP, cada vídeo y cada folleto web se quedaban en
+    // memoria hasta recargar la página. Se espera un rato largo: revocarlo
+    // demasiado pronto cancela la descarga en algunos móviles.
+    setTimeout(function () {
+      if (a.parentNode) a.parentNode.removeChild(a);
+      if (/^blob:/i.test(href)) { try { URL.revokeObjectURL(href); } catch (e) {} }
+    }, 8000);
   }
 
   function hoy() {
@@ -798,12 +944,32 @@
     return d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2) + ('0' + d.getDate()).slice(-2);
   }
 
+  /* Lienzo de exportación: SIEMPRE al tamaño real de la hoja. La imagen, el
+     PDF, el carrusel y las portadas del folleto web no se reducen nunca. */
   function lienzoDe(pag, n) {
     var F = M.FORMATOS[pag.formato] || M.FORMATOS.a4v;
     var cv = document.createElement('canvas');
     cv.width = F.w; cv.height = F.h;
-    M.pintar(cv.getContext('2d'), F.w, F.h, pag, conQR({ nPagina: n }));
+    // sinCache: cada hoja se pinta una sola vez y a tamaño de imprenta, así que
+    // guardarla en memoria no ahorra nada y deja lienzos de varios MB retenidos.
+    M.pintar(cv.getContext('2d'), F.w, F.h, pag, conQR({ nPagina: n, sinCache: true }));
     return cv;
+  }
+
+  /* El QR se genera como <img> y tarda un instante en estar lista. Si se pulsa
+     Descargar justo después de escribir el número, la imagen aún no estaba
+     decodificada y el QR salía en la vista previa pero NO en el JPG ni en el
+     PDF. Esto espera a que lo esté; si no hay QR, sigue de largo. */
+  function qrListo() {
+    var im = FP.qr && FP.qr.el;
+    if (!im) return Promise.resolve();
+    if (im.complete && (im.naturalWidth || im.width)) return Promise.resolve();
+    if (im.decode) return im.decode().then(function () {}, function () {});
+    return new Promise(function (ok) {
+      im.addEventListener('load', ok);
+      im.addEventListener('error', ok);
+      setTimeout(ok, 2000);
+    });
   }
 
   /* ═══════════════════ Mis diseños (guardar en el dispositivo) ═══════════════════
@@ -916,15 +1082,22 @@
     listaDisenos().some(function (x) { if (x.id === id) { it = x; return true; } return false; });
     if (!it) { estado('Ese diseño ya no está.', 'err'); return; }
 
-    // suelta los medios actuales (los vídeos, aunque estén compartidos, se van)
-    FP.pagina.celdas.forEach(function (c, i) { if (c.media) quitarMedia(i, true); });
+    // Suelta los medios actuales. Primero las páginas guardadas y después la de
+    // pantalla: al revés, quitarMedia veía el vídeo todavía «en uso» por una
+    // página guardada, no lo soltaba, y acto seguido FP.paginas se sustituía —
+    // así que ese <video> se quedaba en #fpOculto para siempre.
     FP.paginas.forEach(function (pg) {
       pg.celdas.forEach(function (c) {
         if (c.media && c.media.tipo === 'vid') {
           try { c.media.el.pause(); if (c.media.el.parentNode) c.media.el.parentNode.removeChild(c.media.el); URL.revokeObjectURL(c.media.url); } catch (e) {}
         }
+        c.media = null;
       });
     });
+    FP.paginas = [];
+    FP.pagina.celdas.forEach(function (c, i) { if (c.media) quitarMedia(i, true); });
+
+    if (M.limpiarCache) M.limpiarCache();   // otro folleto: lo guardado ya no sirve
 
     var pags = it.paginas.map(deserializarPagina);
     FP.paginas = pags.slice(0, pags.length - 1);
@@ -1010,14 +1183,24 @@
   }
   function le16(v) { return [v & 255, (v >> 8) & 255]; }
   function le32(v) { return [v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >>> 24) & 255]; }
+  /* Hora y fecha en el formato que espera el ZIP (el de MS-DOS). Sin esto las
+     entradas salían con fecha cero —1980, mes 0, día 0— y algunos
+     descompresores de Windows y de Android lo marcaban como archivo raro. */
+  function dosHora(d) { return (((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF); }
+  function dosFecha(d) {
+    var a = Math.max(0, Math.min(127, d.getFullYear() - 1980));
+    return (((a << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF);
+  }
+
   function zipStore(archivos) {
     var partes = [], central = [], offset = 0;
+    var ahora = new Date(), hh = dosHora(ahora), ff = dosFecha(ahora);
     archivos.forEach(function (f) {
       var nombre = ascii(f.name), datos = f.data, crc = crc32(datos), sz = datos.length;
-      var lh = new Uint8Array([].concat([0x50, 0x4b, 0x03, 0x04], le16(20), le16(0), le16(0), le16(0), le16(0),
+      var lh = new Uint8Array([].concat([0x50, 0x4b, 0x03, 0x04], le16(20), le16(0), le16(0), le16(hh), le16(ff),
         le32(crc), le32(sz), le32(sz), le16(nombre.length), le16(0)));
       partes.push(lh, nombre, datos);
-      central.push(new Uint8Array([].concat([0x50, 0x4b, 0x01, 0x02], le16(20), le16(20), le16(0), le16(0), le16(0), le16(0),
+      central.push(new Uint8Array([].concat([0x50, 0x4b, 0x01, 0x02], le16(20), le16(20), le16(0), le16(0), le16(hh), le16(ff),
         le32(crc), le32(sz), le32(sz), le16(nombre.length), le16(0), le16(0), le16(0), le16(0), le32(0), le32(offset))), nombre);
       offset += lh.length + nombre.length + datos.length;
     });
@@ -1075,11 +1258,21 @@
     infoCarrusel(n > 20 ? '20 tarjetas (de ' + n + ': es el tope de Instagram)' : n + ' tarjetas');
   }
 
+  /* El número de tarjetas también cambia al guardar una página, al rellenar un
+     cuadro o al cambiar de cuadrícula — no sólo al tocar los mandos del
+     carrusel. Se recalcula desde repintar(), pero con un respiro para no
+     rehacer la cuenta en cada tecla. */
+  var _tCarrusel = null;
+  function contarCarruselPronto() {
+    clearTimeout(_tCarrusel);
+    _tCarrusel = setTimeout(function () { try { contarCarrusel(); } catch (e) {} }, 200);
+  }
+
   function descargarCarrusel() {
-    var ts = tarjetasCarrusel();
-    if (ts.length > 20) ts = ts.slice(0, 20);   // Instagram admite 20 por carrusel
     estado('Preparando el carrusel…', 'proc');
-    try {
+    qrListo().then(function () {
+      var ts = tarjetasCarrusel();
+      if (ts.length > 20) ts = ts.slice(0, 20);   // Instagram admite 20 por carrusel
       var archivos = ts.map(function (p, i) {
         var n = ('0' + (i + 1)).slice(-2);
         var b64 = lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.95).split(',')[1];
@@ -1088,14 +1281,20 @@
       bajar('carrusel_' + hoy() + '.zip', URL.createObjectURL(zipStore(archivos)));
       estado('✓ Carrusel de ' + ts.length + ' tarjetas en un ZIP. Ábrelo y súbelas en orden (01, 02, 03…).', 'done');
       infoCarrusel(ts.length + ' tarjetas');
-    } catch (e) {
+    }).catch(function (e) {
       estado('No se pudo montar el carrusel: ' + (e.message || e), 'err');
-    }
+    });
   }
 
   /* ═══════════════════ Descargas ═══════════════════ */
 
-  function descargarPNG() {
+  /* Los tres botones esperan al QR antes de dibujar. El .catch está para que un
+     fallo se vea en la barra roja y no se pierda en silencio dentro de la
+     promesa, como manda la costumbre del bloque. */
+  function fallo(e) { estado('No se pudo generar la descarga: ' + ((e && e.message) || e), 'err'); }
+
+  function descargarPNG() { qrListo().then(descargarPNG2).catch(fallo); }
+  function descargarPNG2() {
     var hs = hojas();
     if (hs.length === 1) {
       bajar('folleto_' + hoy() + '.jpg', lienzoDe(hs[0], 1).toDataURL('image/jpeg', 0.95));
@@ -1120,7 +1319,8 @@
     }
   }
 
-  function descargarPDF() {
+  function descargarPDF() { qrListo().then(descargarPDF2).catch(fallo); }
+  function descargarPDF2() {
     var JS = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
     if (!JS) { estado('No se pudo cargar el motor de PDF. Comprueba la conexión y recarga.', 'err'); return; }
     var hs = hojas();
@@ -1147,9 +1347,9 @@
 
   /* Folleto web: un solo .html que se abre en cualquier móvil, se pasa con el
      dedo, reproduce los vídeos y lee el folleto en voz alta. */
-  function descargarWeb() {
+  function descargarWeb() { estado('Preparando el folleto web…', 'proc'); qrListo().then(descargarWeb2).catch(fallo); }
+  function descargarWeb2() {
     var hs = hojas();
-    estado('Preparando el folleto web…', 'proc');
 
     /* Un mismo vídeo puede estar en varias hojas. Se incrusta UNA sola vez y
        las hojas lo comparten: si no, un folleto de 4 páginas pesaría el
@@ -1165,7 +1365,12 @@
       });
     });
     var pesoVideos = unicos.reduce(function (a, u) { return a + u.file.size; }, 0);
-    var conVideos = pesoVideos > 0 && pesoVideos < TOPE_WEB;
+    // Los vídeos van dentro del HTML en base64, que abulta un tercio más que el
+    // archivo original. Antes se comparaba el tamaño del archivo contra el tope,
+    // así que un conjunto de 44 MB pasaba el filtro y salía un HTML de 59 MB —
+    // justo lo que el tope quería evitar. Se compara lo que va a pesar de verdad.
+    var pesoIncrustado = Math.ceil(pesoVideos * 4 / 3);
+    var conVideos = pesoVideos > 0 && pesoIncrustado < TOPE_WEB;
 
     var tareas = hs.map(function (p, i) {
       return Promise.resolve({ hoja: i, portada: lienzoDe(p, i + 1).toDataURL('image/jpeg', 0.85) });
@@ -1195,6 +1400,11 @@
       }).join('');
 
       var guion = (val('fpGuion') || FP.pagina.guion || '').replace(/[`\\]/g, '');
+      // El guion viaja dentro de un <script> del archivo descargado. JSON.stringify
+      // escapa las comillas pero NO escapa «</script>»: el navegador cerraba la
+      // etiqueta ahí y el folleto se quedaba sin navegación. Escapando el «<» no
+      // puede pasar, y el texto se lee exactamente igual.
+      var guionJS = JSON.stringify(guion).replace(/</g, '\\u003c');
       var titulo = val('fpTitulo') || 'Folleto';
       var marca = val('fpMarca') || '';
 
@@ -1232,7 +1442,7 @@
 (guion ?
 'var hablando=false;document.getElementById("voz").onclick=function(){' +
 'if(hablando){speechSynthesis.cancel();hablando=false;this.textContent="🔊 Escuchar";return;}' +
-'var u=new SpeechSynthesisUtterance(' + JSON.stringify(guion) + ');u.lang="es-ES";u.rate=.95;' +
+'var u=new SpeechSynthesisUtterance(' + guionJS + ');u.lang="es-ES";u.rate=.95;' +
 'u.onend=function(){hablando=false;document.getElementById("voz").textContent="🔊 Escuchar"};' +
 'speechSynthesis.cancel();speechSynthesis.speak(u);hablando=true;this.textContent="■ Parar";};' : '') +
 'ir(0);})();<\/script></body></html>';
@@ -1240,7 +1450,7 @@
       bajar('folleto_web_' + hoy() + '.html', URL.createObjectURL(new Blob([doc], { type: 'text/html' })));
       estado('✓ Folleto web descargado' +
         (pesoVideos > 0 && !conVideos
-          ? '. Los vídeos pesaban ' + Math.round(pesoVideos / 1048576) + ' MB y se han dejado fuera para que el archivo se pueda mandar; se ve su primer fotograma en la hoja.'
+          ? '. Los vídeos ocupaban ' + Math.round(pesoIncrustado / 1048576) + ' MB dentro del archivo y se han dejado fuera para que se pueda mandar; se ve su primer fotograma en la hoja.'
           : conVideos ? ', con los vídeos dentro.' : '.'), 'done');
     }).catch(function (e) {
       estado('No se pudo montar el folleto web: ' + (e.message || e), 'err');
@@ -1591,8 +1801,6 @@
   }
 
   function animOpts(carrusel, F, porHoja) {
-    var ocA = document.createElement('canvas'), ocB = document.createElement('canvas');
-    ocA.width = ocB.width = F.w; ocA.height = ocB.height = F.h;
     // Un único desplegable «✨ Efecto del vídeo» decide todo. Los valores con
     // prefijo «t_» son transiciones entre tarjetas (carrusel); el resto son
     // revelados de cómo aparece cada tarjeta. Se enruta cada uno a su motor y
@@ -1601,8 +1809,21 @@
     // carrusel.
     var sel  = val('fpEfecto') || 'uno_a_uno';
     var esTr = sel.indexOf('t_') === 0;
+    // Si se elige una transición (cubo, iris, barrido…), se usa TAMBIÉN en el
+    // vídeo normal para pasar de una hoja a otra. Antes se calculaba y no se
+    // usaba nunca fuera del carrusel: elegir «🧊 Cubo 3D» para el vídeo normal
+    // daba un fundido y el menú prometía algo que no ocurría. De paso, el vídeo
+    // de varias hojas deja de cortar en seco entre una hoja y la siguiente.
+    var transita = carrusel || esTr;
+    var ocA = null, ocB = null, octxA = null, octxB = null;
+    if (transita) {                       // los lienzos auxiliares sólo si hacen falta
+      ocA = document.createElement('canvas'); ocB = document.createElement('canvas');
+      ocA.width = ocB.width = F.w; ocA.height = ocB.height = F.h;
+      octxA = ocA.getContext('2d'); octxB = ocB.getContext('2d');
+    }
     return {
       carrusel: carrusel,
+      transita: transita,
       efecto: esTr ? 'fundido' : sel,             // revelado por tarjeta
       efCar:  esTr ? sel.slice(2) : 'desvanecer', // transición entre tarjetas
       porHoja: porHoja,
@@ -1610,7 +1831,7 @@
       // (antes tope 0.55 s, se sentía brusca). Nunca ocupa más de ~40% de la
       // tarjeta, y nunca es tan corta que parezca un salto seco.
       PASO: Math.min(porHoja * 0.45, Math.max(0.9, Math.min(1.6, porHoja * 0.40))),
-      ocA: ocA, ocB: ocB, octxA: ocA.getContext('2d'), octxB: ocB.getContext('2d')
+      ocA: ocA, ocB: ocB, octxA: octxA, octxB: octxB
     };
   }
 
@@ -1618,7 +1839,7 @@
     var iHoja = Math.min(hs.length - 1, Math.floor(t / o.porHoja));
     var tHoja = t - iHoja * o.porHoja;
     var queda = o.porHoja - tHoja;
-    if (o.carrusel && iHoja < hs.length - 1 && queda < o.PASO) {
+    if (o.transita && iHoja < hs.length - 1 && queda < o.PASO) {
       // las dos tarjetas se componen con la transición elegida (cubo, iris…)
       var q = 1 - queda / o.PASO;
       var e = q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
@@ -1629,6 +1850,63 @@
     } else {
       animHoja(ctx, F, hs, iHoja, tHoja, t, o.carrusel, o.efecto, o.porHoja);
     }
+  }
+
+  /* Identifica «esta voz concreta»: si no ha cambiado ni el guion, ni la
+     velocidad, ni el archivo, los segundos medidos la última vez siguen
+     valiendo y la vista previa puede usar el ritmo REAL del vídeo. */
+  function claveVoz() {
+    var f = val('fpVoz') || 'texto_gratis';
+    if (f === 'audio') {
+      var a = $('fpAudio'), x = a && a.files && a.files[0];
+      return 'audio|' + (x ? x.name + ':' + x.size : '');
+    }
+    if (f === 'texto_gratis' || f === 'texto_pro')
+      return f + '|' + (val('fpVozVel') || '1') + '|' + (val('fpGuion') || '').trim();
+    return f;
+  }
+
+  /* Al elegir un archivo de música o de voz se mide su duración en el momento,
+     y se guarda como si ya se hubiera grabado: así «▶ Ver» enseña el ritmo real
+     desde la primera vez, sin tener que descargar el vídeo para descubrirlo. */
+  function medirAudioSubido() {
+    var e = $('fpAudio'), f = e && e.files && e.files[0];
+    if (!f) return;
+    var url = URL.createObjectURL(f);
+    var a = new Audio();
+    var fin = function () {
+      if (a.duration && isFinite(a.duration)) FP.vozUltima = { seg: a.duration, clave: claveVoz() };
+      try { URL.revokeObjectURL(url); } catch (er) {}
+    };
+    a.onloadedmetadata = fin;
+    a.onerror = function () { try { URL.revokeObjectURL(url); } catch (er) {} };
+    a.preload = 'metadata';
+    a.src = url;
+  }
+
+  /* Cuánto va a durar el vídeo. Manda la narración, igual que en la grabación.
+     Devuelve además si la cifra es exacta (ya se grabó esa voz y se midió) o
+     una estimación, para poder decirlo y no prometer un «es exactamente esto»
+     que no se cumple. Antes la vista previa usaba siempre la casilla Segundos
+     (12 por defecto) mientras el vídeo duraba lo que durase la voz: con un
+     guion de 40 segundos, la previa enseñaba un ritmo tres veces más rápido. */
+  function duracionPrevista(carrusel, nHojas) {
+    var fuente = val('fpVoz') || 'texto_gratis';
+    var segCaja = Math.max(4, parseFloat(val('fpDur')) || 12);
+    var seg = 0, exacta = false;
+
+    if (fuente === 'ninguna') { seg = 0; exacta = true; }
+    else if (FP.vozUltima && FP.vozUltima.seg > 0 && FP.vozUltima.clave === claveVoz()) {
+      seg = FP.vozUltima.seg; exacta = true;
+    } else if (fuente === 'texto_gratis' || fuente === 'texto_pro') {
+      var t = (val('fpGuion') || '').trim();
+      // ~14 caracteres por segundo es lo que habla una voz a velocidad normal
+      if (t) seg = t.length / (14 * (parseFloat(val('fpVozVel')) || 1));
+    }
+
+    var dur = seg > 0 ? seg + COLA_FIN : segCaja;
+    if (carrusel) dur = Math.max(dur, nHojas * MIN_POR_TARJETA);
+    return { seg: Math.min(TOPE_SEG_VIDEO, Math.max(4, dur)), exacta: exacta };
   }
 
   /* ── Botón «▶ Ver»: reproduce la animación en la vista previa, en bucle, sin
@@ -1651,22 +1929,25 @@
     try { reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
     if (reduce) { estado('Tu dispositivo pide menos animación; se muestra el folleto fijo.', 'proc'); return; }
 
-    var hs = carrusel ? tarjetasCarrusel() : hojas();
-    var F = M.FORMATOS[hs[0].formato] || M.FORMATOS.a4v;
+    // Mismas hojas, mismo formato y mismo tamaño de lienzo que la grabación:
+    // así lo que se ve aquí es de verdad lo que va a salir en el vídeo.
+    var hs = mismoFormato(carrusel ? tarjetasCarrusel() : hojas());
+    var F = medidasVideo(M.FORMATOS[hs[0].formato] || M.FORMATOS.a4v);
     var cv = $('fpLienzo');
     cv.width = F.w; cv.height = F.h;
     cv.style.width = (F.w > F.h ? 400 : 320) + 'px';
     var ctx = cv.getContext('2d');
-    // La vista previa no capta voz, pero usa el mismo ritmo pausado que el vídeo
-    // final (mínimo por tarjeta) para que lo que se ve aquí sea lo que se graba.
-    var dur = Math.max(4, parseFloat(val('fpDur')) || 12);
-    if (carrusel) dur = Math.max(dur, hs.length * MIN_POR_TARJETA);
-    dur = Math.min(TOPE_SEG_VIDEO, dur);
+    // La vista previa no capta la voz, pero usa su duración (medida o estimada)
+    // y el mismo ritmo pausado que el vídeo final (mínimo por tarjeta).
+    var D = duracionPrevista(carrusel, hs.length);
+    var dur = D.seg;
     var o = animOpts(carrusel, F, dur / hs.length);
 
     var btn = carrusel ? $('fpVerCarrusel') : $('fpVerVideo');
     if (btn) btn.textContent = '■ Parar';
-    estado('▶ Así se moverá el vídeo. Cuando te guste, dale a 🎬 para descargarlo.', 'done');
+    estado('▶ Así se moverá el vídeo (' + dur.toFixed(1).replace('.', ',') + ' s' +
+      (D.exacta ? '' : ' aproximados: la voz real puede durar algo más o menos') +
+      '). Cuando te guste, dale a 🎬 para descargarlo.', 'done');
     var t0 = performance.now();
     animPrev = { carrusel: carrusel, raf: 0 };
     (function paso() {
@@ -1708,8 +1989,13 @@
 
     prepararVoz(fuente).then(function (voz) {
       // en modo carrusel el vídeo va tarjeta a tarjeta, como al pasar el dedo
-      var hs = carrusel ? tarjetasCarrusel() : hojas();
-      var F = M.FORMATOS[hs[0].formato] || M.FORMATOS.a4v;
+      // Todas las hojas al formato de la primera (si no, una hoja guardada en
+      // A4 y otra en Historia salían estiradas una dentro de la otra).
+      var hs = mismoFormato(carrusel ? tarjetasCarrusel() : hojas());
+      var Fhoja = M.FORMATOS[hs[0].formato] || M.FORMATOS.a4v;
+      // Y a medida de VÍDEO, no de imprenta: es lo que permite que dé tiempo a
+      // pintar cada fotograma y que la imagen no se quede pegada.
+      var F = medidasVideo(Fhoja);
       var cv = document.createElement('canvas');
       cv.width = F.w; cv.height = F.h;
       var ctx = cv.getContext('2d');
@@ -1727,17 +2013,21 @@
       // montándose (y así el navegador lo mantiene "pintado" y no se congela),
       // pero sin tapar los controles de abajo (el botón Detener del micrófono).
       // pointer-events:none para no bloquear ningún clic.
-      var maxW = Math.min(260, (window.innerWidth || 360) * 0.6);
-      var escala = Math.min(1, maxW / F.w);
+      // Ancho y alto salen de la MISMA escala, sin max-width que los contradiga:
+      // antes se mezclaban píxeles fijos con max-width:60vw y en móviles
+      // estrechos el lienzo se veía achatado mientras grababa.
+      var anchoTope = Math.min(260, Math.max(120, (window.innerWidth || 360) * 0.55));
+      var escala = Math.min(1, anchoTope / F.w);
+      var anchoCSS = Math.round(F.w * escala), altoCSS = Math.round(F.h * escala);
       cv.style.cssText = 'position:fixed;left:50%;top:10px;transform:translateX(-50%);' +
-        'width:' + Math.round(F.w * escala) + 'px;height:' + Math.round(F.h * escala) + 'px;' +
-        'max-width:60vw;border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.7);' +
+        'width:' + anchoCSS + 'px;height:' + altoCSS + 'px;' +
+        'border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.7);' +
         'background:#000;z-index:99999;pointer-events:none;';
       document.body.appendChild(cv);
       // Cartel de "grabando" para que se entienda que hay que dejarlo quieto.
       var aviso = document.createElement('div');
       aviso.textContent = '🎬 Grabando… déjalo quieto, no cambies de pestaña';
-      aviso.style.cssText = 'position:fixed;left:50%;top:' + (Math.round(F.h * escala) + 18) + 'px;' +
+      aviso.style.cssText = 'position:fixed;left:50%;top:' + (altoCSS + 18) + 'px;' +
         'transform:translateX(-50%);background:rgba(0,0,0,.82);color:#fff;' +
         'font:600 11px system-ui,sans-serif;padding:6px 14px;border-radius:20px;' +
         'z-index:100000;pointer-events:none;white-space:nowrap;';
@@ -1785,6 +2075,10 @@
         var segVoz = 0;
         if (voz && voz.seg && isFinite(voz.seg)) segVoz = voz.seg;
         else if (vozEl && vozEl.duration && isFinite(vozEl.duration)) segVoz = vozEl.duration;
+        // Se recuerdan los segundos medidos: mientras no se cambie el guion, la
+        // velocidad ni el archivo, el botón «▶ Ver» usará este ritmo real en vez
+        // de la casilla Segundos.
+        if (segVoz > 0) FP.vozUltima = { seg: segVoz, clave: claveVoz() };
 
         var dur;
         if (segVoz > 0) {
@@ -1887,7 +2181,10 @@
           vozEl.onended = function () { vozAcabo = true; tVozFin = (performance.now() - t0) / 1000; };
           vozEl.play().catch(function () {});
         }
-        estado(fuente === 'mic' ? '● Grabando · habla ahora y pulsa Detener al terminar.' : '🎬 Grabando el vídeo…', 'proc');
+        var medidas = F.w + '×' + F.h + (F.escala < 1 ? '' : ' (tamaño real de la hoja)');
+        estado(fuente === 'mic'
+          ? '● Grabando · habla ahora y pulsa Detener al terminar. · ' + medidas
+          : '🎬 Grabando el vídeo… ' + Math.round(dur) + ' s · ' + medidas, 'proc');
 
         // el MISMO motor de animación que usa el botón «▶ Ver» (WYSIWYG)
         var oAnim = animOpts(carrusel, F, porHoja);
@@ -2003,6 +2300,21 @@
         if (id) aplicarDiseno(id);
       });
     }
+    // Cambiar la calidad o el formato de la hoja cambia el tamaño del vídeo:
+    // se detiene la vista previa animada y se actualiza el rótulo de medidas.
+    // Sólo la calidad cambia el tamaño del vídeo (fpVidFormato elige MP4 o WebM,
+    // que no afecta a las medidas y no tiene por qué cortar la vista previa).
+    if ($('fpVidCalidad')) $('fpVidCalidad').addEventListener('change', function () {
+      pararPreviewAnim(); mostrarMedidasVideo();
+    });
+    // Y cambiar el guion, la velocidad de la voz o los segundos cambia lo que
+    // va a durar: la vista previa animada se para para no enseñar un ritmo viejo.
+    ['fpVoz', 'fpDur', 'fpVozVel', 'fpGuion'].forEach(function (id) {
+      if ($(id)) $(id).addEventListener('change', pararPreviewAnim);
+    });
+    if ($('fpAudio')) $('fpAudio').addEventListener('change', function () {
+      pararPreviewAnim(); medirAudioSubido();
+    });
     if ($('fpMusPrev')) $('fpMusPrev').addEventListener('click', previewMusica);
     if ($('fpMusica')) $('fpMusica').addEventListener('change', pararPreview);
 
@@ -2103,6 +2415,7 @@
     pintarDisenos();
     escribirSolo(false);   // arranca con textos de ejemplo, para que no salga en blanco
     contarCarrusel();
+    mostrarMedidasVideo();
     estado('Pon tus fotos en los huecos y cambia los precios. Nada de esto gasta créditos.', 'done');
   }
 
