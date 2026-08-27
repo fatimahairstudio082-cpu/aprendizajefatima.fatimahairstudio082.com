@@ -72,11 +72,11 @@
   <div class="box">
     <div class="cols">
       <div>
-        <label>Precio estimado por imagen (flux-dev) USD</label>
+        <label>Precio estimado por imagen USD (flux-dev / Qwen-Image ≈0,03 · Qwen lightning ≈0,005)</label>
         <input type="number" id="precImg" value="0.03" step="0.001" min="0">
       </div>
       <div>
-        <label>Precio estimado por clip de video (wan-2.2-t2v-fast) USD</label>
+        <label>Precio estimado por clip de video (wan-2.2-t2v-fast ≈0,05) USD</label>
         <input type="number" id="precVid" value="0.05" step="0.001" min="0">
       </div>
     </div>
@@ -94,6 +94,9 @@
     <div class="nota">
       Estos 4 valores son tuyos: cámbialos las veces que quieras, el recálculo es instantáneo
       y no vuelve a leer Firebase (usa los datos ya escaneados).
+      Precios verificados en Replicate (ago 2026): imagen Qwen-Image ≈ $0,03 (o ≈ $0,005 en modo
+      lightning), video Wan 2.2 t2v-fast ≈ $0,05 por clip de 5 s. Para presupuestar el modo
+      económico de Qwen, pon 0.005 en el precio por imagen.
     </div>
   </div>
 
