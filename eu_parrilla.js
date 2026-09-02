@@ -107,6 +107,10 @@
     pag.rejilla = d.rejilla;
     pag.tema = d.tema;
     pag.adornos = Object.assign({}, d.adornos || {});
+    /* Troquel de celda y paleta propia del estilo (los 30 de «Tendencia»).
+       Sin esto todos saldrían con el cuadro redondeado de siempre. */
+    if (d.formaCelda) pag.formaCelda = d.formaCelda;
+    if (d.colores) pag.colores = Object.assign({}, d.colores);
     pag.formato = EU.$('euFormato').value || d.formato || 'a4v';
     pag.disenoId = d.id;
     pag.disenoNombre = d.nombre;
