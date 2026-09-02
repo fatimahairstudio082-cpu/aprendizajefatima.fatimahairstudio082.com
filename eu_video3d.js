@@ -26,6 +26,18 @@
 
   var LADO_MAX = 1280;
 
+  /* Medidas reales de cada sitio donde se sube el vídeo. Se marcan los que
+     hagan falta y sale un archivo por cada uno, con su medida y con la voz y
+     la música ya dentro. */
+  var SALIDAS = [
+    { id: 'reel', n: 'Reels · Shorts · TikTok · Estado', f: 'vertical-9x16',   w: 720,  h: 1280, d: '9:16 vertical' },
+    { id: 'feed', n: 'Facebook e Instagram · muro',      f: 'cuadrado-1x1',    w: 800,  h: 800,  d: '1:1 cuadrado' },
+    { id: 'yt',   n: 'YouTube · web',                    f: 'horizontal-16x9', w: 1280, h: 720,  d: '16:9 horizontal' },
+    { id: 'wa',   n: 'WhatsApp · más ligero',            f: 'whatsapp-9x16',   w: 540,  h: 960,  d: '9:16 ligero' }
+  ];
+  var salidas = [];        // ids marcados por Fátima
+  var dimSalida = null;    // durante un lote manda la medida del sitio que toca
+
   /* ───────────── Catálogo de efectos ───────────── */
 
   var EFECTOS = {
@@ -40,8 +52,22 @@
     deslizar:   { nombre: 'Deslizar',        grupo: 'Plana' },
     olas:       { nombre: 'Olas',            grupo: 'Plana' },
     circulo:    { nombre: 'Círculo',         grupo: 'Plana' },
-    persiana:   { nombre: 'Persiana',        grupo: 'Plana' }
+    persiana:   { nombre: 'Persiana',        grupo: 'Plana' },
+    latido:     { nombre: 'Latido',          grupo: 'Plana' },
+    petalo:     { nombre: 'Pétalo que abre', grupo: 'Plana' }
   };
+
+  /* Capa de ambiente: se pinta sobre toda la escena, así que vale igual para
+     los cuadros del folleto y para el cierre. */
+  var ADORNOS = {
+    ninguno:   'Sin ambiente',
+    petalos:   'Pétalos cayendo',
+    corazones: 'Corazones que suben',
+    rosas:     'Rosas girando',
+    brillo:    'Brillo dorado',
+    chispas:   'Chispas'
+  };
+  var adorno = 'ninguno';
 
   var CAMARAS = {
     ninguna:  'Sin movimiento',
@@ -121,6 +147,33 @@
     var e = LADO_MAX / Math.max(F.w, F.h);
     // par: algunos codificadores de MP4 rechazan lados impares
     return { W: Math.round(F.w * e / 2) * 2, H: Math.round(F.h * e / 2) * 2 };
+  }
+
+  /* La hoja NUNCA se deforma: se mete entera dentro de la medida del sitio y
+     lo que sobra se rellena con el fondo de la propia hoja. */
+  function cajaSalida(W, H) {
+    var m = medidas(), ar = m.W / m.H;
+    var w = W, h = Math.round(W / ar);
+    if (h > H) { h = H; w = Math.round(H * ar); }
+    return { x: Math.round((W - w) / 2), y: Math.round((H - h) / 2), w: w, h: h };
+  }
+
+  function fondoSalida(ctx, W, H) {
+    var M = EU.motor, C = M.colores(EU.pagina);
+    ctx.fillStyle = C.fondo; ctx.fillRect(0, 0, W, H);
+    var g = ctx.createRadialGradient(W / 2, H * 0.25, 0, W / 2, H * 0.25, Math.max(W, H) * 0.85);
+    g.addColorStop(0, M.rgba(C.acento, 0.22));
+    g.addColorStop(1, M.rgba(C.acento, 0));
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+
+  /* Pasa el fotograma ya pintado (a la medida de la hoja) al lienzo que se
+     graba (a la medida del sitio), centrado y sin estirar. */
+  function componer(origen, cv) {
+    var ctx = cv.getContext('2d');
+    fondoSalida(ctx, cv.width, cv.height);
+    var c = cajaSalida(cv.width, cv.height);
+    ctx.drawImage(origen, 0, 0, origen.width, origen.height, c.x, c.y, c.w, c.h);
   }
 
   function preparar() {
@@ -203,7 +256,8 @@
 
     ctx.drawImage(base, 0, 0);
 
-    if (e.tipo === 'cuadro' && rects[e.idx]) dibujarEfecto(ctx, rects[e.idx], e.efecto, p);
+    if (e.tipo === 'cuadro' && rects[e.idx]) dibujarEfecto(ctx, rects[e.idx], e.efecto, p, t);
+    pintarAdornos(ctx, m.W, m.H, t);
     if (subtitulos && e.frase) subtitulo(ctx, m, e.frase);
     ctx.restore();
   }
@@ -228,7 +282,7 @@
   }
 
   /* El cuadro que entra: se recorta de «lleno» y se transforma. */
-  function dibujarEfecto(ctx, r, efecto, p) {
+  function dibujarEfecto(ctx, r, efecto, p, t) {
     var cx = r.x + r.w / 2, cy = r.y + r.h / 2;
     ctx.save();
 
@@ -284,9 +338,87 @@
     } else if (efecto === 'olas') {
       ctx.translate(0, (1 - p) * r.h * 0.6 * Math.sin(p * Math.PI + 1));
       ctx.globalAlpha = p;
+    } else if (efecto === 'latido') {
+      // dos golpes por segundo, como un pulso: entra creciendo y sigue latiendo
+      var ta = (typeof t === 'number' ? t : 0) * 2 % 1;
+      var pul = 1 + 0.055 * Math.exp(-ta * 3.2) * Math.sin(ta * Math.PI * 2);
+      var zl = (0.86 + 0.14 * p) * pul;
+      ctx.translate(cx, cy); ctx.scale(zl, zl); ctx.translate(-cx, -cy);
+      ctx.globalAlpha = p;
+    } else if (efecto === 'petalo') {
+      // se abre desde el tallo: gira y crece desde la esquina de abajo
+      var pie = cy + r.h * 0.42;
+      ctx.translate(cx, pie);
+      ctx.rotate((1 - p) * -0.55);
+      var zp = 0.25 + 0.75 * p;
+      ctx.scale(zp, zp);
+      ctx.translate(-cx, -pie);
+      ctx.globalAlpha = p;
     }
 
     trozo(ctx, r);
+    ctx.restore();
+  }
+
+  /* Partículas de ambiente. Todo sale de una fórmula con semilla: la misma
+     escena da los mismos pétalos en el mismo sitio, así que lo que se ve en
+     la previa y lo que se graba coinciden exactamente. */
+  function pintarAdornos(ctx, W, H, t) {
+    if (adorno === 'ninguno' || !EU.pagina) return;
+    var M = EU.motor, C = M.colores(EU.pagina);
+    var lado = Math.min(W, H);
+    var az = function (k) { var x = Math.sin(k * 12.9898) * 43758.5453; return x - Math.floor(x); };
+
+    if (adorno === 'brillo') {
+      // un barrido diagonal que cruza la escena cada 3,4 s
+      var per = 3.4, q0 = (t % per) / per;
+      var anchoB = W * 0.30, bx = -anchoB + (W + anchoB * 2) * q0;
+      var g = ctx.createLinearGradient(bx - anchoB, 0, bx + anchoB, H);
+      g.addColorStop(0, M.rgba(C.acento, 0));
+      g.addColorStop(0.5, M.rgba(C.acento, 0.28));
+      g.addColorStop(1, M.rgba(C.acento, 0));
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+      return;
+    }
+
+    var n = adorno === 'chispas' ? 46 : 26;
+    ctx.save();
+    for (var k = 0; k < n; k++) {
+      var s1 = az(k + 1), s2 = az(k + 7.3), s3 = az(k + 19.7);
+      var vel = 0.16 + s2 * 0.26;
+      var tam = lado * (adorno === 'chispas' ? 0.006 + s3 * 0.008 : 0.026 + s3 * 0.030);
+      var px, py, gir, q;
+
+      if (adorno === 'corazones') {
+        q = (t * vel + s1) % 1;
+        py = H * (1.08 - q * 1.16);
+        px = W * s1 + Math.sin(t * 1.5 + k) * W * 0.035;
+        gir = Math.sin(t * 1.2 + k) * 0.22;
+      } else {
+        q = (t * vel + s1) % 1;
+        py = H * (q * 1.16 - 0.08);
+        px = W * s1 + Math.sin(t * 0.9 + k * 1.7) * W * 0.06;
+        gir = t * (0.5 + s2) * (s3 > 0.5 ? 1 : -1);
+      }
+
+      var fade = adorno === 'chispas' ? 0.35 + 0.45 * Math.abs(Math.sin(t * 2.4 + k)) : 0.55;
+      ctx.globalAlpha = fade * (0.5 + s3 * 0.5);
+      ctx.fillStyle = M.rgba(k % 3 === 0 ? C.acento2 : C.acento, 1);
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(gir);
+      if (adorno === 'chispas') {
+        ctx.beginPath(); ctx.arc(0, 0, tam, 0, Math.PI * 2); ctx.fill();
+      } else {
+        var forma = adorno === 'corazones' ? 'corazon' : (adorno === 'rosas' ? 'rosa' : 'petalo');
+        if (M.caminoCelda) { M.caminoCelda(ctx, -tam / 2, -tam / 2, tam, tam, forma, 0); ctx.fill(); }
+        else { ctx.beginPath(); ctx.arc(0, 0, tam / 2, 0, Math.PI * 2); ctx.fill(); }
+      }
+      ctx.restore();
+    }
     ctx.restore();
   }
 
@@ -354,7 +486,7 @@
 
       '<div class="panel"><h3>Efecto de la escena</h3>' +
       ['3D', 'Plana'].map(function (g) {
-        return '<label class="mini-lbl">' + (g === '3D' ? '3D del cuadro · 8' : 'Entradas planas · 4') + '</label>' +
+        return '<label class="mini-lbl">' + (g === '3D' ? '3D del cuadro' : 'Entradas planas') + ' · ' + grupos[g].length + '</label>' +
           '<div class="tira">' + grupos[g].map(function (k) {
             return '<button class="pill' + (esc[sel] && esc[sel].efecto === k ? ' on' : '') + '" data-ef="' + k + '">' +
               EU.esc(EFECTOS[k].nombre) + '</button>';
@@ -367,6 +499,10 @@
       '<label class="mini-lbl">Ritmo</label><div class="tira">' +
       [['0.8', 'Lento'], ['1', 'Normal'], ['1.3', 'Rápido']].map(function (r) {
         return '<button class="pill' + (String(ritmo) === r[0] ? ' on' : '') + '" data-rit="' + r[0] + '">' + r[1] + '</button>';
+      }).join('') + '</div>' +
+      '<label class="mini-lbl">Ambiente · se pinta sobre toda la escena</label><div class="tira">' +
+      Object.keys(ADORNOS).map(function (k) {
+        return '<button class="pill' + (adorno === k ? ' on' : '') + '" data-ador="' + k + '">' + EU.esc(ADORNOS[k]) + '</button>';
       }).join('') + '</div>' +
       '</div>' +
 
@@ -396,6 +532,24 @@
           '<input type="range" min="0" max="1" step="0.05" id="euMusVol" value="' + musica.vol + '">' +
           '<button class="btn btn-g btn-sm" style="width:100%;margin-top:6px" id="euMusQuitar">Quitar la música</button>'
         : '') +
+      '</div>' +
+
+      '<div class="panel"><h3>Descargar listo para cada sitio</h3>' +
+      '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:0 0 8px">' +
+      'Marca dónde vas a subirlo y sale un archivo por sitio, con su medida y con tu voz y la música dentro. ' +
+      'Se graban en fila, uno detrás de otro.</p>' +
+      '<div style="display:flex;flex-direction:column;gap:5px">' +
+      SALIDAS.map(function (x) {
+        var on = salidas.indexOf(x.id) >= 0;
+        return '<button class="pill' + (on ? ' on' : '') + '" data-salida="' + x.id + '" ' +
+          'style="width:100%;justify-content:flex-start;border-radius:9px;text-align:left">' +
+          '<span style="width:16px;flex:none;text-align:center">' + (on ? '☑' : '☐') + '</span>' +
+          '<span style="flex:1">' + EU.esc(x.n) + '</span>' +
+          '<span style="opacity:.7;font-size:10px">' + EU.esc(x.d) + '</span></button>';
+      }).join('') +
+      '</div>' +
+      '<button class="btn" id="euBtnLote" style="width:100%;margin-top:10px">' +
+      '⬇ Descargar todo lo marcado · ' + salidas.length + '</button>' +
       '</div>' +
 
       '<div class="panel"><h3>Marca en el vídeo</h3>' +
@@ -444,6 +598,9 @@
     c.querySelectorAll('[data-rit]').forEach(function (b) {
       b.onclick = function () { ritmo = parseFloat(b.getAttribute('data-rit')); panel(); duracionTexto(); };
     });
+    c.querySelectorAll('[data-ador]').forEach(function (b) {
+      b.onclick = function () { adorno = b.getAttribute('data-ador'); panel(); pintarEnSel(); };
+    });
     var g = c.querySelector('[data-guion]');
     if (g) g.onclick = guionCerebro;
     c.querySelectorAll('input[name=euSon]').forEach(function (r) {
@@ -470,6 +627,15 @@
     if (mv) mv.oninput = function () { musica.vol = parseFloat(mv.value); };
     var mq = EU.$('euMusQuitar');
     if (mq) mq.onclick = function () { musica.blob = null; musica.nombre = ''; panel(); };
+    c.querySelectorAll('[data-salida]').forEach(function (b) {
+      b.onclick = function () {
+        var id = b.getAttribute('data-salida'), k = salidas.indexOf(id);
+        if (k >= 0) salidas.splice(k, 1); else salidas.push(id);
+        panel();
+      };
+    });
+    var lote = EU.$('euBtnLote');
+    if (lote) lote.onclick = function () { V.exportarLote(); };
     var s = EU.$('euSubs'); if (s) s.onchange = function () { subtitulos = s.checked; pintarEnSel(); };
     var q = EU.$('euCierreQR'); if (q) q.onchange = function () { cierreQR = q.checked; };
   }
@@ -652,24 +818,41 @@
 
   /* ───────────── Grabar ───────────── */
 
-  V.grabar = function () {
+  V.grabar = function (opts) {
+    opts = opts || {};
+    var fallar = function (msg) {
+      dimSalida = null;
+      EU.estado('euVideoEstado', msg, 'err');
+      if (opts.alFallar) opts.alFallar();
+    };
     if (corriendo) { if (pararTodo) pararTodo(); return; }
-    if (!EU_PLAN.exigeSesion()) return;
+    if (!EU_PLAN.exigeSesion()) { if (opts.alFallar) opts.alFallar(); return; }
 
     var tope = EU_PLAN.topeVideo();
     if (total() > tope) {
       EU_PLAN.muro('video', 'Tu vídeo dura ' + total().toFixed(1) + ' s. Acorta las escenas o pasa a Pro.');
+      if (opts.alFallar) opts.alFallar();
       return;
     }
     if (!window.MediaRecorder || !document.createElement('canvas').captureStream) {
-      EU.estado('euVideoEstado', 'Este navegador no sabe grabar vídeo. Prueba en Chrome.', 'err');
+      fallar('Este navegador no sabe grabar vídeo. Prueba en Chrome.');
       return;
     }
 
     preparar();
     var m = medidas();
+    /* Sin lote se graba tal cual, a la medida de la hoja. Con lote el lienzo
+       que se graba lleva la medida del sitio y la hoja se compone dentro. */
+    var out = dimSalida || m;
     var cv = document.createElement('canvas');
-    cv.width = m.W; cv.height = m.H;
+    cv.width = out.W; cv.height = out.H;
+    var interno = dimSalida ? document.createElement('canvas') : null;
+    if (interno) { interno.width = m.W; interno.height = m.H; }
+
+    /* El primer fotograma tiene que estar YA pintado: hay navegadores que fijan
+       la medida del vídeo con lo que encuentran en el lienzo al arrancar. */
+    if (interno) { pintarFotograma(0, interno); componer(interno, cv); }
+    else pintarFotograma(0, cv);
 
     var flujo = new MediaStream();
     cv.captureStream(30).getVideoTracks().forEach(function (t) { flujo.addTrack(t); });
@@ -710,13 +893,19 @@
 
     function arranca() {
       var tipo = '';
-      ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'].some(function (x) {
+      /* Con sonido hay que exigir un formato que nombre su códec de audio: hay
+         navegadores que dicen sí al mp4 genérico y luego entregan el vídeo mudo. */
+      var hayAudio = !!(audio.blob || musica.blob);
+      (hayAudio
+        ? ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+        : ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm']
+      ).some(function (x) {
         if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(x)) { tipo = x; return true; }
         return false;
       });
       var rec;
       try { rec = new MediaRecorder(flujo, tipo ? { mimeType: tipo, videoBitsPerSecond: 4500000 } : undefined); }
-      catch (e) { EU.estado('euVideoEstado', 'No se pudo iniciar la grabación: ' + EU.esc(e.message || e), 'err'); return; }
+      catch (e) { fallar('No se pudo iniciar la grabación: ' + EU.esc(e.message || e)); return; }
 
       var trozos = [];
       rec.ondataavailable = function (e) { if (e.data && e.data.size) trozos.push(e.data); };
@@ -726,17 +915,22 @@
         try { if (ac) ac.close(); } catch (e) {}
         var mp4 = /mp4/.test(rec.mimeType || tipo || '');
         var b = new Blob(trozos, { type: mp4 ? 'video/mp4' : 'video/webm' });
-        EU_EDITOR.bajar(b, EU_EDITOR.limpio(EU.marca.nombre || 'video') + (mp4 ? '.mp4' : '.webm'));
-        EU.estado('euVideoEstado',
-          'Vídeo descargado' + (mp4 ? '.' : ' en formato WebM: este navegador no sabe hacer MP4. Se ve en el ordenador y en Android; para iPhone conviértelo.') +
-          ' Pesa ' + Math.round(b.size / 1024) + ' KB.', mp4 ? 'ok' : 'avi');
+        var nom = opts.nombre || EU_EDITOR.limpio(EU.marca.nombre || 'video');
+        EU_EDITOR.bajar(b, nom + (mp4 ? '.mp4' : '.webm'));
+        if (!opts.alTerminar) {
+          EU.estado('euVideoEstado',
+            'Vídeo descargado' + (mp4 ? '.' : ' en formato WebM: este navegador no sabe hacer MP4. Se ve en el ordenador y en Android; para iPhone conviértelo.') +
+            ' Pesa ' + Math.round(b.size / 1024) + ' KB.', mp4 ? 'ok' : 'avi');
+        }
         EU.$('euBtnGrabar').textContent = '⏺ Grabar el vídeo';
+        if (cancelado && opts.alFallar) opts.alFallar();
+        else if (opts.alTerminar) opts.alTerminar();
       };
 
       EU.$('euBtnGrabar').textContent = '■ Parar';
-      EU.estado('euVideoEstado',
-        'Grabando… tarda lo mismo que dura el vídeo (' + total().toFixed(1) + ' s). ' +
-        '<b>No cambies de pestaña</b>.', 'proc');
+      EU.estado('euVideoEstado', opts.aviso ||
+        ('Grabando… tarda lo mismo que dura el vídeo (' + total().toFixed(1) + ' s). ' +
+         '<b>No cambies de pestaña</b>.'), 'proc');
 
       rec.start();
       if (fuente) { try { fuente.start(); } catch (e) {} }
@@ -747,21 +941,62 @@
       corriendo = true;
       pararTodo = function () { cancelado = true; };
 
+      var salida = function (t) {
+        if (interno) { pintarFotograma(t, interno); componer(interno, cv); }
+        else pintarFotograma(t, cv);
+        EU_PLAN.marcaAgua(ctxOff, out.W, out.H);
+      };
+
       (function paso() {
         var t = (performance.now() - t0) / 1000;
         if (cancelado || t >= total()) {
-          pintarFotograma(Math.min(t, total() - 0.001), cv);
-          EU_PLAN.marcaAgua(ctxOff, m.W, m.H);
+          salida(Math.min(t, total() - 0.001));
           corriendo = false; pararTodo = null;
           setTimeout(function () { try { rec.stop(); } catch (e) {} }, 120);
           return;
         }
-        pintarFotograma(t, cv);
-        EU_PLAN.marcaAgua(ctxOff, m.W, m.H);
+        salida(t);
         pintarFotograma(t);           // espejo en pantalla, para verlo salir
         requestAnimationFrame(paso);
       })();
     }
+  };
+
+  /* Descarga en fila un archivo por cada sitio marcado, cada uno con su
+     medida propia y el sonido ya dentro. */
+  V.exportarLote = function () {
+    if (corriendo) { EU.estado('euVideoEstado', 'Espera a que termine la grabación que está en marcha.', 'avi'); return; }
+    var defs = salidas.map(function (id) {
+      return SALIDAS.filter(function (x) { return x.id === id; })[0];
+    }).filter(Boolean);
+    if (!defs.length) {
+      EU.estado('euVideoEstado', 'Marca al menos un sitio donde vas a subirlo.', 'avi');
+      return;
+    }
+    var limpiar = function () {
+      dimSalida = null;
+      try { preparar(); pintarEnSel(); } catch (e) {}
+    };
+    var paso = function (k) {
+      if (k >= defs.length) {
+        limpiar();
+        EU.estado('euVideoEstado',
+          defs.length + (defs.length === 1 ? ' vídeo descargado' : ' vídeos descargados') +
+          ', cada uno con su medida y con tu voz y la música dentro.', 'ok');
+        return;
+      }
+      var d = defs[k];
+      dimSalida = { W: d.w, H: d.h };
+      V.grabar({
+        nombre: EU_EDITOR.limpio(EU.marca.nombre || 'video') + '-' + d.f,
+        aviso: 'Grabando ' + EU.esc(d.d) + ' (' + (k + 1) + ' de ' + defs.length + '). <b>No cambies de pestaña</b>.',
+        alTerminar: function () { setTimeout(function () { paso(k + 1); }, 1000); },
+        // si un sitio no se puede grabar, se corta el lote y el estudio vuelve
+        // a su medida normal, no se queda clavado en la del lote
+        alFallar: limpiar
+      });
+    };
+    paso(0);
   };
 
   window.addEventListener('resize', function () { if (EU.pantalla === 'video' && !corriendo) pintarEnSel(); });
