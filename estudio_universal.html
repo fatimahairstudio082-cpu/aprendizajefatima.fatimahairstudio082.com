@@ -151,12 +151,18 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 #euToast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:80;pointer-events:none;display:flex;flex-direction:column;gap:6px;align-items:center;width:calc(100% - 28px);max-width:420px}
 #euToast div{background:var(--card2);border:1px solid var(--ac);border-radius:22px;padding:9px 16px;font-size:12px;box-shadow:0 8px 26px rgba(0,0,0,.6);text-align:center}
 
+/* Repaso: el repaso a la izquierda y la hoja de examen a la derecha */
+.rp-cols{display:grid;grid-template-columns:1fr 400px;gap:16px;align-items:start}
+.rp-hoja{background:#18183a;border:1px solid var(--bd);border-radius:12px;padding:14px;position:sticky;top:120px}
+
 @media(max-width:900px){
   .eu-cols,.ed-cols,.vd-cols,.qr-cols{grid-template-columns:1fr}
   .eu-filtros,.ed-panel{position:static}
   .ed-cuerpo{max-height:none}
   nav.tabs{display:flex}
   nav.mtabs{display:none}
+  .rp-cols{grid-template-columns:1fr}
+  .rp-hoja{position:static}
   .wrap{padding:12px 12px 24px}
 }
 </style>
@@ -176,6 +182,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
   <button data-p="plantillas" class="on">🗂 Plantillas</button>
   <button data-p="editor">✏️ Editor</button>
   <button data-p="video">🎬 Vídeo</button>
+  <button data-p="repaso">✅ Repaso</button>
   <button data-p="guias">💇 Guías 3D</button>
   <button data-p="estudios">💄 Estudios</button>
   <button data-p="qr">🔳 QR</button>
@@ -323,6 +330,16 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
     </div>
   </section>
 
+  <!-- ══════════ REPASO Y EXAMEN ══════════ -->
+  <section class="pantalla" id="pRepaso">
+    <h2 class="tit2">Repaso y examen</h2>
+    <p class="ayuda">Las preguntas salen de la misma técnica que estudias: no son un cuestionario
+      aparte. Cada respuesta se corrige al momento y <b>siempre enseña el porqué</b>, se acierte o
+      se falle, porque lo que hay que aprender es el criterio. Al lado, la misma prueba maquetada
+      en A4 para imprimir, con su hoja de corrección para el aula.</p>
+    <div id="euRepaso"></div>
+  </section>
+
   <!-- ══════════ GUÍAS 3D · elemento autónomo (b6_guias_3d.js) ══════════ -->
   <section class="pantalla" id="pGuias">
     <guias-3d></guias-3d>
@@ -429,5 +446,6 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 <script src="eu_qr.js"></script>
 <script src="eu_video3d.js"></script>
 <script src="eu_proyectos.js"></script>
+<script src="eu_repaso.js"></script>
 </body>
 </html>
