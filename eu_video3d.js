@@ -35,6 +35,17 @@
     { id: 'yt',   n: 'YouTube · web',                    f: 'horizontal-16x9', w: 1280, h: 720,  d: '16:9 horizontal' },
     { id: 'wa',   n: 'WhatsApp · más ligero',            f: 'whatsapp-9x16',   w: 540,  h: 960,  d: '9:16 ligero' }
   ];
+  /* Medida del vídeo cuando se graba a mano (una sola pieza). «hoja» es la
+     de siempre: la del folleto tal cual. */
+  var RATIOS = {
+    hoja: { nombre: 'Como la hoja', W: 0,   H: 0 },
+    v:    { nombre: '9:16',         W: 540, H: 960 },
+    q:    { nombre: '1:1',          W: 640, H: 640 },
+    h:    { nombre: '16:9',         W: 854, H: 480 }
+  };
+  var ratio = 'hoja';
+  var previa = null;       // lienzo interno para enseñar la medida elegida
+
   var salidas = [];        // ids marcados por Fátima
   var dimSalida = null;    // durante un lote manda la medida del sitio que toca
 
@@ -176,6 +187,11 @@
     ctx.drawImage(origen, 0, 0, origen.width, origen.height, c.x, c.y, c.w, c.h);
   }
 
+  function dimRatio() {
+    var R = RATIOS[ratio];
+    return (!R || !R.W) ? null : { W: R.W, H: R.H };
+  }
+
   function preparar() {
     var m = medidas();
     lleno = document.createElement('canvas');
@@ -227,6 +243,21 @@
     if (!cv || !lleno) return;
     var m = medidas();
     var mostrar = (cv.id === 'euVideoLienzo');
+    /* Con una medida elegida la previa la enseña de verdad: la hoja se pinta
+       aparte y se compone dentro, igual que hará el archivo. */
+    var dr = mostrar ? dimRatio() : null;
+    if (dr) {
+      if (!previa) previa = document.createElement('canvas');
+      if (previa.width !== m.W || previa.height !== m.H) { previa.width = m.W; previa.height = m.H; }
+      pintarFotograma(t, previa);
+      var cajaR = cv.parentNode.clientWidth - 30;
+      var porAltoR = Math.max(240, window.innerHeight - 300) * (dr.W / dr.H);
+      var anchoR = Math.max(200, Math.min(420, cajaR, porAltoR));
+      var eR = anchoR / dr.W;
+      cv.width = Math.round(dr.W * eR); cv.height = Math.round(dr.H * eR);
+      componer(previa, cv);
+      return;
+    }
     if (mostrar) {
       var caja = cv.parentNode.clientWidth - 30;
       // que quepa entero de alto: el vídeo se juzga viéndolo, no haciendo scroll
@@ -534,6 +565,16 @@
         : '') +
       '</div>' +
 
+      '<div class="panel"><h3>Medida del vídeo</h3>' +
+      '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:0 0 8px">' +
+      'La que sale al pulsar «Grabar el vídeo». La hoja se mete entera dentro y no se estira.</p>' +
+      '<div class="tira">' +
+      Object.keys(RATIOS).map(function (k) {
+        return '<button class="pill' + (ratio === k ? ' on' : '') + '" data-ratio="' + k + '">' +
+          EU.esc(RATIOS[k].nombre) + '</button>';
+      }).join('') + '</div>' +
+      '</div>' +
+
       '<div class="panel"><h3>Descargar listo para cada sitio</h3>' +
       '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:0 0 8px">' +
       'Marca dónde vas a subirlo y sale un archivo por sitio, con su medida y con tu voz y la música dentro. ' +
@@ -627,6 +668,9 @@
     if (mv) mv.oninput = function () { musica.vol = parseFloat(mv.value); };
     var mq = EU.$('euMusQuitar');
     if (mq) mq.onclick = function () { musica.blob = null; musica.nombre = ''; panel(); };
+    c.querySelectorAll('[data-ratio]').forEach(function (b) {
+      b.onclick = function () { ratio = b.getAttribute('data-ratio'); panel(); pintarEnSel(); };
+    });
     c.querySelectorAll('[data-salida]').forEach(function (b) {
       b.onclick = function () {
         var id = b.getAttribute('data-salida'), k = salidas.indexOf(id);
@@ -843,10 +887,10 @@
     var m = medidas();
     /* Sin lote se graba tal cual, a la medida de la hoja. Con lote el lienzo
        que se graba lleva la medida del sitio y la hoja se compone dentro. */
-    var out = dimSalida || m;
+    var out = dimSalida || dimRatio() || m;
     var cv = document.createElement('canvas');
     cv.width = out.W; cv.height = out.H;
-    var interno = dimSalida ? document.createElement('canvas') : null;
+    var interno = (out !== m) ? document.createElement('canvas') : null;
     if (interno) { interno.width = m.W; interno.height = m.H; }
 
     /* El primer fotograma tiene que estar YA pintado: hay navegadores que fijan
