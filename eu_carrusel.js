@@ -299,6 +299,29 @@
     h.push('<label style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:#cbd5e1;cursor:pointer">' +
       '<input type="checkbox" id="euCarNum"' + (st.numerar ? ' checked' : '') +
       ' style="accent-color:#a855f7;width:15px;height:15px" /> Numerar y poner «desliza»</label>');
+    /* Los medios van por cuadro de la diapositiva que esté tocada: es donde
+       la persona está mirando, y así no hay que buscar la celda en una lista
+       de treinta. Las fotos se quedan en el dispositivo. */
+    var d = (st.diapos || [])[st.sel];
+    if (d) {
+      h.push('<label style="font-size:10px;color:#94a3b8;margin:14px 0 4px;display:block;' +
+        'letter-spacing:.06em;text-transform:uppercase">Fotos y vídeos · diapositiva ' + (st.sel + 1) + '</label>');
+      h.push('<p style="margin:0 0 8px;font-size:10.5px;color:#7c7c9e;line-height:1.55">' +
+        'Sin foto, el motor dibuja un fondo con tu propia paleta: nunca finge ser una foto real. ' +
+        'Se quedan en tu dispositivo, no suben a ningún sitio.</p>');
+      (d.celdas || []).forEach(function (c, i) {
+        h.push('<div style="background:#141430;border:1px solid #2d2d4a;border-radius:9px;padding:8px;margin-bottom:6px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:5px">' +
+          '<b style="font-size:11px;color:#cbd5e1;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;' +
+          'white-space:nowrap">' + (i + 1) + ' · ' + EU.esc(c.titulo || 'Cuadro') + '</b>' +
+          (c.media ? '<button data-quitamedio="' + i + '" style="background:transparent;border:1px solid #2d2d4a;' +
+            'color:#94a3b8;border-radius:6px;padding:4px 9px;font-size:10px;cursor:pointer;flex:none;' +
+            'font-family:inherit">Quitar</button>' : '') + '</div>' +
+          '<input type="file" accept="image/*,video/*" data-medio="' + i + '" style="font-size:11px;width:100%">' +
+          '</div>');
+      });
+    }
+
     h.push('<p style="margin:10px 0 0;font-size:10.5px;color:#7c7c9e;line-height:1.55">' +
       'La portada y el cierre llevan una sola pieza; las de en medio, dos. Es lo que hace que la ' +
       'serie se lea como una historia y no como seis tarifas seguidas.</p>');
@@ -318,6 +341,24 @@
   }
 
   function enganchar(caja) {
+    /* Un vídeo se queda en su primer fotograma dentro de la hoja: el motor
+       lo pinta con `cubrir`, que ya sabe distinguir vídeo de foto. */
+    caja.querySelectorAll('[data-medio]').forEach(function (f) {
+      f.onchange = function () {
+        var n = parseInt(f.getAttribute('data-medio'), 10);
+        var file = f.files && f.files[0];
+        var d = (st.diapos || [])[st.sel];
+        if (!file || !d || !d.celdas || !d.celdas[n]) return;
+        var esVid = /^video\//.test(file.type);
+        var el = esVid ? document.createElement('video') : new Image();
+        if (esVid) { el.muted = true; el.playsInline = true; el.preload = 'auto'; }
+        el.onloadeddata = el.onload = function () { pintar(); };
+        el.onerror = function () { EU.toast('No se pudo leer ese archivo.'); };
+        el.src = URL.createObjectURL(file);
+        d.celdas[n].media = { el: el, tipo: esVid ? 'vid' : 'img' };
+      };
+    });
+
     caja.onclick = function (ev) {
       var t = ev.target;
       var mini = t.closest ? t.closest('[data-diapo]') : null;
@@ -361,6 +402,11 @@
           if (st.diapos.length <= 2) return EU.toast('Un carrusel necesita al menos portada y cierre.');
           st.diapos.splice(st.sel, 1);
           st.sel = Math.max(0, st.sel - 1);
+          return pintar();
+        }
+        if (b.hasAttribute('data-quitamedio')) {
+          var qd = (st.diapos || [])[st.sel];
+          if (qd && qd.celdas) delete qd.celdas[+b.getAttribute('data-quitamedio')].media;
           return pintar();
         }
         if (b.id === 'euCarUna') return bajarUna(st.sel);
