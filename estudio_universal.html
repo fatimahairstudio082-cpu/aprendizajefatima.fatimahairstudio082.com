@@ -151,6 +151,10 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 #euToast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:80;pointer-events:none;display:flex;flex-direction:column;gap:6px;align-items:center;width:calc(100% - 28px);max-width:420px}
 #euToast div{background:var(--card2);border:1px solid var(--ac);border-radius:22px;padding:9px 16px;font-size:12px;box-shadow:0 8px 26px rgba(0,0,0,.6);text-align:center}
 
+/* Carrusel: lienzo y tira a la izquierda, ajustes a la derecha */
+.cr-cols{display:grid;grid-template-columns:1fr 320px;gap:14px;align-items:start}
+.cr-panel{background:#18183a;border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
+
 /* Láminas: el lienzo a la izquierda y la galería a la derecha */
 .lm-cols{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
 .lm-panel{background:#18183a;border:1px solid var(--bd);border-radius:12px;padding:13px;position:sticky;top:120px;max-height:64vh;overflow:auto}
@@ -169,6 +173,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
   .rp-hoja{position:static}
   .lm-cols{grid-template-columns:1fr}
   .lm-panel{position:static;max-height:none}
+  .cr-cols{grid-template-columns:1fr}
   .wrap{padding:12px 12px 24px}
 }
 </style>
@@ -188,6 +193,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
   <button data-p="plantillas" class="on">🗂 Plantillas</button>
   <button data-p="editor">✏️ Editor</button>
   <button data-p="video">🎬 Vídeo</button>
+  <button data-p="carrusel">🎠 Carrusel</button>
   <button data-p="laminas">🧠 Láminas</button>
   <button data-p="repaso">✅ Repaso</button>
   <button data-p="guias">💇 Guías 3D</button>
@@ -337,6 +343,15 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
     </div>
   </section>
 
+  <!-- ══════════ CARRUSEL ══════════ -->
+  <section class="pantalla" id="pCarrusel">
+    <h2 class="tit2">Carrusel · varias diapositivas encadenadas</h2>
+    <p class="ayuda">Una portada, las diapositivas que necesites y un cierre con tu contacto. Todas
+      comparten paleta, tipografía y logo, y llevan su número y la flecha de «desliza» para que se
+      lean en orden.</p>
+    <div id="euCarrusel"></div>
+  </section>
+
   <!-- ══════════ LÁMINAS DE EXPOSICIÓN ══════════ -->
   <section class="pantalla" id="pLaminas">
     <h2 class="tit2">Láminas de exposición</h2>
@@ -466,6 +481,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 <script src="eu_qr.js"></script>
 <script src="eu_video3d.js"></script>
 <script src="eu_proyectos.js"></script>
+<script src="eu_carrusel.js"></script>
 <script src="eu_laminas.js"></script>
 <script src="eu_repaso.js"></script>
 </body>

@@ -102,6 +102,7 @@
     if (p === 'qr' && window.EU_QR) EU_QR.entrar();
     if (p === 'mios' && window.EU_PROYECTOS) EU_PROYECTOS.entrar();
     if (p === 'plan' && window.EU_PLAN) EU_PLAN.entrar();
+    if (p === 'carrusel' && window.EU_CARRUSEL) EU_CARRUSEL.entrar();
     if (p === 'laminas' && window.EU_LAMINAS) EU_LAMINAS.entrar();
     if (p === 'repaso' && window.EU_REPASO) EU_REPASO.entrar();
   };
