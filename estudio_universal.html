@@ -151,6 +151,10 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 #euToast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:80;pointer-events:none;display:flex;flex-direction:column;gap:6px;align-items:center;width:calc(100% - 28px);max-width:420px}
 #euToast div{background:var(--card2);border:1px solid var(--ac);border-radius:22px;padding:9px 16px;font-size:12px;box-shadow:0 8px 26px rgba(0,0,0,.6);text-align:center}
 
+/* Tríptico: lienzo a la izquierda, paleta y troqueles a la derecha */
+.tp-cols{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
+.tp-panel{background:#18183a;border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
+
 /* Carrusel: lienzo y tira a la izquierda, ajustes a la derecha */
 .cr-cols{display:grid;grid-template-columns:1fr 320px;gap:14px;align-items:start}
 .cr-panel{background:#18183a;border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
@@ -174,6 +178,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
   .lm-cols{grid-template-columns:1fr}
   .lm-panel{position:static;max-height:none}
   .cr-cols{grid-template-columns:1fr}
+  .tp-cols{grid-template-columns:1fr}
   .wrap{padding:12px 12px 24px}
 }
 </style>
@@ -193,6 +198,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
   <button data-p="plantillas" class="on">🗂 Plantillas</button>
   <button data-p="editor">✏️ Editor</button>
   <button data-p="video">🎬 Vídeo</button>
+  <button data-p="triptico">📐 Tríptico</button>
   <button data-p="carrusel">🎠 Carrusel</button>
   <button data-p="laminas">🧠 Láminas</button>
   <button data-p="repaso">✅ Repaso</button>
@@ -343,6 +349,15 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
     </div>
   </section>
 
+  <!-- ══════════ TRÍPTICO ══════════ -->
+  <section class="pantalla" id="pTriptico">
+    <h2 class="tit2">Tríptico · tres cuerpos por cara</h2>
+    <p class="ayuda">Un A4 apaisado partido en tres, por sus dos caras: la de fuera con la portada
+      y la contraportada, y la de dentro, que es la que se lee con el folleto abierto. Puedes verlo
+      plano —como se imprime— o abriéndose en la mano.</p>
+    <div id="euTriptico"></div>
+  </section>
+
   <!-- ══════════ CARRUSEL ══════════ -->
   <section class="pantalla" id="pCarrusel">
     <h2 class="tit2">Carrusel · varias diapositivas encadenadas</h2>
@@ -481,6 +496,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 <script src="eu_qr.js"></script>
 <script src="eu_video3d.js"></script>
 <script src="eu_proyectos.js"></script>
+<script src="eu_triptico.js"></script>
 <script src="eu_carrusel.js"></script>
 <script src="eu_laminas.js"></script>
 <script src="eu_repaso.js"></script>
