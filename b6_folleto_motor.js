@@ -83,6 +83,8 @@
     r1:  { nombre: 'Pieza única',        n: 1, uso: 'Carta, cartel o anuncio',    filas: [{ alto: 1, cols: [1] }] },
     r2a: { nombre: 'Dúo apilado',        n: 2, uso: 'Antes y después',            filas: [{ alto: 1, cols: [1] }, { alto: 1, cols: [1] }] },
     r2b: { nombre: 'Dúo lado a lado',    n: 2, uso: 'Dos promociones',            filas: [{ alto: 1, cols: [1, 1] }] },
+    r3a: { nombre: 'Trío en fila',       n: 3, uso: 'Tres pasos o tres precios', filas: [{ alto: 1, cols: [1, 1, 1] }] },
+    r3b: { nombre: 'Uno grande + dos',   n: 3, uso: 'Un destacado y dos apoyos', filas: [{ alto: 1.35, cols: [1] }, { alto: 1, cols: [1, 1] }] },
     r4a: { nombre: 'Cuadrícula 2×2',     n: 4, uso: 'La tarifa clásica',          filas: [{ alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }] },
     r4b: { nombre: 'Revista',            n: 4, uso: 'Un servicio estrella',       filas: [{ alto: 1.35, cols: [1] }, { alto: 1, cols: [1, 1, 1] }] },
     r6a: { nombre: 'Catálogo 2×3',       n: 6, uso: 'La carta completa',          filas: [{ alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }] },
