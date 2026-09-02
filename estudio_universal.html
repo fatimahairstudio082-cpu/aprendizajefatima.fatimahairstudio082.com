@@ -155,8 +155,8 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
   .eu-cols,.ed-cols,.vd-cols,.qr-cols{grid-template-columns:1fr}
   .eu-filtros,.ed-panel{position:static}
   .ed-cuerpo{max-height:none}
-  nav.tabs{display:none}
-  nav.mtabs{display:flex}
+  nav.tabs{display:flex}
+  nav.mtabs{display:none}
   .wrap{padding:12px 12px 24px}
 }
 </style>
@@ -176,6 +176,8 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
   <button data-p="plantillas" class="on">🗂 Plantillas</button>
   <button data-p="editor">✏️ Editor</button>
   <button data-p="video">🎬 Vídeo</button>
+  <button data-p="guias">💇 Guías 3D</button>
+  <button data-p="estudios">💄 Estudios</button>
   <button data-p="qr">🔳 QR</button>
   <button data-p="mios">📁 Míos</button>
   <button data-p="plan">💜 Plan</button>
@@ -321,6 +323,16 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
     </div>
   </section>
 
+  <!-- ══════════ GUÍAS 3D · elemento autónomo (b6_guias_3d.js) ══════════ -->
+  <section class="pantalla" id="pGuias">
+    <guias-3d></guias-3d>
+  </section>
+
+  <!-- ══════════ ESTUDIOS · elemento autónomo (b6_estudios.js) ══════════ -->
+  <section class="pantalla" id="pEstudios">
+    <estudios-belleza></estudios-belleza>
+  </section>
+
 </div>
 
 <!-- ══════════ Pestañas de móvil ══════════ -->
@@ -400,6 +412,14 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 <script src="b6_folleto_cerebro.js"></script>
 <script src="b6_folleto_disenos.js"></script>
 <script src="b6_voz_video_gratis.js"></script>
+<!-- Motores de Guías 3D y Estudios · cargar en este orden -->
+<script src="b6_bandeja.js"></script>
+<script src="b6_voz.js"></script>
+<script src="b6_cerebro.js"></script>
+<script src="b6_divisiones.js"></script>
+<script src="b6_cortes.js"></script>
+<script src="b6_guias_3d.js"></script>
+<script src="b6_estudios.js"></script>
 
 <!-- ══════════ Piezas del Estudio Universal ══════════ -->
 <script src="eu_nucleo.js"></script>
