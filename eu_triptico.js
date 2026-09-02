@@ -182,6 +182,7 @@
     if (st.libro) return pintarLibro(ctx, W, H, cps, st.abre);
 
     cps.forEach(function (off, i) { ctx.drawImage(off, i * pw, 0); });
+    EU.ponerLogo(ctx, W, H);
     ctx.save();
     ctx.setLineDash([10, 8]);
     ctx.lineWidth = 2;
@@ -218,6 +219,7 @@
     cv.width = W; cv.height = H;
     var ctx = cv.getContext('2d');
     if (cps) cps.forEach(function (off, i) { ctx.drawImage(off, i * pw, 0); });
+    EU.ponerLogo(ctx, W, H);
     st.cara = guardada;
     invalidar();
     return cv;

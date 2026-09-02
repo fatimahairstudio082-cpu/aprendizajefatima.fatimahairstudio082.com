@@ -98,7 +98,9 @@
   /* Pintar un A4 en cada movimiento no hace falta y se nota: la hoja se
      guarda hasta que cambie algo que la afecte de verdad. */
   function hoja() {
-    var clave = [st.id, st.tema, st.qr, st.semilla, JSON.stringify(EU.marca || {})].join('|');
+    var L = EU.logo || {};
+    var clave = [st.id, st.tema, st.qr, st.semilla, L.url ? L.url.length : 0, L.pos, L.tam,
+      JSON.stringify(EU.marca || {})].join('|');
     if (cacheClave === clave && cacheHoja) return cacheHoja;
     if (!st.pag) st.pag = nuevaPagina();
     var op = { contacto: EU.contactoTexto ? EU.contactoTexto() : '' };
@@ -108,6 +110,7 @@
       op.qrTexto = EU.qr.etiqueta || 'Escanéame';
     }
     cacheHoja = V().hoja(st.id, st.pag, op);
+    EU.ponerLogo(cacheHoja.getContext('2d'), cacheHoja.width, cacheHoja.height);
     cacheClave = clave;
     return cacheHoja;
   }

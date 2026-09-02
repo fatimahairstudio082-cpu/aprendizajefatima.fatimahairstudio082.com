@@ -135,6 +135,7 @@
     var ctx = elLienzo.getContext('2d');
     ctx.clearRect(0, 0, W, H);
     M.pintar(ctx, W, H, laminaDeHoja(Math.min(st.hoja, totalHojas() - 1)), { prog: st.prog });
+    EU.ponerLogo(ctx, W, H);
   }
 
   /* Miniaturas de la galería: se pintan de verdad, con su paleta y su
@@ -210,7 +211,9 @@
     var cv = document.createElement('canvas');
     cv.width = Math.round(F.w * (escala || 1));
     cv.height = Math.round(F.h * (escala || 1));
-    M.pintar(cv.getContext('2d'), cv.width, cv.height, laminaDeHoja(i), { prog: 1 });
+    var g = cv.getContext('2d');
+    M.pintar(g, cv.width, cv.height, laminaDeHoja(i), { prog: 1 });
+    EU.ponerLogo(g, cv.width, cv.height);
     return cv;
   }
 
@@ -326,6 +329,7 @@
       var t = (performance.now() - t0) / 1000;
       var pr = Math.min(1, t / dur);
       M.pintar(g, W, H, lam, { prog: pr });
+      EU.ponerLogo(g, W, H);
       EU_PLAN.marcaAgua(g, W, H);
       if (pr >= 1) {
         setTimeout(function () { try { rec.stop(); } catch (er) {} }, 200);

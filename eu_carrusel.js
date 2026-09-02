@@ -117,7 +117,8 @@
     cv.width = W; cv.height = H;
     var ctx = cv.getContext('2d');
     M().pintar(ctx, W, H, pag, { formaCelda: pag.formaCelda || 'suave' });
-    if (EU.marcaAgua) EU.marcaAgua(ctx, W, H);
+    EU.ponerLogo(ctx, W, H);
+    if (window.EU_PLAN) EU_PLAN.marcaAgua(ctx, W, H);
     sello(ctx, W, H, i, (st.diapos || []).length);
     return cv;
   }

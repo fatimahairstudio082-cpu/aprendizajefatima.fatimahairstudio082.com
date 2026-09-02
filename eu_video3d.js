@@ -336,6 +336,7 @@
     }
     pintarAdornos(ctx, m.W, m.H, t);
     if (subtitulos && e.frase) subtitulo(ctx, m, e.frase);
+    EU.ponerLogo(ctx, m.W, m.H);
     ctx.restore();
   }
 

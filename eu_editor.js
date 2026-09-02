@@ -87,7 +87,9 @@
     var esc = ancho / F.w;
     cv.width = Math.round(F.w * esc);
     cv.height = Math.round(F.h * esc);
-    M.pintar(cv.getContext('2d'), cv.width, cv.height, EU.pagina, opciones());
+    var ctx = cv.getContext('2d');
+    M.pintar(ctx, cv.width, cv.height, EU.pagina, opciones());
+    EU.ponerLogo(ctx, cv.width, cv.height);
   };
 
   /* Opciones de dibujo comunes: aquí entra el QR, para que salga igual en la
@@ -496,6 +498,7 @@
     cv.width = F.w; cv.height = F.h;
     var ctx = cv.getContext('2d');
     M.pintar(ctx, F.w, F.h, EU.pagina, opciones());
+    EU.ponerLogo(ctx, F.w, F.h);
     EU_PLAN.marcaAgua(ctx, F.w, F.h);
     return cv;
   };
