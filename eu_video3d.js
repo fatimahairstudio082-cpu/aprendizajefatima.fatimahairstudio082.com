@@ -45,6 +45,7 @@
   };
   var ratio = 'hoja';
   var previa = null;       // lienzo interno para enseñar la medida elegida
+  var desBandeja = null;   // para soltar la bandeja antes de repintar el panel
 
   var salidas = [];        // ids marcados por Fátima
   var dimSalida = null;    // durante un lote manda la medida del sitio que toca
@@ -602,7 +603,9 @@
       (EU_PLAN.llevaMarcaAgua()
         ? 'Con el plan Free el vídeo lleva marca de agua y dura como mucho ' + EU_PLAN.topeVideo() + ' s.'
         : 'Plan Pro: sin marca de agua, hasta ' + EU_PLAN.topeVideo() + ' s.') + '</p>' +
-      '</div>';
+      '</div>' +
+
+      '<div id="euVideoBandeja"></div>';
 
     cablearPanel(c);
     controlesSonido();
@@ -682,6 +685,13 @@
     if (lote) lote.onclick = function () { V.exportarLote(); };
     var s = EU.$('euSubs'); if (s) s.onchange = function () { subtitulos = s.checked; pintarEnSel(); };
     var q = EU.$('euCierreQR'); if (q) q.onchange = function () { cierreQR = q.checked; };
+    /* La bandeja se vuelve a montar en cada repintado del panel: hay que
+       soltar la suscripción anterior o se quedan oyentes sobre nodos muertos. */
+    var hb = EU.$('euVideoBandeja');
+    if (hb && window.B6Bandeja) {
+      if (desBandeja) { try { desBandeja(); } catch (e) {} }
+      desBandeja = B6Bandeja.panel(hb, { origen: 'video' }, 'video');
+    }
   }
 
   function pintarEnSel() {
@@ -960,7 +970,13 @@
         var mp4 = /mp4/.test(rec.mimeType || tipo || '');
         var b = new Blob(trozos, { type: mp4 ? 'video/mp4' : 'video/webm' });
         var nom = opts.nombre || EU_EDITOR.limpio(EU.marca.nombre || 'video');
-        EU_EDITOR.bajar(b, nom + (mp4 ? '.mp4' : '.webm'));
+        var arch = nom + (mp4 ? '.mp4' : '.webm');
+        EU_EDITOR.bajar(b, arch);
+        if (window.B6Bandeja) {
+          var ub = URL.createObjectURL(b);
+          B6Bandeja.apuntar(ub, arch, 'video');
+          setTimeout(function () { URL.revokeObjectURL(ub); }, 10000);
+        }
         if (!opts.alTerminar) {
           EU.estado('euVideoEstado',
             'Vídeo descargado' + (mp4 ? '.' : ' en formato WebM: este navegador no sabe hacer MP4. Se ve en el ordenador y en Android; para iPhone conviértelo.') +
