@@ -28,7 +28,25 @@
     lam: null,
     hoja: 0,          // hoja de la serie, en los carruseles
     prog: 1,          // avance del dibujo, 0 a 1
-    animando: false
+    animando: false,
+    panel: 'galeria', // galeria · contenido · estilo · anim · bajar
+    nodo: 0,          // nodo tocado en Contenido
+    texto: ''         // el texto que se pega para repartir
+  };
+
+  var PANELES = [
+    { id: 'galeria',   n: 'Galería' },
+    { id: 'contenido', n: 'Contenido' },
+    { id: 'estilo',    n: 'Estilo' },
+    { id: 'anim',      n: 'Animación' },
+    { id: 'bajar',     n: 'Descargar' }
+  ];
+
+  var ANIMACIONES = {
+    aparecer: 'Van apareciendo',
+    dibujar:  'Se van dibujando',
+    rotar:    'Gira',
+    pasar:    'Pasa de hoja'
   };
 
   var elLienzo = null, elGaleria = null, rafId = 0;
@@ -230,6 +248,265 @@
     EU.toast('PDF de ' + n + (n === 1 ? ' hoja' : ' hojas') + ' descargado.');
   }
 
+  /* La serie entera en PNG, dentro de un ZIP. Pasa por la bandeja, que es
+     quien sabe armarlo. */
+  function bajarZIP() {
+    if (!st.lam) return;
+    if (!window.B6Bandeja) return EU.toast('La bandeja no está cargada.');
+    var n = totalHojas(), base = nombreBase();
+    for (var i = 0; i < n; i++) {
+      B6Bandeja.apuntar(lienzoFinal(i, 1).toDataURL('image/png'),
+        base + '-' + String(i + 1) + '.png', 'laminas');
+    }
+    EU.estado('euLamEstado', 'Preparando el ZIP con ' + n + ' hojas…', 'proc');
+    setTimeout(function () { B6Bandeja.zip(base, { origen: 'laminas' }); }, 900);
+  }
+
+  /* Vídeo de la lámina: se graba el mismo dibujo que ya se ve, avanzando de
+     0 a 1. Narrado, la voz gratis del navegador va por el micrófono, igual
+     que en la pestaña de vídeo. */
+  function bajarVideo(narrado) {
+    if (!st.lam) return;
+    if (!EU_PLAN.exigeSesion()) return;
+    if (!window.MediaRecorder || !document.createElement('canvas').captureStream) {
+      return EU.estado('euLamEstado', 'Este navegador no sabe grabar vídeo. Prueba en Chrome.', 'err');
+    }
+    var M = LM(), F = formato();
+    var lado = 1280, e = lado / Math.max(F.w, F.h);
+    var W = Math.round(F.w * e / 2) * 2, H = Math.round(F.h * e / 2) * 2;
+    var cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    var g = cv.getContext('2d');
+    var lam = laminaDeHoja(st.hoja);
+    var nodos = (lam.nodos || []).filter(function (x) { return x && x.t; });
+    var dur = Math.max(2, nodos.length * (st.lam.segPorNodo || 1.6));
+
+    M.pintar(g, W, H, lam, { prog: 0 });
+    var flujo = new MediaStream();
+    cv.captureStream(30).getVideoTracks().forEach(function (t) { flujo.addTrack(t); });
+
+    var tipo = '';
+    ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'].some(function (x) {
+      if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(x)) { tipo = x; return true; }
+      return false;
+    });
+    var rec;
+    try { rec = new MediaRecorder(flujo, tipo ? { mimeType: tipo, videoBitsPerSecond: 4500000 } : undefined); }
+    catch (er) { return EU.estado('euLamEstado', 'No se pudo grabar: ' + EU.esc(er.message || er), 'err'); }
+
+    var trozos = [];
+    rec.ondataavailable = function (ev) { if (ev.data && ev.data.size) trozos.push(ev.data); };
+    rec.onstop = function () {
+      var mp4 = /mp4/.test(rec.mimeType || tipo || '');
+      var b = new Blob(trozos, { type: mp4 ? 'video/mp4' : 'video/webm' });
+      var arch = nombreBase() + (narrado ? '-narrada' : '') + (mp4 ? '.mp4' : '.webm');
+      EU_EDITOR.bajar(b, arch);
+      if (window.B6Bandeja) {
+        var u = URL.createObjectURL(b);
+        B6Bandeja.apuntar(u, arch, 'laminas');
+        setTimeout(function () { URL.revokeObjectURL(u); }, 10000);
+      }
+      EU.estado('euLamEstado', 'Vídeo descargado. Pesa ' + Math.round(b.size / 1024) + ' KB.', 'ok');
+      st.animando = false; st.prog = 1; pintarLienzo();
+    };
+
+    EU.estado('euLamEstado', 'Grabando… tarda lo que dura (' + dur.toFixed(1) + ' s). ' +
+      '<b>No cambies de pestaña</b>.', 'proc');
+    st.animando = true;
+    rec.start();
+    if (narrado && window.EU_VOZ && EU_VOZ.narrar) {
+      try {
+        EU_VOZ.narrar(nodos.map(function (x, i) {
+          return { texto: x.t + (x.d ? '. ' + x.d : ''), clave: 'lam:' + (st.disenoId || '') + ':' + i };
+        }));
+      } catch (er) {}
+    }
+    var t0 = performance.now();
+    (function paso() {
+      var t = (performance.now() - t0) / 1000;
+      var pr = Math.min(1, t / dur);
+      M.pintar(g, W, H, lam, { prog: pr });
+      EU_PLAN.marcaAgua(g, W, H);
+      if (pr >= 1) {
+        setTimeout(function () { try { rec.stop(); } catch (er) {} }, 200);
+        return;
+      }
+      requestAnimationFrame(paso);
+    })();
+  }
+
+  /* ───────────── Los cuerpos del panel ───────────── */
+
+  function ent(id, rot, val, ph) {
+    return '<label class="mini-lbl">' + EU.esc(rot) + '</label>' +
+      '<input id="' + id + '" value="' + EU.esc(val || '') + '"' +
+      (ph ? ' placeholder="' + EU.esc(ph) + '"' : '') +
+      ' style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;color:#e2e8f0;' +
+      'border-radius:8px;padding:8px;font-size:12px;font-family:inherit">';
+  }
+
+  function selec(id, rot, opciones, valor) {
+    return '<label class="mini-lbl">' + EU.esc(rot) + '</label>' +
+      '<select id="' + id + '" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;' +
+      'color:#e2e8f0;border-radius:8px;padding:8px;font-size:12px;font-family:inherit">' +
+      opciones.map(function (o) {
+        return '<option value="' + EU.esc(o.id) + '"' + (o.id === valor ? ' selected' : '') + '>' +
+          EU.esc(o.n) + '</option>';
+      }).join('') + '</select>';
+  }
+
+  function panGaleria(todas, visibles, cats) {
+    var h = [];
+    h.push('<select id="euLamCat" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;' +
+      'color:#e2e8f0;border-radius:8px;padding:8px;font-size:12px;margin-bottom:6px;font-family:inherit">');
+    h.push('<option value="">Todas las materias</option>');
+    cats.forEach(function (c) {
+      h.push('<option value="' + EU.esc(c) + '"' + (c === st.cat ? ' selected' : '') + '>' + EU.esc(c) + '</option>');
+    });
+    h.push('</select>');
+    h.push('<p style="margin:0 0 8px;font-size:10.5px;color:#7c7c9e">' + visibles.length +
+      (visibles.length === 1 ? ' plantilla' : ' plantillas') + '</p>');
+    h.push('<div id="euLamGaleria" style="display:flex;flex-wrap:wrap;gap:8px">');
+    visibles.forEach(function (p) {
+      var sel = p.id === st.disenoId;
+      h.push('<button data-lam-sel="' + EU.esc(p.id) + '" title="' + EU.esc(p.desc || '') + '" ' +
+        'style="width:88px;padding:0;background:transparent;border:2px solid ' +
+        (sel ? '#7c3aed' : 'transparent') + ';border-radius:9px;cursor:pointer;font-family:inherit">' +
+        '<canvas data-lam="' + EU.esc(p.id) + '" width="84" height="119" ' +
+        'style="width:84px;height:119px;border-radius:7px;background:#0a0a14;display:block"></canvas>' +
+        '<span style="display:block;font-size:9.5px;color:' + (sel ? '#e2e8f0' : '#7c7c9e') +
+        ';line-height:1.3;padding:4px 2px 5px;text-align:center;overflow:hidden">' +
+        EU.esc(p.nombre) + '</span></button>');
+    });
+    h.push('</div>');
+    return h.join('');
+  }
+
+  /* Contenido: la cabecera de la lámina y, debajo, los nodos uno a uno. En
+     los carruseles lo que se edita son las hojas de la serie. */
+  function panContenido() {
+    var lam = st.lam, h = [];
+    if (!lam) return '';
+    h.push(ent('euLamTit', 'Título de la lámina', lam.titulo));
+    h.push(ent('euLamSub', 'Subtítulo', lam.subtitulo));
+    h.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+      '<div>' + ent('euLamRot', 'Rótulo', lam.rotulo, 'Ej.: Tema 4') + '</div>' +
+      '<div>' + ent('euLamPie', 'Pie', lam.pie, 'Tu nombre o el centro') + '</div></div>');
+
+    h.push('<label class="mini-lbl" style="margin-top:12px">Nodos · ' + (lam.nodos || []).length + '</label>');
+    (lam.nodos || []).forEach(function (n, i) {
+      var tocado = i === st.nodo;
+      h.push('<div data-nodo="' + i + '" style="background:' + (tocado ? '#22224a' : '#141430') +
+        ';border:1px solid ' + (tocado ? '#7c3aed' : '#2d2d4a') + ';border-radius:9px;padding:8px;margin-bottom:6px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+        '<span style="font-size:10px;color:#a855f7;font-weight:700">' +
+        (n.nivel ? '· nivel ' + n.nivel : 'centro') + '</span>' +
+        '<button data-quitanodo="' + i + '" style="background:transparent;border:0;color:#7c7c9e;' +
+        'font-size:12px;cursor:pointer;font-family:inherit">✕</button></div>' +
+        '<input data-nt="' + i + '" value="' + EU.esc(n.t || '') + '" ' +
+        'style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;color:#e2e8f0;border-radius:7px;' +
+        'padding:7px;font-size:11.5px;margin-bottom:5px;font-family:inherit">' +
+        '<textarea data-nd="' + i + '" rows="2" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;' +
+        'color:#94a3b8;border-radius:7px;padding:7px;font-size:11px;resize:vertical;font-family:inherit">' +
+        EU.esc(n.d || '') + '</textarea></div>');
+    });
+    h.push('<button id="euLamMas" style="background:transparent;border:1px dashed #2d2d4a;color:#94a3b8;' +
+      'border-radius:8px;padding:8px;font-size:11.5px;cursor:pointer;width:100%;font-family:inherit">+ Otra rama</button>');
+
+    h.push('<label class="mini-lbl" style="margin-top:14px">Pegar un texto</label>');
+    h.push('<p style="margin:0 0 6px;font-size:10.5px;color:#7c7c9e;line-height:1.5">' +
+      'La primera línea es el centro. Las demás, ramas. Si una empieza por guión o va sangrada, ' +
+      'entra como subrama.</p>');
+    h.push('<textarea id="euLamTexto" rows="5" placeholder="El agua&#10;Evaporación&#10;- del mar y de los ríos&#10;Condensación&#10;Precipitación" ' +
+      'style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;color:#e2e8f0;border-radius:8px;' +
+      'padding:8px;font-size:11.5px;resize:vertical;line-height:1.6;font-family:inherit">' +
+      EU.esc(st.texto) + '</textarea>');
+    h.push('<button id="euLamRepartir" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;' +
+      'border:0;border-radius:8px;padding:8px 14px;font-size:11.5px;font-weight:600;cursor:pointer;' +
+      'margin-top:8px;font-family:inherit">↧ Repartir en nodos</button>');
+    return h.join('');
+  }
+
+  function panEstilo() {
+    var M = LM(), lam = st.lam, h = [];
+    if (!lam) return '';
+    var ests = M.porFamilia(lam.familia).map(function (e) { return { id: e.id, n: e.nombre }; });
+    h.push(selec('euLamEst', 'Estructura', ests, lam.estructura));
+
+    var pals = M.paletas();
+    h.push('<label class="mini-lbl">Paleta</label>' +
+      '<select id="euLamPal" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;color:#e2e8f0;' +
+      'border-radius:8px;padding:8px;font-size:12px;font-family:inherit">' +
+      ['Educativas', 'Del folleto'].map(function (g) {
+        var l = pals.filter(function (p) { return (p.grupo || 'Educativas') === g; });
+        if (!l.length) return '';
+        return '<optgroup label="' + g + '">' + l.map(function (p) {
+          return '<option value="' + EU.esc(p.id) + '"' + (p.id === lam.paleta ? ' selected' : '') + '>' +
+            EU.esc(p.nombre) + '</option>';
+        }).join('') + '</optgroup>';
+      }).join('') + '</select>');
+
+    var C = M.colores(lam);
+    h.push('<label class="mini-lbl">Colores a mano</label><div style="display:flex;gap:8px;flex-wrap:wrap">');
+    [['fondo', 'Fondo'], ['panel', 'Panel'], ['tinta', 'Tinta'], ['acento', 'Acento'], ['acento2', 'Acento 2']]
+      .forEach(function (c) {
+        h.push('<label style="font-size:10px;color:#94a3b8;display:flex;flex-direction:column;gap:3px;align-items:center">' +
+          c[1] + '<input type="color" data-col="' + c[0] + '" value="' + EU.esc(C[c[0]] || '#000000') + '" ' +
+          'style="width:40px;height:28px;border:1px solid #2d2d4a;border-radius:6px;background:#0f0f22;padding:1px;cursor:pointer"></label>');
+      });
+    h.push('</div>');
+    h.push('<button id="euLamColRes" style="background:transparent;border:1px solid #2d2d4a;color:#94a3b8;' +
+      'border-radius:8px;padding:7px 12px;font-size:11px;cursor:pointer;margin-top:7px;font-family:inherit">' +
+      'Volver a los de la paleta</button>');
+
+    var fmts = Object.keys(M.FORMATOS).map(function (k) { return { id: k, n: M.FORMATOS[k].nombre }; });
+    var frms = Object.keys(M.FORMAS_NODO).map(function (k) { return { id: k, n: M.FORMAS_NODO[k].nombre }; });
+    h.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">' +
+      '<div>' + selec('euLamFmt', 'Formato', fmts, lam.formato) + '</div>' +
+      '<div>' + selec('euLamFrm', 'Forma del nodo', frms, (lam.opciones || {}).forma || 'caja') + '</div></div>');
+
+    h.push('<div class="tira" style="margin-top:10px">' +
+      '<button class="pill' + (lam.sombras ? ' on' : '') + '" data-sw="sombras">Sombras</button>' +
+      '<button class="pill' + (lam.vineta ? ' on' : '') + '" data-sw="vineta">Viñeta</button></div>');
+    return h.join('');
+  }
+
+  function panAnim() {
+    var lam = st.lam, h = [];
+    if (!lam) return '';
+    h.push('<label class="mini-lbl">Cómo entra</label><div class="tira">');
+    Object.keys(ANIMACIONES).forEach(function (k) {
+      h.push('<button class="pill' + (lam.animacion === k ? ' on' : '') + '" data-anim="' + k + '">' +
+        EU.esc(ANIMACIONES[k]) + '</button>');
+    });
+    h.push('</div>');
+    h.push('<label class="mini-lbl" style="margin-top:12px">Segundos por nodo · ' +
+      Number(lam.segPorNodo || 1.6).toFixed(1) + ' s</label>' +
+      '<input type="range" id="euLamSeg" min="0.4" max="4" step="0.1" value="' + (lam.segPorNodo || 1.6) +
+      '" style="width:100%">');
+    h.push('<p style="margin:8px 0 0;font-size:10.5px;color:#7c7c9e;line-height:1.5">' +
+      'Con ' + (lam.nodos || []).length + ' nodos, la lámina entera dura ' +
+      ((lam.nodos || []).length * (lam.segPorNodo || 1.6)).toFixed(1) + ' s.</p>');
+    return h.join('');
+  }
+
+  function panBajar(nH) {
+    var h = [];
+    h.push('<p style="margin:0 0 9px;font-size:10.5px;color:#7c7c9e;line-height:1.5">' +
+      'La lámina se pinta a tamaño de imprenta, así que lo que ves y lo que bajas es lo mismo.</p>');
+    h.push('<div style="display:flex;flex-direction:column;gap:6px">' +
+      '<button class="btn btn-g btn-sm" id="euLamPNG">↓ PNG de esta hoja</button>' +
+      '<button class="btn btn-g btn-sm" id="euLamPDF">↓ PDF de esta hoja</button>' +
+      (nH > 1 ? '<button class="btn btn-g btn-sm" id="euLamPDFT">↓ PDF · las ' + nH + ' hojas</button>' +
+        '<button class="btn btn-g btn-sm" id="euLamZIP">🗜 ZIP · las ' + nH + ' hojas en PNG</button>' : '') +
+      '<button class="btn btn-sm" id="euLamVid">🎬 Vídeo de la lámina</button>' +
+      '<button class="btn btn-g btn-sm" id="euLamVidNar">🎬 Vídeo narrado</button>' +
+      '</div>');
+    h.push('<div id="euLamEstado" style="margin-top:9px"></div>');
+    h.push('<div id="euLamBandeja"></div>');
+    return h.join('');
+  }
+
   /* ───────────── Pantalla ───────────── */
 
   function pintar() {
@@ -294,42 +571,29 @@
       'border-radius:9px;padding:9px 15px;font-size:12.5px;cursor:pointer;font-family:inherit">🔊 Narrar por nodo</button>' +
       '</div>');
 
-    h.push('<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
-      '<button id="euLamPNG" style="background:transparent;border:1px solid #2d2d4a;color:#cbd5e1;' +
-      'border-radius:9px;padding:9px 15px;font-size:12.5px;cursor:pointer;font-family:inherit">↓ PNG</button>' +
-      '<button id="euLamPDF" style="background:transparent;border:1px solid #2d2d4a;color:#cbd5e1;' +
-      'border-radius:9px;padding:9px 15px;font-size:12.5px;cursor:pointer;font-family:inherit">↓ PDF</button>' +
-      (nH > 1 ? '<button id="euLamPDFT" style="background:transparent;border:1px solid #2d2d4a;color:#cbd5e1;' +
-        'border-radius:9px;padding:9px 15px;font-size:12.5px;cursor:pointer;font-family:inherit">↓ PDF · las ' +
-        nH + ' hojas</button>' : '') +
-      '</div>');
     h.push('</div>');
 
-    /* ── Galería ── */
+    /* ── Panel con pestañas ── */
     h.push('<div class="lm-panel">');
-    h.push('<select id="euLamCat" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;' +
-      'color:#e2e8f0;border-radius:8px;padding:8px;font-size:12px;margin-bottom:6px;font-family:inherit">');
-    h.push('<option value="">Todas las materias</option>');
-    cats.forEach(function (c) {
-      h.push('<option value="' + EU.esc(c) + '"' + (c === st.cat ? ' selected' : '') + '>' + EU.esc(c) + '</option>');
+    h.push('<div style="display:flex;border-bottom:1px solid #2d2d4a;background:#13132a;' +
+      'margin:-13px -13px 12px;border-radius:12px 12px 0 0;overflow:auto">');
+    PANELES.forEach(function (t) {
+      var on = st.panel === t.id;
+      h.push('<button data-pan="' + t.id + '" style="flex:1;min-width:74px;background:' +
+        (on ? '#18183a' : 'transparent') + ';border:0;border-bottom:2px solid ' +
+        (on ? '#a855f7' : 'transparent') + ';color:' + (on ? '#e2e8f0' : '#7c7c9e') +
+        ';padding:10px 6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;' +
+        'white-space:nowrap">' + EU.esc(t.n) + '</button>');
     });
-    h.push('</select>');
-    h.push('<p style="margin:0 0 8px;font-size:10.5px;color:#7c7c9e">' + visibles.length +
-      (visibles.length === 1 ? ' plantilla' : ' plantillas') + '</p>');
+    h.push('</div>');
 
-    h.push('<div id="euLamGaleria" style="display:flex;flex-wrap:wrap;gap:8px">');
-    visibles.forEach(function (p) {
-      var sel = p.id === st.disenoId;
-      h.push('<button data-lam-sel="' + EU.esc(p.id) + '" title="' + EU.esc(p.desc || '') + '" ' +
-        'style="width:88px;padding:0;background:transparent;border:2px solid ' +
-        (sel ? '#7c3aed' : 'transparent') + ';border-radius:9px;cursor:pointer;font-family:inherit">' +
-        '<canvas data-lam="' + EU.esc(p.id) + '" width="84" height="119" ' +
-        'style="width:84px;height:119px;border-radius:7px;background:#0a0a14;display:block"></canvas>' +
-        '<span style="display:block;font-size:9.5px;color:' + (sel ? '#e2e8f0' : '#7c7c9e') +
-        ';line-height:1.3;padding:4px 2px 5px;text-align:center;overflow:hidden">' +
-        EU.esc(p.nombre) + '</span></button>');
-    });
-    h.push('</div></div>');
+    if (st.panel === 'galeria') h.push(panGaleria(todas, visibles, cats));
+    else if (st.panel === 'contenido') h.push(panContenido());
+    else if (st.panel === 'estilo') h.push(panEstilo());
+    else if (st.panel === 'anim') h.push(panAnim());
+    else h.push(panBajar(nH));
+
+    h.push('</div>');
 
     h.push('</div>');
     caja.innerHTML = h.join('');
@@ -340,7 +604,13 @@
     pintarLienzo();
     /* Las miniaturas después del primer pintado: la grande primero, que es
        la que se está mirando. */
-    setTimeout(pintarGaleria, 0);
+    if (st.panel === 'galeria') setTimeout(pintarGaleria, 0);
+
+    var hb = EU.$('euLamBandeja');
+    if (hb && window.B6Bandeja) {
+      if (P._des) { try { P._des(); } catch (e) {} }
+      P._des = B6Bandeja.panel(hb, { origen: 'laminas' }, 'laminas');
+    }
   }
 
   function enganchar(caja, nH) {
@@ -372,10 +642,87 @@
       if (b.id === 'euLamPNG') return bajarPNG();
       if (b.id === 'euLamPDF') return bajarPDF(false);
       if (b.id === 'euLamPDFT') return bajarPDF(true);
+      if (b.id === 'euLamZIP') return bajarZIP();
+      if (b.id === 'euLamVid') return bajarVideo(false);
+      if (b.id === 'euLamVidNar') return bajarVideo(true);
+
+      if (b.hasAttribute('data-pan')) { st.panel = b.getAttribute('data-pan'); return pintar(); }
+      if (b.hasAttribute('data-quitanodo')) {
+        var qi = parseInt(b.getAttribute('data-quitanodo'), 10);
+        if (st.lam && st.lam.nodos.length > 1) {
+          st.lam.nodos.splice(qi, 1);
+          st.nodo = Math.max(0, Math.min(st.nodo, st.lam.nodos.length - 1));
+          pintar();
+        } else EU.toast('Tiene que quedar al menos un nodo.');
+        return;
+      }
+      if (b.id === 'euLamMas') {
+        st.lam.nodos.push({ t: 'Rama nueva', d: '', nivel: 1 });
+        st.nodo = st.lam.nodos.length - 1;
+        return pintar();
+      }
+      if (b.id === 'euLamRepartir') {
+        var ta = EU.$('euLamTexto');
+        st.texto = ta ? ta.value : '';
+        if (!st.texto.trim()) return EU.toast('Pega antes un texto.');
+        st.lam.nodos = LM().nodosDeTexto(st.texto);
+        st.lam.titulo = st.lam.nodos[0] ? st.lam.nodos[0].t : st.lam.titulo;
+        st.nodo = 0;
+        pintar();
+        return EU.toast('Texto repartido en ' + st.lam.nodos.length + ' nodos.');
+      }
+      if (b.id === 'euLamColRes') { delete st.lam.colores; return pintar(); }
+      if (b.hasAttribute('data-sw')) {
+        var k = b.getAttribute('data-sw');
+        st.lam[k] = !st.lam[k];
+        return pintar();
+      }
+      if (b.hasAttribute('data-anim')) {
+        st.lam.animacion = b.getAttribute('data-anim');
+        return pintar();
+      }
     };
 
-    var sel = EU.$('euLamCat');
-    if (sel) sel.onchange = function () { st.cat = sel.value; pintar(); };
+    /* Lo que se escribe repinta la lámina pero NO vuelve a montar el panel:
+       si se remontara, el cursor saltaría fuera del campo en cada letra. */
+    caja.oninput = function (ev) {
+      var t = ev.target;
+      if (!t || !st.lam) return;
+      if (t.id === 'euLamTit') { st.lam.titulo = t.value; return pintarLienzo(); }
+      if (t.id === 'euLamSub') { st.lam.subtitulo = t.value; return pintarLienzo(); }
+      if (t.id === 'euLamRot') { st.lam.rotulo = t.value; return pintarLienzo(); }
+      if (t.id === 'euLamPie') { st.lam.pie = t.value; return pintarLienzo(); }
+      if (t.id === 'euLamTexto') { st.texto = t.value; return; }
+      if (t.id === 'euLamSeg') { st.lam.segPorNodo = parseFloat(t.value); return; }
+      if (t.hasAttribute('data-nt')) {
+        st.lam.nodos[parseInt(t.getAttribute('data-nt'), 10)].t = t.value;
+        return pintarLienzo();
+      }
+      if (t.hasAttribute('data-nd')) {
+        st.lam.nodos[parseInt(t.getAttribute('data-nd'), 10)].d = t.value;
+        return pintarLienzo();
+      }
+      if (t.hasAttribute('data-col')) {
+        st.lam.colores = st.lam.colores || {};
+        st.lam.colores[t.getAttribute('data-col')] = t.value;
+        return pintarLienzo();
+      }
+    };
+
+    caja.onchange = function (ev) {
+      var t = ev.target;
+      if (!t || !st.lam) return;
+      if (t.id === 'euLamCat') { st.cat = t.value; return pintar(); }
+      if (t.id === 'euLamEst') { st.lam.estructura = t.value; return pintar(); }
+      if (t.id === 'euLamPal') { st.lam.paleta = t.value; delete st.lam.colores; return pintar(); }
+      if (t.id === 'euLamFmt') { st.lam.formato = t.value; return pintar(); }
+      if (t.id === 'euLamFrm') {
+        st.lam.opciones = st.lam.opciones || {};
+        st.lam.opciones.forma = t.value;
+        return pintar();
+      }
+      if (t.id === 'euLamSeg') return pintar();
+    };
   }
 
   P.entrar = function () { pintar(); };
