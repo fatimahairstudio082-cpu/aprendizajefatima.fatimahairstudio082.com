@@ -62,6 +62,8 @@
   var subtitulos = true;
   var cierreQR = true;
   var audio = { modo: 'ninguno', blob: null, segundos: 0, nombre: '' };
+  /* Música de fondo: va por debajo de la voz y se mezcla dentro del archivo. */
+  var musica = { blob: null, nombre: '', vol: 0.35 };
   var lleno = null, base = null, rects = [], baseK = -1;
   var corriendo = false, pararTodo = null;
 
@@ -384,6 +386,18 @@
       'Y no cambies de pestaña mientras graba.</div>' +
       '</div>' +
 
+      '<div class="panel"><h3>Música de fondo</h3>' +
+      '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:0 0 8px">Suena por debajo de la voz. '+
+      'Entra dentro del archivo que descargues.</p>' +
+      '<input type="file" accept="audio/*" id="euMusFile" style="font-size:11px;width:100%">' +
+      (musica.blob
+        ? '<div class="st ok" style="margin-top:6px">' + EU.esc(musica.nombre || 'música') + '</div>' +
+          '<label class="mini-lbl">Volumen de la música · ' + Math.round(musica.vol * 100) + ' %</label>' +
+          '<input type="range" min="0" max="1" step="0.05" id="euMusVol" value="' + musica.vol + '">' +
+          '<button class="btn btn-g btn-sm" style="width:100%;margin-top:6px" id="euMusQuitar">Quitar la música</button>'
+        : '') +
+      '</div>' +
+
       '<div class="panel"><h3>Marca en el vídeo</h3>' +
       '<div class="fila"><input type="checkbox" id="euSubs"' + (subtitulos ? ' checked' : '') + ' style="width:auto">' +
       '<span style="font-size:11.5px">Subtítulos de la narración</span></div>' +
@@ -445,6 +459,17 @@
         controlesSonido();
       };
     });
+    var mf = EU.$('euMusFile');
+    if (mf) mf.onchange = function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      musica.blob = f; musica.nombre = f.name;
+      panel();
+    };
+    var mv = EU.$('euMusVol');
+    if (mv) mv.oninput = function () { musica.vol = parseFloat(mv.value); };
+    var mq = EU.$('euMusQuitar');
+    if (mq) mq.onclick = function () { musica.blob = null; musica.nombre = ''; panel(); };
     var s = EU.$('euSubs'); if (s) s.onchange = function () { subtitulos = s.checked; pintarEnSel(); };
     var q = EU.$('euCierreQR'); if (q) q.onchange = function () { cierreQR = q.checked; };
   }
@@ -652,22 +677,35 @@
     var ac = null, fuente = null;
     var seguir = function () { arranca(); };
 
-    if (audio.blob) {
+    /* La voz y la música se mezclan en un mismo destino, cada una con su
+       ganancia: la música por debajo para que la palabra se entienda. Si sólo
+       hay una de las dos, suena esa. */
+    var fuenteMus = null;
+    if (audio.blob || musica.blob) {
       ac = new (window.AudioContext || window.webkitAudioContext)();
-      audio.blob.arrayBuffer().then(function (ab) { return ac.decodeAudioData(ab); })
-        .then(function (buf) {
-          var dest = ac.createMediaStreamDestination();
-          fuente = ac.createBufferSource();
-          fuente.buffer = buf;
-          fuente.connect(dest);
-          fuente.connect(ac.destination);
-          dest.stream.getAudioTracks().forEach(function (t) { flujo.addTrack(t); });
-          seguir();
-        })
-        .catch(function () {
-          EU.estado('euVideoEstado', 'No se pudo leer el audio: el vídeo saldrá sin sonido.', 'avi');
-          seguir();
-        });
+      var dest = ac.createMediaStreamDestination();
+      var leer = function (blob) {
+        return blob.arrayBuffer().then(function (ab) { return ac.decodeAudioData(ab); });
+      };
+      var pistas = [];
+      if (audio.blob) pistas.push(leer(audio.blob).then(function (buf) {
+        var g = ac.createGain(); g.gain.value = 1;
+        fuente = ac.createBufferSource(); fuente.buffer = buf;
+        fuente.connect(g); g.connect(dest); g.connect(ac.destination);
+      }));
+      if (musica.blob) pistas.push(leer(musica.blob).then(function (buf) {
+        var g = ac.createGain(); g.gain.value = musica.vol;
+        fuenteMus = ac.createBufferSource(); fuenteMus.buffer = buf;
+        fuenteMus.loop = true;                 // la música se repite hasta el final
+        fuenteMus.connect(g); g.connect(dest); g.connect(ac.destination);
+      }));
+      Promise.all(pistas).then(function () {
+        dest.stream.getAudioTracks().forEach(function (t) { flujo.addTrack(t); });
+        seguir();
+      }).catch(function () {
+        EU.estado('euVideoEstado', 'No se pudo leer el audio: el vídeo saldrá sin sonido.', 'avi');
+        seguir();
+      });
     } else { seguir(); }
 
     function arranca() {
@@ -684,6 +722,7 @@
       rec.ondataavailable = function (e) { if (e.data && e.data.size) trozos.push(e.data); };
       rec.onstop = function () {
         try { if (fuente) fuente.stop(); } catch (e) {}
+        try { if (fuenteMus) fuenteMus.stop(); } catch (e) {}
         try { if (ac) ac.close(); } catch (e) {}
         var mp4 = /mp4/.test(rec.mimeType || tipo || '');
         var b = new Blob(trozos, { type: mp4 ? 'video/mp4' : 'video/webm' });
@@ -701,6 +740,7 @@
 
       rec.start();
       if (fuente) { try { fuente.start(); } catch (e) {} }
+      if (fuenteMus) { try { fuenteMus.start(); } catch (e) {} }
 
       var ctxOff = cv.getContext('2d');
       var t0 = performance.now(), cancelado = false;
