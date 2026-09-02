@@ -151,6 +151,10 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 #euToast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:80;pointer-events:none;display:flex;flex-direction:column;gap:6px;align-items:center;width:calc(100% - 28px);max-width:420px}
 #euToast div{background:var(--card2);border:1px solid var(--ac);border-radius:22px;padding:9px 16px;font-size:12px;box-shadow:0 8px 26px rgba(0,0,0,.6);text-align:center}
 
+/* Láminas: el lienzo a la izquierda y la galería a la derecha */
+.lm-cols{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
+.lm-panel{background:#18183a;border:1px solid var(--bd);border-radius:12px;padding:13px;position:sticky;top:120px;max-height:64vh;overflow:auto}
+
 /* Repaso: el repaso a la izquierda y la hoja de examen a la derecha */
 .rp-cols{display:grid;grid-template-columns:1fr 400px;gap:16px;align-items:start}
 .rp-hoja{background:#18183a;border:1px solid var(--bd);border-radius:12px;padding:14px;position:sticky;top:120px}
@@ -163,6 +167,8 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
   nav.mtabs{display:none}
   .rp-cols{grid-template-columns:1fr}
   .rp-hoja{position:static}
+  .lm-cols{grid-template-columns:1fr}
+  .lm-panel{position:static;max-height:none}
   .wrap{padding:12px 12px 24px}
 }
 </style>
@@ -182,6 +188,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
   <button data-p="plantillas" class="on">🗂 Plantillas</button>
   <button data-p="editor">✏️ Editor</button>
   <button data-p="video">🎬 Vídeo</button>
+  <button data-p="laminas">🧠 Láminas</button>
   <button data-p="repaso">✅ Repaso</button>
   <button data-p="guias">💇 Guías 3D</button>
   <button data-p="estudios">💄 Estudios</button>
@@ -330,6 +337,15 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
     </div>
   </section>
 
+  <!-- ══════════ LÁMINAS DE EXPOSICIÓN ══════════ -->
+  <section class="pantalla" id="pLaminas">
+    <h2 class="tit2">Láminas de exposición</h2>
+    <p class="ayuda">Mapas conceptuales, mandalas, carruseles, pósters, líneas de tiempo, procesos,
+      infografías de datos, comparativas, pirámides y fichas de estudio. Trescientas plantillas con
+      contenido de verdad por materia: eliges una, corriges el texto y la descargas como lámina o PDF.</p>
+    <div id="euLaminas"></div>
+  </section>
+
   <!-- ══════════ REPASO Y EXAMEN ══════════ -->
   <section class="pantalla" id="pRepaso">
     <h2 class="tit2">Repaso y examen</h2>
@@ -437,6 +453,10 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 <script src="b6_cortes.js"></script>
 <script src="b6_guias_3d.js"></script>
 <script src="b6_estudios.js"></script>
+<!-- Motores de Láminas y de la hoja de examen -->
+<script src="b6_laminas_motor.js"></script>
+<script src="b6_laminas_disenos.js"></script>
+<script src="b6_examen.js"></script>
 
 <!-- ══════════ Piezas del Estudio Universal ══════════ -->
 <script src="eu_nucleo.js"></script>
@@ -446,6 +466,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 <script src="eu_qr.js"></script>
 <script src="eu_video3d.js"></script>
 <script src="eu_proyectos.js"></script>
+<script src="eu_laminas.js"></script>
 <script src="eu_repaso.js"></script>
 </body>
 </html>
