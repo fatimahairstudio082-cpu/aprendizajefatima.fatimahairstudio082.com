@@ -351,7 +351,43 @@
     };
   }
 
-  P.entrar = function () { pintar(); };
+  /* La pantalla lleva dos cosas: el tríptico y la hoja suelta. El conmutador
+     enseña una u otra sin tocar lo que ya hace cada una. */
+  var modo = 'tri';
+
+  var TEXTOS = {
+    tri: ['Tríptico · tres cuerpos por cara',
+      'Un A4 apaisado partido en tres, por sus dos caras: la de fuera con la portada y la ' +
+      'contraportada, y la de dentro, que es la que se lee con el folleto abierto. Puedes verlo ' +
+      'plano —como se imprime— o abriéndose en la mano.'],
+    vol: ['Volantes y maquetas · la hoja suelta',
+      'Tres cosas distintas según a quién van: el volante que se reparte, el cartel de mostrador ' +
+      'y la hoja de mando que se rellena a bolígrafo. Cualquiera de las tres se puede ver puesta ' +
+      'en el mundo o como plano de imprenta, con el sangrado y las marcas de corte donde tienen ' +
+      'que estar.']
+  };
+
+  function poner(m) {
+    modo = m;
+    var t = EU.$('euTriptico'), v = EU.$('euVolantes');
+    var bt = EU.$('euModoTri'), bv = EU.$('euModoVol');
+    var ti = EU.$('euTriTit'), ay = EU.$('euTriAyuda');
+    if (t) t.style.display = (m === 'tri') ? '' : 'none';
+    if (v) v.style.display = (m === 'vol') ? '' : 'none';
+    if (bt) bt.classList.toggle('on', m === 'tri');
+    if (bv) bv.classList.toggle('on', m === 'vol');
+    if (ti) ti.textContent = TEXTOS[m][0];
+    if (ay) ay.textContent = TEXTOS[m][1];
+    if (m === 'tri') pintar();
+    else if (window.EU_VOLANTES) EU_VOLANTES.entrar();
+  }
+
+  P.entrar = function () {
+    var bt = EU.$('euModoTri'), bv = EU.$('euModoVol');
+    if (bt) bt.onclick = function () { poner('tri'); };
+    if (bv) bv.onclick = function () { poner('vol'); };
+    poner(modo);
+  };
   P.salir = function () { if (rafId) { cancelAnimationFrame(rafId); rafId = 0; } };
 
   window.EU_TRIPTICO = P;

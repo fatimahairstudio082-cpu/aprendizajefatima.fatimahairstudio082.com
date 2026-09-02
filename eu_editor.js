@@ -542,6 +542,7 @@
     document.body.appendChild(a); a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
   }
+  E.PALETAS_PRO = PALETAS_PRO;   // las usan también los volantes
   E.bajar = bajar;
   E.limpio = limpio;
 

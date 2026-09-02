@@ -372,11 +372,16 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 
   <!-- ══════════ TRÍPTICO ══════════ -->
   <section class="pantalla" id="pTriptico">
-    <h2 class="tit2">Tríptico · tres cuerpos por cara</h2>
-    <p class="ayuda">Un A4 apaisado partido en tres, por sus dos caras: la de fuera con la portada
+    <h2 class="tit2" id="euTriTit">Tríptico · tres cuerpos por cara</h2>
+    <p class="ayuda" id="euTriAyuda">Un A4 apaisado partido en tres, por sus dos caras: la de fuera con la portada
       y la contraportada, y la de dentro, que es la que se lee con el folleto abierto. Puedes verlo
       plano —como se imprime— o abriéndose en la mano.</p>
+    <div class="tira" style="margin-bottom:12px">
+      <button class="pill on" id="euModoTri">📐 Tríptico</button>
+      <button class="pill" id="euModoVol">🖐️ Volantes y maquetas</button>
+    </div>
     <div id="euTriptico"></div>
+    <div id="euVolantes" style="display:none"></div>
   </section>
 
   <!-- ══════════ CARRUSEL ══════════ -->
@@ -519,6 +524,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 <script src="eu_video3d.js"></script>
 <script src="eu_proyectos.js"></script>
 <script src="eu_triptico.js"></script>
+<script src="eu_volantes.js"></script>
 <script src="eu_carrusel.js"></script>
 <script src="eu_laminas.js"></script>
 <script src="eu_repaso.js"></script>
