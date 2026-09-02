@@ -102,6 +102,12 @@
   var audio = { modo: 'ninguno', blob: null, segundos: 0, nombre: '' };
   /* Música de fondo: va por debajo de la voz y se mezcla dentro del archivo. */
   var musica = { blob: null, nombre: '', vol: 0.35 };
+  /* Clips de vídeo de Fátima. Se pegan en medio del guion como una escena
+     más, recortados desde el segundo que ella diga. */
+  var clips = [];
+  var sonClips = false;
+  var acMix = null;          // una sola mesa de sonido para toda la pestaña
+
   var lleno = null, base = null, rects = [], baseK = -1;
   var corriendo = false, pararTodo = null;
 
@@ -120,6 +126,8 @@
     var celdas = EU.pagina.celdas || [];
     var n = (EU.motor.REJILLAS[EU.pagina.rejilla] || EU.motor.REJILLAS.r4a).n;
     var claves = Object.keys(EFECTOS);
+    // los clips que Fátima ya haya pegado no se tiran al cambiar la rejilla
+    var pegados = esc.filter(function (e) { return e.tipo === 'clip'; });
     esc = [{ tipo: 'portada', nombre: 'Portada', efecto: 'profundidad', seg: 2.2, frase: fraseCabecera() }];
     for (var i = 0; i < Math.min(n, celdas.length); i++) {
       esc.push({
@@ -130,6 +138,7 @@
         frase: fraseCelda(celdas[i])
       });
     }
+    pegados.forEach(function (e) { esc.push(e); });
     esc.push({ tipo: 'cierre', nombre: 'Cierre + QR', efecto: 'profundidad', seg: 2.6, frase: fraseCierre() });
     esc._rejilla = EU.pagina.rejilla;
     sel = 0;
@@ -186,6 +195,37 @@
     fondoSalida(ctx, cv.width, cv.height);
     var c = cajaSalida(cv.width, cv.height);
     ctx.drawImage(origen, 0, 0, origen.width, origen.height, c.x, c.y, c.w, c.h);
+  }
+
+  /* Una sola mesa para todo el sonido: un vídeo sólo se puede enchufar una
+     vez y se queda atado a la mesa donde se enchufó, así que no se puede
+     abrir una nueva en cada grabación. */
+  function ctxAudio() {
+    if (!acMix) {
+      var A = window.AudioContext || window.webkitAudioContext;
+      if (!A) return null;
+      acMix = new A();
+    }
+    if (acMix.state === 'suspended') { try { acMix.resume(); } catch (e) {} }
+    return acMix;
+  }
+
+  function clipDe(id) {
+    for (var i = 0; i < clips.length; i++) if (clips[i].id === id) return clips[i];
+    return null;
+  }
+
+  function enchufarClip(cl) {
+    if (cl._nodo || cl._roto) return;
+    var ac = ctxAudio();
+    if (!ac) return;
+    try {
+      cl._nodo = ac.createMediaElementSource(cl.el);
+      cl._gan = ac.createGain();
+      cl._gan.gain.value = 1;
+      cl._nodo.connect(cl._gan);
+      cl._gan.connect(ac.destination);
+    } catch (e) { cl._roto = true; }
   }
 
   function dimRatio() {
@@ -286,9 +326,14 @@
     ctx.scale(s, s);
     aplicarCamara(ctx, m, t, E, p);
 
-    ctx.drawImage(base, 0, 0);
-
-    if (e.tipo === 'cuadro' && rects[e.idx]) dibujarEfecto(ctx, rects[e.idx], e.efecto, p, t);
+    if (e.tipo === 'clip') {
+      pararOtrosClips(e.clip);
+      pintarClip(ctx, m, e, E.p);
+    } else {
+      pararOtrosClips(null);
+      ctx.drawImage(base, 0, 0);
+      if (e.tipo === 'cuadro' && rects[e.idx]) dibujarEfecto(ctx, rects[e.idx], e.efecto, p, t);
+    }
     pintarAdornos(ctx, m.W, m.H, t);
     if (subtitulos && e.frase) subtitulo(ctx, m, e.frase);
     ctx.restore();
@@ -390,6 +435,53 @@
 
     trozo(ctx, r);
     ctx.restore();
+  }
+
+  /* El clip se pinta a pantalla completa, recortado desde su segundo, con
+     una entrada y una salida en negro para que no dé un salto seco. */
+  function pintarClip(ctx, m, e, p) {
+    var cl = clipDe(e.clip);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, m.W, m.H);
+    if (cl && cl.el && cl.el.readyState >= 2) {
+      llevarClip(cl, (e.ini || 0) + p * (e.seg / ritmo));
+      EU.motor.cubrir(ctx, cl.el, 0, 0, m.W, m.H);
+    } else {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,.55)';
+      ctx.font = '600 ' + (m.W * 0.03).toFixed(1) + "px 'Segoe UI',Arial,sans-serif";
+      ctx.textAlign = 'center';
+      ctx.fillText(cl ? 'Cargando ' + cl.nombre : 'Ese clip ya no está', m.W / 2, m.H / 2);
+      ctx.restore();
+    }
+    var fade = Math.min(1, Math.min(p, 1 - p) / 0.12);
+    if (fade < 1) {
+      ctx.fillStyle = 'rgba(0,0,0,' + (1 - fade).toFixed(3) + ')';
+      ctx.fillRect(0, 0, m.W, m.H);
+    }
+  }
+
+  /* Grabando, el clip corre solo y sólo se corrige si se descuelga. Parado,
+     se busca el fotograma exacto. */
+  function llevarClip(cl, seg) {
+    var el = cl.el;
+    if (!el.duration || !isFinite(el.duration)) return;
+    var d = Math.max(0, Math.min(el.duration - 0.05, seg));
+    try {
+      if (corriendo) {
+        if (el.paused) { el.currentTime = d; el.play(); }
+        else if (Math.abs(el.currentTime - d) > 0.35) el.currentTime = d;
+      } else {
+        if (!el.paused) el.pause();
+        if (Math.abs(el.currentTime - d) > 0.05) el.currentTime = d;
+      }
+    } catch (er) {}
+  }
+
+  function pararOtrosClips(id) {
+    clips.forEach(function (c) {
+      if (c.id !== id && c.el && !c.el.paused) { try { c.el.pause(); } catch (e) {} }
+    });
   }
 
   /* Partículas de ambiente. Todo sale de una fórmula con semilla: la misma
@@ -510,7 +602,16 @@
           '<div class="cab"><b>' + EU.esc(e.nombre) + '</b>' +
           '<span>' + EU.esc(EFECTOS[e.efecto] ? EFECTOS[e.efecto].nombre : e.efecto) + ' · ' + e.seg.toFixed(1) + ' s</span></div>' +
           (i === sel ? '<textarea rows="2" data-frase="' + i + '" placeholder="lo que dice la voz en esta escena">' + EU.esc(e.frase || '') + '</textarea>' +
-            '<div class="fila"><label class="lb">Dura</label><input type="range" min="1" max="8" step="0.1" value="' + e.seg + '" data-seg="' + i + '"></div>' : '') +
+            '<div class="fila"><label class="lb">Dura</label><input type="range" min="1" max="8" step="0.1" value="' + e.seg + '" data-seg="' + i + '"></div>' +
+            (e.tipo === 'clip'
+              ? '<div class="fila"><label class="lb">Empieza en</label>' +
+                '<input type="number" min="0" step="0.5" value="' + (e.ini || 0) + '" data-ini="' + i + '" style="width:64px">' +
+                '<span style="font-size:10.5px;color:var(--tx2)">s del clip</span></div>' +
+                '<div class="tira" style="margin-top:6px">' +
+                '<button class="pill" data-mover="' + i + '" data-dir="-1">↑ Subir</button>' +
+                '<button class="pill" data-mover="' + i + '" data-dir="1">↓ Bajar</button>' +
+                '<button class="pill" data-quitaesc="' + i + '">✕ Quitar</button></div>'
+              : '') : '') +
           '</div>';
       }).join('') +
       '<div class="ed-barra"><button class="btn btn-g btn-sm" data-guion="1">✍️ Que lo escriba el cerebro</button></div>' +
@@ -536,6 +637,26 @@
       Object.keys(ADORNOS).map(function (k) {
         return '<button class="pill' + (adorno === k ? ' on' : '') + '" data-ador="' + k + '">' + EU.esc(ADORNOS[k]) + '</button>';
       }).join('') + '</div>' +
+      '</div>' +
+
+      '<div class="panel"><h3>Tus clips de vídeo</h3>' +
+      '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:0 0 8px">' +
+      'Se pegan en medio del guion, detrás de la escena que tengas tocada, y se recortan ' +
+      'desde el segundo que tú digas.</p>' +
+      '<input type="file" accept="video/*" multiple id="euClipFile" style="font-size:11px;width:100%">' +
+      (clips.length
+        ? '<div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">' +
+          clips.map(function (c) {
+            return '<div class="fila" style="gap:6px">' +
+              '<b style="flex:1;min-width:0;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+              EU.esc(c.nombre) + '</b>' +
+              '<button class="pill" data-pegar="' + c.id + '">➕ Al guion</button>' +
+              '<button class="pill" data-borraclip="' + c.id + '">✕</button></div>';
+          }).join('') + '</div>' +
+          '<div class="fila" style="margin-top:8px"><input type="checkbox" id="euSonClips"' +
+          (sonClips ? ' checked' : '') + ' style="width:auto">' +
+          '<span style="font-size:11.5px">Meter el sonido de los clips en el vídeo</span></div>'
+        : '') +
       '</div>' +
 
       '<div class="panel"><h3>Sonido</h3>' +
@@ -645,6 +766,76 @@
     c.querySelectorAll('[data-ador]').forEach(function (b) {
       b.onclick = function () { adorno = b.getAttribute('data-ador'); panel(); pintarEnSel(); };
     });
+    c.querySelectorAll('[data-ini]').forEach(function (n) {
+      n.oninput = function () {
+        var e = esc[parseInt(n.getAttribute('data-ini'), 10)];
+        if (e) e.ini = Math.max(0, parseFloat(n.value) || 0);
+        pintarEnSel();
+      };
+    });
+    c.querySelectorAll('[data-mover]').forEach(function (b) {
+      b.onclick = function () {
+        var i = parseInt(b.getAttribute('data-mover'), 10);
+        var j = i + parseInt(b.getAttribute('data-dir'), 10);
+        if (j < 0 || j >= esc.length) return;
+        var x = esc[i]; esc[i] = esc[j]; esc[j] = x;
+        sel = j;
+        panel(); pintarEnSel(); duracionTexto();
+      };
+    });
+    c.querySelectorAll('[data-quitaesc]').forEach(function (b) {
+      b.onclick = function () {
+        var i = parseInt(b.getAttribute('data-quitaesc'), 10);
+        esc.splice(i, 1);
+        sel = Math.max(0, Math.min(sel, esc.length - 1));
+        panel(); pintarEnSel(); duracionTexto();
+      };
+    });
+    var cf = EU.$('euClipFile');
+    if (cf) cf.onchange = function (ev) {
+      var fs = ev.target.files || [];
+      for (var i = 0; i < fs.length; i++) (function (f) {
+        var el = document.createElement('video');
+        el.src = URL.createObjectURL(f);
+        el.muted = true;              // hasta que se pida su sonido
+        el.playsInline = true;
+        el.preload = 'auto';
+        el.onloadeddata = function () { panel(); pintarEnSel(); };
+        clips.push({ id: 'c' + Date.now() + '_' + clips.length, nombre: f.name, el: el });
+      })(fs[i]);
+      panel();
+    };
+    c.querySelectorAll('[data-pegar]').forEach(function (b) {
+      b.onclick = function () {
+        var cl = clipDe(b.getAttribute('data-pegar'));
+        if (!cl) return;
+        var i = Math.min(sel + 1, esc.length);
+        esc.splice(i, 0, {
+          tipo: 'clip', clip: cl.id, ini: 0, seg: 4,
+          nombre: '🎬 ' + cl.nombre, efecto: 'deslizar', frase: ''
+        });
+        sel = i;
+        panel(); pintarEnSel(); duracionTexto();
+        EU.toast('Clip pegado en el guion.');
+      };
+    });
+    c.querySelectorAll('[data-borraclip]').forEach(function (b) {
+      b.onclick = function () {
+        var id = b.getAttribute('data-borraclip');
+        esc = esc.filter(function (e) { return e.clip !== id; });
+        clips = clips.filter(function (x) { return x.id !== id; });
+        sel = Math.max(0, Math.min(sel, esc.length - 1));
+        panel(); pintarEnSel(); duracionTexto();
+      };
+    });
+    var sc = EU.$('euSonClips');
+    if (sc) sc.onchange = function () {
+      sonClips = sc.checked;
+      clips.forEach(function (cl) {
+        if (sonClips) { enchufarClip(cl); cl.el.muted = false; }
+        else cl.el.muted = true;
+      });
+    };
     var g = c.querySelector('[data-guion]');
     if (g) g.onclick = guionCerebro;
     c.querySelectorAll('input[name=euSon]').forEach(function (r) {
@@ -711,7 +902,7 @@
     esc.forEach(function (e) {
       if (e.tipo === 'portada') e.frase = fraseCabecera();
       else if (e.tipo === 'cierre') e.frase = fraseCierre();
-      else e.frase = fraseCelda(EU.pagina.celdas[e.idx] || {});
+      else if (e.tipo === 'cuadro') e.frase = fraseCelda(EU.pagina.celdas[e.idx] || {});
     });
     panel();
     EU.toast('Guion escrito con los textos de tu folleto.');
@@ -911,16 +1102,24 @@
     var flujo = new MediaStream();
     cv.captureStream(30).getVideoTracks().forEach(function (t) { flujo.addTrack(t); });
 
-    var ac = null, fuente = null;
+    var ac = null, fuente = null, dest = null;
     var seguir = function () { arranca(); };
+    var ganClips = [];
+    var conClips = !!(sonClips && clips.length);
 
-    /* La voz y la música se mezclan en un mismo destino, cada una con su
-       ganancia: la música por debajo para que la palabra se entienda. Si sólo
-       hay una de las dos, suena esa. */
+    /* La voz, la música y el sonido de los clips se mezclan en un mismo
+       destino, cada uno con su ganancia: la música por debajo para que la
+       palabra se entienda. Si sólo hay una, suena esa. */
     var fuenteMus = null;
-    if (audio.blob || musica.blob) {
-      ac = new (window.AudioContext || window.webkitAudioContext)();
-      var dest = ac.createMediaStreamDestination();
+    if (audio.blob || musica.blob || conClips) {
+      ac = ctxAudio();
+    }
+    if (!ac) { seguir(); } else {
+      dest = ac.createMediaStreamDestination();
+      if (conClips) clips.forEach(function (cl) {
+        enchufarClip(cl);
+        if (cl._gan) { try { cl._gan.connect(dest); ganClips.push(cl._gan); } catch (e) {} }
+      });
       var leer = function (blob) {
         return blob.arrayBuffer().then(function (ab) { return ac.decodeAudioData(ab); });
       };
@@ -943,13 +1142,13 @@
         EU.estado('euVideoEstado', 'No se pudo leer el audio: el vídeo saldrá sin sonido.', 'avi');
         seguir();
       });
-    } else { seguir(); }
+    }
 
     function arranca() {
       var tipo = '';
       /* Con sonido hay que exigir un formato que nombre su códec de audio: hay
          navegadores que dicen sí al mp4 genérico y luego entregan el vídeo mudo. */
-      var hayAudio = !!(audio.blob || musica.blob);
+      var hayAudio = !!(audio.blob || musica.blob || conClips);
       (hayAudio
         ? ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
         : ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm']
@@ -966,7 +1165,9 @@
       rec.onstop = function () {
         try { if (fuente) fuente.stop(); } catch (e) {}
         try { if (fuenteMus) fuenteMus.stop(); } catch (e) {}
-        try { if (ac) ac.close(); } catch (e) {}
+        // la mesa NO se cierra: los clips viven enchufados a ella
+        ganClips.forEach(function (g) { try { g.disconnect(dest); } catch (e) {} });
+        pararOtrosClips(null);
         var mp4 = /mp4/.test(rec.mimeType || tipo || '');
         var b = new Blob(trozos, { type: mp4 ? 'video/mp4' : 'video/webm' });
         var nom = opts.nombre || EU_EDITOR.limpio(EU.marca.nombre || 'video');
