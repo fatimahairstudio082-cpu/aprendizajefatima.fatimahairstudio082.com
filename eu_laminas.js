@@ -31,13 +31,24 @@
     animando: false,
     panel: 'galeria', // galeria · contenido · estilo · anim · bajar
     nodo: 0,          // nodo tocado en Contenido
-    texto: ''         // el texto que se pega para repartir
+    texto: '',        // el texto que se pega para repartir
+    medios: {},       // id de medio → { el, tipo }; el nodo guarda su id en n.medio
+    fondo: null,      // foto o vídeo debajo de todo
+    audio: null,      // pista de sonido para el vídeo que se descargue
+    audioNom: '',
+    narraAlVer: false // narrar al pulsar Reproducir
   };
+
+  var nMedio = 0;     // para dar un id distinto a cada medio que se sube
+  var grabandoK = -1; // qué elemento se está grabando ahora mismo
+  var acMix = null;   // una sola mesa de sonido, no una por grabación
 
   var PANELES = [
     { id: 'galeria',   n: 'Galería' },
     { id: 'contenido', n: 'Contenido' },
     { id: 'estilo',    n: 'Estilo' },
+    { id: 'medios',    n: 'Medios' },
+    { id: 'voz',       n: 'Voz' },
     { id: 'anim',      n: 'Animación' },
     { id: 'bajar',     n: 'Descargar' }
   ];
@@ -52,6 +63,25 @@
   var elLienzo = null, elGaleria = null, rafId = 0;
 
   function LM() { return window.LAMINAS_MOTOR || null; }
+
+  /* Todo lo que el motor necesita además de la lámina: los medios de los
+     nodos y el fondo. En un solo sitio para que la previa, el PNG, el PDF y
+     el vídeo salgan exactamente iguales. */
+  function ctxAudio() {
+    if (!acMix) {
+      var A = window.AudioContext || window.webkitAudioContext;
+      if (!A) return null;
+      acMix = new A();
+    }
+    if (acMix.state === 'suspended') { try { acMix.resume(); } catch (e) {} }
+    return acMix;
+  }
+
+  function opLam(extra) {
+    var op = { medios: st.medios, fondoMedio: st.fondo };
+    if (extra) Object.keys(extra).forEach(function (k) { op[k] = extra[k]; });
+    return op;
+  }
   function LD() { return window.LAMINAS_DISENOS || null; }
 
   function chip(on) {
@@ -134,7 +164,7 @@
     if (elLienzo.width !== W || elLienzo.height !== H) { elLienzo.width = W; elLienzo.height = H; }
     var ctx = elLienzo.getContext('2d');
     ctx.clearRect(0, 0, W, H);
-    M.pintar(ctx, W, H, laminaDeHoja(Math.min(st.hoja, totalHojas() - 1)), { prog: st.prog });
+    M.pintar(ctx, W, H, laminaDeHoja(Math.min(st.hoja, totalHojas() - 1)), opLam({ prog: st.prog }));
     EU.ponerLogo(ctx, W, H);
   }
 
@@ -170,6 +200,8 @@
     parar();
     var M = LM();
     if (!M || !st.lam) return;
+    // con la narración marcada manda la voz: cada nodo entra al acabar su frase
+    if (st.narraAlVer) return narrar();
     var n = (M.conteo(laminaDeHoja(st.hoja)) || {}).cajas || 6;
     var dur = Math.max(1600, n * (st.lam.segPorNodo || 0.75) * 1000);
     var t0 = performance.now();
@@ -195,7 +227,7 @@
     if (!nodos.length) return;
     parar();
     var pasos = nodos.map(function (x, i) {
-      return { texto: x.t + (x.d ? '. ' + x.d : ''), clave: 'lam:' + (st.disenoId || '') + ':' + i };
+      return { texto: x.t + (x.d ? '. ' + x.d : ''), clave: claveVoz(i) };
     });
     st.animando = true;
     EU_VOZ.narrar(pasos, function (i) {
@@ -212,7 +244,7 @@
     cv.width = Math.round(F.w * (escala || 1));
     cv.height = Math.round(F.h * (escala || 1));
     var g = cv.getContext('2d');
-    M.pintar(g, cv.width, cv.height, laminaDeHoja(i), { prog: 1 });
+    M.pintar(g, cv.width, cv.height, laminaDeHoja(i), opLam({ prog: 1 }));
     EU.ponerLogo(g, cv.width, cv.height);
     return cv;
   }
@@ -284,59 +316,129 @@
     var nodos = (lam.nodos || []).filter(function (x) { return x && x.t; });
     var dur = Math.max(2, nodos.length * (st.lam.segPorNodo || 1.6));
 
-    M.pintar(g, W, H, lam, { prog: 0 });
+    M.pintar(g, W, H, lam, opLam({ prog: 0 }));
     var flujo = new MediaStream();
     cv.captureStream(30).getVideoTracks().forEach(function (t) { flujo.addTrack(t); });
 
+    /* El sonido va DENTRO del archivo. Dos fuentes: la pista que se haya
+       subido, y las grabaciones de Fátima elemento a elemento, que entran
+       cada una en su segundo. La voz del navegador NO se puede meter en el
+       archivo —no pasa por la tarjeta de sonido— así que si se pide vídeo
+       narrado y no hay nada grabado, se avisa en vez de entregar un archivo
+       mudo diciendo que lleva voz. */
+    var ac = null, dest = null, fuentes = [];
+    var clips = [];
+    if (narrado) {
+      nodos.forEach(function (x, k) {
+        var u = EU_VOZ && EU_VOZ.audioDe ? EU_VOZ.audioDe(claveVoz(k)) : null;
+        if (u) clips.push({ url: u, en: k * (st.lam.segPorNodo || 1.6) });
+      });
+    }
+    var conSonido = !!(st.audio || clips.length);
+    if (narrado && !conSonido) {
+      return EU.estado('euLamEstado',
+        'Para meter la voz dentro del archivo hace falta una grabación tuya: ' +
+        'graba los elementos en la pestaña <b>Voz</b>, o sube una pista en <b>Medios</b>. ' +
+        'La voz del navegador suena por el altavoz y no entra en el vídeo.', 'avi');
+    }
+
     var tipo = '';
-    ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'].some(function (x) {
+    (conSonido
+      ? ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+      : ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm']
+    ).some(function (x) {
       if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(x)) { tipo = x; return true; }
       return false;
     });
-    var rec;
-    try { rec = new MediaRecorder(flujo, tipo ? { mimeType: tipo, videoBitsPerSecond: 4500000 } : undefined); }
-    catch (er) { return EU.estado('euLamEstado', 'No se pudo grabar: ' + EU.esc(er.message || er), 'err'); }
 
-    var trozos = [];
-    rec.ondataavailable = function (ev) { if (ev.data && ev.data.size) trozos.push(ev.data); };
-    rec.onstop = function () {
-      var mp4 = /mp4/.test(rec.mimeType || tipo || '');
-      var b = new Blob(trozos, { type: mp4 ? 'video/mp4' : 'video/webm' });
-      var arch = nombreBase() + (narrado ? '-narrada' : '') + (mp4 ? '.mp4' : '.webm');
-      EU_EDITOR.bajar(b, arch);
-      if (window.B6Bandeja) {
-        var u = URL.createObjectURL(b);
-        B6Bandeja.apuntar(u, arch, 'laminas');
-        setTimeout(function () { URL.revokeObjectURL(u); }, 10000);
+    /* Primero se prepara el sonido; sólo cuando está listo arranca la
+       grabación, porque MediaRecorder fija sus pistas al empezar. */
+    if (conSonido) {
+      ac = ctxAudio();
+      if (!ac) { conSonido = false; arranca(); }
+      else {
+        dest = ac.createMediaStreamDestination();
+        var leer = function (u) {
+          return fetch(u).then(function (r) { return r.arrayBuffer(); })
+            .then(function (ab) { return ac.decodeAudioData(ab); });
+        };
+        var pistas = [];
+        if (st.audio) pistas.push(
+          st.audio.arrayBuffer().then(function (ab) { return ac.decodeAudioData(ab); })
+            .then(function (buf) {
+              var g2 = ac.createGain();
+              g2.gain.value = clips.length ? 0.35 : 1;   // por debajo si además hay voz
+              var f = ac.createBufferSource();
+              f.buffer = buf; f.loop = true;
+              f.connect(g2); g2.connect(dest); g2.connect(ac.destination);
+              fuentes.push({ f: f, en: 0 });
+            }));
+        clips.forEach(function (c) {
+          pistas.push(leer(c.url).then(function (buf) {
+            var g3 = ac.createGain(); g3.gain.value = 1;
+            var f = ac.createBufferSource();
+            f.buffer = buf;
+            f.connect(g3); g3.connect(dest); g3.connect(ac.destination);
+            fuentes.push({ f: f, en: c.en });
+          }));
+        });
+        Promise.all(pistas).then(function () {
+          dest.stream.getAudioTracks().forEach(function (t) { flujo.addTrack(t); });
+          arranca();
+        }).catch(function () {
+          EU.estado('euLamEstado', 'No se pudo leer el sonido: el vídeo saldrá mudo.', 'avi');
+          conSonido = false;
+          arranca();
+        });
       }
-      EU.estado('euLamEstado', 'Vídeo descargado. Pesa ' + Math.round(b.size / 1024) + ' KB.', 'ok');
-      st.animando = false; st.prog = 1; pintarLienzo();
-    };
+    } else arranca();
 
-    EU.estado('euLamEstado', 'Grabando… tarda lo que dura (' + dur.toFixed(1) + ' s). ' +
-      '<b>No cambies de pestaña</b>.', 'proc');
-    st.animando = true;
-    rec.start();
-    if (narrado && window.EU_VOZ && EU_VOZ.narrar) {
-      try {
-        EU_VOZ.narrar(nodos.map(function (x, i) {
-          return { texto: x.t + (x.d ? '. ' + x.d : ''), clave: 'lam:' + (st.disenoId || '') + ':' + i };
-        }));
-      } catch (er) {}
+    function arranca() {
+      var rec;
+      try { rec = new MediaRecorder(flujo, tipo ? { mimeType: tipo, videoBitsPerSecond: 4500000 } : undefined); }
+      catch (er) { return EU.estado('euLamEstado', 'No se pudo grabar: ' + EU.esc(er.message || er), 'err'); }
+
+      var trozos = [];
+      rec.ondataavailable = function (ev) { if (ev.data && ev.data.size) trozos.push(ev.data); };
+      rec.onstop = function () {
+        fuentes.forEach(function (x) { try { x.f.stop(); } catch (er) {} });
+        var mp4 = /mp4/.test(rec.mimeType || tipo || '');
+        var b = new Blob(trozos, { type: mp4 ? 'video/mp4' : 'video/webm' });
+        var arch = nombreBase() + (narrado ? '-narrada' : '') + (mp4 ? '.mp4' : '.webm');
+        EU_EDITOR.bajar(b, arch);
+        if (window.B6Bandeja) {
+          var u = URL.createObjectURL(b);
+          B6Bandeja.apuntar(u, arch, 'laminas');
+          setTimeout(function () { URL.revokeObjectURL(u); }, 10000);
+        }
+        EU.estado('euLamEstado', 'Vídeo descargado' +
+          (conSonido ? ' con el sonido dentro' : '') + '. Pesa ' + Math.round(b.size / 1024) + ' KB.', 'ok');
+        st.animando = false; st.prog = 1; pintarLienzo();
+      };
+
+      EU.estado('euLamEstado', 'Grabando… tarda lo que dura (' + dur.toFixed(1) + ' s). ' +
+        '<b>No cambies de pestaña</b>.', 'proc');
+      st.animando = true;
+      rec.start();
+      // cada grabación entra en el segundo de su elemento
+      if (ac) fuentes.forEach(function (x) {
+        try { x.f.start(ac.currentTime + x.en); } catch (er) {}
+      });
+
+      var t0 = performance.now();
+      (function paso() {
+        var t = (performance.now() - t0) / 1000;
+        var pr = Math.min(1, t / dur);
+        M.pintar(g, W, H, lam, opLam({ prog: pr }));
+        EU.ponerLogo(g, W, H);
+        EU_PLAN.marcaAgua(g, W, H);
+        if (pr >= 1) {
+          setTimeout(function () { try { rec.stop(); } catch (er) {} }, 200);
+          return;
+        }
+        requestAnimationFrame(paso);
+      })();
     }
-    var t0 = performance.now();
-    (function paso() {
-      var t = (performance.now() - t0) / 1000;
-      var pr = Math.min(1, t / dur);
-      M.pintar(g, W, H, lam, { prog: pr });
-      EU.ponerLogo(g, W, H);
-      EU_PLAN.marcaAgua(g, W, H);
-      if (pr >= 1) {
-        setTimeout(function () { try { rec.stop(); } catch (er) {} }, 200);
-        return;
-      }
-      requestAnimationFrame(paso);
-    })();
   }
 
   /* ───────────── Los cuerpos del panel ───────────── */
@@ -475,6 +577,120 @@
     return h.join('');
   }
 
+  /* Medios: la foto o el vídeo van DENTRO del nodo, recortados con su forma
+     y con su velo, para que el texto siga leyéndose encima. */
+  function panMedios() {
+    var lam = st.lam, h = [];
+    if (!lam) return '';
+    var nodos = lam.nodos || [];
+    var i = Math.max(0, Math.min(st.nodo, nodos.length - 1));
+    var n = nodos[i] || {};
+
+    h.push('<label class="mini-lbl">Foto o vídeo dentro de un nodo</label>');
+    h.push('<select id="euLamNodoSel" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;' +
+      'color:#e2e8f0;border-radius:8px;padding:8px;font-size:12px;font-family:inherit">' +
+      nodos.map(function (x, k) {
+        return '<option value="' + k + '"' + (k === i ? ' selected' : '') + '>' +
+          (k + 1) + ' · ' + EU.esc((x.t || 'Sin título').slice(0, 34)) +
+          (x.medio ? '  ✓' : '') + '</option>';
+      }).join('') + '</select>');
+    h.push('<p style="margin:6px 0;font-size:10.5px;color:#7c7c9e;line-height:1.5">' +
+      'Se recorta con la forma del nodo y lleva su velo, para que el texto siga leyéndose encima.</p>');
+    h.push('<input type="file" accept="image/*,video/*" id="euLamMedioFile" style="font-size:11px;width:100%">');
+    if (n.medio) {
+      h.push('<button class="btn btn-g btn-sm" id="euLamMedioQuita" style="width:100%;margin-top:7px">' +
+        'Quitar el medio de este nodo</button>');
+    }
+
+    h.push('<label class="mini-lbl" style="margin-top:16px">Fondo de la lámina</label>');
+    h.push('<p style="margin:0 0 6px;font-size:10.5px;color:#7c7c9e;line-height:1.5">' +
+      'Una foto o un vídeo debajo de todo. El velo lo aclara u oscurece hasta que la lámina se lee de lejos.</p>');
+    h.push('<input type="file" accept="image/*,video/*" id="euLamFondoFile" style="font-size:11px;width:100%">');
+    var velo = Math.round((lam.veloFondo == null ? 0.72 : lam.veloFondo) * 100);
+    h.push('<label class="mini-lbl">Velo del fondo · ' + velo + ' %</label>' +
+      '<input type="range" id="euLamVelo" min="0" max="95" step="5" value="' + velo + '" style="width:100%">');
+    if (st.fondo) {
+      h.push('<button class="btn btn-g btn-sm" id="euLamFondoQuita" style="width:100%;margin-top:7px">' +
+        'Quitar el fondo</button>');
+    }
+
+    h.push('<label class="mini-lbl" style="margin-top:16px">Audio del vídeo</label>');
+    h.push('<p style="margin:0 0 6px;font-size:10.5px;color:#7c7c9e;line-height:1.5">' +
+      'Tu voz grabada o una música. Entra como pista de sonido del vídeo que descargues.</p>');
+    h.push('<input type="file" accept="audio/*" id="euLamAudioFile" style="font-size:11px;width:100%">');
+    if (st.audio) {
+      h.push('<div class="st ok" style="margin-top:6px">' + EU.esc(st.audioNom || 'audio') + '</div>' +
+        '<button class="btn btn-g btn-sm" id="euLamAudioQuita" style="width:100%;margin-top:6px">' +
+        'Quitar el audio</button>');
+    }
+    return h.join('');
+  }
+
+  /* Voz: la narración va por elementos, cada uno entra cuando termina su
+     frase. Donde haya grabación de Fátima se usa la suya, no la del
+     navegador, también dentro del vídeo. */
+  function panVoz() {
+    var lam = st.lam, h = [];
+    if (!lam) return '';
+    var V = window.EU_VOZ;
+    if (!V) return '<div class="st err">La voz no se ha cargado (b6_voz.js).</div>';
+    var aj = V.ajustes();
+
+    h.push('<p style="margin:0 0 10px;font-size:10.5px;color:#7c7c9e;line-height:1.55">' +
+      'La narración va por elementos: cada uno entra cuando termina su frase, no antes. ' +
+      'Lo que se oye y lo que se ve hablan de lo mismo.</p>');
+    h.push('<button class="pill' + (st.narraAlVer ? ' on' : '') + '" id="euLamNarraVer" ' +
+      'style="width:100%;justify-content:center">🔊 Narrar al reproducir</button>');
+
+    if (!V.disponible) {
+      h.push('<p style="margin:10px 0 0;font-size:10.5px;color:#7c7c9e;line-height:1.5">' +
+        'Este navegador no ofrece voces instaladas. Puedes grabar la tuya en la lista de abajo.</p>');
+    } else {
+      var vs = V.voces() || [];
+      h.push('<label class="mini-lbl">Voz</label>' +
+        '<select id="euLamVozSel" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;' +
+        'color:#e2e8f0;border-radius:8px;padding:8px;font-size:11.5px;font-family:inherit">' +
+        vs.map(function (x) {
+          var id = x.id || x.nombre || x.name;
+          return '<option value="' + EU.esc(id) + '"' + (id === aj.voz ? ' selected' : '') + '>' +
+            EU.esc(x.n || x.nombre || x.name || id) + '</option>';
+        }).join('') + '</select>');
+      h.push('<label class="mini-lbl">Velocidad · ' + Number(aj.velocidad).toFixed(2) + '</label>' +
+        '<input type="range" id="euLamVozVel" min="0.6" max="1.6" step="0.05" value="' + aj.velocidad + '" style="width:100%">');
+      h.push('<label class="mini-lbl">Tono · ' + Number(aj.tono).toFixed(2) + '</label>' +
+        '<input type="range" id="euLamVozTono" min="0.6" max="1.5" step="0.05" value="' + aj.tono + '" style="width:100%">');
+      h.push('<div class="tira" style="margin-top:10px">' +
+        '<button class="btn btn-g btn-sm" id="euLamVozProbar">Probar</button>' +
+        '<button class="btn btn-g btn-sm" id="euLamVozCallar">Callar</button></div>');
+    }
+
+    h.push('<label class="mini-lbl" style="margin-top:16px">Tu voz, elemento a elemento</label>');
+    h.push('<p style="margin:0 0 9px;font-size:10.5px;color:#7c7c9e;line-height:1.55">' +
+      'Un clip corto por elemento. Donde haya grabación tuya se usa esa y no la del navegador, ' +
+      'también en el vídeo.</p>');
+    var nodos = (laminaDeHoja(st.hoja).nodos || []).filter(function (x) { return x && x.t; });
+    nodos.forEach(function (x, k) {
+      var cl = claveVoz(k);
+      var tiene = V.tieneAudio(cl);
+      h.push('<div style="background:#13132a;border:1px solid #2d2d4a;border-radius:9px;padding:9px 10px;margin-bottom:7px">' +
+        '<div style="display:flex;gap:7px;align-items:baseline">' +
+        '<span style="font-size:10px;color:#a855f7;font-weight:700;flex:none">' + (k + 1) + '</span>' +
+        '<span style="font-size:11.5px;color:#e2e8f0;line-height:1.4;flex:1;min-width:0">' +
+        EU.esc(x.t) + '</span></div>' +
+        '<div class="st ' + (tiene ? 'ok' : '') + '" style="margin:6px 0 0;padding:4px 8px;font-size:10px">' +
+        (tiene ? 'Grabada con tu voz' : 'Sin grabar · sonará la voz del navegador') + '</div>' +
+        '<div class="tira" style="margin-top:7px">' +
+        '<button class="btn btn-g btn-sm" data-vgrab="' + k + '">' +
+        (V.grabando() && grabandoK === k ? '■ Parar' : '● Grabar') + '</button>' +
+        '<button class="btn btn-g btn-sm" data-voir="' + k + '">Oír</button>' +
+        (tiene ? '<button class="btn btn-g btn-sm" data-vborra="' + k + '">Quitar</button>' : '') +
+        '</div></div>');
+    });
+    return h.join('');
+  }
+
+  function claveVoz(k) { return 'lam:' + (st.disenoId || '') + ':' + st.hoja + ':' + k; }
+
   function panAnim() {
     var lam = st.lam, h = [];
     if (!lam) return '';
@@ -594,6 +810,8 @@
     if (st.panel === 'galeria') h.push(panGaleria(todas, visibles, cats));
     else if (st.panel === 'contenido') h.push(panContenido());
     else if (st.panel === 'estilo') h.push(panEstilo());
+    else if (st.panel === 'medios') h.push(panMedios());
+    else if (st.panel === 'voz') h.push(panVoz());
     else if (st.panel === 'anim') h.push(panAnim());
     else h.push(panBajar(nH));
 
@@ -685,6 +903,75 @@
         st.lam.animacion = b.getAttribute('data-anim');
         return pintar();
       }
+      if (b.id === 'euLamNarraVer') { st.narraAlVer = !st.narraAlVer; return pintar(); }
+      if (b.id === 'euLamVozProbar') {
+        var lv = laminaDeHoja(st.hoja).nodos || [];
+        var pr = lv.filter(function (x) { return x && x.t; })[0];
+        return EU_VOZ.hablar(pr ? pr.t : 'Así suena tu voz.', null);
+      }
+      if (b.id === 'euLamVozCallar') return EU_VOZ.callar();
+      if (b.id === 'euLamMedioQuita') {
+        var nq = (st.lam.nodos || [])[st.nodo];
+        if (nq && nq.medio) { delete st.medios[nq.medio]; delete nq.medio; }
+        return pintar();
+      }
+      if (b.id === 'euLamFondoQuita') { st.fondo = null; return pintar(); }
+      if (b.id === 'euLamAudioQuita') { st.audio = null; st.audioNom = ''; return pintar(); }
+
+      if (b.hasAttribute('data-vgrab')) {
+        var gk = parseInt(b.getAttribute('data-vgrab'), 10);
+        if (EU_VOZ.grabando()) {
+          return EU_VOZ.pararGrabacion().then(function () { grabandoK = -1; pintar(); })
+            .catch(function (er) { grabandoK = -1; EU.toast(er.message || 'No se pudo parar.'); pintar(); });
+        }
+        grabandoK = gk;
+        return EU_VOZ.grabar(claveVoz(gk), function () { pintar(); })
+          .catch(function (er) { grabandoK = -1; EU.toast(er.message || 'No se pudo grabar.'); pintar(); });
+      }
+      if (b.hasAttribute('data-voir')) {
+        var ok = parseInt(b.getAttribute('data-voir'), 10);
+        var lo = (laminaDeHoja(st.hoja).nodos || []).filter(function (x) { return x && x.t; })[ok];
+        return EU_VOZ.hablar(lo ? lo.t + (lo.d ? '. ' + lo.d : '') : '', claveVoz(ok));
+      }
+      if (b.hasAttribute('data-vborra')) {
+        EU_VOZ.borrarAudio(claveVoz(parseInt(b.getAttribute('data-vborra'), 10)));
+        return pintar();
+      }
+    };
+
+    /* Los archivos que se suben. Un vídeo se queda en su fotograma dentro del
+       nodo: lo pinta `cubrir`, que ya sabe distinguir vídeo de foto. */
+    function leerMedio(input, alTener) {
+      input.onchange = function () {
+        var f = input.files && input.files[0];
+        if (!f) return;
+        var esVid = /^video\//.test(f.type);
+        var el = esVid ? document.createElement('video') : new Image();
+        if (esVid) { el.muted = true; el.playsInline = true; el.preload = 'auto'; }
+        el.onloadeddata = el.onload = function () { pintar(); };
+        el.onerror = function () { EU.toast('No se pudo leer ese archivo.'); };
+        el.src = URL.createObjectURL(f);
+        alTener({ el: el, tipo: esVid ? 'vid' : 'img' });
+      };
+    }
+
+    var mf = EU.$('euLamMedioFile');
+    if (mf) leerMedio(mf, function (m) {
+      var nd = (st.lam.nodos || [])[st.nodo];
+      if (!nd) return;
+      var id = 'm' + (++nMedio);
+      st.medios[id] = m;
+      nd.medio = id;
+      pintar();
+    });
+    var ff = EU.$('euLamFondoFile');
+    if (ff) leerMedio(ff, function (m) { st.fondo = m; pintar(); });
+    var af = EU.$('euLamAudioFile');
+    if (af) af.onchange = function () {
+      var f = af.files && af.files[0];
+      if (!f) return;
+      st.audio = f; st.audioNom = f.name;
+      pintar();
     };
 
     /* Lo que se escribe repinta la lámina pero NO vuelve a montar el panel:
@@ -704,6 +991,10 @@
       }
       if (t.hasAttribute('data-nd')) {
         st.lam.nodos[parseInt(t.getAttribute('data-nd'), 10)].d = t.value;
+        return pintarLienzo();
+      }
+      if (t.id === 'euLamVelo') {
+        st.lam.veloFondo = (parseInt(t.value, 10) || 0) / 100;
         return pintarLienzo();
       }
       if (t.hasAttribute('data-col')) {
@@ -726,6 +1017,11 @@
         return pintar();
       }
       if (t.id === 'euLamSeg') return pintar();
+      if (t.id === 'euLamNodoSel') { st.nodo = parseInt(t.value, 10) || 0; return pintar(); }
+      if (t.id === 'euLamVozSel') { EU_VOZ.ponerVoz(t.value); return pintar(); }
+      if (t.id === 'euLamVozVel') { EU_VOZ.ponerVelocidad(parseFloat(t.value)); return pintar(); }
+      if (t.id === 'euLamVozTono') { EU_VOZ.ponerTono(parseFloat(t.value)); return pintar(); }
+      if (t.id === 'euLamVelo') return pintar();
     };
   }
 
