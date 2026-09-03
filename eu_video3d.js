@@ -102,6 +102,10 @@
   var audio = { modo: 'ninguno', blob: null, segundos: 0, nombre: '' };
   /* Música de fondo: va por debajo de la voz y se mezcla dentro del archivo. */
   var musica = { blob: null, nombre: '', vol: 0.35 };
+  var vozVol = 1;            // volumen de la voz en la mezcla
+  var rotulo = false;        // rótulo de marca sobre cada fotograma
+  var guionTexto = '';       // el guion entero, para leerlo de un tirón
+  var tActual = 0;           // dónde está la barra de tiempo
   /* Clips de vídeo de Fátima. Se pegan en medio del guion como una escena
      más, recortados desde el segundo que ella diga. */
   var clips = [];
@@ -310,6 +314,7 @@
     var ctx = cv.getContext('2d');
     var s = cv.width / m.W;
 
+    if (mostrar) ponerReloj(t);
     var E = escenaEn(t), e = esc[E.i], p = suave(E.p);
     // Cuántos cuadros están YA puestos en la base: los de las escenas
     // anteriores. El de la escena actual es el que está entrando.
@@ -335,6 +340,7 @@
       if (e.tipo === 'cuadro' && rects[e.idx]) dibujarEfecto(ctx, rects[e.idx], e.efecto, p, t);
     }
     pintarAdornos(ctx, m.W, m.H, t);
+    if (rotulo) ponerRotulo(ctx, m);
     if (subtitulos && e.frase) subtitulo(ctx, m, e.frase);
     EU.ponerLogo(ctx, m.W, m.H);
     ctx.restore();
@@ -558,6 +564,28 @@
 
   /* ───────────── Subtítulos ───────────── */
 
+  /* Rótulo de marca: la píldora del motor, arriba a la izquierda, con el
+     nombre del negocio. La misma que ya usa el folleto en su llamada. */
+  function ponerRotulo(ctx, m) {
+    var M = EU.motor, C = M.colores(EU.pagina);
+    var nom = (EU.pagina.cabecera && EU.pagina.cabecera.marca) || (EU.marca && EU.marca.nombre) || '';
+    if (!nom) return;
+    ctx.save();
+    M.pildora(ctx, nom, m.W * 0.05, m.W * 0.05, m.W * 0.026,
+      M.rgba(C.acento, 0.92), C.sobreAcento);
+    ctx.restore();
+  }
+
+  /* La barra de tiempo y el reloj, debajo del lienzo. */
+  function ponerReloj(t) {
+    tActual = Math.max(0, Math.min(total(), t));
+    var b = EU.$('euVideoPos');
+    if (b) b.value = Math.round(tActual / Math.max(0.001, total()) * 1000);
+    var r = EU.$('euVideoReloj');
+    if (r) r.textContent = tActual.toFixed(1).replace('.', ',') + ' / ' +
+      total().toFixed(1).replace('.', ',') + ' s';
+  }
+
   function subtitulo(ctx, m, frase) {
     var t = String(frase || '').trim();
     if (!t) return;
@@ -615,7 +643,12 @@
               : '') : '') +
           '</div>';
       }).join('') +
-      '<div class="ed-barra"><button class="btn btn-g btn-sm" data-guion="1">✍️ Que lo escriba el cerebro</button></div>' +
+      '<div class="tira" style="margin-top:8px">' +
+      '<button class="btn btn-g btn-sm" data-guion="1">✍️ Que lo escriba el cerebro</button>' +
+      '<button class="btn btn-g btn-sm" data-rehacer="1">↺ Rehacer el guion</button>' +
+      '</div>' +
+      '<label class="mini-lbl">Segundos por cuadro · ' + segCuadro().toFixed(2).replace('.', ',') + ' s</label>' +
+      '<input type="range" id="euSegCuadro" min="0.75" max="6" step="0.25" value="' + segCuadro() + '" style="width:100%">' +
       '</div>' +
 
       '<div class="panel"><h3>Efecto de la escena</h3>' +
@@ -672,6 +705,22 @@
           o[1] + (pro ? '<span class="badge-pro">PRO</span>' : '') + '</span></div>';
       }).join('') +
       '<div id="euSonCtrl"></div>' +
+      (audio.blob
+        ? '<label class="mini-lbl">Volumen de la voz · ' + Math.round(vozVol * 100) + ' %</label>' +
+          '<input type="range" id="euVozVol" min="0" max="1" step="0.05" value="' + vozVol + '">' +
+          '<button class="btn btn-g btn-sm" style="width:100%;margin-top:6px" id="euVozQuitar">Quitar la voz</button>'
+        : '') +
+      '<label class="mini-lbl">Guion para leer</label>' +
+      '<textarea id="euGuionTexto" rows="4" placeholder="todo lo que dice la voz, seguido" ' +
+      'style="width:100%;background:#0f0f22;border:1px solid var(--bd);color:var(--tx);' +
+      'border-radius:8px;padding:8px;font-size:11.5px;resize:vertical;line-height:1.6;' +
+      'font-family:inherit">' + EU.esc(guionTexto || frasesSeguidas()) + '</textarea>' +
+      '<div class="tira" style="margin-top:6px">' +
+      '<button class="btn btn-g btn-sm" id="euLeerGuion">🗣 Escuchar con la voz del móvil</button>' +
+      '<button class="btn btn-g btn-sm" id="euCallar">■ Callar</button></div>' +
+      '<p style="font-size:10.5px;color:var(--tx2);line-height:1.55;margin:6px 0 0">' +
+      'La voz del navegador sirve para ensayar. Para que salga <b>dentro</b> del archivo, ' +
+      'grábala o súbela arriba.</p>' +
       '<div class="st avi">Con la voz gratis: <b>altavoz, no auriculares</b>, y sitio en silencio — se capta por el micrófono. ' +
       'Y no cambies de pestaña mientras graba.</div>' +
       '</div>' +
@@ -721,6 +770,8 @@
       '<span style="font-size:11.5px">Subtítulos de la narración</span></div>' +
       '<div class="fila"><input type="checkbox" id="euCierreQR"' + (cierreQR ? ' checked' : '') + ' style="width:auto">' +
       '<span style="font-size:11.5px">Cierre con el QR grande</span></div>' +
+      '<div class="fila"><input type="checkbox" id="euRotulo"' + (rotulo ? ' checked' : '') + ' style="width:auto">' +
+      '<span style="font-size:11.5px">Rótulo con el nombre del negocio</span></div>' +
       '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:8px 0 0">' +
       (EU_PLAN.llevaMarcaAgua()
         ? 'Con el plan Free el vídeo lleva marca de agua y dura como mucho ' + EU_PLAN.topeVideo() + ' s.'
@@ -839,6 +890,44 @@
     };
     var g = c.querySelector('[data-guion]');
     if (g) g.onclick = guionCerebro;
+    var rh = c.querySelector('[data-rehacer]');
+    if (rh) rh.onclick = function () {
+      if (pararTodo) pararTodo();
+      construirEscenas();
+      preparar();
+      panel(); pintarEnSel(); duracionTexto();
+      EU.toast('Guion rehecho con los cuadros de la hoja.');
+    };
+    var sc2 = EU.$('euSegCuadro');
+    if (sc2) {
+      sc2.oninput = function () {
+        var v = parseFloat(sc2.value);
+        esc.forEach(function (e) { if (e.tipo === 'cuadro') e.seg = v; });
+        duracionTexto();
+      };
+      sc2.onchange = function () { panel(); pintarEnSel(); };
+    }
+    var ro = EU.$('euRotulo');
+    if (ro) ro.onchange = function () { rotulo = ro.checked; pintarEnSel(); };
+    var vv = EU.$('euVozVol');
+    if (vv) vv.oninput = function () { vozVol = parseFloat(vv.value); };
+    var vq = EU.$('euVozQuitar');
+    if (vq) vq.onclick = function () {
+      audio.blob = null; audio.segundos = 0; audio.nombre = '';
+      panel();
+      EU.toast('Voz quitada.');
+    };
+    var gt = EU.$('euGuionTexto');
+    if (gt) gt.oninput = function () { guionTexto = gt.value; };
+    var lg = EU.$('euLeerGuion');
+    if (lg) lg.onclick = function () {
+      var t = (guionTexto || frasesSeguidas()).trim();
+      if (!t) return EU.toast('El guion está vacío.');
+      if (!window.EU_VOZ || !EU_VOZ.disponible) return EU.toast('Este navegador no ofrece voces instaladas.');
+      EU_VOZ.hablar(t, null);
+    };
+    var cl = EU.$('euCallar');
+    if (cl) cl.onclick = function () { if (window.EU_VOZ) EU_VOZ.callar(); };
     c.querySelectorAll('input[name=euSon]').forEach(function (r) {
       r.onchange = function () {
         if (r.value === 'estudio' && !EU_PLAN.puede('vozEstudio')) {
@@ -892,11 +981,27 @@
     pintarFotograma(t + (esc[sel] ? esc[sel].seg / ritmo * 0.75 : 0));
   }
 
+  /* Los segundos que dura cada cuadro. Si están todas iguales manda ese
+     número; si alguien ha tocado una a mano, se enseña la media. */
+  function segCuadro() {
+    var c = esc.filter(function (e) { return e.tipo === 'cuadro'; });
+    if (!c.length) return 2.5;
+    var t = 0;
+    c.forEach(function (e) { t += e.seg; });
+    return Math.round(t / c.length * 100) / 100;
+  }
+
   function duracionTexto() {
     var e = EU.$('euVideoDur');
     if (!e) return;
     var t = total(), tope = EU_PLAN.topeVideo();
     e.innerHTML = t.toFixed(1) + ' s' + (t > tope ? ' <b style="color:var(--warn)">· tope ' + tope + ' s</b>' : '');
+  }
+
+  /* Todas las frases del guion, seguidas: es lo que se lee de un tirón. */
+  function frasesSeguidas() {
+    return esc.map(function (e) { return (e.frase || '').trim(); })
+      .filter(Boolean).join(' ');
   }
 
   function guionCerebro() {
@@ -1037,9 +1142,22 @@
   /* ───────────── Vista previa ───────────── */
 
   V.previa = function () {
-    if (corriendo) { if (pararTodo) pararTodo(); return; }
+    var b = EU.$('euBtnPrevia');
+    if (corriendo) {
+      if (pararTodo) pararTodo();
+      if (b) b.textContent = '▶ Ver sin sonido';
+      return;
+    }
     preparar();
-    correr(null, function () {});
+    if (b) b.textContent = '■ Parar';
+    correr(null, function () { if (b) b.textContent = '▶ Ver sin sonido'; });
+  };
+
+  /* Mover la barra de tiempo: se pinta ese instante exacto. */
+  V.irA = function (frac) {
+    if (corriendo) { if (pararTodo) pararTodo(); }
+    preparar();
+    pintarFotograma(Math.max(0, Math.min(0.999, frac)) * total());
   };
 
   function correr(alFotograma, alAcabar) {
@@ -1126,7 +1244,7 @@
       };
       var pistas = [];
       if (audio.blob) pistas.push(leer(audio.blob).then(function (buf) {
-        var g = ac.createGain(); g.gain.value = 1;
+        var g = ac.createGain(); g.gain.value = vozVol;
         fuente = ac.createBufferSource(); fuente.buffer = buf;
         fuente.connect(g); g.connect(dest); g.connect(ac.destination);
       }));
@@ -1260,6 +1378,13 @@
     };
     paso(0);
   };
+
+  /* La barra de tiempo se cablea una vez: vive fuera del panel. */
+  (function () {
+    var b = document.getElementById('euVideoPos');
+    if (!b) return;
+    b.oninput = function () { V.irA(parseInt(b.value, 10) / 1000); };
+  })();
 
   window.addEventListener('resize', function () { if (EU.pantalla === 'video' && !corriendo) pintarEnSel(); });
   window.addEventListener('pagehide', function () { if (pararTodo) pararTodo(); });

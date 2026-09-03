@@ -306,10 +306,17 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
     <div class="vd-cols">
       <div>
         <div class="lienzo-caja"><canvas id="euVideoLienzo" width="540" height="764"></canvas></div>
+        <div class="fila" style="margin-top:10px;gap:8px">
+          <button class="btn btn-g btn-sm" id="euBtnPrevia" onclick="EU_VIDEO.previa()"
+            style="flex:none">▶ Ver sin sonido</button>
+          <input type="range" id="euVideoPos" min="0" max="1000" step="1" value="0"
+            style="flex:1;min-width:80px">
+          <span id="euVideoReloj" style="font-size:11px;color:var(--tx2);white-space:nowrap;
+            font-variant-numeric:tabular-nums">0,0 / 0,0 s</span>
+        </div>
         <div class="ed-barra">
-          <button class="btn btn-g btn-sm" onclick="EU_VIDEO.previa()">▶ Ver sin sonido</button>
-          <span style="flex:1"></span>
           <span id="euVideoDur" style="font-size:11px;color:var(--tx2)"></span>
+          <span style="flex:1"></span>
           <button class="btn" id="euBtnGrabar" onclick="EU_VIDEO.grabar()">⏺ Grabar el vídeo</button>
         </div>
         <div id="euVideoEstado"></div>
