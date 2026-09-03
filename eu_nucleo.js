@@ -172,9 +172,16 @@
       ? '#fff url(' + EU.logo.url + ') center/contain no-repeat' : '#1a1a35';
     var tp = $('euLogoPos');
     if (tp) {
-      tp.innerHTML = Object.keys(LOGO_POS).map(function (k) {
-        return '<button class="pill' + (EU.logo.pos === k ? ' on' : '') + '" data-logopos="' + k + '">' +
-          EU.esc(LOGO_POS[k]) + '</button>';
+      tp.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-width:150px';
+      tp.innerHTML = ORDEN_POS.map(function (k) {
+        var on = EU.logo.pos === k;
+        return '<button data-logopos="' + k + '" title="' + EU.esc(LOGO_POS[k]) + '" ' +
+          'style="height:30px;border-radius:6px;cursor:pointer;font-size:0;padding:0;' +
+          'border:1.5px solid ' + (on ? 'var(--ac2)' : 'var(--bd)') + ';' +
+          'background:' + (on ? 'var(--card2)' : 'var(--bg3)') + ';' +
+          'display:flex;align-items:center;justify-content:center">' +
+          '<span style="width:13px;height:9px;border-radius:2px;background:' +
+          (on ? 'var(--ac2)' : 'var(--bd)') + '"></span></button>';
       }).join('');
       tp.querySelectorAll('[data-logopos]').forEach(function (b) {
         b.onclick = function () {
@@ -186,7 +193,7 @@
       });
     }
     var rt = $('euLogoTamRot');
-    if (rt) rt.textContent = 'Tamaño · ' + EU.logo.tam + ' % del ancho';
+    if (rt) rt.textContent = 'Dónde va · ' + LOGO_POS[EU.logo.pos] + '  ·  Tamaño ' + EU.logo.tam + ' % del ancho';
     var tm = $('euLogoTam');
     if (tm && String(tm.value) !== String(EU.logo.tam)) tm.value = EU.logo.tam;
   };
@@ -236,7 +243,7 @@
       t.oninput = function () {
         EU.logo.tam = parseInt(t.value, 10) || 9;
         var rt = $('euLogoTamRot');
-        if (rt) rt.textContent = 'Tamaño · ' + EU.logo.tam + ' % del ancho';
+        if (rt) rt.textContent = 'Dónde va · ' + LOGO_POS[EU.logo.pos] + '  ·  Tamaño ' + EU.logo.tam + ' % del ancho';
       };
       t.onchange = function () { EU.guardarCfgLogo(); EU.refrescarPiezas(); };
     }
@@ -284,17 +291,33 @@
      por qué viajar. Se pinta ENCIMA de la hoja ya dibujada, en la misma capa
      en todas las piezas: folleto, tríptico, carrusel, láminas y vídeo. */
 
-  EU.logo = { url: '', img: null, pos: 'td', tam: 9 };
+  EU.logo = { url: '', img: null, pos: 'ad', tam: 9 };
 
-  var LOGO_POS = { td: 'Arriba derecha', ti: 'Arriba izquierda', pd: 'Pie derecha', pc: 'Pie centro' };
+  /* Nueve huecos, los mismos que ya usa la foto de las fichas de Estudios:
+     [columna, fila] · 0 izquierda/arriba, 1 centro, 2 derecha/abajo. */
+  var POS_XY = {
+    ai: [0, 0], ac: [1, 0], ad: [2, 0],
+    mi: [0, 1], mc: [1, 1], md: [2, 1],
+    bi: [0, 2], bc: [1, 2], bd: [2, 2]
+  };
+  var ORDEN_POS = ['ai', 'ac', 'ad', 'mi', 'mc', 'md', 'bi', 'bc', 'bd'];
+  var LOGO_POS = {
+    ai: 'Arriba izquierda', ac: 'Arriba centro', ad: 'Arriba derecha',
+    mi: 'Centro izquierda', mc: 'Centro', md: 'Centro derecha',
+    bi: 'Abajo izquierda', bc: 'Abajo centro', bd: 'Abajo derecha'
+  };
   EU.LOGO_POS = LOGO_POS;
+
+  /* Los nombres viejos de cuatro esquinas siguen valiendo: se traducen. */
+  var VIEJAS = { td: 'ad', ti: 'ai', pd: 'bd', pc: 'bc' };
 
   function cargarLogoLocal() {
     try {
       var c = JSON.parse(localStorage.getItem(LOGOCFG_LOCAL) || 'null');
       if (c && typeof c === 'object') {
-        if (LOGO_POS[c.pos]) EU.logo.pos = c.pos;
-        if (c.tam) EU.logo.tam = Math.max(4, Math.min(22, c.tam));
+        var pv = VIEJAS[c.pos] || c.pos;
+        if (LOGO_POS[pv]) EU.logo.pos = pv;
+        if (c.tam) EU.logo.tam = Math.max(4, Math.min(40, c.tam));
       }
       var u = localStorage.getItem(LOGO_LOCAL) || '';
       if (u) EU.ponerImagenLogo(u);
@@ -333,10 +356,10 @@
     var anc = W * ((EU.logo.tam || 9) / 100);
     var alt = anc * ((im.naturalHeight || im.height) / (im.naturalWidth || im.width));
     var M = W * 0.055;
-    var x = W - M - anc, y = M;
-    if (EU.logo.pos === 'ti') { x = M; y = M; }
-    else if (EU.logo.pos === 'pc') { x = (W - anc) / 2; y = H - M - alt; }
-    else if (EU.logo.pos === 'pd') { x = W - M - anc; y = H - M - alt; }
+    var pos = POS_XY[EU.logo.pos] ? EU.logo.pos : 'ad';
+    var col = POS_XY[pos][0], fil = POS_XY[pos][1];
+    var x = col === 0 ? M : (col === 1 ? (W - anc) / 2 : W - M - anc);
+    var y = fil === 0 ? M : (fil === 1 ? (H - alt) / 2 : H - M - alt);
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,.28)';
     ctx.shadowBlur = anc * 0.10;
