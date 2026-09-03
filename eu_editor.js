@@ -21,6 +21,24 @@
      Las fotos son objetos Image: no caben en un JSON, así que se guardan
      aparte y se vuelven a enganchar al restaurar. */
 
+  /* Las ocho combinaciones profesionales del proyecto de Claude Design. Cada
+     una es un juego completo de color: no se mezclan con el tema, lo sustituyen. */
+  var PALETAS_PRO = [
+    { id: 'noche_oro', n: 'Noche y oro',      c: { fondo: '#0E0E13', panel: '#191922', acento: '#D4AF37', acento2: '#F1E0A6', tinta: '#F6F3EC', tinta2: '#B6AF9E' } },
+    { id: 'editorial', n: 'Editorial claro',  c: { fondo: '#F6F4F0', panel: '#FFFFFF', acento: '#1F2937', acento2: '#B08968', tinta: '#14161A', tinta2: '#5C6472' } },
+    { id: 'nude',      n: 'Nude cálido',      c: { fondo: '#F3E7E0', panel: '#FFF8F4', acento: '#B27C68', acento2: '#E3B7A0', tinta: '#3A2A24', tinta2: '#7C635A' } },
+    { id: 'verde',     n: 'Verde botánico',   c: { fondo: '#0F1A15', panel: '#17251E', acento: '#4E9E6A', acento2: '#A8D5B5', tinta: '#EDF4EE', tinta2: '#9DB0A4' } },
+    { id: 'azul',      n: 'Azul corporativo', c: { fondo: '#0B1220', panel: '#141F33', acento: '#3B82F6', acento2: '#93C5FD', tinta: '#EAF1FB', tinta2: '#9AAFC9' } },
+    { id: 'vino',      n: 'Vino y crema',     c: { fondo: '#1A0E12', panel: '#26141A', acento: '#9B2242', acento2: '#E8B4B8', tinta: '#F7EDEA', tinta2: '#C2A4A4' } },
+    { id: 'grafito',   n: 'Grafito y cal',    c: { fondo: '#151515', panel: '#202020', acento: '#E7E5E0', acento2: '#8A8A85', tinta: '#F5F4F1', tinta2: '#A8A8A3' } },
+    { id: 'coral',     n: 'Coral fresco',     c: { fondo: '#FFF6F2', panel: '#FFFFFF', acento: '#EF5B4C', acento2: '#FFB4A2', tinta: '#26120F', tinta2: '#7A5650' } }
+  ];
+
+  var ROLES = [
+    { k: 'fondo', n: 'Fondo' }, { k: 'panel', n: 'Cuadro' }, { k: 'tinta', n: 'Texto' },
+    { k: 'tinta2', n: 'Texto suave' }, { k: 'acento', n: 'Acento' }, { k: 'acento2', n: 'Acento claro' }
+  ];
+
   function copiar(pag) {
     var medias = (pag.celdas || []).map(function (c) { return c.media || null; });
     var j = JSON.stringify(pag, function (k, v) { return k === 'media' ? undefined : v; });
@@ -44,7 +62,15 @@
 
   /* ───────────── Entrar en la pantalla ───────────── */
 
+  function montarBandeja() {
+    var hb = EU.$('euEdBandeja');
+    if (!hb || !window.B6Bandeja) return;
+    if (E._des) { try { E._des(); } catch (e) {} }
+    E._des = B6Bandeja.panel(hb, { origen: 'folleto' }, 'folleto');
+  }
+
   E.entrar = function () {
+    montarBandeja();
     if (!EU.pagina) {
       EU.toast('Elige antes una plantilla.');
       EU.ir('plantillas');
@@ -69,7 +95,9 @@
     var esc = ancho / F.w;
     cv.width = Math.round(F.w * esc);
     cv.height = Math.round(F.h * esc);
-    M.pintar(cv.getContext('2d'), cv.width, cv.height, EU.pagina, opciones());
+    var ctx = cv.getContext('2d');
+    M.pintar(ctx, cv.width, cv.height, EU.pagina, opciones());
+    EU.ponerLogo(ctx, cv.width, cv.height);
   };
 
   /* Opciones de dibujo comunes: aquí entra el QR, para que salga igual en la
@@ -135,10 +163,34 @@
         EU.esc(M.FORMATOS[k].nombre) + '</option>';
     }).join('');
 
+    /* Cuántos cuadros: las rejillas agrupadas por número de piezas, para
+       elegir por cantidad antes que por forma. */
+    var nums = [];
+    Object.keys(M.REJILLAS).forEach(function (k) {
+      var n = M.REJILLAS[k].n;
+      if (nums.indexOf(n) < 0) nums.push(n);
+    });
+    nums.sort(function (a, b) { return a - b; });
+    var nAct = (M.REJILLAS[p.rejilla] || {}).n;
+    var conteos = nums.map(function (n) {
+      return '<button class="pill' + (n === nAct ? ' on' : '') + '" data-conteo="' + n + '">' + n + '</button>';
+    }).join('');
+
+    /* Los quince troqueles de celda que el motor ya sabe dibujar. */
+    var FC = M.FORMAS_CELDA || {};
+    var troq = Object.keys(FC).map(function (k) {
+      return '<button class="troquel' + ((p.formaCelda || 'suave') === k ? ' on' : '') +
+        '" data-forma="' + k + '" title="' + EU.esc(FC[k].nombre) + '">' +
+        '<i>' + FC[k].icono + '</i><span>' + EU.esc(FC[k].nombre) + '</span></button>';
+    }).join('');
+
     var ad = p.adornos || {};
     return '' +
       '<label class="mini-lbl">Cuadrícula</label><div class="tira">' + rej + '</div>' +
+      '<label class="mini-lbl">Cuántos cuadros</label><div class="tira">' + conteos + '</div>' +
       '<label class="mini-lbl">Hoja</label><select data-campo="formato">' + fmt + '</select>' +
+      '<label class="mini-lbl">Forma de los cuadros · 15 troqueles</label>' +
+      '<div class="troqueles">' + troq + '</div>' +
       '<label class="mini-lbl">Paleta · 10</label><div style="display:grid;gap:5px">' + temas + '</div>' +
       '<label class="mini-lbl">Acabado</label>' +
       [['grano', 'Grano de papel'], ['vineta', 'Viñeta'], ['filetes', 'Filetes'], ['sombras', 'Sombras duras']]
@@ -176,7 +228,16 @@
         '<div class="fila">' +
         '<input type="text" data-celda="' + i + '" data-k="precio" value="' + EU.esc(c.precio || '') + '" placeholder="precio" maxlength="20" style="flex:1">' +
         '<input type="text" data-celda="' + i + '" data-k="etiqueta" value="' + EU.esc(c.etiqueta || '') + '" placeholder="etiqueta" maxlength="20" style="flex:1">' +
-        '</div></div>';
+        '</div>' +
+        '<select data-cforma="' + i + '" style="width:100%;margin-top:5px;background:#13132a;' +
+        'border:1px solid var(--bd);color:var(--tx2);border-radius:7px;padding:6px 8px;font-size:11px;' +
+        'font-family:inherit">' +
+        '<option value="">Troquel: el de la hoja</option>' +
+        Object.keys(EU.motor.FORMAS_CELDA).map(function (k) {
+          return '<option value="' + k + '"' + (c.forma === k ? ' selected' : '') + '>Troquel: ' +
+            EU.motor.FORMAS_CELDA[k].icono + ' ' + EU.esc(EU.motor.FORMAS_CELDA[k].nombre) + '</option>';
+        }).join('') + '</select>' +
+        '</div>';
     }).join('');
 
     return '' +
@@ -196,10 +257,19 @@
     return '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:0 0 10px">' +
       'Sin foto, el motor dibuja un fondo con tu propia paleta: nunca finge ser una foto real. ' +
       'Las fotos se quedan en tu móvil, no suben a ningún sitio.</p>' +
+      '<div style="border:1px dashed var(--ac2);border-radius:10px;padding:11px;margin-bottom:12px;' +
+      'background:var(--card2)">' +
+      '<b style="font-size:11.5px;display:block;margin-bottom:4px">Diseño con tus fotos y vídeos en un paso</b>' +
+      '<span style="font-size:10.5px;color:var(--tx2);line-height:1.5;display:block;margin-bottom:7px">' +
+      'Elige varios archivos a la vez —fotos, vídeos o mezclados— y se reparten por los cuadros que ' +
+      'tengas puestos, empezando por los que están vacíos. Si traes más archivos que cuadros, la ' +
+      'cuadrícula crece para acogerlos.</span>' +
+      '<input type="file" accept="image/*,video/*" multiple id="euFotosLote" style="font-size:11px;width:100%">' +
+      '</div>' +
       (p.celdas || []).map(function (c, i) {
         return '<div class="celda-fila"><div class="cab"><b>' + (i + 1) + ' · ' + EU.esc(c.titulo || '') + '</b>' +
           (c.media ? '<button class="btn btn-g btn-sm" data-quitafoto="' + i + '">Quitar</button>' : '') + '</div>' +
-          '<input type="file" accept="image/*" data-foto="' + i + '" style="font-size:11px">' +
+          '<input type="file" accept="image/*,video/*" data-foto="' + i + '" style="font-size:11px">' +
           '</div>';
       }).join('');
   }
@@ -228,7 +298,23 @@
       '<label class="mini-lbl">Colores</label>' +
       '<div class="fila"><input type="checkbox" data-miscolores="1"' + (propios ? ' checked' : '') +
       ' style="width:auto"><span style="font-size:11.5px">Usar los colores de mi marca</span></div>' +
-      '<button class="btn btn-g btn-sm" style="width:100%;margin-top:10px" data-poncontacto="1">Poner mi contacto en el pie</button>';
+      '<button class="btn btn-g btn-sm" style="width:100%;margin-top:10px" data-poncontacto="1">Poner mi contacto en el pie</button>' +
+      '<label class="mini-lbl">Combinaciones profesionales</label>' +
+      '<div class="pro-grid">' + PALETAS_PRO.map(function (pp) {
+        return '<button class="pro-b' + (p.paletaPro === pp.id ? ' on' : '') + '" data-pro="' + pp.id + '">' +
+          '<span class="pro-tira">' +
+          ['fondo', 'panel', 'acento', 'acento2'].map(function (x) {
+            return '<i style="background:' + pp.c[x] + '"></i>';
+          }).join('') + '</span>' +
+          '<span class="pro-n">' + EU.esc(pp.n) + '</span></button>';
+      }).join('') + '</div>' +
+      '<label class="mini-lbl">Ajuste fino</label>' +
+      '<div class="roles">' + ROLES.map(function (r) {
+        var v = (p.colores && p.colores[r.k]) || (EU.motor.colores(p) || {})[r.k] || '#888888';
+        return '<label class="rol"><input type="color" data-rol="' + r.k + '" value="' + v + '">' +
+          '<span>' + EU.esc(r.n) + '</span></label>';
+      }).join('') + '</div>' +
+      '<button class="btn btn-g btn-sm" style="width:100%;margin-top:8px" data-volverpaleta="1">Volver a la paleta del tema</button>';
   }
 
   /* ───────────── Cablear el panel ───────────── */
@@ -249,6 +335,55 @@
         EU.pagina.adornos = EU.pagina.adornos || {};
         EU.pagina.adornos[k.getAttribute('data-adorno')] = k.checked;
         E.repintar();
+      };
+    });
+    /* Cuántos cuadros: salta a la primera rejilla con ese número de piezas. */
+    c.querySelectorAll('[data-conteo]').forEach(function (b) {
+      b.onclick = function () {
+        var n = parseInt(b.getAttribute('data-conteo'), 10), M = EU.motor;
+        var k = Object.keys(M.REJILLAS).filter(function (x) { return M.REJILLAS[x].n === n; })[0];
+        if (!k) return;
+        apuntar(); ajustarCeldas(k); E.repintar(); E.panel();
+      };
+    });
+    /* Troquel de celda: lo lee el motor en pintar(), así que basta guardarlo. */
+    c.querySelectorAll('[data-forma]').forEach(function (b) {
+      b.onclick = function () {
+        apuntar();
+        EU.pagina.formaCelda = b.getAttribute('data-forma');
+        E.repintar(); E.panel();
+      };
+    });
+    /* Combinación profesional: sustituye la paleta entera, no la mezcla. */
+    c.querySelectorAll('[data-pro]').forEach(function (b) {
+      b.onclick = function () {
+        var id = b.getAttribute('data-pro');
+        var pp = PALETAS_PRO.filter(function (x) { return x.id === id; })[0];
+        if (!pp) return;
+        apuntar();
+        if (EU.pagina.paletaPro === id) {          // volver a pulsarla la quita
+          delete EU.pagina.paletaPro; delete EU.pagina.colores;
+        } else {
+          EU.pagina.paletaPro = id;
+          EU.pagina.colores = Object.assign({}, pp.c);
+        }
+        E.repintar(); E.panel();
+      };
+    });
+    /* Ajuste fino: un color por papel. Al tocarlo se deja de seguir la paleta. */
+    c.querySelectorAll('[data-rol]').forEach(function (i) {
+      i.oninput = function () {
+        EU.pagina.colores = Object.assign({}, EU.pagina.colores || {});
+        EU.pagina.colores[i.getAttribute('data-rol')] = i.value;
+        delete EU.pagina.paletaPro;
+        E.repintar();
+      };
+    });
+    c.querySelectorAll('[data-volverpaleta]').forEach(function (b) {
+      b.onclick = function () {
+        apuntar();
+        delete EU.pagina.colores; delete EU.pagina.paletaPro;
+        E.repintar(); E.panel();
       };
     });
     c.querySelectorAll('[data-cerebro]').forEach(function (b) {
@@ -285,16 +420,70 @@
         E.repintar(); E.panel();
       };
     });
+    c.querySelectorAll('[data-cforma]').forEach(function (sel) {
+      sel.onchange = function () {
+        apuntar();
+        var i = parseInt(sel.getAttribute('data-cforma'), 10);
+        if (sel.value) EU.pagina.celdas[i].forma = sel.value;
+        else delete EU.pagina.celdas[i].forma;
+        E.repintar();
+      };
+    });
+
+    /* Varias de golpe: primero los cuadros vacíos, y si sobran archivos la
+       cuadrícula crece hasta la que los acoja. */
+    var lote = EU.$('euFotosLote');
+    if (lote) lote.onchange = function () {
+      var fs = Array.prototype.slice.call(lote.files || []);
+      if (!fs.length) return;
+      apuntar();
+      var M = EU.motor;
+      var encaje = { 1: 'r1', 2: 'r2b', 3: 'r3a', 4: 'r4a', 6: 'r6a', 8: 'r8a' };
+      var nAhora = (M.REJILLAS[EU.pagina.rejilla] || {}).n || EU.pagina.celdas.length;
+      if (fs.length > nAhora) {
+        var sube = [2, 3, 4, 6, 8].filter(function (x) { return x >= fs.length; })[0] || 8;
+        var k = encaje[fs.length] || encaje[sube];
+        if (k && M.REJILLAS[k]) {
+          EU.pagina.rejilla = k;
+          var n = M.REJILLAS[k].n;
+          while (EU.pagina.celdas.length < n) {
+            EU.pagina.celdas.push(JSON.parse(JSON.stringify(
+              EU.pagina.celdas[EU.pagina.celdas.length % Math.max(1, EU.pagina.celdas.length)] ||
+              { titulo: 'Servicio', texto: '', precio: '' })));
+          }
+          EU.pagina.celdas = EU.pagina.celdas.slice(0, n);
+        }
+      }
+      // primero los vacíos, después el resto, siempre en orden
+      var orden = [];
+      EU.pagina.celdas.forEach(function (c, i) { if (!c.media) orden.push(i); });
+      EU.pagina.celdas.forEach(function (c, i) { if (c.media) orden.push(i); });
+      fs.slice(0, orden.length).forEach(function (file, k2) {
+        var i = orden[k2];
+        var esVid = /^video\//.test(file.type);
+        var el = esVid ? document.createElement('video') : new Image();
+        if (esVid) { el.muted = true; el.playsInline = true; el.preload = 'auto'; }
+        el.onloadeddata = el.onload = function () { E.repintar(); };
+        el.onerror = function () { EU.toast('No se pudo leer ' + file.name); };
+        el.src = URL.createObjectURL(file);
+        EU.pagina.celdas[i].media = { el: el, tipo: esVid ? 'vid' : 'img' };
+      });
+      E.repintar(); E.panel();
+      EU.toast(Math.min(fs.length, orden.length) + ' en los cuadros de la hoja.');
+    };
+
     c.querySelectorAll('[data-foto]').forEach(function (f) {
       f.onchange = function () {
         var n = parseInt(f.getAttribute('data-foto'), 10), file = f.files && f.files[0];
         if (!file) return;
-        var img = new Image();
-        img.onload = function () { E.repintar(); E.panel(); };
-        img.onerror = function () { EU.toast('No se pudo leer esa imagen.'); };
+        var esVid = /^video\//.test(file.type);
+        var img = esVid ? document.createElement('video') : new Image();
+        if (esVid) { img.muted = true; img.playsInline = true; img.preload = 'auto'; }
+        img.onloadeddata = img.onload = function () { E.repintar(); E.panel(); };
+        img.onerror = function () { EU.toast('No se pudo leer ese archivo.'); };
         img.src = URL.createObjectURL(file);
         apuntar();
-        EU.pagina.celdas[n].media = { el: img, tipo: 'img' };
+        EU.pagina.celdas[n].media = { el: img, tipo: esVid ? 'vid' : 'img' };
       };
     });
     c.querySelectorAll('[data-quitafoto]').forEach(function (b) {
@@ -389,6 +578,7 @@
     cv.width = F.w; cv.height = F.h;
     var ctx = cv.getContext('2d');
     M.pintar(ctx, F.w, F.h, EU.pagina, opciones());
+    EU.ponerLogo(ctx, F.w, F.h);
     EU_PLAN.marcaAgua(ctx, F.w, F.h);
     return cv;
   };
@@ -402,6 +592,11 @@
     cv.toBlob(function (b) {
       if (!b) { EU.estado('euEdEstado', 'El navegador no pudo generar la imagen.', 'err'); return; }
       E.bajar(b, nombre + '.jpg');
+      if (window.B6Bandeja) {
+        var u = URL.createObjectURL(b);
+        B6Bandeja.apuntar(u, nombre + '.jpg', 'folleto');
+        setTimeout(function () { URL.revokeObjectURL(u); }, 10000);
+      }
       EU.estado('euEdEstado',
         'JPG descargado.' + (EU_PLAN.puede('pdf')
           ? ' <button class="btn btn-sm" id="euBtnPdf">También en PDF de imprenta</button>'
@@ -435,6 +630,7 @@
     document.body.appendChild(a); a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
   }
+  E.PALETAS_PRO = PALETAS_PRO;   // las usan también los volantes
   E.bajar = bajar;
   E.limpio = limpio;
 

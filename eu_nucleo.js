@@ -23,6 +23,8 @@
   };
 
   var MARCA_LOCAL = 'eu_marca';      // respaldo cuando no hay sesión
+  var LOGO_LOCAL = 'eu_logo';        // el logo vive en el dispositivo
+  var LOGOCFG_LOCAL = 'eu_logo_cfg';
   var auth = null, db = null;
 
   var EU = {
@@ -102,6 +104,10 @@
     if (p === 'qr' && window.EU_QR) EU_QR.entrar();
     if (p === 'mios' && window.EU_PROYECTOS) EU_PROYECTOS.entrar();
     if (p === 'plan' && window.EU_PLAN) EU_PLAN.entrar();
+    if (p === 'triptico' && window.EU_TRIPTICO) EU_TRIPTICO.entrar();
+    if (p === 'carrusel' && window.EU_CARRUSEL) EU_CARRUSEL.entrar();
+    if (p === 'laminas' && window.EU_LAMINAS) EU_LAMINAS.entrar();
+    if (p === 'repaso' && window.EU_REPASO) EU_REPASO.entrar();
   };
 
   function cablearPestanas() {
@@ -154,8 +160,94 @@
     $('euMC2').value = m.c2 || '#a855f7';
     EU.estado('euMarcaEstado', '');
     $('euMarcaVelo').classList.add('on');
+    EU.pintarMandosLogo();
   };
   EU.cerrarMarca = function () { $('euMarcaVelo').classList.remove('on'); };
+
+  /* Los mandos del logo. El logo se aplica al momento —no espera al botón de
+     guardar— porque no viaja a la cuenta: vive en este dispositivo. */
+  EU.pintarMandosLogo = function () {
+    var pv = $('euLogoPrevio');
+    if (pv) pv.style.background = EU.logo.url
+      ? '#fff url(' + EU.logo.url + ') center/contain no-repeat' : '#1a1a35';
+    var tp = $('euLogoPos');
+    if (tp) {
+      tp.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-width:150px';
+      tp.innerHTML = ORDEN_POS.map(function (k) {
+        var on = EU.logo.pos === k;
+        return '<button data-logopos="' + k + '" title="' + EU.esc(LOGO_POS[k]) + '" ' +
+          'style="height:30px;border-radius:6px;cursor:pointer;font-size:0;padding:0;' +
+          'border:1.5px solid ' + (on ? 'var(--ac2)' : 'var(--bd)') + ';' +
+          'background:' + (on ? 'var(--card2)' : 'var(--bg3)') + ';' +
+          'display:flex;align-items:center;justify-content:center">' +
+          '<span style="width:13px;height:9px;border-radius:2px;background:' +
+          (on ? 'var(--ac2)' : 'var(--bd)') + '"></span></button>';
+      }).join('');
+      tp.querySelectorAll('[data-logopos]').forEach(function (b) {
+        b.onclick = function () {
+          EU.logo.pos = b.getAttribute('data-logopos');
+          EU.guardarCfgLogo();
+          EU.pintarMandosLogo();
+          EU.refrescarPiezas();
+        };
+      });
+    }
+    var rt = $('euLogoTamRot');
+    if (rt) rt.textContent = 'Dónde va · ' + LOGO_POS[EU.logo.pos] + '  ·  Tamaño ' + EU.logo.tam + ' % del ancho';
+    var tm = $('euLogoTam');
+    if (tm && String(tm.value) !== String(EU.logo.tam)) tm.value = EU.logo.tam;
+  };
+
+  EU.cablearLogo = function () {
+    var f = $('euLogoFile');
+    if (f) f.onchange = function (ev) {
+      var file = ev.target.files && ev.target.files[0];
+      ev.target.value = '';
+      if (!file) return;
+      var lec = new FileReader();
+      lec.onload = function () {
+        /* Se reescala a 512 px de lado mayor antes de guardarlo: un logo hecho
+           con el móvil son varios megas y no cabe en el almacén del navegador. */
+        var im = new Image();
+        im.onload = function () {
+          var k = Math.min(1, 512 / Math.max(im.naturalWidth, im.naturalHeight));
+          var cv = document.createElement('canvas');
+          cv.width = Math.max(1, Math.round(im.naturalWidth * k));
+          cv.height = Math.max(1, Math.round(im.naturalHeight * k));
+          cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+          var url = cv.toDataURL('image/png');
+          try { localStorage.setItem(LOGO_LOCAL, url); }
+          catch (e) { EU.toast('El logo no cabe en este navegador, pero se usa mientras la página esté abierta.'); }
+          EU.ponerImagenLogo(url, function () {
+            EU.pintarMandosLogo();
+            EU.refrescarPiezas();
+            EU.toast('Logo puesto.');
+          });
+        };
+        im.onerror = function () { EU.toast('Ese archivo no es una imagen que se pueda leer.'); };
+        im.src = lec.result;
+      };
+      lec.readAsDataURL(file);
+    };
+    var q = $('euLogoQuitar');
+    if (q) q.onclick = function () {
+      try { localStorage.removeItem(LOGO_LOCAL); } catch (e) {}
+      EU.ponerImagenLogo('', function () {
+        EU.pintarMandosLogo();
+        EU.refrescarPiezas();
+        EU.toast('Logo quitado.');
+      });
+    };
+    var t = $('euLogoTam');
+    if (t) {
+      t.oninput = function () {
+        EU.logo.tam = parseInt(t.value, 10) || 9;
+        var rt = $('euLogoTamRot');
+        if (rt) rt.textContent = 'Dónde va · ' + LOGO_POS[EU.logo.pos] + '  ·  Tamaño ' + EU.logo.tam + ' % del ancho';
+      };
+      t.onchange = function () { EU.guardarCfgLogo(); EU.refrescarPiezas(); };
+    }
+  };
 
   EU.guardarMarca = function () {
     var m = {
@@ -192,6 +284,97 @@
           '<br>La administración tiene que publicar las reglas nuevas (ver LEEME_ESTUDIO_UNIVERSAL.md).', 'avi');
         if (window.EU_PARRILLA) EU_PARRILLA.repintar();
       });
+  };
+
+  /* ───────────── El logo ─────────────
+     Se guarda en el dispositivo, no en la cuenta: es una imagen y no tiene
+     por qué viajar. Se pinta ENCIMA de la hoja ya dibujada, en la misma capa
+     en todas las piezas: folleto, tríptico, carrusel, láminas y vídeo. */
+
+  EU.logo = { url: '', img: null, pos: 'ad', tam: 9 };
+
+  /* Nueve huecos, los mismos que ya usa la foto de las fichas de Estudios:
+     [columna, fila] · 0 izquierda/arriba, 1 centro, 2 derecha/abajo. */
+  var POS_XY = {
+    ai: [0, 0], ac: [1, 0], ad: [2, 0],
+    mi: [0, 1], mc: [1, 1], md: [2, 1],
+    bi: [0, 2], bc: [1, 2], bd: [2, 2]
+  };
+  var ORDEN_POS = ['ai', 'ac', 'ad', 'mi', 'mc', 'md', 'bi', 'bc', 'bd'];
+  var LOGO_POS = {
+    ai: 'Arriba izquierda', ac: 'Arriba centro', ad: 'Arriba derecha',
+    mi: 'Centro izquierda', mc: 'Centro', md: 'Centro derecha',
+    bi: 'Abajo izquierda', bc: 'Abajo centro', bd: 'Abajo derecha'
+  };
+  EU.LOGO_POS = LOGO_POS;
+
+  /* Los nombres viejos de cuatro esquinas siguen valiendo: se traducen. */
+  var VIEJAS = { td: 'ad', ti: 'ai', pd: 'bd', pc: 'bc' };
+
+  function cargarLogoLocal() {
+    try {
+      var c = JSON.parse(localStorage.getItem(LOGOCFG_LOCAL) || 'null');
+      if (c && typeof c === 'object') {
+        var pv = VIEJAS[c.pos] || c.pos;
+        if (LOGO_POS[pv]) EU.logo.pos = pv;
+        if (c.tam) EU.logo.tam = Math.max(4, Math.min(40, c.tam));
+      }
+      var u = localStorage.getItem(LOGO_LOCAL) || '';
+      if (u) EU.ponerImagenLogo(u);
+    } catch (e) {}
+  }
+
+  EU.ponerImagenLogo = function (url, alAcabar) {
+    if (!url) {
+      EU.logo.url = ''; EU.logo.img = null;
+      window.EU_LOGO = null;
+      if (alAcabar) alAcabar();
+      return;
+    }
+    var im = new Image();
+    im.onload = function () {
+      EU.logo.url = url; EU.logo.img = im;
+      window.EU_LOGO = EU.logo;
+      if (alAcabar) alAcabar();
+    };
+    im.onerror = function () { if (alAcabar) alAcabar(); };
+    im.src = url;
+  };
+
+  EU.guardarCfgLogo = function () {
+    try {
+      localStorage.setItem(LOGOCFG_LOCAL, JSON.stringify({ pos: EU.logo.pos, tam: EU.logo.tam }));
+    } catch (e) {}
+  };
+
+  /* El logo va después de todo y antes de la marca de agua. El tamaño es un
+     porcentaje del ancho de la pieza, así que se ve igual en un A4 que en
+     una historia de móvil. */
+  EU.ponerLogo = function (ctx, W, H) {
+    var im = EU.logo && EU.logo.img;
+    if (!im || !(im.naturalWidth || im.width)) return;
+    var anc = W * ((EU.logo.tam || 9) / 100);
+    var alt = anc * ((im.naturalHeight || im.height) / (im.naturalWidth || im.width));
+    var M = W * 0.055;
+    var pos = POS_XY[EU.logo.pos] ? EU.logo.pos : 'ad';
+    var col = POS_XY[pos][0], fil = POS_XY[pos][1];
+    var x = col === 0 ? M : (col === 1 ? (W - anc) / 2 : W - M - anc);
+    var y = fil === 0 ? M : (fil === 1 ? (H - alt) / 2 : H - M - alt);
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.28)';
+    ctx.shadowBlur = anc * 0.10;
+    ctx.drawImage(im, x, y, anc, alt);
+    ctx.restore();
+  };
+
+  /* Repintar lo que esté a la vista cuando cambia el logo. */
+  EU.refrescarPiezas = function () {
+    var m = { editor: 'EU_EDITOR', triptico: 'EU_TRIPTICO', carrusel: 'EU_CARRUSEL',
+              laminas: 'EU_LAMINAS', video: 'EU_VIDEO' };
+    var n = m[EU.pantalla];
+    var mod = n && window[n];
+    if (mod && mod.repintar) { try { mod.repintar(); return; } catch (e) {} }
+    if (mod && mod.entrar) { try { mod.entrar(); } catch (e) {} }
   };
 
   function cargarMarcaLocal() {
@@ -276,6 +459,8 @@
     }
 
     cargarMarcaLocal();
+    cargarLogoLocal();
+    EU.cablearLogo();
     cablearPestanas();
     EU.pintarPlan();
     EU.pintarMarcaResumen();

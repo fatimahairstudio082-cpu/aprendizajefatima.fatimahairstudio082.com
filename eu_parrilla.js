@@ -16,7 +16,7 @@
   var P = {};
   window.EU_PARRILLA = P;
 
-  var filtroRej = '', filtroTema = '';   // '' = todas
+  var filtroRej = '', filtroTema = '', filtroForma = '';   // '' = todas
   var cola = [], pintando = false;
 
   /* ───────────── Rellenar mandos ───────────── */
@@ -84,6 +84,31 @@
       marcar(ft, b);
       P.repintar();
     };
+
+    /* Troquel: sólo se ofrecen los que alguna plantilla usa de verdad, para
+       que ninguna tira lleve a una rejilla vacía. Las que no declaran troquel
+       llevan el suave, que es el de siempre. */
+    var ff = EU.$('euFiltroForma');
+    if (ff && M.FORMAS_CELDA) {
+      var usados = {};
+      (EU.disenos ? EU.disenos.lista() : []).forEach(function (d) {
+        usados[d.formaCelda || 'suave'] = true;
+      });
+      ff.innerHTML = '<button class="pill on" data-f="">Todos</button>' +
+        Object.keys(M.FORMAS_CELDA).filter(function (k) { return usados[k]; })
+          .map(function (k) {
+            return '<button class="pill" data-f="' + k + '" title="' + EU.esc(M.FORMAS_CELDA[k].nombre) + '">' +
+              '<i style="font-style:normal">' + M.FORMAS_CELDA[k].icono + '</i>' +
+              EU.esc(M.FORMAS_CELDA[k].nombre) + '</button>';
+          }).join('');
+      ff.onclick = function (e) {
+        var b = e.target.closest && e.target.closest('button[data-f]');
+        if (!b) return;
+        filtroForma = b.getAttribute('data-f');
+        marcar(ff, b);
+        P.repintar();
+      };
+    }
   }
 
   function marcar(caja, btn) {
@@ -107,6 +132,10 @@
     pag.rejilla = d.rejilla;
     pag.tema = d.tema;
     pag.adornos = Object.assign({}, d.adornos || {});
+    /* Troquel de celda y paleta propia del estilo (los 30 de «Tendencia»).
+       Sin esto todos saldrían con el cuadro redondeado de siempre. */
+    if (d.formaCelda) pag.formaCelda = d.formaCelda;
+    if (d.colores) pag.colores = Object.assign({}, d.colores);
     pag.formato = EU.$('euFormato').value || d.formato || 'a4v';
     pag.disenoId = d.id;
     pag.disenoNombre = d.nombre;
@@ -125,6 +154,7 @@
         if (d.rejilla === 'rlista' || !M.REJILLAS[d.rejilla] || M.REJILLAS[d.rejilla].n !== n) return false;
       }
       if (filtroTema && d.tema !== filtroTema) return false;
+      if (filtroForma && (d.formaCelda || 'suave') !== filtroForma) return false;
       return true;
     });
   }
