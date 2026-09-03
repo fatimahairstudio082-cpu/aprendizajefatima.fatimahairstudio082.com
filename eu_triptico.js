@@ -32,7 +32,20 @@
     diseno: '',        // plantilla de folleto que manda en acabados y color
     paletaPro: '',     // combinación profesional
     colores: null,     // colores a mano
-    qr: false          // QR en el cuerpo de contacto
+    qr: false,         // QR en el cuerpo de contacto
+    narra: '',         // lo que se cuenta en el vídeo
+    vozBlob: null,     // voz subida o grabada, para meterla dentro
+    vozNom: '',
+    vozVivo: false,    // narrar con la voz del móvil mientras se graba
+    ratio: 'hoja'      // medida del vídeo
+  };
+
+  var CLAVE_VOZ = 'tri:narra';
+  var RATIOS = {
+    hoja: { nombre: 'Como la hoja', W: 0,   H: 0 },
+    v:    { nombre: '9:16',         W: 720, H: 1280 },
+    q:    { nombre: '1:1',          W: 800, H: 800 },
+    h:    { nombre: '16:9',         W: 1280, H: 720 }
   };
 
   var elLienzo = null, rafId = 0, cacheClave = '', cacheCuerpos = null;
@@ -411,6 +424,45 @@
         '<div style="font-size:10.5px;color:#7c7c9e;line-height:1.5;margin-top:5px">' +
         'Antes hay que generarlo en la pestaña QR.</div>'));
 
+    /* Vídeo del tríptico: lo que se cuenta, la medida y la voz. */
+    h.push('<label class="mini-lbl" style="margin-top:16px">Vídeo del tríptico con narración</label>' +
+      '<p style="margin:0 0 6px;font-size:10.5px;color:#7c7c9e;line-height:1.5">' +
+      'Escribe lo que quieres que se cuente. Sale rotulado <b>dentro</b> del vídeo.</p>' +
+      '<textarea id="euTriNarra" rows="3" placeholder="Ej.: En Estudio Nube cuidamos tu color de ' +
+      'principio a fin. Abre y mira los tratamientos. Pide cita por WhatsApp." ' +
+      'style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;color:#e2e8f0;border-radius:8px;' +
+      'padding:8px;font-size:11.5px;resize:vertical;line-height:1.6;font-family:inherit">' +
+      EU.esc(st.narra) + '</textarea>');
+
+    h.push('<label class="mini-lbl">Medida del vídeo</label><div style="display:flex;gap:6px;flex-wrap:wrap">' +
+      Object.keys(RATIOS).map(function (k) {
+        return '<button data-tratio="' + k + '" style="' + chip(st.ratio === k) + '">' +
+          EU.esc(RATIOS[k].nombre) + '</button>';
+      }).join('') + '</div>');
+
+    h.push('<div class="tira" style="margin-top:9px">' +
+      '<button class="btn btn-sm" id="euTriVideo">⏺ Grabar vídeo narrado</button>' +
+      '<button class="btn btn-g btn-sm" id="euTriLibroVid">⏺ Vídeo del libro</button></div>');
+
+    var tieneVoz = !!(st.vozBlob || (window.EU_VOZ && EU_VOZ.tieneAudio(CLAVE_VOZ)));
+    h.push('<label class="mini-lbl" style="margin-top:12px">Voz dentro del vídeo</label>' +
+      '<div class="st ' + (tieneVoz ? 'ok' : '') + '" style="margin:0 0 7px;padding:5px 9px;font-size:10.5px">' +
+      (tieneVoz ? 'Hay voz: ' + EU.esc(st.vozNom || 'grabada aquí') : 'Sin voz · el vídeo saldrá mudo') + '</div>' +
+      '<div class="tira">' +
+      '<button class="btn btn-g btn-sm" id="euTriVozGrab">' +
+      (window.EU_VOZ && EU_VOZ.grabando() ? '■ Parar' : '● Grabar') + '</button>' +
+      '<button class="btn btn-g btn-sm" id="euTriVozSubir">📁 Subir audio</button>' +
+      (tieneVoz ? '<button class="btn btn-g btn-sm" id="euTriVozOir">▶ Oír</button>' +
+        '<button class="btn btn-g btn-sm" id="euTriVozQuitar">Quitar</button>' : '') +
+      '</div>' +
+      '<input type="file" accept="audio/*" id="euTriVozFile" style="display:none">' +
+      '<div class="fila" style="margin-top:8px"><input type="checkbox" id="euTriVozVivo"' +
+      (st.vozVivo ? ' checked' : '') + ' style="width:auto">' +
+      '<span style="font-size:11.5px">Narrar en directo con la voz del móvil</span></div>' +
+      '<p style="font-size:10.5px;color:#7c7c9e;line-height:1.5;margin:6px 0 0">' +
+      'La voz del móvil suena por el altavoz y no entra en el archivo. Para que entre, ' +
+      'grábala o súbela aquí.</p>');
+
     h.push('<p style="margin:12px 0 0;font-size:10.5px;color:#7c7c9e;line-height:1.55">' +
       'La hoja se imprime en A4 apaisado, 297 × 210 mm, partida en tres cuerpos de 99 mm. ' +
       'El PDF sale con la cara de fuera primero y la de dentro después: es el orden que espera ' +
@@ -485,6 +537,32 @@
       if (b.id === 'euTriAmbas') return bajarAmbas();
       if (b.id === 'euTriCuerpos') return bajarCuerpos();
       if (b.id === 'euTriPDF') return bajarPDF();
+      if (b.hasAttribute('data-tratio')) { st.ratio = b.getAttribute('data-tratio'); return pintar(); }
+      if (b.id === 'euTriVideo') return grabarNarrado();
+      if (b.id === 'euTriLibroVid') return grabarLibro();
+      if (b.id === 'euTriVozSubir') { EU.$('euTriVozFile').click(); return; }
+      if (b.id === 'euTriVozGrab') {
+        if (!window.EU_VOZ) return EU.toast('La voz no se ha cargado.');
+        if (EU_VOZ.grabando()) {
+          return EU_VOZ.pararGrabacion().then(function () { st.vozBlob = null; st.vozNom = ''; pintar(); })
+            .catch(function (e) { EU.toast(e.message || 'No se pudo parar.'); pintar(); });
+        }
+        return EU_VOZ.grabar(CLAVE_VOZ, function () { pintar(); })
+          .catch(function (e) { EU.toast(e.message || 'No se pudo grabar.'); pintar(); });
+      }
+      if (b.id === 'euTriVozOir') {
+        if (st.vozBlob) {
+          var a = new Audio(URL.createObjectURL(st.vozBlob));
+          a.play().catch(function () {});
+          return;
+        }
+        return EU_VOZ.hablar('', CLAVE_VOZ);
+      }
+      if (b.id === 'euTriVozQuitar') {
+        st.vozBlob = null; st.vozNom = '';
+        if (window.EU_VOZ) EU_VOZ.borrarAudio(CLAVE_VOZ);
+        return pintar();
+      }
     };
 
     /* Lo que se escribe repinta la hoja pero NO vuelve a montar el panel: el
@@ -500,6 +578,7 @@
         pgs[parseInt(t.getAttribute('data-tsub'), 10)].cabecera.sub = t.value;
         invalidar(); return pintarLienzo();
       }
+      if (t.id === 'euTriNarra') { st.narra = t.value; return; }
       if (t.hasAttribute('data-tcol')) {
         st.colores = st.colores || {};
         st.colores[t.getAttribute('data-tcol')] = t.value;
@@ -522,6 +601,14 @@
       }
       if (t.hasAttribute('data-tfoto')) return ponerFoto(t, parseInt(t.getAttribute('data-tfoto'), 10));
       if (t.id === 'euTriFotos') return repartirFotos(t);
+      if (t.id === 'euTriVozFile') {
+        var f = t.files && t.files[0];
+        if (!f) return;
+        st.vozBlob = f; st.vozNom = f.name;
+        if (window.EU_VOZ) EU_VOZ.borrarAudio(CLAVE_VOZ);
+        return pintar();
+      }
+      if (t.id === 'euTriVozVivo') { st.vozVivo = t.checked; return; }
     };
   }
 
@@ -562,6 +649,188 @@
     el.onerror = function () { EU.toast('No se pudo leer ese archivo.'); };
     el.src = URL.createObjectURL(f);
     alTener({ el: el, tipo: esVid ? 'vid' : 'img' });
+  }
+
+  /* ───────────── Vídeo ─────────────
+     Dos vídeos: el libro abriéndose, y el narrado, que enseña la cara de
+     fuera, abre, y se queda en la de dentro con el rótulo de lo que se
+     cuenta. La voz, si la hay, va DENTRO del archivo. */
+
+  function medidasVid() {
+    var R = RATIOS[st.ratio];
+    if (R && R.W) return { W: R.W, H: R.H };
+    return { W: 1054, H: 744 };          // la proporción de la hoja
+  }
+
+  function rotularNarra(ctx, W, H) {
+    var t = (st.narra || '').trim();
+    if (!t) return;
+    var M = M_(), C = M.colores((paginas() || [])[0] || { tema: st.tema });
+    var tam = Math.round(W * 0.030);
+    ctx.save();
+    ctx.font = '600 ' + tam + 'px ' + '"Segoe UI",Arial,sans-serif';
+    ctx.textAlign = 'center';
+    var lineas = [], linea = '';
+    t.split(/\s+/).forEach(function (p) {
+      var pr = linea ? linea + ' ' + p : p;
+      if (ctx.measureText(pr).width > W * 0.82 && linea) { lineas.push(linea); linea = p; }
+      else linea = pr;
+    });
+    if (linea) lineas.push(linea);
+    lineas = lineas.slice(-3);
+    var alto = lineas.length * tam * 1.35 + tam * 0.9;
+    var y0 = H - alto - H * 0.045;
+    ctx.fillStyle = M.rgba(C.fondo, 0.72);
+    M.redondo(ctx, W * 0.06, y0, W * 0.88, alto, tam * 0.5);
+    ctx.fill();
+    ctx.fillStyle = C.tinta;
+    lineas.forEach(function (l, i) {
+      ctx.fillText(l, W / 2, y0 + tam * 1.15 + i * tam * 1.35);
+    });
+    ctx.restore();
+  }
+
+  function M_() { return window.FOLLETO_MOTOR; }
+
+  /* Prepara la mezcla y graba `dur` segundos pintando con `alFotograma`. */
+  function grabarLienzo(dur, alFotograma, nombre) {
+    if (!EU_PLAN.exigeSesion()) return;
+    if (!window.MediaRecorder || !document.createElement('canvas').captureStream) {
+      return EU.toast('Este navegador no sabe grabar vídeo. Prueba en Chrome.');
+    }
+    var m = medidasVid();
+    var cv = document.createElement('canvas');
+    cv.width = Math.round(m.W / 2) * 2; cv.height = Math.round(m.H / 2) * 2;
+    var ctx = cv.getContext('2d');
+    alFotograma(ctx, cv.width, cv.height, 0);
+
+    var flujo = new MediaStream();
+    cv.captureStream(30).getVideoTracks().forEach(function (t) { flujo.addTrack(t); });
+
+    var url = st.vozBlob ? null : (window.EU_VOZ && EU_VOZ.audioDe(CLAVE_VOZ));
+    var conSonido = !!(st.vozBlob || url);
+    var tipo = '';
+    (conSonido
+      ? ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+      : ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm']
+    ).some(function (x) {
+      if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(x)) { tipo = x; return true; }
+      return false;
+    });
+
+    var ac = null, fuente = null;
+    var seguir = function () { arranca(); };
+    if (conSonido) {
+      var A = window.AudioContext || window.webkitAudioContext;
+      if (!A) { conSonido = false; seguir(); }
+      else {
+        ac = acMix || (acMix = new A());
+        if (ac.state === 'suspended') { try { ac.resume(); } catch (e) {} }
+        var dest = ac.createMediaStreamDestination();
+        var leer = st.vozBlob
+          ? st.vozBlob.arrayBuffer()
+          : fetch(url).then(function (r) { return r.arrayBuffer(); });
+        leer.then(function (ab) { return ac.decodeAudioData(ab); }).then(function (buf) {
+          var g = ac.createGain(); g.gain.value = 1;
+          fuente = ac.createBufferSource(); fuente.buffer = buf;
+          fuente.connect(g); g.connect(dest); g.connect(ac.destination);
+          dest.stream.getAudioTracks().forEach(function (t) { flujo.addTrack(t); });
+          seguir();
+        }).catch(function () { conSonido = false; seguir(); });
+      }
+    } else seguir();
+
+    function arranca() {
+      var rec;
+      try { rec = new MediaRecorder(flujo, tipo ? { mimeType: tipo, videoBitsPerSecond: 4500000 } : undefined); }
+      catch (e) { return EU.toast('No se pudo grabar: ' + (e.message || e)); }
+      var trozos = [];
+      rec.ondataavailable = function (e) { if (e.data && e.data.size) trozos.push(e.data); };
+      rec.onstop = function () {
+        try { if (fuente) fuente.stop(); } catch (e) {}
+        var mp4 = /mp4/.test(rec.mimeType || tipo || '');
+        var b = new Blob(trozos, { type: mp4 ? 'video/mp4' : 'video/webm' });
+        var arch = nombre + (mp4 ? '.mp4' : '.webm');
+        EU_EDITOR.bajar(b, arch);
+        if (window.B6Bandeja) {
+          var u = URL.createObjectURL(b);
+          B6Bandeja.apuntar(u, arch, 'triptico');
+          setTimeout(function () { URL.revokeObjectURL(u); }, 10000);
+        }
+        EU.toast('Vídeo descargado' + (conSonido ? ' con la voz dentro' : '') +
+          '. Pesa ' + Math.round(b.size / 1024) + ' KB.');
+        pintar();
+      };
+      EU.toast('Grabando ' + dur.toFixed(1) + ' s. No cambies de pestaña.');
+      rec.start();
+      if (fuente) { try { fuente.start(); } catch (e) {} }
+      if (st.vozVivo && st.narra && window.EU_VOZ && EU_VOZ.disponible) {
+        try { EU_VOZ.hablar(st.narra, null); } catch (e) {}
+      }
+      var t0 = performance.now();
+      (function paso() {
+        var t = (performance.now() - t0) / 1000;
+        var pr = Math.min(1, t / dur);
+        alFotograma(ctx, cv.width, cv.height, pr);
+        if (pr >= 1) { setTimeout(function () { try { rec.stop(); } catch (e) {} }, 200); return; }
+        requestAnimationFrame(paso);
+      })();
+    }
+  }
+
+  var acMix = null;
+
+  /* El libro abriéndose, sin más. */
+  function grabarLibro() {
+    var guardadaC = st.cara, guardadoL = st.libro, guardadoA = st.abre;
+    st.cara = 'ext'; st.libro = true;
+    grabarLienzo(4, function (ctx, W, H, pr) {
+      st.abre = Math.min(1, pr / 0.75);
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      var cps = cuerpos(Math.floor(1053 / 3), 744);
+      if (cps) pintarLibro(ctx, W, H, cps, st.abre);
+      EU.ponerLogo(ctx, W, H);
+      EU_PLAN.marcaAgua(ctx, W, H);
+      ctx.restore();
+      if (pr >= 1) { st.cara = guardadaC; st.libro = guardadoL; st.abre = guardadoA; }
+    }, 'triptico-libro');
+  }
+
+  /* El narrado: fuera, abre, y se queda dentro con el rótulo. */
+  function grabarNarrado() {
+    var guardadaC = st.cara, guardadoL = st.libro, guardadoA = st.abre;
+    var dur = Math.max(6, Math.min(30, (st.narra || '').split(/\s+/).length / 2.6));
+    grabarLienzo(dur, function (ctx, W, H, pr) {
+      // 0–35 % la cara de fuera abriéndose · 35–100 % la de dentro
+      var fuera = pr < 0.35;
+      st.cara = fuera ? 'ext' : 'int';
+      st.libro = fuera;
+      st.abre = fuera ? Math.min(1, pr / 0.30) : 1;
+      invalidar();
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      var pw = Math.floor(1053 / 3);
+      var cps = cuerpos(pw, 744);
+      if (cps) {
+        if (fuera) pintarLibro(ctx, W, H, cps, st.abre);
+        else {
+          var e = Math.min(W / 1053, H / 744);
+          var ox = (W - 1053 * e) / 2, oy = (H - 744 * e) / 2;
+          ctx.save();
+          ctx.translate(ox, oy); ctx.scale(e, e);
+          cps.forEach(function (off, i) { ctx.drawImage(off, i * pw, 0); });
+          ctx.restore();
+        }
+      }
+      rotularNarra(ctx, W, H);
+      EU.ponerLogo(ctx, W, H);
+      EU_PLAN.marcaAgua(ctx, W, H);
+      ctx.restore();
+      if (pr >= 1) { st.cara = guardadaC; st.libro = guardadoL; st.abre = guardadoA; invalidar(); }
+    }, 'triptico-narrado');
   }
 
   /* Las dos caras, y los seis cuerpos sueltos. */
