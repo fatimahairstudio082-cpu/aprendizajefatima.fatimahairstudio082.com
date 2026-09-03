@@ -28,7 +28,11 @@
     tema: 'nude',
     forma: 'suave',    // troquel de celda
     libro: false,
-    abre: 1            // 0 cerrado, 1 abierto del todo
+    abre: 1,           // 0 cerrado, 1 abierto del todo
+    diseno: '',        // plantilla de folleto que manda en acabados y color
+    paletaPro: '',     // combinación profesional
+    colores: null,     // colores a mano
+    qr: false          // QR en el cuerpo de contacto
   };
 
   var elLienzo = null, rafId = 0, cacheClave = '', cacheCuerpos = null;
@@ -60,6 +64,20 @@
     p.tema = st.tema;
     p.formaCelda = st.forma;
     p.adornos = { grano: false, vineta: false, filetes: true, sombras: true };
+    /* La plantilla elegida manda en acabados, troquel y color; el tríptico
+       sigue siendo de tres cuerpos, así que la rejilla no se toca. */
+    var D = window.FOLLETO_DISENOS && st.diseno ? FOLLETO_DISENOS.get(st.diseno) : null;
+    if (D) {
+      if (D.adornos) p.adornos = Object.assign({}, p.adornos, D.adornos);
+      if (D.formaCelda) p.formaCelda = D.formaCelda;
+      if (D.tema) p.tema = D.tema;
+      if (D.colores) p.colores = Object.assign({}, D.colores);
+    }
+    if (st.paletaPro && window.EU_EDITOR && EU_EDITOR.PALETAS_PRO) {
+      var PP = EU_EDITOR.PALETAS_PRO.filter(function (x) { return x.id === st.paletaPro; })[0];
+      if (PP) { p.paletaPro = PP.id; p.colores = Object.assign({}, PP.c); }
+    }
+    if (st.colores) p.colores = Object.assign({}, p.colores || {}, st.colores);
     return p;
   }
 
@@ -77,13 +95,23 @@
   function cuerpos(pw, H) {
     var pags = paginas();
     if (!pags) return null;
-    var clave = pw + '|' + st.cara + '|' + st.tema + '|' + st.forma + '|' +
-      pags.map(function (p) { return p.cabecera.titulo; }).join('~');
+    var clave = pw + '|' + st.cara + '|' + st.tema + '|' + st.forma + '|' + st.qr + '|' +
+      st.diseno + '|' + st.paletaPro + '|' + JSON.stringify(st.colores || 0) + '|' +
+      pags.map(function (p) {
+        return p.cabecera.titulo + '¬' + (p.cabecera.sub || '') + '¬' +
+          (p.celdas || []).map(function (c) { return (c.titulo || '') + (c.media ? '·f' : ''); }).join('|');
+      }).join('~');
     if (cacheClave === clave && cacheCuerpos) return cacheCuerpos;
-    cacheCuerpos = pags.map(function (pag) {
+    cacheCuerpos = pags.map(function (pag, i) {
       var off = document.createElement('canvas');
       off.width = pw; off.height = H;
-      M().pintar(off.getContext('2d'), pw, H, pag, { formaCelda: pag.formaCelda || 'suave' });
+      var op = { formaCelda: pag.formaCelda || 'suave' };
+      // el QR va en el cuerpo del contacto, que es el último de la cara
+      if (st.qr && i === pags.length - 1 && EU.qr && EU.qr.el) {
+        op.qr = EU.qr.el;
+        op.qrTexto = EU.qr.etiqueta || 'Escanéame';
+      }
+      M().pintar(off.getContext('2d'), pw, H, pag, op);
       return off;
     });
     cacheClave = clave;
@@ -278,12 +306,17 @@
       '<button data-vista="plana" style="' + chip(!st.libro) + '">▭ Plana</button>' +
       '<button data-vista="libro" style="' + chip(st.libro) + '">📖 Libro</button>' +
       '<button id="euTriAbrir" style="' + chip(false) + '">▶ Abrir</button>' +
+      (st.libro ? '<button id="euTriOtra" style="' + chip(false) + '">↺ Abrir otra vez</button>' : '') +
       '</div>');
 
     h.push('<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
       '<button id="euTriRehacer" style="' + chip(false) + '">🔁 Rehacer los textos</button>' +
       '<button id="euTriPNG" style="background:transparent;border:1px solid #2d2d4a;color:#cbd5e1;' +
       'border-radius:9px;padding:9px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⬇ Esta cara en PNG</button>' +
+      '<button id="euTriAmbas" style="background:transparent;border:1px solid #2d2d4a;color:#cbd5e1;' +
+      'border-radius:9px;padding:9px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⬇ Las 2 caras</button>' +
+      '<button id="euTriCuerpos" style="background:transparent;border:1px solid #2d2d4a;color:#cbd5e1;' +
+      'border-radius:9px;padding:9px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⬇ Los 6 cuerpos</button>' +
       '<button id="euTriPDF" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:0;' +
       'border-radius:9px;padding:9px 15px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">⬇ PDF de las dos caras</button>' +
       '</div>');
@@ -292,8 +325,46 @@
 
     /* Ajustes */
     h.push('<div class="tp-panel">');
-    h.push('<label style="font-size:10px;color:#94a3b8;margin:0 0 4px;display:block;letter-spacing:.06em;' +
-      'text-transform:uppercase">Paleta</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">');
+
+    /* Plantilla: la del catálogo de folletos manda en acabados y color. */
+    var lista = window.FOLLETO_DISENOS ? FOLLETO_DISENOS.lista() : [];
+    h.push('<label class="mini-lbl">Plantilla del tríptico</label>' +
+      '<select id="euTriDiseno" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;' +
+      'color:#e2e8f0;border-radius:8px;padding:8px;font-size:12px;font-family:inherit">' +
+      '<option value="">Sin plantilla · sólo la paleta de abajo</option>' +
+      lista.map(function (d) {
+        return '<option value="' + EU.esc(d.id) + '"' + (d.id === st.diseno ? ' selected' : '') + '>' +
+          EU.esc(d.nombre) + '</option>';
+      }).join('') + '</select>');
+
+    /* Fotos y vídeos: se reparten por los cuadros de esta cara, en orden. */
+    h.push('<label class="mini-lbl" style="margin-top:12px">Tus fotos y vídeos</label>' +
+      '<input type="file" accept="image/*,video/*" multiple id="euTriFotos" style="font-size:11px;width:100%">' +
+      '<div style="font-size:10.5px;color:#7c7c9e;line-height:1.5;margin-top:4px">' +
+      'Se reparten por los cuadros de esta cara, en orden.</div>' +
+      '<button class="btn btn-g btn-sm" id="euTriQuitaFotos" style="width:100%;margin-top:6px">' +
+      'Quitar las fotos de esta cara</button>');
+
+    /* Los tres cuerpos de la cara que se está viendo. */
+    var pags = paginas() || [];
+    h.push('<label class="mini-lbl" style="margin-top:14px">Cuerpos de esta cara</label>');
+    pags.forEach(function (pg, i) {
+      h.push('<div style="background:#141430;border:1px solid #2d2d4a;border-radius:9px;padding:8px;margin-bottom:6px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">' +
+        '<span style="font-size:10px;color:#a855f7;font-weight:700">Cuerpo ' + (i + 1) + '</span>' +
+        '<button data-regen="' + i + '" title="Rehacer este cuerpo" style="' + chip(false) +
+        ';padding:3px 9px;font-size:11px">🔁</button></div>' +
+        '<input data-ttit="' + i + '" value="' + EU.esc(pg.cabecera.titulo || '') + '" ' +
+        'placeholder="título" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;color:#e2e8f0;' +
+        'border-radius:7px;padding:7px;font-size:11.5px;margin-bottom:5px;font-family:inherit">' +
+        '<input data-tsub="' + i + '" value="' + EU.esc(pg.cabecera.sub || '') + '" ' +
+        'placeholder="subtítulo" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;color:#94a3b8;' +
+        'border-radius:7px;padding:7px;font-size:11px;margin-bottom:5px;font-family:inherit">' +
+        '<input type="file" accept="image/*,video/*" data-tfoto="' + i + '" style="font-size:10.5px;width:100%">' +
+        '</div>');
+    });
+
+    h.push('<label class="mini-lbl" style="margin-top:14px">Paleta</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">');
     Object.keys(M().TEMAS).forEach(function (t) {
       h.push('<button data-tema="' + t + '" style="' + chip(t === st.tema) + '">' +
         EU.esc(M().TEMAS[t].nombre) + '</button>');
@@ -308,6 +379,37 @@
         chip(f === st.forma) + '">' + F.icono + ' ' + EU.esc(F.nombre) + '</button>');
     });
     h.push('</div>');
+
+    var PP = (window.EU_EDITOR && EU_EDITOR.PALETAS_PRO) || [];
+    if (PP.length) {
+      h.push('<label class="mini-lbl" style="margin-top:14px">Combinaciones profesionales</label>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+        '<button data-pro="" style="' + chip(!st.paletaPro) + '">Ninguna</button>' +
+        PP.map(function (x) {
+          return '<button data-pro="' + EU.esc(x.id) + '" style="' + chip(st.paletaPro === x.id) + '">' +
+            '<i style="width:11px;height:11px;border-radius:3px;background:' + x.c.acento +
+            ';display:inline-block;margin-right:4px"></i>' + EU.esc(x.n) + '</button>';
+        }).join('') + '</div>');
+    }
+
+    var Cnow = M().colores(pags[0] || { tema: st.tema });
+    h.push('<label class="mini-lbl" style="margin-top:14px">Colores a tu gusto</label>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      [['fondo', 'Fondo'], ['panel', 'Panel'], ['tinta', 'Tinta'], ['acento', 'Acento'], ['acento2', 'Acento 2']]
+        .map(function (c) {
+          return '<label style="font-size:10px;color:#94a3b8;display:flex;flex-direction:column;gap:3px;align-items:center">' +
+            c[1] + '<input type="color" data-tcol="' + c[0] + '" value="' +
+            EU.esc((st.colores && st.colores[c[0]]) || Cnow[c[0]] || '#000000') + '" ' +
+            'style="width:40px;height:28px;border:1px solid #2d2d4a;border-radius:6px;background:#0f0f22;padding:1px;cursor:pointer"></label>';
+        }).join('') + '</div>' +
+      '<button class="btn btn-g btn-sm" id="euTriColRes" style="margin-top:7px">Volver a los de la paleta</button>');
+
+    h.push('<label class="mini-lbl" style="margin-top:14px">QR en el cuerpo de contacto</label>' +
+      '<button data-triqr="1" style="' + chip(st.qr) + '">' +
+      (st.qr ? '🔳 Puesto' : '🔳 Poner el QR') + '</button>' +
+      (EU.qr && EU.qr.el ? '' :
+        '<div style="font-size:10.5px;color:#7c7c9e;line-height:1.5;margin-top:5px">' +
+        'Antes hay que generarlo en la pestaña QR.</div>'));
 
     h.push('<p style="margin:12px 0 0;font-size:10.5px;color:#7c7c9e;line-height:1.55">' +
       'La hoja se imprime en A4 apaisado, 297 × 210 mm, partida en tres cuerpos de 99 mm. ' +
@@ -346,11 +448,163 @@
         });
         invalidar(); return pintar();
       }
+      if (b.hasAttribute('data-pro')) {
+        st.paletaPro = b.getAttribute('data-pro');
+        st.colores = null;
+        st.pags = nuevoTriptico(); invalidar(); return pintar();
+      }
+      if (b.hasAttribute('data-triqr')) {
+        if (!st.qr && !(EU.qr && EU.qr.el)) return EU.toast('Genera antes el código en la pestaña QR.');
+        st.qr = !st.qr; invalidar(); return pintar();
+      }
+      if (b.hasAttribute('data-regen')) {
+        var ri = parseInt(b.getAttribute('data-regen'), 10);
+        var pgs = paginas();
+        if (pgs && pgs[ri]) {
+          var n = (pgs[ri].celdas || []).length || 1;
+          var nuevo = unaPagina(n, Date.now() % 9999);
+          // las fotos que ya estuvieran puestas no se pierden al rehacer el texto
+          (pgs[ri].celdas || []).forEach(function (c, k) {
+            if (c.media && nuevo.celdas[k]) nuevo.celdas[k].media = c.media;
+          });
+          pgs[ri] = nuevo;
+        }
+        invalidar(); return pintar();
+      }
+      if (b.id === 'euTriOtra') { st.abre = 0; return animarLibro(); }
+      if (b.id === 'euTriColRes') { st.colores = null; st.pags = nuevoTriptico(); invalidar(); return pintar(); }
+      if (b.id === 'euTriQuitaFotos') {
+        (paginas() || []).forEach(function (pg) {
+          (pg.celdas || []).forEach(function (c) { delete c.media; });
+        });
+        invalidar(); return pintar();
+      }
       if (b.id === 'euTriAbrir') return animarLibro();
       if (b.id === 'euTriRehacer') { st.pags = nuevoTriptico(); invalidar(); return pintar(); }
       if (b.id === 'euTriPNG') return bajarPNG();
+      if (b.id === 'euTriAmbas') return bajarAmbas();
+      if (b.id === 'euTriCuerpos') return bajarCuerpos();
       if (b.id === 'euTriPDF') return bajarPDF();
     };
+
+    /* Lo que se escribe repinta la hoja pero NO vuelve a montar el panel: el
+       cursor se quedaría fuera del campo en cada letra. */
+    caja.oninput = function (ev) {
+      var t = ev.target, pgs = paginas();
+      if (!t || !pgs) return;
+      if (t.hasAttribute('data-ttit')) {
+        pgs[parseInt(t.getAttribute('data-ttit'), 10)].cabecera.titulo = t.value;
+        invalidar(); return pintarLienzo();
+      }
+      if (t.hasAttribute('data-tsub')) {
+        pgs[parseInt(t.getAttribute('data-tsub'), 10)].cabecera.sub = t.value;
+        invalidar(); return pintarLienzo();
+      }
+      if (t.hasAttribute('data-tcol')) {
+        st.colores = st.colores || {};
+        st.colores[t.getAttribute('data-tcol')] = t.value;
+        ['ext', 'int'].forEach(function (c) {
+          (st.pags[c] || []).forEach(function (p) {
+            p.colores = Object.assign({}, p.colores || {}, st.colores);
+          });
+        });
+        invalidar(); return pintarLienzo();
+      }
+    };
+
+    caja.onchange = function (ev) {
+      var t = ev.target;
+      if (!t) return;
+      if (t.id === 'euTriDiseno') {
+        st.diseno = t.value;
+        st.pags = nuevoTriptico(); invalidar();
+        return pintar();
+      }
+      if (t.hasAttribute('data-tfoto')) return ponerFoto(t, parseInt(t.getAttribute('data-tfoto'), 10));
+      if (t.id === 'euTriFotos') return repartirFotos(t);
+    };
+  }
+
+  /* Un archivo en el primer cuadro de un cuerpo. */
+  function ponerFoto(input, i) {
+    var f = input.files && input.files[0];
+    var pgs = paginas();
+    if (!f || !pgs || !pgs[i] || !pgs[i].celdas || !pgs[i].celdas.length) return;
+    medio(f, function (m) {
+      pgs[i].celdas[0].media = m;
+      invalidar(); pintar();
+    });
+  }
+
+  /* Varias de golpe: se reparten por los cuadros de esta cara, en orden. */
+  function repartirFotos(input) {
+    var fs = Array.prototype.slice.call(input.files || []);
+    var pgs = paginas();
+    if (!fs.length || !pgs) return;
+    var huecos = [];
+    pgs.forEach(function (pg) {
+      (pg.celdas || []).forEach(function (c) { huecos.push(c); });
+    });
+    fs.slice(0, huecos.length).forEach(function (f, k) {
+      medio(f, function (m) { huecos[k].media = m; invalidar(); pintarLienzo(); });
+    });
+    setTimeout(pintar, 600);
+    EU.toast(Math.min(fs.length, huecos.length) + ' en los cuadros de esta cara.');
+  }
+
+  /* Un vídeo se queda en su primer fotograma: lo pinta `cubrir`, que ya sabe
+     distinguir vídeo de foto. */
+  function medio(f, alTener) {
+    var esVid = /^video\//.test(f.type);
+    var el = esVid ? document.createElement('video') : new Image();
+    if (esVid) { el.muted = true; el.playsInline = true; el.preload = 'auto'; }
+    el.onloadeddata = el.onload = function () { invalidar(); pintarLienzo(); };
+    el.onerror = function () { EU.toast('No se pudo leer ese archivo.'); };
+    el.src = URL.createObjectURL(f);
+    alTener({ el: el, tipo: esVid ? 'vid' : 'img' });
+  }
+
+  /* Las dos caras, y los seis cuerpos sueltos. */
+  function bajarAmbas() {
+    ['ext', 'int'].forEach(function (c, i) {
+      setTimeout(function () {
+        var cv = hojaImprenta(c);
+        cv.toBlob(function (b) {
+          if (!b) return;
+          var nom = 'triptico-' + (c === 'ext' ? 'fuera' : 'dentro') + '.png';
+          EU_EDITOR.bajar(b, nom);
+          if (window.B6Bandeja) {
+            var u = URL.createObjectURL(b);
+            B6Bandeja.apuntar(u, nom, 'triptico');
+            setTimeout(function () { URL.revokeObjectURL(u); }, 10000);
+          }
+        }, 'image/png');
+      }, i * 500);
+    });
+    EU.toast('Las dos caras, una detrás de otra.');
+  }
+
+  function bajarCuerpos() {
+    var guardada = st.cara, n = 0;
+    ['ext', 'int'].forEach(function (c) {
+      st.cara = c; invalidar();
+      var pgs = paginas() || [];
+      var W = 1754, H = 1240, pw = Math.floor(W / 3);
+      var cps = cuerpos(pw, H) || [];
+      cps.forEach(function (off, i) {
+        var cv = document.createElement('canvas');
+        cv.width = pw; cv.height = H;
+        var ctx = cv.getContext('2d');
+        ctx.drawImage(off, 0, 0);
+        EU.ponerLogo(ctx, pw, H);
+        var nom = 'triptico-' + (c === 'ext' ? 'fuera' : 'dentro') + '-cuerpo' + (i + 1) + '.png';
+        if (window.B6Bandeja) B6Bandeja.apuntar(cv.toDataURL('image/png'), nom, 'triptico');
+        n++;
+      });
+    });
+    st.cara = guardada; invalidar(); pintarLienzo();
+    if (!window.B6Bandeja) return EU.toast('La bandeja no está cargada.');
+    EU.toast('Los ' + n + ' cuerpos están en la bandeja: bájalos sueltos o en ZIP.');
   }
 
   /* La pantalla lleva dos cosas: el tríptico y la hoja suelta. El conmutador
