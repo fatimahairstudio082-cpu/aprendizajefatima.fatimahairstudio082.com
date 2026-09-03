@@ -62,7 +62,15 @@
 
   /* ───────────── Entrar en la pantalla ───────────── */
 
+  function montarBandeja() {
+    var hb = EU.$('euEdBandeja');
+    if (!hb || !window.B6Bandeja) return;
+    if (E._des) { try { E._des(); } catch (e) {} }
+    E._des = B6Bandeja.panel(hb, { origen: 'folleto' }, 'folleto');
+  }
+
   E.entrar = function () {
+    montarBandeja();
     if (!EU.pagina) {
       EU.toast('Elige antes una plantilla.');
       EU.ir('plantillas');
@@ -220,7 +228,16 @@
         '<div class="fila">' +
         '<input type="text" data-celda="' + i + '" data-k="precio" value="' + EU.esc(c.precio || '') + '" placeholder="precio" maxlength="20" style="flex:1">' +
         '<input type="text" data-celda="' + i + '" data-k="etiqueta" value="' + EU.esc(c.etiqueta || '') + '" placeholder="etiqueta" maxlength="20" style="flex:1">' +
-        '</div></div>';
+        '</div>' +
+        '<select data-cforma="' + i + '" style="width:100%;margin-top:5px;background:#13132a;' +
+        'border:1px solid var(--bd);color:var(--tx2);border-radius:7px;padding:6px 8px;font-size:11px;' +
+        'font-family:inherit">' +
+        '<option value="">Troquel: el de la hoja</option>' +
+        Object.keys(EU.motor.FORMAS_CELDA).map(function (k) {
+          return '<option value="' + k + '"' + (c.forma === k ? ' selected' : '') + '>Troquel: ' +
+            EU.motor.FORMAS_CELDA[k].icono + ' ' + EU.esc(EU.motor.FORMAS_CELDA[k].nombre) + '</option>';
+        }).join('') + '</select>' +
+        '</div>';
     }).join('');
 
     return '' +
@@ -240,10 +257,19 @@
     return '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:0 0 10px">' +
       'Sin foto, el motor dibuja un fondo con tu propia paleta: nunca finge ser una foto real. ' +
       'Las fotos se quedan en tu móvil, no suben a ningún sitio.</p>' +
+      '<div style="border:1px dashed var(--ac2);border-radius:10px;padding:11px;margin-bottom:12px;' +
+      'background:var(--card2)">' +
+      '<b style="font-size:11.5px;display:block;margin-bottom:4px">Diseño con tus fotos y vídeos en un paso</b>' +
+      '<span style="font-size:10.5px;color:var(--tx2);line-height:1.5;display:block;margin-bottom:7px">' +
+      'Elige varios archivos a la vez —fotos, vídeos o mezclados— y se reparten por los cuadros que ' +
+      'tengas puestos, empezando por los que están vacíos. Si traes más archivos que cuadros, la ' +
+      'cuadrícula crece para acogerlos.</span>' +
+      '<input type="file" accept="image/*,video/*" multiple id="euFotosLote" style="font-size:11px;width:100%">' +
+      '</div>' +
       (p.celdas || []).map(function (c, i) {
         return '<div class="celda-fila"><div class="cab"><b>' + (i + 1) + ' · ' + EU.esc(c.titulo || '') + '</b>' +
           (c.media ? '<button class="btn btn-g btn-sm" data-quitafoto="' + i + '">Quitar</button>' : '') + '</div>' +
-          '<input type="file" accept="image/*" data-foto="' + i + '" style="font-size:11px">' +
+          '<input type="file" accept="image/*,video/*" data-foto="' + i + '" style="font-size:11px">' +
           '</div>';
       }).join('');
   }
@@ -394,16 +420,70 @@
         E.repintar(); E.panel();
       };
     });
+    c.querySelectorAll('[data-cforma]').forEach(function (sel) {
+      sel.onchange = function () {
+        apuntar();
+        var i = parseInt(sel.getAttribute('data-cforma'), 10);
+        if (sel.value) EU.pagina.celdas[i].forma = sel.value;
+        else delete EU.pagina.celdas[i].forma;
+        E.repintar();
+      };
+    });
+
+    /* Varias de golpe: primero los cuadros vacíos, y si sobran archivos la
+       cuadrícula crece hasta la que los acoja. */
+    var lote = EU.$('euFotosLote');
+    if (lote) lote.onchange = function () {
+      var fs = Array.prototype.slice.call(lote.files || []);
+      if (!fs.length) return;
+      apuntar();
+      var M = EU.motor;
+      var encaje = { 1: 'r1', 2: 'r2b', 3: 'r3a', 4: 'r4a', 6: 'r6a', 8: 'r8a' };
+      var nAhora = (M.REJILLAS[EU.pagina.rejilla] || {}).n || EU.pagina.celdas.length;
+      if (fs.length > nAhora) {
+        var sube = [2, 3, 4, 6, 8].filter(function (x) { return x >= fs.length; })[0] || 8;
+        var k = encaje[fs.length] || encaje[sube];
+        if (k && M.REJILLAS[k]) {
+          EU.pagina.rejilla = k;
+          var n = M.REJILLAS[k].n;
+          while (EU.pagina.celdas.length < n) {
+            EU.pagina.celdas.push(JSON.parse(JSON.stringify(
+              EU.pagina.celdas[EU.pagina.celdas.length % Math.max(1, EU.pagina.celdas.length)] ||
+              { titulo: 'Servicio', texto: '', precio: '' })));
+          }
+          EU.pagina.celdas = EU.pagina.celdas.slice(0, n);
+        }
+      }
+      // primero los vacíos, después el resto, siempre en orden
+      var orden = [];
+      EU.pagina.celdas.forEach(function (c, i) { if (!c.media) orden.push(i); });
+      EU.pagina.celdas.forEach(function (c, i) { if (c.media) orden.push(i); });
+      fs.slice(0, orden.length).forEach(function (file, k2) {
+        var i = orden[k2];
+        var esVid = /^video\//.test(file.type);
+        var el = esVid ? document.createElement('video') : new Image();
+        if (esVid) { el.muted = true; el.playsInline = true; el.preload = 'auto'; }
+        el.onloadeddata = el.onload = function () { E.repintar(); };
+        el.onerror = function () { EU.toast('No se pudo leer ' + file.name); };
+        el.src = URL.createObjectURL(file);
+        EU.pagina.celdas[i].media = { el: el, tipo: esVid ? 'vid' : 'img' };
+      });
+      E.repintar(); E.panel();
+      EU.toast(Math.min(fs.length, orden.length) + ' en los cuadros de la hoja.');
+    };
+
     c.querySelectorAll('[data-foto]').forEach(function (f) {
       f.onchange = function () {
         var n = parseInt(f.getAttribute('data-foto'), 10), file = f.files && f.files[0];
         if (!file) return;
-        var img = new Image();
-        img.onload = function () { E.repintar(); E.panel(); };
-        img.onerror = function () { EU.toast('No se pudo leer esa imagen.'); };
+        var esVid = /^video\//.test(file.type);
+        var img = esVid ? document.createElement('video') : new Image();
+        if (esVid) { img.muted = true; img.playsInline = true; img.preload = 'auto'; }
+        img.onloadeddata = img.onload = function () { E.repintar(); E.panel(); };
+        img.onerror = function () { EU.toast('No se pudo leer ese archivo.'); };
         img.src = URL.createObjectURL(file);
         apuntar();
-        EU.pagina.celdas[n].media = { el: img, tipo: 'img' };
+        EU.pagina.celdas[n].media = { el: img, tipo: esVid ? 'vid' : 'img' };
       };
     });
     c.querySelectorAll('[data-quitafoto]').forEach(function (b) {
@@ -512,6 +592,11 @@
     cv.toBlob(function (b) {
       if (!b) { EU.estado('euEdEstado', 'El navegador no pudo generar la imagen.', 'err'); return; }
       E.bajar(b, nombre + '.jpg');
+      if (window.B6Bandeja) {
+        var u = URL.createObjectURL(b);
+        B6Bandeja.apuntar(u, nombre + '.jpg', 'folleto');
+        setTimeout(function () { URL.revokeObjectURL(u); }, 10000);
+      }
       EU.estado('euEdEstado',
         'JPG descargado.' + (EU_PLAN.puede('pdf')
           ? ' <button class="btn btn-sm" id="euBtnPdf">También en PDF de imprenta</button>'
