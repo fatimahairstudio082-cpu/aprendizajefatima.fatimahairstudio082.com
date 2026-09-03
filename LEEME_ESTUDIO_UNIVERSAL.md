@@ -147,10 +147,15 @@ Repaso · Guías · Estudios · QR · Míos · Plan**.
   paleta y **troquel del cuadro** (15). El texto ya viene escrito con los datos
   del negocio.
 - **Editor** — cuadrícula, hoja, 10 paletas y **8 combinaciones profesionales**,
-  4 acabados, **15 troqueles**, número de cuadros; textos de cabecera, cuadros
-  y pie con regenerado por cuadro; fotos por cuadro; colores de marca uno a
-  uno; deshacer. Descarga **JPG** siempre y **PDF de imprenta** en Pro.
-- **Vídeo** — una escena por cuadro, **14 efectos** (8 en 3D, 6 planos),
+  4 acabados, **15 troqueles** —también **uno por cuadro**—, número de cuadros;
+  textos de cabecera, cuadros y pie con regenerado por cuadro; fotos y vídeos
+  por cuadro y **varios de golpe**, con la cuadrícula creciendo hasta la que
+  los acoja; colores de marca uno a uno; deshacer; bandeja. Descarga **JPG**
+  siempre y **PDF de imprenta** en Pro.
+- **Vídeo** — barra de tiempo con reloj para ir a cualquier instante, ↺
+  rehacer el guion, segundos por cuadro, rótulo con el nombre del negocio,
+  volumen y quitar la voz, y el guion entero para leer con la voz del móvil.
+  Una escena por cuadro, **14 efectos** (8 en 3D, 6 planos),
   **5 cámaras**, **6 ambientes** (pétalos, corazones, rosas, brillo, chispas).
   **Tus propios clips** se pegan en medio del guion, recortados desde el
   segundo que se elija. Sonido: voz gratis, voz grabada, audio subido, voz de
@@ -159,21 +164,31 @@ Repaso · Guías · Estudios · QR · Míos · Plan**.
   se marcan Reels/TikTok, Facebook e Instagram, YouTube y WhatsApp y sale un
   archivo por cada uno con su medida. Bandeja de descargas.
 - **Tríptico** — A4 apaisado en tres cuerpos por sus dos caras, plano y
-  abriéndose como un libro. PNG y PDF de las dos caras.
+  abriéndose como un libro. Plantilla del catálogo, los tres cuerpos con
+  título y subtítulo editables, 🔁 por cuerpo, fotos y vídeos (uno a uno o
+  varios repartidos), 8 combinaciones, 5 colores a mano, QR en el cuerpo de
+  contacto. Descargas: esta cara, las 2 caras, los 6 cuerpos y PDF.
+  **Vídeo narrado** —enseña la cara de fuera, la abre y se queda en la de
+  dentro con el rótulo de lo que se cuenta— y **vídeo del libro**, en cuatro
+  medidas, con la voz grabada o subida **dentro del archivo**.
 - **Volantes y maquetas** (segundo modo de Tríptico) — 30 plantillas en tres
   variantes: volante de mano (12), cartel de mostrador (9) y hoja de mando
   (9). Tres vistas: la hoja, la pieza **puesta en el mundo** y el **plano de
   imprenta** con sangrado, marcas de corte, margen de seguridad y cotas.
   PNG, plano y **PDF con sangrado**.
 - **Carrusel** — portada, cuerpo y cierre con número y flecha de «desliza»,
-  tres medidas, **fotos y vídeos por cuadro**, PDF y ZIP.
+  tres medidas, plantilla del catálogo, título y subtítulo por diapositiva,
+  **fotos y vídeos por cuadro**, PDF y ZIP.
 - **Láminas** — 300 plantillas en 10 familias, con panel de siete solapas:
   Galería, **Contenido** (título, nodos uno a uno, pegar un texto que se
   reparte solo), **Estilo** (estructura, 22 paletas, colores a mano, 7
   formatos, 10 formas de nodo), **Medios** (foto o vídeo dentro del nodo,
   fondo con velo, pista de sonido), **Voz** (narrar al reproducir, voz del
-  navegador y **tu voz elemento a elemento**), **Animación** y **Descargar**
-  (PNG, PDF, PDF de la serie, ZIP, vídeo y vídeo con el sonido dentro).
+  navegador y **tu voz elemento a elemento**), **Animación** —con barra de
+  avance para mirar un momento concreto— y **Descargar** (PNG, PDF, PDF de la
+  serie, ZIP, vídeo y vídeo con el sonido dentro). En Contenido se puede
+  **traer una técnica del Cerebro** —el título es la técnica y cada paso una
+  rama— y, en los carruseles, editar las **hojas de la serie**.
 - **Repaso** — examen por familia con corrección al momento y hoja A4.
 - **Guías** — la cabeza de maniquí con particiones y elevaciones.
 - **Estudios** — las fichas de estudio de las técnicas.
@@ -185,8 +200,9 @@ Repaso · Guías · Estudios · QR · Míos · Plan**.
 - **Plan** — Free/Pro y el **muro de pago sólo al descargar**, nunca al
   diseñar.
 
-**El logo** se sube una vez en la ficha del negocio (esquina y tamaño en
-porcentaje del ancho) y sale en el folleto, el tríptico, el carrusel, las
+**El logo** se sube una vez en la ficha del negocio (**nueve huecos** —los
+mismos que la foto de las fichas de Estudios— y tamaño en porcentaje del
+ancho, de 8 a 40 %) y sale en el folleto, el tríptico, el carrusel, las
 láminas, los volantes y el vídeo, siempre en la misma capa: encima de la hoja
 y debajo de la marca de agua. Se guarda en el dispositivo, reescalado a 512 px.
 
@@ -252,21 +268,37 @@ el texto. **No se ha tocado el texto sin permiso.**
 
 ### 5. Lo que sigue faltando del diseño
 
+La maqueta de las doce pantallas de Claude Design suma **255 mandos**. Se
+extrajo uno a uno y se comparó contra el repositorio; lo que faltaba está
+traído. Queda esto:
+
 | Del diseño | Estado |
 | --- | --- |
 | **Tarjeta de facturación** | falta · ver el punto 4 |
 | **Añadir QR a un vídeo ya editado** (cualquier MP4) | falta |
 | Efectos de **texto** y transiciones **entre escenas** | falta — están los 14 del cuadro, los 6 de ambiente y las 5 de cámara |
-| QR en **SVG**, color, esquinas y **logo en medio** | falta — hoy PNG en blanco y negro |
+| QR en **SVG**, esquinas y **logo en medio** | falta — hoy PNG con color |
 | **Arrastrar para reordenar** escenas y diapositivas | falta — se mueven con flechas |
 | **Tocar el texto en el lienzo** para editarlo | falta — se edita en el panel de la derecha |
 | **Asistente** («¿qué necesitas hoy?», 3 preguntas → 3 plantillas) | falta |
 | **Productividad** (tareas, notas, calendario de publicaciones) | falta |
 | **Compartir** (enlace público de sólo ver) | falta — y hay que decidir antes dónde se aloja: hoy nada del Estudio sale del dispositivo |
 
-Ya **no** faltan (estaban en esta lista y se han hecho): tríptico, carrusel,
-láminas, volantes y maquetas, vídeo con clips propios, música de fondo que
-convive con la voz, subir el logo, ZIP y filtro de troquel.
+Del informe técnico del propio proyecto de Claude Design quedan además:
+
+| Punto | Estado |
+| --- | --- |
+| **P1 · Guías 3D** · campo de narración por paso, que mande sobre el texto del Cerebro | falta |
+| **P2 · Guías 3D** · los nueve huecos y el tamaño de la foto, que ya existen en Estudios | falta ahí — el mismo patrón sí se usa ya para el logo |
+| **P3 · Guías 3D** · la foto desaparece en modo dos cabezas | decisión de producto |
+| **P4 · Bandeja** · se vacía al recargar; habría que guardarla en el dispositivo | falta |
+| **D2** · jsPDF y JSZip vienen de un CDN: sin conexión no hay PDF ni ZIP | falta guardarlos en el propio proyecto |
+
+> **Aviso honesto sobre el alcance de esta comparación.** El archivo de
+> entrada de Claude Design pesa más de 256 KiB y la herramienta lo entrega
+> cortado: la maqueta se lee entera, pero el último tramo del código no. Por
+> eso se puede afirmar que **no falta ningún mando**, y no se puede afirmar
+> que cada uno se comporte por dentro exactamente igual que allí.
 
 ### 6. Categorías que el cerebro no tiene
 
