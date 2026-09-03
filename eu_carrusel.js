@@ -22,6 +22,7 @@
     formato: 'cuadrado',
     tema: 'violeta',
     numerar: true,
+    diseno: '',            // plantilla del catálogo que manda en acabados y color
     marcadas: {}           // qué diapositivas entran en el ZIP
   };
 
@@ -63,6 +64,17 @@
     p.tema = st.tema;
     p.papel = papel;
     p.adornos = { grano: false, vineta: true, filetes: true, sombras: true };
+    var D = window.FOLLETO_DISENOS && st.diseno ? FOLLETO_DISENOS.get(st.diseno) : null;
+    if (D) {
+      if (D.adornos) p.adornos = Object.assign({}, p.adornos, D.adornos);
+      if (D.formaCelda) p.formaCelda = D.formaCelda;
+      if (D.tema) p.tema = D.tema;
+      if (D.colores) p.colores = Object.assign({}, D.colores);
+      if (D.paletaPro && window.EU_EDITOR && EU_EDITOR.PALETAS_PRO) {
+        var PP = EU_EDITOR.PALETAS_PRO.filter(function (x) { return x.id === D.paletaPro; })[0];
+        if (PP) { p.paletaPro = PP.id; p.colores = Object.assign({}, PP.c); }
+      }
+    }
     return p;
   }
 
@@ -299,6 +311,29 @@
     h.push('<label style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:#cbd5e1;cursor:pointer">' +
       '<input type="checkbox" id="euCarNum"' + (st.numerar ? ' checked' : '') +
       ' style="accent-color:#a855f7;width:15px;height:15px" /> Numerar y poner «desliza»</label>');
+    var lista = window.FOLLETO_DISENOS ? FOLLETO_DISENOS.lista() : [];
+    h.push('<label style="font-size:10px;color:#94a3b8;margin:14px 0 4px;display:block;' +
+      'letter-spacing:.06em;text-transform:uppercase">Plantilla del carrusel</label>' +
+      '<select id="euCarDiseno" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;' +
+      'color:#e2e8f0;border-radius:8px;padding:8px;font-size:12px;font-family:inherit">' +
+      '<option value="">Sin plantilla · sólo la paleta de arriba</option>' +
+      lista.map(function (d) {
+        return '<option value="' + EU.esc(d.id) + '"' + (d.id === st.diseno ? ' selected' : '') + '>' +
+          EU.esc(d.nombre) + '</option>';
+      }).join('') + '</select>');
+
+    var dsel = (st.diapos || [])[st.sel];
+    if (dsel && dsel.cabecera) {
+      h.push('<label style="font-size:10px;color:#94a3b8;margin:14px 0 4px;display:block;' +
+        'letter-spacing:.06em;text-transform:uppercase">Textos de la diapositiva ' + (st.sel + 1) + '</label>' +
+        '<input id="euCarTit" value="' + EU.esc(dsel.cabecera.titulo || '') + '" placeholder="título" ' +
+        'style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;color:#e2e8f0;border-radius:7px;' +
+        'padding:7px;font-size:11.5px;margin-bottom:5px;font-family:inherit">' +
+        '<input id="euCarSub" value="' + EU.esc(dsel.cabecera.sub || dsel.cabecera.subtitulo || '') + '" ' +
+        'placeholder="subtítulo" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;' +
+        'color:#94a3b8;border-radius:7px;padding:7px;font-size:11px;font-family:inherit">');
+    }
+
     /* Los medios van por cuadro de la diapositiva que esté tocada: es donde
        la persona está mirando, y así no hay que buscar la celda en una lista
        de treinta. Las fotos se quedan en el dispositivo. */
@@ -343,6 +378,27 @@
   function enganchar(caja) {
     /* Un vídeo se queda en su primer fotograma dentro de la hoja: el motor
        lo pinta con `cubrir`, que ya sabe distinguir vídeo de foto. */
+    var dsel2 = EU.$('euCarDiseno');
+    if (dsel2) dsel2.onchange = function () {
+      st.diseno = dsel2.value;
+      var n = (st.diapos || []).length || 5;
+      st.diapos = nuevoCarrusel(n);
+      pintar();
+    };
+    var ct = EU.$('euCarTit');
+    if (ct) ct.oninput = function () {
+      var d = (st.diapos || [])[st.sel];
+      if (d && d.cabecera) { d.cabecera.titulo = ct.value; pintarLienzo(); }
+    };
+    var cs = EU.$('euCarSub');
+    if (cs) cs.oninput = function () {
+      var d = (st.diapos || [])[st.sel];
+      if (!d || !d.cabecera) return;
+      if ('sub' in d.cabecera) d.cabecera.sub = cs.value;
+      else d.cabecera.subtitulo = cs.value;
+      pintarLienzo();
+    };
+
     caja.querySelectorAll('[data-medio]').forEach(function (f) {
       f.onchange = function () {
         var n = parseInt(f.getAttribute('data-medio'), 10);

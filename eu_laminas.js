@@ -36,7 +36,8 @@
     fondo: null,      // foto o vídeo debajo de todo
     audio: null,      // pista de sonido para el vídeo que se descargue
     audioNom: '',
-    narraAlVer: false // narrar al pulsar Reproducir
+    narraAlVer: false, // narrar al pulsar Reproducir
+    tec: ''            // técnica del Cerebro que se vuelca en la lámina
   };
 
   var nMedio = 0;     // para dar un id distinto a cada medio que se sube
@@ -499,6 +500,26 @@
       '<div>' + ent('euLamRot', 'Rótulo', lam.rotulo, 'Ej.: Tema 4') + '</div>' +
       '<div>' + ent('euLamPie', 'Pie', lam.pie, 'Tu nombre o el centro') + '</div></div>');
 
+    /* En un carrusel lo que se edita son las hojas de la serie. */
+    if (lam.familia === 'carrusel' && lam.serie) {
+      h.push('<label class="mini-lbl" style="margin-top:12px">Hojas de la serie · ' + lam.serie.length + '</label>');
+      lam.serie.forEach(function (papel, k) {
+        h.push('<div style="background:' + (k === st.hoja ? '#22224a' : '#141430') +
+          ';border:1px solid ' + (k === st.hoja ? '#7c3aed' : '#2d2d4a') +
+          ';border-radius:9px;padding:8px;margin-bottom:6px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+          '<span style="font-size:10px;color:#a855f7;font-weight:700">' + (k + 1) + ' · ' +
+          EU.esc(papel) + '</span>' +
+          '<span><button data-verhoja="' + k + '" style="background:transparent;border:0;color:#7c7c9e;' +
+          'font-size:11px;cursor:pointer;font-family:inherit">ver</button>' +
+          '<button data-quitahoja="' + k + '" style="background:transparent;border:0;color:#7c7c9e;' +
+          'font-size:12px;cursor:pointer;font-family:inherit">✕</button></span></div></div>');
+      });
+      h.push('<button id="euLamMasHoja" style="background:transparent;border:1px dashed #2d2d4a;' +
+        'color:#94a3b8;border-radius:8px;padding:8px;font-size:11.5px;cursor:pointer;width:100%;' +
+        'margin-bottom:12px;font-family:inherit">+ Otra hoja</button>');
+    }
+
     h.push('<label class="mini-lbl" style="margin-top:12px">Nodos · ' + (lam.nodos || []).length + '</label>');
     (lam.nodos || []).forEach(function (n, i) {
       var tocado = i === st.nodo;
@@ -530,6 +551,24 @@
     h.push('<button id="euLamRepartir" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;' +
       'border:0;border-radius:8px;padding:8px 14px;font-size:11.5px;font-weight:600;cursor:pointer;' +
       'margin-top:8px;font-family:inherit">↧ Repartir en nodos</button>');
+
+    /* Traer una técnica del Cerebro: entra con la forma que pide la familia. */
+    var C = window.EU_CEREBRO;
+    if (C && C.listar) {
+      var tec = C.listar() || [];
+      h.push('<label class="mini-lbl" style="margin-top:14px">Desde el Cerebro</label>' +
+        '<select id="euLamTec" style="width:100%;background:#0f0f22;border:1px solid #2d2d4a;' +
+        'color:#e2e8f0;border-radius:8px;padding:8px;font-size:11.5px;font-family:inherit">' +
+        '<option value="">Elige una técnica…</option>' +
+        tec.map(function (t) {
+          return '<option value="' + EU.esc(t.id) + '"' + (t.id === st.tec ? ' selected' : '') + '>' +
+            EU.esc(t.n) + '</option>';
+        }).join('') + '</select>' +
+        '<button class="btn btn-g btn-sm" id="euLamDesde" style="width:100%;margin-top:6px">' +
+        '↧ Traer sus pasos a la lámina</button>' +
+        '<p style="margin:6px 0 0;font-size:10.5px;color:#7c7c9e;line-height:1.5">' +
+        'El título es la técnica y cada paso una rama, con su explicación debajo.</p>');
+    }
     return h.join('');
   }
 
@@ -704,6 +743,12 @@
       Number(lam.segPorNodo || 1.6).toFixed(1) + ' s</label>' +
       '<input type="range" id="euLamSeg" min="0.4" max="4" step="0.1" value="' + (lam.segPorNodo || 1.6) +
       '" style="width:100%">');
+    h.push('<label class="mini-lbl" style="margin-top:12px">Avance del dibujo · ' +
+      Math.round(st.prog * 100) + ' %</label>' +
+      '<input type="range" id="euLamProg" min="0" max="100" step="1" value="' +
+      Math.round(st.prog * 100) + '" style="width:100%">' +
+      '<p style="margin:5px 0 0;font-size:10.5px;color:#7c7c9e;line-height:1.5">' +
+      'Para mirar un momento concreto sin tener que reproducirlo entero.</p>');
     h.push('<p style="margin:8px 0 0;font-size:10.5px;color:#7c7c9e;line-height:1.5">' +
       'Con ' + (lam.nodos || []).length + ' nodos, la lámina entera dura ' +
       ((lam.nodos || []).length * (lam.segPorNodo || 1.6)).toFixed(1) + ' s.</p>');
@@ -894,6 +939,40 @@
         return EU.toast('Texto repartido en ' + st.lam.nodos.length + ' nodos.');
       }
       if (b.id === 'euLamColRes') { delete st.lam.colores; return pintar(); }
+      if (b.hasAttribute('data-verhoja')) {
+        st.hoja = parseInt(b.getAttribute('data-verhoja'), 10);
+        st.prog = 1;
+        return pintar();
+      }
+      if (b.hasAttribute('data-quitahoja')) {
+        var qh = parseInt(b.getAttribute('data-quitahoja'), 10);
+        if ((st.lam.serie || []).length <= 2) return EU.toast('Una serie necesita al menos dos hojas.');
+        st.lam.serie.splice(qh, 1);
+        st.hoja = Math.max(0, Math.min(st.hoja, st.lam.serie.length - 1));
+        return pintar();
+      }
+      if (b.id === 'euLamMasHoja') {
+        st.lam.serie = st.lam.serie || [];
+        // se añade antes del cierre, que siempre va el último
+        st.lam.serie.splice(Math.max(0, st.lam.serie.length - 1), 0, 'punto');
+        st.hoja = Math.max(0, st.lam.serie.length - 2);
+        return pintar();
+      }
+      if (b.id === 'euLamDesde') {
+        var C = window.EU_CEREBRO;
+        var t = C && st.tec ? C.obtener(st.tec) : null;
+        if (!t) return EU.toast('Elige antes una técnica.');
+        var nodos = [{ t: t.n, d: t.resumen || '', nivel: 0 }];
+        (t.pasos || []).forEach(function (pp) {
+          nodos.push({ t: pp.t || '', d: pp.n || '', nivel: 1 });
+        });
+        st.lam.nodos = nodos;
+        st.lam.titulo = t.n;
+        st.lam.subtitulo = t.resumen || '';
+        st.nodo = 0;
+        pintar();
+        return EU.toast(t.n + ': ' + (t.pasos || []).length + ' pasos en la lámina.');
+      }
       if (b.hasAttribute('data-sw')) {
         var k = b.getAttribute('data-sw');
         st.lam[k] = !st.lam[k];
@@ -985,6 +1064,10 @@
       if (t.id === 'euLamPie') { st.lam.pie = t.value; return pintarLienzo(); }
       if (t.id === 'euLamTexto') { st.texto = t.value; return; }
       if (t.id === 'euLamSeg') { st.lam.segPorNodo = parseFloat(t.value); return; }
+      if (t.id === 'euLamProg') {
+        st.prog = (parseInt(t.value, 10) || 0) / 100;
+        return pintarLienzo();
+      }
       if (t.hasAttribute('data-nt')) {
         st.lam.nodos[parseInt(t.getAttribute('data-nt'), 10)].t = t.value;
         return pintarLienzo();
@@ -1021,6 +1104,8 @@
       if (t.id === 'euLamVozSel') { EU_VOZ.ponerVoz(t.value); return pintar(); }
       if (t.id === 'euLamVozVel') { EU_VOZ.ponerVelocidad(parseFloat(t.value)); return pintar(); }
       if (t.id === 'euLamVozTono') { EU_VOZ.ponerTono(parseFloat(t.value)); return pintar(); }
+      if (t.id === 'euLamTec') { st.tec = t.value; return; }
+      if (t.id === 'euLamProg') return pintar();
       if (t.id === 'euLamVelo') return pintar();
     };
   }
