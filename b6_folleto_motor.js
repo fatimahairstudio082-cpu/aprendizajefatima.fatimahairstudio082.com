@@ -83,6 +83,8 @@
     r1:  { nombre: 'Pieza única',        n: 1, uso: 'Carta, cartel o anuncio',    filas: [{ alto: 1, cols: [1] }] },
     r2a: { nombre: 'Dúo apilado',        n: 2, uso: 'Antes y después',            filas: [{ alto: 1, cols: [1] }, { alto: 1, cols: [1] }] },
     r2b: { nombre: 'Dúo lado a lado',    n: 2, uso: 'Dos promociones',            filas: [{ alto: 1, cols: [1, 1] }] },
+    r3a: { nombre: 'Trío en fila',       n: 3, uso: 'Tres pasos o tres precios', filas: [{ alto: 1, cols: [1, 1, 1] }] },
+    r3b: { nombre: 'Uno grande + dos',   n: 3, uso: 'Un destacado y dos apoyos', filas: [{ alto: 1.35, cols: [1] }, { alto: 1, cols: [1, 1] }] },
     r4a: { nombre: 'Cuadrícula 2×2',     n: 4, uso: 'La tarifa clásica',          filas: [{ alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }] },
     r4b: { nombre: 'Revista',            n: 4, uso: 'Un servicio estrella',       filas: [{ alto: 1.35, cols: [1] }, { alto: 1, cols: [1, 1, 1] }] },
     r6a: { nombre: 'Catálogo 2×3',       n: 6, uso: 'La carta completa',          filas: [{ alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }, { alto: 1, cols: [1, 1] }] },
@@ -138,6 +140,264 @@
     ctx.arcTo(x, y + h, x, y, r);
     ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
+  }
+
+  /* ── Formas de los cuadros de la rejilla ──────────────────────────────
+     pad  = cuánto se aparta el texto del borde (una forma redonda necesita
+            más aire que una recta o el título se corta con la curva)
+     txt  = cuánto sube el bloque de texto respecto al alto del cuadro     */
+
+  /* caja = rectángulo útil INSCRITO en la silueta, en fracciones del cuadro:
+     [izquierda, arriba, ancho, alto]. Todo lo que es texto (título, descripción,
+     precio, etiqueta) se coloca dentro de esa caja, no del cuadro entero. Es lo
+     que evita que una curva se coma la primera letra o el símbolo del euro. */
+
+  var FORMAS_CELDA = {
+    recta:    { nombre: 'Recta',      icono: '▭', pad: 1.00, txt: 0.00, radio: 0 },
+    suave:    { nombre: 'Redondeada', icono: '▢', pad: 1.00, txt: 0.00, radio: 0.075 },
+    blanda:   { nombre: 'Muy suave',  icono: '▣', pad: 1.05, txt: 0.00, radio: 0.20 },
+    circulo:  { nombre: 'Redonda',    icono: '●', pad: 1.10, txt: 0.00, radio: 0 },
+    pildora:  { nombre: 'Píldora',    icono: '▬', pad: 1.05, txt: 0.00, radio: 0 },
+    arco:     { nombre: 'Arcoíris',   icono: '⌒', pad: 1.02, txt: 0.00, radio: 0 },
+    hexagono: { nombre: 'Hexágono',   icono: '⬡', pad: 1.02, txt: 0.00, radio: 0 },
+    ojiva:    { nombre: 'Ojiva',      icono: '❍', pad: 1.02, txt: 0.00, radio: 0 },
+    rombo:    { nombre: 'Rombo',      icono: '◆', pad: 1.02, txt: 0.00, radio: 0 },
+
+    /* Orgánicas. Sirven igual de marco de texto que de hueco para una foto:
+       el recorte de la imagen usa este mismo camino, así que la foto que suba
+       la persona sale ya con forma de corazón, rosa, pétalo… */
+    corazon:  { nombre: 'Corazón',    icono: '♥', pad: 1.02, txt: 0.00, radio: 0 },
+    rosa:     { nombre: 'Rosa',       icono: '🌹', pad: 1.02, txt: 0.00, radio: 0 },
+    flor:     { nombre: 'Flor',       icono: '✿', pad: 1.02, txt: 0.00, radio: 0 },
+    petalo:   { nombre: 'Pétalo',     icono: '🌸', pad: 1.02, txt: 0.00, radio: 0 },
+    gota:     { nombre: 'Gota',       icono: '💧', pad: 1.02, txt: 0.00, radio: 0 },
+    hoja:     { nombre: 'Hoja',       icono: '🍃', pad: 1.02, txt: 0.00, radio: 0 }
+  };
+
+  function caminoCelda(ctx, x, y, w, h, forma, radio) {
+    var i, a, px, py;
+    if (forma === 'circulo') {
+      ctx.beginPath();
+      ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+      ctx.closePath(); return;
+    }
+    if (forma === 'pildora') { return redondo(ctx, x, y, w, h, Math.min(w, h) / 2); }
+    if (forma === 'arco') {
+      var rr = Math.min(w / 2, h * 0.62);
+      ctx.beginPath();
+      ctx.moveTo(x, y + h);
+      ctx.lineTo(x, y + rr);
+      ctx.arc(x + w / 2, y + rr, w / 2, Math.PI, 0);
+      ctx.lineTo(x + w, y + h);
+      ctx.closePath(); return;
+    }
+    if (forma === 'hexagono') {
+      ctx.beginPath();
+      for (i = 0; i < 6; i++) {
+        a = -Math.PI / 2 + i * Math.PI / 3;
+        px = x + w / 2 + (w / 2) * Math.cos(a) * 0.99;
+        py = y + h / 2 + (h / 2) * Math.sin(a) * 0.99;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath(); return;
+    }
+    if (forma === 'ojiva') {
+      // Arco apuntado que LLENA el cuadro: vértice arriba, hombros al ancho
+      // completo a media altura y base redondeada. La versión anterior eran dos
+      // cuádricas cruzadas que daban una lente de 0,46 del ancho — una astilla
+      // donde no cabía ni un título de dos palabras.
+      var rb = Math.min(w, h) * 0.20, cxo = x + w * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(cxo, y);
+      ctx.bezierCurveTo(x + w * 0.70, y + h * 0.02, x + w, y + h * 0.20, x + w, y + h * 0.50);
+      ctx.lineTo(x + w, y + h - rb);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - rb, y + h);
+      ctx.lineTo(x + rb, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - rb);
+      ctx.lineTo(x, y + h * 0.50);
+      ctx.bezierCurveTo(x, y + h * 0.20, x + w * 0.30, y + h * 0.02, cxo, y);
+      ctx.closePath(); return;
+    }
+    if (forma === 'rombo') {
+      ctx.beginPath();
+      ctx.moveTo(x + w / 2, y);
+      ctx.lineTo(x + w, y + h / 2);
+      ctx.lineTo(x + w / 2, y + h);
+      ctx.lineTo(x, y + h / 2);
+      ctx.closePath(); return;
+    }
+    if (forma === 'corazon') {
+      // Corazón inscrito en el cuadro. El pico de abajo toca y+h y los dos
+      // lóbulos tocan x y x+w, así que llena el hueco sin pasarse.
+      var cx = x + w / 2, tp = y + h * 0.26;
+      ctx.beginPath();
+      ctx.moveTo(cx, y + h);
+      ctx.bezierCurveTo(x - w * 0.06, y + h * 0.58, x + w * 0.06, y, cx, tp);
+      ctx.bezierCurveTo(x + w * 0.94, y, x + w * 1.06, y + h * 0.58, cx, y + h);
+      ctx.closePath(); return;
+    }
+    if (forma === 'rosa') {
+      // Cinco pétalos con punta: mismo bezier de valle a valle que la flor pero
+      // con los controles muy juntos, para que la punta pinche en vez de ondear.
+      var nr = 5, rxr = w / 2, ryr = h / 2, valr = 0.58, punr = 1.26;
+      var pasor = Math.PI * 2 / nr, sepr = pasor * 0.15;
+      var ptr = function (ang, rad) {
+        return [x + rxr + rxr * rad * Math.cos(ang), y + ryr + ryr * rad * Math.sin(ang)];
+      };
+      ctx.beginPath();
+      var q0 = ptr(-Math.PI / 2 - pasor / 2, valr);
+      ctx.moveTo(q0[0], q0[1]);
+      for (i = 0; i < nr; i++) {
+        var cer = -Math.PI / 2 + i * pasor;
+        var d1 = ptr(cer - sepr, punr), d2 = ptr(cer + sepr, punr);
+        var f1 = ptr(cer + pasor / 2, valr);
+        ctx.bezierCurveTo(d1[0], d1[1], d2[0], d2[1], f1[0], f1[1]);
+      }
+      ctx.closePath(); return;
+    }
+    if (forma === 'flor') {
+      // Seis pétalos redondos: cada uno es un bezier de valle a valle con los
+      // dos controles abiertos sobre la punta. Con una polilínea polar salía
+      // una estrella; los senos hay que redondearlos, no pinchar.
+      var n = 6, rx2 = w / 2, ry2 = h / 2, val = 0.52, pun = 1.30;
+      var paso = Math.PI * 2 / n, sep = paso * 0.30;
+      var pt = function (ang, rad) {
+        return [x + rx2 + rx2 * rad * Math.cos(ang), y + ry2 + ry2 * rad * Math.sin(ang)];
+      };
+      ctx.beginPath();
+      var p0 = pt(-Math.PI / 2 - paso / 2, val);
+      ctx.moveTo(p0[0], p0[1]);
+      for (i = 0; i < n; i++) {
+        var ce = -Math.PI / 2 + i * paso;
+        var c1 = pt(ce - sep, pun), c2 = pt(ce + sep, pun);
+        var fin = pt(ce + paso / 2, val);
+        ctx.bezierCurveTo(c1[0], c1[1], c2[0], c2[1], fin[0], fin[1]);
+      }
+      ctx.closePath(); return;
+    }
+    if (forma === 'petalo') {
+      // Pétalo: punta arriba, base redonda abajo, ligeramente ladeado.
+      ctx.beginPath();
+      ctx.moveTo(x + w * 0.5, y);
+      ctx.bezierCurveTo(x + w * 1.02, y + h * 0.26, x + w, y + h * 0.82, x + w * 0.52, y + h);
+      ctx.bezierCurveTo(x, y + h * 0.82, x - w * 0.02, y + h * 0.26, x + w * 0.5, y);
+      ctx.closePath(); return;
+    }
+    if (forma === 'gota') {
+      // Gota: punta arriba, panza abajo. El texto baja (txt negativo).
+      var mx = x + w * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(mx, y);
+      ctx.bezierCurveTo(x + w * 0.51, y + h * 0.16, x + w * 0.97, y + h * 0.30, x + w, y + h * 0.55);
+      ctx.bezierCurveTo(x + w, y + h * 0.86, x + w * 0.79, y + h, mx, y + h);
+      ctx.bezierCurveTo(x + w * 0.21, y + h, x, y + h * 0.86, x, y + h * 0.55);
+      ctx.bezierCurveTo(x + w * 0.03, y + h * 0.30, x + w * 0.49, y + h * 0.16, mx, y);
+      ctx.closePath(); return;
+    }
+    if (forma === 'hoja') {
+      // Hoja: dos arcos que se juntan en punta a izquierda y derecha.
+      ctx.beginPath();
+      ctx.moveTo(x, y + h * 0.5);
+      ctx.quadraticCurveTo(x + w * 0.34, y, x + w, y + h * 0.5);
+      ctx.quadraticCurveTo(x + w * 0.66, y + h, x, y + h * 0.5);
+      ctx.closePath(); return;
+    }
+    return redondo(ctx, x, y, w, h, radio || 0);
+  }
+
+  /* ── Caja útil medida sobre la silueta ───────────────────────────────────
+     Antes cada forma llevaba su rectángulo útil escrito a mano y siempre se
+     quedaba corto o largo. Ahora se mide: se traza la silueta en un lienzo de
+     apoyo, se muestrean 24 alturas buscando en cada una el tramo interior más
+     ancho, y se queda el rectángulo inscrito de mayor área. Se guarda en caché
+     por forma y proporción, así que el vídeo no paga el cálculo cada cuadro. */
+
+  var _cacheCaja = {}, _lienzoApoyo = null;
+
+  function ctxApoyo() {
+    if (!_lienzoApoyo) {
+      _lienzoApoyo = document.createElement('canvas');
+      _lienzoApoyo.width = 8; _lienzoApoyo.height = 8;
+    }
+    return _lienzoApoyo.getContext('2d');
+  }
+
+  function cajaUtil(forma, fracRadio, w, h, modo) {
+    if (!w || !h) return [0, 0, 1, 1];
+    /* Los caminos son paramétricos en w y h, así que la caja inscrita medida en
+       fracciones sale igual a cualquier proporción de celda: la clave sólo
+       necesita forma y radio. */
+    var clave = forma + '|' + (fracRadio || 0);
+    if (_cacheCaja[clave]) return _cacheCaja[clave][modo === 'ancha' ? 1 : 0];
+
+    var W = 100, H = 100, NR = 34, NC = 48;
+    var g;
+    try { g = ctxApoyo(); } catch (e) { return [0, 0, 1, 1]; }
+    caminoCelda(g, 0, 0, W, H, forma, Math.min(W, H) * (fracRadio || 0));
+
+    var filas = [], i, j;
+    for (i = 0; i < NR; i++) {
+      var yy = H * (i + 0.5) / NR;
+      var mIni = -1, mFin = -2, ini = -1;
+      for (j = 0; j <= NC; j++) {
+        if (g.isPointInPath(W * j / NC, yy)) { if (ini < 0) ini = j; }
+        else if (ini >= 0) {
+          if (j - 1 - ini > mFin - mIni) { mIni = ini; mFin = j - 1; }
+          ini = -1;
+        }
+      }
+      if (ini >= 0 && NC - ini > mFin - mIni) { mIni = ini; mFin = NC; }
+      filas.push(mIni < 0 ? null : { x0: W * mIni / NC, x1: W * mFin / NC, y: yy });
+    }
+
+    var mejor = null, masAncha = null;
+    for (var a = 0; a < NR; a++) {
+      if (!filas[a]) continue;
+      var x0 = filas[a].x0, x1 = filas[a].x1;
+      for (var b = a; b < NR; b++) {
+        if (!filas[b]) break;
+        x0 = Math.max(x0, filas[b].x0); x1 = Math.min(x1, filas[b].x1);
+        var an = x1 - x0;
+        if (an <= W * 0.30) break;
+        /* El rectángulo llega justo hasta los CENTROS de las filas medidas, no
+           hasta sus bordes: el ancho sólo está comprobado en esos centros, y
+           en una silueta curva medio pelÚño más arriba la curva ya se ha
+           cerrado. Estirarlo media fila era lo que dejaba la primera línea
+           fuera del recorte en formas aplanadas como la hoja. */
+        var y0 = filas[a].y, y1 = filas[b].y;
+        if (y1 - y0 < H * 0.06) continue;
+        /* El bloque de texto se escribe abajo, así que sólo compiten las bandas
+           que llegan al 55% inferior. Si no, la punta estrecha de una ojiva o
+           una rosa gana por alta y el título sale truncado con puntos. */
+        /* La banda más ancha se apunta ANTES del filtro de altura: en la rosa y
+           la flor lo más ancho está a media altura, y ahí es donde hay que
+           poder caer si el título no cabe abajo. */
+        if (!masAncha || an > masAncha.w + 0.001) masAncha = { x: x0, y: y0, w: an, h: y1 - y0 };
+        if (y1 < H * 0.55) continue;
+        // El ancho manda con fuerza: una línea necesita ancho antes que alto, y
+        // un título entero en una banda baja se lee mejor que dos líneas
+        // truncadas en una banda alta y estrecha.
+        var punt = Math.pow(an, 2.5) * (y1 - y0);
+        if (!mejor || punt > mejor.area) mejor = { area: punt, x: x0, y: y0, w: an, h: y1 - y0 };
+      }
+    }
+
+    /* Suelo de legibilidad: por debajo de la mitad del ancho de la celda no
+       cabe un título, así que se cambia por la banda más ancha que exista
+       aunque sea más baja. */
+    if (masAncha && mejor && mejor.w < W * 0.50 && masAncha.w > mejor.w) mejor = masAncha;
+    if (!mejor && masAncha) mejor = masAncha;
+
+    // margen de seguridad: el muestreo puede pasarse media casilla de la curva
+    var aFrac = function (c) {
+      return c
+        ? [Math.max(0, c.x / W + 0.012), Math.max(0, c.y / H + 0.012),
+           Math.min(1, c.w / W - 0.024), Math.min(1, c.h / H - 0.024)]
+        : [0, 0, 1, 1];
+    };
+    var res = [aFrac(mejor), aFrac(masAncha || mejor)];
+    _cacheCaja[clave] = res;
+    return res[modo === 'ancha' ? 1 : 0];
   }
 
   /* Ojo con los vídeos: flCover (el del bloque) mide con img.width, que en un
@@ -201,13 +461,14 @@
       t = Math.max(minTam, t - Math.max(0.5, t * 0.06));
     }
     // sólo se recorta si de verdad sobra texto (antes ponía «…» aunque cupiese)
-    if (lineas.length > maxLineas) {
+    var cortado = lineas.length > maxLineas;
+    if (cortado) {
       lineas = lineas.slice(0, maxLineas);
       var u = lineas[maxLineas - 1];
       while (u.length > 4 && ctx.measureText(u + '…').width > maxW) u = u.slice(0, -1);
       lineas[maxLineas - 1] = u + '…';
     }
-    return { lineas: lineas, tam: t };
+    return { lineas: lineas, tam: t, cortado: cortado };
   }
 
   function hex2rgb(h) {
@@ -434,9 +695,12 @@
 
   function cuadro(ctx, r, C, celda, idx, ad, op, forz) {
     celda = celda || {};
+    var i, j;
     var G = geometria(r);
     forz = forz || { titulo: G.titulo, texto: G.texto };
-    var radio = Math.min(r.w, r.h) * 0.075;
+    var fcId = celda.forma || (op.formaCelda ? (typeof op.formaCelda === 'function' ? op.formaCelda(idx) : op.formaCelda) : null) || 'suave';
+    var FD = FORMAS_CELDA[fcId] || FORMAS_CELDA.suave;
+    var radio = Math.min(r.w, r.h) * (FD.radio || 0);
     var lado = G.lado;
 
     if (ad.sombras) {
@@ -444,13 +708,13 @@
       ctx.shadowColor = C.claro ? rgba(C.tinta, 0.22) : 'rgba(0,0,0,.5)';
       ctx.shadowBlur = lado * 0.10;
       ctx.shadowOffsetY = lado * 0.03;
-      redondo(ctx, r.x, r.y, r.w, r.h, radio);
+      caminoCelda(ctx, r.x, r.y, r.w, r.h, fcId, radio);
       ctx.fillStyle = C.panel; ctx.fill();
       ctx.restore();
     }
 
     ctx.save();
-    redondo(ctx, r.x, r.y, r.w, r.h, radio);
+    caminoCelda(ctx, r.x, r.y, r.w, r.h, fcId, radio);
     ctx.clip();
 
     // media: foto, fotograma de vídeo, o imagen de ejemplo
@@ -473,55 +737,106 @@
     ctx.fillStyle = v;
     ctx.fillRect(r.x, r.y + r.h - alto, r.w, alto);
 
-    var pad = G.pad, maxW = G.maxW;
-    var y = r.y + r.h - pad;
+    /* La caja útil manda: si la silueta es curva, el texto se escribe dentro
+       del rectángulo inscrito, nunca contra el borde del cuadro. Se prueba
+       primero la banda con mejor equilibrio y, si el título sale con puntos
+       suspensivos, se repite en la banda MÁS ANCHA de la silueta: el criterio es
+       si el texto real cabe, no una fracción fija de ancho. */
+    var CJ, pad, cx0, cx1, maxW, y, tamE, altoEtq, base, techo, P = null, q, m;
+
+    var plan = function (esc, linDesc, linTit) {
+      var Pp = { h: 0, precio: 0, desc: null, tit: null };
+      if (celda.precio) { Pp.precio = G.tamPrecio * esc; Pp.h += Pp.precio * 1.9 + lado * 0.03; }
+      if (celda.texto && linDesc > 0 && r.h > lado * 0.55) {
+        Pp.desc = encajar(ctx, celda.texto, maxW, linDesc, Math.max(G.minTexto, forz.texto * esc), '400', G.minTexto);
+        Pp.fuenteDesc = '400 ' + Pp.desc.tam.toFixed(1) + 'px ' + FUENTE_C;
+        Pp.h += Pp.desc.lineas.length * Pp.desc.tam * 1.25 + lado * 0.012;
+      }
+      if (celda.titulo) {
+        Pp.tit = encajar(ctx, celda.titulo, maxW, linTit || 2, Math.max(G.minTitulo, forz.titulo * esc), '800', G.minTitulo, FUENTE_T);
+        Pp.fuenteTit = '800 ' + Pp.tit.tam.toFixed(1) + 'px ' + FUENTE_T;
+        Pp.h += Pp.tit.lineas.length * Pp.tit.tam * 1.14;
+      }
+      return Pp;
+    };
+
+    /* De más generoso a más modesto: [escala, líneas de descripción, líneas de
+       título]. Se pinta el primero que entra en la caja. */
+    var intentos = [
+      [1, 2, 2], [0.93, 2, 2], [0.86, 2, 2],
+      [1, 1, 2], [0.9, 1, 2], [0.8, 1, 2],
+      [1, 0, 2], [0.86, 0, 2],
+      [1, 0, 1], [0.86, 0, 1], [0.74, 0, 1]
+    ];
+
+    var modos = ['texto', 'ancha'];
+    for (m = 0; m < modos.length; m++) {
+      CJ = cajaUtil(fcId, FD.radio, r.w, r.h, modos[m]);
+      pad = G.pad * FD.pad;
+      cx0 = r.x + CJ[0] * r.w + pad;
+      cx1 = r.x + (CJ[0] + CJ[2]) * r.w - pad;
+      maxW = Math.max(lado * 0.4, cx1 - cx0);
+      y = r.y + (CJ[1] + CJ[3]) * r.h - pad;
+      tamE = celda.etiqueta ? Math.max(8, lado * 0.058) : 0;
+      altoEtq = celda.etiqueta ? tamE * 1.9 : 0;
+      base = y;
+      techo = r.y + CJ[1] * r.h + (celda.etiqueta ? pad * 0.85 + altoEtq + pad * 0.35 : 0);
+      for (q = 0; q < intentos.length; q++) {
+        P = plan(intentos[q][0], intentos[q][1], intentos[q][2]);
+        if (base - P.h >= techo) break;
+      }
+      if (!P.tit || !P.tit.cortado) break;
+    }
+    var etqCabe = base - P.h >= techo;
 
     // se escribe de abajo arriba: primero el precio, luego la descripción y
     // por último el título, así ninguno se come al de abajo
     // op.textoRev(i) → 0..1: hace ENTRAR el texto (sube y aparece) en el vídeo.
     // Sin op.textoRev el texto sale fijo, exactamente como antes.
     var trev = op.textoRev ? Math.max(0, Math.min(1, op.textoRev(idx))) : 1;
+
     ctx.save();
     if (trev < 1) { ctx.globalAlpha = trev; ctx.translate(0, (1 - trev) * lado * 0.18); }
-    if (celda.precio) {
-      var tamP = G.tamPrecio;
-      pildora(ctx, celda.precio, r.x + r.w - pad, y - tamP * 1.9, tamP, C.acento, C.sobreAcento, 'derecha');
-      y -= tamP * 1.9 + lado * 0.03;
+    if (P.precio) {
+      pildora(ctx, celda.precio, cx1, y - P.precio * 1.9, P.precio, C.acento, C.sobreAcento, 'derecha');
+      y -= P.precio * 1.9 + lado * 0.03;
     }
 
-    // descripción · si no cabe se recorta con puntos suspensivos, nunca se
-    // encoge hasta ser ilegible: más vale media frase legible que dos ilegibles
-    if (celda.texto && r.h > lado * 0.55) {
-      var d = encajar(ctx, celda.texto, maxW, 2, forz.texto, '400', forz.texto);
+    if (P.desc) {
+      // encajar() deja ctx.font puesto en lo último que midió, y aquí se mide
+      // la descripción antes del título: hay que fijar la fuente a mano o la
+      // descripción sale con la letra del título y se desborda.
+      ctx.font = P.fuenteDesc;
       ctx.fillStyle = C.tinta2; ctx.textAlign = 'left';
-      for (var i = d.lineas.length - 1; i >= 0; i--) {
-        ctx.fillText(d.lineas[i], r.x + pad, y);
-        y -= d.tam * 1.25;
+      for (i = P.desc.lineas.length - 1; i >= 0; i--) {
+        ctx.fillText(P.desc.lineas[i], cx0, y);
+        y -= P.desc.tam * 1.25;
       }
       y -= lado * 0.012;
     }
 
-    // título del servicio
-    if (celda.titulo) {
-      var t = encajar(ctx, celda.titulo, maxW, 2, forz.titulo, '800', forz.titulo, FUENTE_T);
+    if (P.tit) {
+      ctx.font = P.fuenteTit;
       ctx.fillStyle = C.tinta; ctx.textAlign = 'left';
-      for (var j = t.lineas.length - 1; j >= 0; j--) {
-        ctx.fillText(t.lineas[j], r.x + pad, y);
-        y -= t.tam * 1.14;
+      for (j = P.tit.lineas.length - 1; j >= 0; j--) {
+        ctx.fillText(P.tit.lineas[j], cx0, y);
+        y -= P.tit.tam * 1.14;
       }
     }
     ctx.restore();
 
-    // etiqueta de esquina
-    if (celda.etiqueta) {
-      var tamE = Math.max(8, lado * 0.058);
-      pildora(ctx, celda.etiqueta, r.x + pad, r.y + pad * 0.85, tamE, C.acento2, C.claro ? '#1a1a1a' : '#FFFFFF');
+    // etiqueta de esquina · sólo si queda hueco por encima del título
+    if (celda.etiqueta && etqCabe) {
+      pildora(ctx, celda.etiqueta, cx0, r.y + CJ[1] * r.h + pad * 0.85, tamE, C.acento2, C.claro ? '#1a1a1a' : '#FFFFFF');
     }
+
+    // descripción · si no cabe se recorta con puntos suspensivos, nunca se
+    // encoge hasta ser ilegible: más vale media frase legible que dos ilegibles
 
     ctx.restore();
 
     if (ad.filetes) {
-      redondo(ctx, r.x, r.y, r.w, r.h, radio);
+      caminoCelda(ctx, r.x, r.y, r.w, r.h, fcId, radio);
       ctx.strokeStyle = rgba(C.acento, 0.45);
       ctx.lineWidth = Math.max(1, lado * 0.006);
       ctx.stroke();
@@ -718,6 +1033,8 @@
     FORMATOS: FORMATOS,
     TEMAS: TEMAS,
     REJILLAS: REJILLAS,
+    FORMAS_CELDA: FORMAS_CELDA,
+    caminoCelda: caminoCelda,
     rejilla: rejilla,
     pintar: pintar,
     colores: colores,
