@@ -151,12 +151,55 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 #euToast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:80;pointer-events:none;display:flex;flex-direction:column;gap:6px;align-items:center;width:calc(100% - 28px);max-width:420px}
 #euToast div{background:var(--card2);border:1px solid var(--ac);border-radius:22px;padding:9px 16px;font-size:12px;box-shadow:0 8px 26px rgba(0,0,0,.6);text-align:center}
 
+/* Editor · rejilla de los quince troqueles de celda */
+.troqueles{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:5px}
+.troqueles .troquel{background:#1a1a35;border:1px solid var(--bd);border-radius:8px;padding:6px 2px;
+  cursor:pointer;font-family:inherit;color:var(--tx2);text-align:center;line-height:1.2}
+.troqueles .troquel.on{border-color:var(--ac);background:#231a4a;color:var(--tx)}
+.troqueles .troquel i{display:block;font-size:15px;line-height:1;font-style:normal}
+.troqueles .troquel span{display:block;font-size:9px;margin-top:3px}
+
+/* Editor · combinaciones profesionales y ajuste fino */
+.pro-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pro-b{background:#1a1a35;border:1px solid var(--bd);border-radius:8px;padding:6px;cursor:pointer;font-family:inherit}
+.pro-b.on{border-color:var(--ac);background:#231a4a}
+.pro-tira{display:flex;gap:0;border-radius:4px;overflow:hidden;height:16px}
+.pro-tira i{flex:1}
+.pro-n{display:block;font-size:10px;color:var(--tx);margin-top:5px;font-weight:600}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.roles .rol{display:flex;align-items:center;gap:6px;background:#1a1a35;border:1px solid var(--bd);
+  border-radius:8px;padding:5px 7px}
+.roles .rol input[type=color]{width:26px;height:22px;padding:0;border:0;border-radius:4px;background:none;cursor:pointer;flex:none}
+.roles .rol span{font-size:10px;color:var(--tx2)}
+
+/* Tríptico: lienzo a la izquierda, paleta y troqueles a la derecha */
+.tp-cols{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
+.tp-panel{background:#18183a;border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
+
+/* Carrusel: lienzo y tira a la izquierda, ajustes a la derecha */
+.cr-cols{display:grid;grid-template-columns:1fr 320px;gap:14px;align-items:start}
+.cr-panel{background:#18183a;border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
+
+/* Láminas: el lienzo a la izquierda y la galería a la derecha */
+.lm-cols{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
+.lm-panel{background:#18183a;border:1px solid var(--bd);border-radius:12px;padding:13px;position:sticky;top:120px;max-height:64vh;overflow:auto}
+
+/* Repaso: el repaso a la izquierda y la hoja de examen a la derecha */
+.rp-cols{display:grid;grid-template-columns:1fr 400px;gap:16px;align-items:start}
+.rp-hoja{background:#18183a;border:1px solid var(--bd);border-radius:12px;padding:14px;position:sticky;top:120px}
+
 @media(max-width:900px){
   .eu-cols,.ed-cols,.vd-cols,.qr-cols{grid-template-columns:1fr}
   .eu-filtros,.ed-panel{position:static}
   .ed-cuerpo{max-height:none}
-  nav.tabs{display:none}
-  nav.mtabs{display:flex}
+  nav.tabs{display:flex}
+  nav.mtabs{display:none}
+  .rp-cols{grid-template-columns:1fr}
+  .rp-hoja{position:static}
+  .lm-cols{grid-template-columns:1fr}
+  .lm-panel{position:static;max-height:none}
+  .cr-cols{grid-template-columns:1fr}
+  .tp-cols{grid-template-columns:1fr}
   .wrap{padding:12px 12px 24px}
 }
 </style>
@@ -176,6 +219,12 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
   <button data-p="plantillas" class="on">🗂 Plantillas</button>
   <button data-p="editor">✏️ Editor</button>
   <button data-p="video">🎬 Vídeo</button>
+  <button data-p="triptico">📐 Tríptico</button>
+  <button data-p="carrusel">🎠 Carrusel</button>
+  <button data-p="laminas">🧠 Láminas</button>
+  <button data-p="repaso">✅ Repaso</button>
+  <button data-p="guias">💇 Guías 3D</button>
+  <button data-p="estudios">💄 Estudios</button>
   <button data-p="qr">🔳 QR</button>
   <button data-p="mios">📁 Míos</button>
   <button data-p="plan">💜 Plan</button>
@@ -208,6 +257,8 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
           <div class="tira" id="euFiltroRej" style="margin-top:4px"></div>
           <label class="mini-lbl">Paleta</label>
           <div class="tira" id="euFiltroTema" style="margin-top:4px"></div>
+          <label class="mini-lbl">Troquel del cuadro</label>
+          <div class="tira" id="euFiltroForma" style="margin-top:4px"></div>
           <button class="btn btn-g btn-sm" style="margin-top:12px;width:100%" onclick="EU_PARRILLA.otraVersion()">🔄 Otra versión del texto</button>
           <button class="btn btn-g btn-sm" style="margin-top:6px;width:100%" onclick="EU_PARRILLA.enBlanco()">Empezar en blanco</button>
         </div>
@@ -232,6 +283,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
           <button class="btn" onclick="EU_EDITOR.descargar()">⬇ Descargar</button>
         </div>
         <div id="euEdEstado"></div>
+        <div id="euEdBandeja"></div>
       </div>
 
       <div class="ed-panel">
@@ -255,10 +307,17 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
     <div class="vd-cols">
       <div>
         <div class="lienzo-caja"><canvas id="euVideoLienzo" width="540" height="764"></canvas></div>
+        <div class="fila" style="margin-top:10px;gap:8px">
+          <button class="btn btn-g btn-sm" id="euBtnPrevia" onclick="EU_VIDEO.previa()"
+            style="flex:none">▶ Ver sin sonido</button>
+          <input type="range" id="euVideoPos" min="0" max="1000" step="1" value="0"
+            style="flex:1;min-width:80px">
+          <span id="euVideoReloj" style="font-size:11px;color:var(--tx2);white-space:nowrap;
+            font-variant-numeric:tabular-nums">0,0 / 0,0 s</span>
+        </div>
         <div class="ed-barra">
-          <button class="btn btn-g btn-sm" onclick="EU_VIDEO.previa()">▶ Ver sin sonido</button>
-          <span style="flex:1"></span>
           <span id="euVideoDur" style="font-size:11px;color:var(--tx2)"></span>
+          <span style="flex:1"></span>
           <button class="btn" id="euBtnGrabar" onclick="EU_VIDEO.grabar()">⏺ Grabar el vídeo</button>
         </div>
         <div id="euVideoEstado"></div>
@@ -306,6 +365,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
     <p class="ayuda">Se guardan en tu cuenta (<code>proyectos/{uid}</code>). Solo tú los ves.</p>
     <div id="euMiosEstado"></div>
     <div class="rejilla-tarj" id="euMios"></div>
+    <div id="euMiosBandeja"></div>
   </section>
 
   <!-- ══════════ P9 · PLANES ══════════ -->
@@ -319,6 +379,58 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
         Igual que hoy con los créditos: la administración pone <code>plan: 'pro'</code> en tu ficha desde el
         panel. Desde aquí nadie puede subirse el plan solo — la regla de Firestore no lo permite.</p>
     </div>
+  </section>
+
+  <!-- ══════════ TRÍPTICO ══════════ -->
+  <section class="pantalla" id="pTriptico">
+    <h2 class="tit2" id="euTriTit">Tríptico · tres cuerpos por cara</h2>
+    <p class="ayuda" id="euTriAyuda">Un A4 apaisado partido en tres, por sus dos caras: la de fuera con la portada
+      y la contraportada, y la de dentro, que es la que se lee con el folleto abierto. Puedes verlo
+      plano —como se imprime— o abriéndose en la mano.</p>
+    <div class="tira" style="margin-bottom:12px">
+      <button class="pill on" id="euModoTri">📐 Tríptico</button>
+      <button class="pill" id="euModoVol">🖐️ Volantes y maquetas</button>
+    </div>
+    <div id="euTriptico"></div>
+    <div id="euVolantes" style="display:none"></div>
+  </section>
+
+  <!-- ══════════ CARRUSEL ══════════ -->
+  <section class="pantalla" id="pCarrusel">
+    <h2 class="tit2">Carrusel · varias diapositivas encadenadas</h2>
+    <p class="ayuda">Una portada, las diapositivas que necesites y un cierre con tu contacto. Todas
+      comparten paleta, tipografía y logo, y llevan su número y la flecha de «desliza» para que se
+      lean en orden.</p>
+    <div id="euCarrusel"></div>
+  </section>
+
+  <!-- ══════════ LÁMINAS DE EXPOSICIÓN ══════════ -->
+  <section class="pantalla" id="pLaminas">
+    <h2 class="tit2">Láminas de exposición</h2>
+    <p class="ayuda">Mapas conceptuales, mandalas, carruseles, pósters, líneas de tiempo, procesos,
+      infografías de datos, comparativas, pirámides y fichas de estudio. Trescientas plantillas con
+      contenido de verdad por materia: eliges una, corriges el texto y la descargas como lámina o PDF.</p>
+    <div id="euLaminas"></div>
+  </section>
+
+  <!-- ══════════ REPASO Y EXAMEN ══════════ -->
+  <section class="pantalla" id="pRepaso">
+    <h2 class="tit2">Repaso y examen</h2>
+    <p class="ayuda">Las preguntas salen de la misma técnica que estudias: no son un cuestionario
+      aparte. Cada respuesta se corrige al momento y <b>siempre enseña el porqué</b>, se acierte o
+      se falle, porque lo que hay que aprender es el criterio. Al lado, la misma prueba maquetada
+      en A4 para imprimir, con su hoja de corrección para el aula.</p>
+    <div id="euRepaso"></div>
+  </section>
+
+  <!-- ══════════ GUÍAS 3D · elemento autónomo (b6_guias_3d.js) ══════════ -->
+  <section class="pantalla" id="pGuias">
+    <guias-3d></guias-3d>
+  </section>
+
+  <!-- ══════════ ESTUDIOS · elemento autónomo (b6_estudios.js) ══════════ -->
+  <section class="pantalla" id="pEstudios">
+    <estudios-belleza></estudios-belleza>
   </section>
 
 </div>
@@ -361,6 +473,23 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
       <input type="color" id="euMC2" value="#a855f7">
       <span style="font-size:10.5px;color:var(--tx2)">se usan si eliges «mis colores»</span>
     </div>
+    <div style="height:1px;background:var(--bd);margin:14px 0"></div>
+    <label class="mini-lbl">Tu logo</label>
+    <div class="fila" style="align-items:flex-start;gap:9px">
+      <div id="euLogoPrevio" style="width:52px;height:52px;flex:none;border:1px solid var(--bd);
+        border-radius:8px;background:#1a1a35 center/contain no-repeat"></div>
+      <div style="flex:1;min-width:0">
+        <input type="file" accept="image/*" id="euLogoFile" style="font-size:11px;width:100%">
+        <div style="font-size:10px;color:var(--tx2);line-height:1.5;margin-top:4px">PNG con fondo
+          transparente es lo que mejor queda. Sale en el folleto, el tríptico, el carrusel, las
+          láminas y el vídeo.</div>
+      </div>
+      <button class="btn btn-g btn-sm" id="euLogoQuitar" style="flex:none">Quitar</button>
+    </div>
+    <div id="euLogoPos" style="margin-top:9px"></div>
+    <label class="mini-lbl" id="euLogoTamRot">Tamaño</label>
+    <input type="range" id="euLogoTam" min="4" max="40" step="1" value="9" style="width:100%">
+
     <div id="euMarcaEstado"></div>
     <div class="ed-barra">
       <button class="btn btn-g" onclick="EU.cerrarMarca()">Cancelar</button>
@@ -391,6 +520,7 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 <!-- ══════════ Librerías ══════════ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -400,6 +530,19 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 <script src="b6_folleto_cerebro.js"></script>
 <script src="b6_folleto_disenos.js"></script>
 <script src="b6_voz_video_gratis.js"></script>
+<!-- Motores de Guías 3D y Estudios · cargar en este orden -->
+<script src="b6_bandeja.js"></script>
+<script src="b6_voz.js"></script>
+<script src="b6_cerebro.js"></script>
+<script src="b6_divisiones.js"></script>
+<script src="b6_cortes.js"></script>
+<script src="b6_guias_3d.js"></script>
+<script src="b6_estudios.js"></script>
+<!-- Motores de Láminas y de la hoja de examen -->
+<script src="b6_laminas_motor.js"></script>
+<script src="b6_laminas_disenos.js"></script>
+<script src="b6_examen.js"></script>
+<script src="b6_volantes.js"></script>
 
 <!-- ══════════ Piezas del Estudio Universal ══════════ -->
 <script src="eu_nucleo.js"></script>
@@ -409,5 +552,10 @@ input[type=range]{width:100%;accent-color:var(--ac2)}
 <script src="eu_qr.js"></script>
 <script src="eu_video3d.js"></script>
 <script src="eu_proyectos.js"></script>
+<script src="eu_triptico.js"></script>
+<script src="eu_volantes.js"></script>
+<script src="eu_carrusel.js"></script>
+<script src="eu_laminas.js"></script>
+<script src="eu_repaso.js"></script>
 </body>
 </html>

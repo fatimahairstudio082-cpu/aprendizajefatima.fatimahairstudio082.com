@@ -26,6 +26,30 @@
 
   var LADO_MAX = 1280;
 
+  /* Medidas reales de cada sitio donde se sube el vídeo. Se marcan los que
+     hagan falta y sale un archivo por cada uno, con su medida y con la voz y
+     la música ya dentro. */
+  var SALIDAS = [
+    { id: 'reel', n: 'Reels · Shorts · TikTok · Estado', f: 'vertical-9x16',   w: 720,  h: 1280, d: '9:16 vertical' },
+    { id: 'feed', n: 'Facebook e Instagram · muro',      f: 'cuadrado-1x1',    w: 800,  h: 800,  d: '1:1 cuadrado' },
+    { id: 'yt',   n: 'YouTube · web',                    f: 'horizontal-16x9', w: 1280, h: 720,  d: '16:9 horizontal' },
+    { id: 'wa',   n: 'WhatsApp · más ligero',            f: 'whatsapp-9x16',   w: 540,  h: 960,  d: '9:16 ligero' }
+  ];
+  /* Medida del vídeo cuando se graba a mano (una sola pieza). «hoja» es la
+     de siempre: la del folleto tal cual. */
+  var RATIOS = {
+    hoja: { nombre: 'Como la hoja', W: 0,   H: 0 },
+    v:    { nombre: '9:16',         W: 540, H: 960 },
+    q:    { nombre: '1:1',          W: 640, H: 640 },
+    h:    { nombre: '16:9',         W: 854, H: 480 }
+  };
+  var ratio = 'hoja';
+  var previa = null;       // lienzo interno para enseñar la medida elegida
+  var desBandeja = null;   // para soltar la bandeja antes de repintar el panel
+
+  var salidas = [];        // ids marcados por Fátima
+  var dimSalida = null;    // durante un lote manda la medida del sitio que toca
+
   /* ───────────── Catálogo de efectos ───────────── */
 
   var EFECTOS = {
@@ -40,8 +64,22 @@
     deslizar:   { nombre: 'Deslizar',        grupo: 'Plana' },
     olas:       { nombre: 'Olas',            grupo: 'Plana' },
     circulo:    { nombre: 'Círculo',         grupo: 'Plana' },
-    persiana:   { nombre: 'Persiana',        grupo: 'Plana' }
+    persiana:   { nombre: 'Persiana',        grupo: 'Plana' },
+    latido:     { nombre: 'Latido',          grupo: 'Plana' },
+    petalo:     { nombre: 'Pétalo que abre', grupo: 'Plana' }
   };
+
+  /* Capa de ambiente: se pinta sobre toda la escena, así que vale igual para
+     los cuadros del folleto y para el cierre. */
+  var ADORNOS = {
+    ninguno:   'Sin ambiente',
+    petalos:   'Pétalos cayendo',
+    corazones: 'Corazones que suben',
+    rosas:     'Rosas girando',
+    brillo:    'Brillo dorado',
+    chispas:   'Chispas'
+  };
+  var adorno = 'ninguno';
 
   var CAMARAS = {
     ninguna:  'Sin movimiento',
@@ -62,6 +100,18 @@
   var subtitulos = true;
   var cierreQR = true;
   var audio = { modo: 'ninguno', blob: null, segundos: 0, nombre: '' };
+  /* Música de fondo: va por debajo de la voz y se mezcla dentro del archivo. */
+  var musica = { blob: null, nombre: '', vol: 0.35 };
+  var vozVol = 1;            // volumen de la voz en la mezcla
+  var rotulo = false;        // rótulo de marca sobre cada fotograma
+  var guionTexto = '';       // el guion entero, para leerlo de un tirón
+  var tActual = 0;           // dónde está la barra de tiempo
+  /* Clips de vídeo de Fátima. Se pegan en medio del guion como una escena
+     más, recortados desde el segundo que ella diga. */
+  var clips = [];
+  var sonClips = false;
+  var acMix = null;          // una sola mesa de sonido para toda la pestaña
+
   var lleno = null, base = null, rects = [], baseK = -1;
   var corriendo = false, pararTodo = null;
 
@@ -80,6 +130,8 @@
     var celdas = EU.pagina.celdas || [];
     var n = (EU.motor.REJILLAS[EU.pagina.rejilla] || EU.motor.REJILLAS.r4a).n;
     var claves = Object.keys(EFECTOS);
+    // los clips que Fátima ya haya pegado no se tiran al cambiar la rejilla
+    var pegados = esc.filter(function (e) { return e.tipo === 'clip'; });
     esc = [{ tipo: 'portada', nombre: 'Portada', efecto: 'profundidad', seg: 2.2, frase: fraseCabecera() }];
     for (var i = 0; i < Math.min(n, celdas.length); i++) {
       esc.push({
@@ -90,6 +142,7 @@
         frase: fraseCelda(celdas[i])
       });
     }
+    pegados.forEach(function (e) { esc.push(e); });
     esc.push({ tipo: 'cierre', nombre: 'Cierre + QR', efecto: 'profundidad', seg: 2.6, frase: fraseCierre() });
     esc._rejilla = EU.pagina.rejilla;
     sel = 0;
@@ -119,6 +172,69 @@
     var e = LADO_MAX / Math.max(F.w, F.h);
     // par: algunos codificadores de MP4 rechazan lados impares
     return { W: Math.round(F.w * e / 2) * 2, H: Math.round(F.h * e / 2) * 2 };
+  }
+
+  /* La hoja NUNCA se deforma: se mete entera dentro de la medida del sitio y
+     lo que sobra se rellena con el fondo de la propia hoja. */
+  function cajaSalida(W, H) {
+    var m = medidas(), ar = m.W / m.H;
+    var w = W, h = Math.round(W / ar);
+    if (h > H) { h = H; w = Math.round(H * ar); }
+    return { x: Math.round((W - w) / 2), y: Math.round((H - h) / 2), w: w, h: h };
+  }
+
+  function fondoSalida(ctx, W, H) {
+    var M = EU.motor, C = M.colores(EU.pagina);
+    ctx.fillStyle = C.fondo; ctx.fillRect(0, 0, W, H);
+    var g = ctx.createRadialGradient(W / 2, H * 0.25, 0, W / 2, H * 0.25, Math.max(W, H) * 0.85);
+    g.addColorStop(0, M.rgba(C.acento, 0.22));
+    g.addColorStop(1, M.rgba(C.acento, 0));
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+
+  /* Pasa el fotograma ya pintado (a la medida de la hoja) al lienzo que se
+     graba (a la medida del sitio), centrado y sin estirar. */
+  function componer(origen, cv) {
+    var ctx = cv.getContext('2d');
+    fondoSalida(ctx, cv.width, cv.height);
+    var c = cajaSalida(cv.width, cv.height);
+    ctx.drawImage(origen, 0, 0, origen.width, origen.height, c.x, c.y, c.w, c.h);
+  }
+
+  /* Una sola mesa para todo el sonido: un vídeo sólo se puede enchufar una
+     vez y se queda atado a la mesa donde se enchufó, así que no se puede
+     abrir una nueva en cada grabación. */
+  function ctxAudio() {
+    if (!acMix) {
+      var A = window.AudioContext || window.webkitAudioContext;
+      if (!A) return null;
+      acMix = new A();
+    }
+    if (acMix.state === 'suspended') { try { acMix.resume(); } catch (e) {} }
+    return acMix;
+  }
+
+  function clipDe(id) {
+    for (var i = 0; i < clips.length; i++) if (clips[i].id === id) return clips[i];
+    return null;
+  }
+
+  function enchufarClip(cl) {
+    if (cl._nodo || cl._roto) return;
+    var ac = ctxAudio();
+    if (!ac) return;
+    try {
+      cl._nodo = ac.createMediaElementSource(cl.el);
+      cl._gan = ac.createGain();
+      cl._gan.gain.value = 1;
+      cl._nodo.connect(cl._gan);
+      cl._gan.connect(ac.destination);
+    } catch (e) { cl._roto = true; }
+  }
+
+  function dimRatio() {
+    var R = RATIOS[ratio];
+    return (!R || !R.W) ? null : { W: R.W, H: R.H };
   }
 
   function preparar() {
@@ -172,6 +288,21 @@
     if (!cv || !lleno) return;
     var m = medidas();
     var mostrar = (cv.id === 'euVideoLienzo');
+    /* Con una medida elegida la previa la enseña de verdad: la hoja se pinta
+       aparte y se compone dentro, igual que hará el archivo. */
+    var dr = mostrar ? dimRatio() : null;
+    if (dr) {
+      if (!previa) previa = document.createElement('canvas');
+      if (previa.width !== m.W || previa.height !== m.H) { previa.width = m.W; previa.height = m.H; }
+      pintarFotograma(t, previa);
+      var cajaR = cv.parentNode.clientWidth - 30;
+      var porAltoR = Math.max(240, window.innerHeight - 300) * (dr.W / dr.H);
+      var anchoR = Math.max(200, Math.min(420, cajaR, porAltoR));
+      var eR = anchoR / dr.W;
+      cv.width = Math.round(dr.W * eR); cv.height = Math.round(dr.H * eR);
+      componer(previa, cv);
+      return;
+    }
     if (mostrar) {
       var caja = cv.parentNode.clientWidth - 30;
       // que quepa entero de alto: el vídeo se juzga viéndolo, no haciendo scroll
@@ -183,6 +314,7 @@
     var ctx = cv.getContext('2d');
     var s = cv.width / m.W;
 
+    if (mostrar) ponerReloj(t);
     var E = escenaEn(t), e = esc[E.i], p = suave(E.p);
     // Cuántos cuadros están YA puestos en la base: los de las escenas
     // anteriores. El de la escena actual es el que está entrando.
@@ -199,10 +331,18 @@
     ctx.scale(s, s);
     aplicarCamara(ctx, m, t, E, p);
 
-    ctx.drawImage(base, 0, 0);
-
-    if (e.tipo === 'cuadro' && rects[e.idx]) dibujarEfecto(ctx, rects[e.idx], e.efecto, p);
+    if (e.tipo === 'clip') {
+      pararOtrosClips(e.clip);
+      pintarClip(ctx, m, e, E.p);
+    } else {
+      pararOtrosClips(null);
+      ctx.drawImage(base, 0, 0);
+      if (e.tipo === 'cuadro' && rects[e.idx]) dibujarEfecto(ctx, rects[e.idx], e.efecto, p, t);
+    }
+    pintarAdornos(ctx, m.W, m.H, t);
+    if (rotulo) ponerRotulo(ctx, m);
     if (subtitulos && e.frase) subtitulo(ctx, m, e.frase);
+    EU.ponerLogo(ctx, m.W, m.H);
     ctx.restore();
   }
 
@@ -226,7 +366,7 @@
   }
 
   /* El cuadro que entra: se recorta de «lleno» y se transforma. */
-  function dibujarEfecto(ctx, r, efecto, p) {
+  function dibujarEfecto(ctx, r, efecto, p, t) {
     var cx = r.x + r.w / 2, cy = r.y + r.h / 2;
     ctx.save();
 
@@ -282,9 +422,134 @@
     } else if (efecto === 'olas') {
       ctx.translate(0, (1 - p) * r.h * 0.6 * Math.sin(p * Math.PI + 1));
       ctx.globalAlpha = p;
+    } else if (efecto === 'latido') {
+      // dos golpes por segundo, como un pulso: entra creciendo y sigue latiendo
+      var ta = (typeof t === 'number' ? t : 0) * 2 % 1;
+      var pul = 1 + 0.055 * Math.exp(-ta * 3.2) * Math.sin(ta * Math.PI * 2);
+      var zl = (0.86 + 0.14 * p) * pul;
+      ctx.translate(cx, cy); ctx.scale(zl, zl); ctx.translate(-cx, -cy);
+      ctx.globalAlpha = p;
+    } else if (efecto === 'petalo') {
+      // se abre desde el tallo: gira y crece desde la esquina de abajo
+      var pie = cy + r.h * 0.42;
+      ctx.translate(cx, pie);
+      ctx.rotate((1 - p) * -0.55);
+      var zp = 0.25 + 0.75 * p;
+      ctx.scale(zp, zp);
+      ctx.translate(-cx, -pie);
+      ctx.globalAlpha = p;
     }
 
     trozo(ctx, r);
+    ctx.restore();
+  }
+
+  /* El clip se pinta a pantalla completa, recortado desde su segundo, con
+     una entrada y una salida en negro para que no dé un salto seco. */
+  function pintarClip(ctx, m, e, p) {
+    var cl = clipDe(e.clip);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, m.W, m.H);
+    if (cl && cl.el && cl.el.readyState >= 2) {
+      llevarClip(cl, (e.ini || 0) + p * (e.seg / ritmo));
+      EU.motor.cubrir(ctx, cl.el, 0, 0, m.W, m.H);
+    } else {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,.55)';
+      ctx.font = '600 ' + (m.W * 0.03).toFixed(1) + "px 'Segoe UI',Arial,sans-serif";
+      ctx.textAlign = 'center';
+      ctx.fillText(cl ? 'Cargando ' + cl.nombre : 'Ese clip ya no está', m.W / 2, m.H / 2);
+      ctx.restore();
+    }
+    var fade = Math.min(1, Math.min(p, 1 - p) / 0.12);
+    if (fade < 1) {
+      ctx.fillStyle = 'rgba(0,0,0,' + (1 - fade).toFixed(3) + ')';
+      ctx.fillRect(0, 0, m.W, m.H);
+    }
+  }
+
+  /* Grabando, el clip corre solo y sólo se corrige si se descuelga. Parado,
+     se busca el fotograma exacto. */
+  function llevarClip(cl, seg) {
+    var el = cl.el;
+    if (!el.duration || !isFinite(el.duration)) return;
+    var d = Math.max(0, Math.min(el.duration - 0.05, seg));
+    try {
+      if (corriendo) {
+        if (el.paused) { el.currentTime = d; el.play(); }
+        else if (Math.abs(el.currentTime - d) > 0.35) el.currentTime = d;
+      } else {
+        if (!el.paused) el.pause();
+        if (Math.abs(el.currentTime - d) > 0.05) el.currentTime = d;
+      }
+    } catch (er) {}
+  }
+
+  function pararOtrosClips(id) {
+    clips.forEach(function (c) {
+      if (c.id !== id && c.el && !c.el.paused) { try { c.el.pause(); } catch (e) {} }
+    });
+  }
+
+  /* Partículas de ambiente. Todo sale de una fórmula con semilla: la misma
+     escena da los mismos pétalos en el mismo sitio, así que lo que se ve en
+     la previa y lo que se graba coinciden exactamente. */
+  function pintarAdornos(ctx, W, H, t) {
+    if (adorno === 'ninguno' || !EU.pagina) return;
+    var M = EU.motor, C = M.colores(EU.pagina);
+    var lado = Math.min(W, H);
+    var az = function (k) { var x = Math.sin(k * 12.9898) * 43758.5453; return x - Math.floor(x); };
+
+    if (adorno === 'brillo') {
+      // un barrido diagonal que cruza la escena cada 3,4 s
+      var per = 3.4, q0 = (t % per) / per;
+      var anchoB = W * 0.30, bx = -anchoB + (W + anchoB * 2) * q0;
+      var g = ctx.createLinearGradient(bx - anchoB, 0, bx + anchoB, H);
+      g.addColorStop(0, M.rgba(C.acento, 0));
+      g.addColorStop(0.5, M.rgba(C.acento, 0.28));
+      g.addColorStop(1, M.rgba(C.acento, 0));
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+      return;
+    }
+
+    var n = adorno === 'chispas' ? 46 : 26;
+    ctx.save();
+    for (var k = 0; k < n; k++) {
+      var s1 = az(k + 1), s2 = az(k + 7.3), s3 = az(k + 19.7);
+      var vel = 0.16 + s2 * 0.26;
+      var tam = lado * (adorno === 'chispas' ? 0.006 + s3 * 0.008 : 0.026 + s3 * 0.030);
+      var px, py, gir, q;
+
+      if (adorno === 'corazones') {
+        q = (t * vel + s1) % 1;
+        py = H * (1.08 - q * 1.16);
+        px = W * s1 + Math.sin(t * 1.5 + k) * W * 0.035;
+        gir = Math.sin(t * 1.2 + k) * 0.22;
+      } else {
+        q = (t * vel + s1) % 1;
+        py = H * (q * 1.16 - 0.08);
+        px = W * s1 + Math.sin(t * 0.9 + k * 1.7) * W * 0.06;
+        gir = t * (0.5 + s2) * (s3 > 0.5 ? 1 : -1);
+      }
+
+      var fade = adorno === 'chispas' ? 0.35 + 0.45 * Math.abs(Math.sin(t * 2.4 + k)) : 0.55;
+      ctx.globalAlpha = fade * (0.5 + s3 * 0.5);
+      ctx.fillStyle = M.rgba(k % 3 === 0 ? C.acento2 : C.acento, 1);
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(gir);
+      if (adorno === 'chispas') {
+        ctx.beginPath(); ctx.arc(0, 0, tam, 0, Math.PI * 2); ctx.fill();
+      } else {
+        var forma = adorno === 'corazones' ? 'corazon' : (adorno === 'rosas' ? 'rosa' : 'petalo');
+        if (M.caminoCelda) { M.caminoCelda(ctx, -tam / 2, -tam / 2, tam, tam, forma, 0); ctx.fill(); }
+        else { ctx.beginPath(); ctx.arc(0, 0, tam / 2, 0, Math.PI * 2); ctx.fill(); }
+      }
+      ctx.restore();
+    }
     ctx.restore();
   }
 
@@ -298,6 +563,28 @@
   }
 
   /* ───────────── Subtítulos ───────────── */
+
+  /* Rótulo de marca: la píldora del motor, arriba a la izquierda, con el
+     nombre del negocio. La misma que ya usa el folleto en su llamada. */
+  function ponerRotulo(ctx, m) {
+    var M = EU.motor, C = M.colores(EU.pagina);
+    var nom = (EU.pagina.cabecera && EU.pagina.cabecera.marca) || (EU.marca && EU.marca.nombre) || '';
+    if (!nom) return;
+    ctx.save();
+    M.pildora(ctx, nom, m.W * 0.05, m.W * 0.05, m.W * 0.026,
+      M.rgba(C.acento, 0.92), C.sobreAcento);
+    ctx.restore();
+  }
+
+  /* La barra de tiempo y el reloj, debajo del lienzo. */
+  function ponerReloj(t) {
+    tActual = Math.max(0, Math.min(total(), t));
+    var b = EU.$('euVideoPos');
+    if (b) b.value = Math.round(tActual / Math.max(0.001, total()) * 1000);
+    var r = EU.$('euVideoReloj');
+    if (r) r.textContent = tActual.toFixed(1).replace('.', ',') + ' / ' +
+      total().toFixed(1).replace('.', ',') + ' s';
+  }
 
   function subtitulo(ctx, m, frase) {
     var t = String(frase || '').trim();
@@ -344,15 +631,29 @@
           '<div class="cab"><b>' + EU.esc(e.nombre) + '</b>' +
           '<span>' + EU.esc(EFECTOS[e.efecto] ? EFECTOS[e.efecto].nombre : e.efecto) + ' · ' + e.seg.toFixed(1) + ' s</span></div>' +
           (i === sel ? '<textarea rows="2" data-frase="' + i + '" placeholder="lo que dice la voz en esta escena">' + EU.esc(e.frase || '') + '</textarea>' +
-            '<div class="fila"><label class="lb">Dura</label><input type="range" min="1" max="8" step="0.1" value="' + e.seg + '" data-seg="' + i + '"></div>' : '') +
+            '<div class="fila"><label class="lb">Dura</label><input type="range" min="1" max="8" step="0.1" value="' + e.seg + '" data-seg="' + i + '"></div>' +
+            (e.tipo === 'clip'
+              ? '<div class="fila"><label class="lb">Empieza en</label>' +
+                '<input type="number" min="0" step="0.5" value="' + (e.ini || 0) + '" data-ini="' + i + '" style="width:64px">' +
+                '<span style="font-size:10.5px;color:var(--tx2)">s del clip</span></div>' +
+                '<div class="tira" style="margin-top:6px">' +
+                '<button class="pill" data-mover="' + i + '" data-dir="-1">↑ Subir</button>' +
+                '<button class="pill" data-mover="' + i + '" data-dir="1">↓ Bajar</button>' +
+                '<button class="pill" data-quitaesc="' + i + '">✕ Quitar</button></div>'
+              : '') : '') +
           '</div>';
       }).join('') +
-      '<div class="ed-barra"><button class="btn btn-g btn-sm" data-guion="1">✍️ Que lo escriba el cerebro</button></div>' +
+      '<div class="tira" style="margin-top:8px">' +
+      '<button class="btn btn-g btn-sm" data-guion="1">✍️ Que lo escriba el cerebro</button>' +
+      '<button class="btn btn-g btn-sm" data-rehacer="1">↺ Rehacer el guion</button>' +
+      '</div>' +
+      '<label class="mini-lbl">Segundos por cuadro · ' + segCuadro().toFixed(2).replace('.', ',') + ' s</label>' +
+      '<input type="range" id="euSegCuadro" min="0.75" max="6" step="0.25" value="' + segCuadro() + '" style="width:100%">' +
       '</div>' +
 
       '<div class="panel"><h3>Efecto de la escena</h3>' +
       ['3D', 'Plana'].map(function (g) {
-        return '<label class="mini-lbl">' + (g === '3D' ? '3D del cuadro · 8' : 'Entradas planas · 4') + '</label>' +
+        return '<label class="mini-lbl">' + (g === '3D' ? '3D del cuadro' : 'Entradas planas') + ' · ' + grupos[g].length + '</label>' +
           '<div class="tira">' + grupos[g].map(function (k) {
             return '<button class="pill' + (esc[sel] && esc[sel].efecto === k ? ' on' : '') + '" data-ef="' + k + '">' +
               EU.esc(EFECTOS[k].nombre) + '</button>';
@@ -366,6 +667,30 @@
       [['0.8', 'Lento'], ['1', 'Normal'], ['1.3', 'Rápido']].map(function (r) {
         return '<button class="pill' + (String(ritmo) === r[0] ? ' on' : '') + '" data-rit="' + r[0] + '">' + r[1] + '</button>';
       }).join('') + '</div>' +
+      '<label class="mini-lbl">Ambiente · se pinta sobre toda la escena</label><div class="tira">' +
+      Object.keys(ADORNOS).map(function (k) {
+        return '<button class="pill' + (adorno === k ? ' on' : '') + '" data-ador="' + k + '">' + EU.esc(ADORNOS[k]) + '</button>';
+      }).join('') + '</div>' +
+      '</div>' +
+
+      '<div class="panel"><h3>Tus clips de vídeo</h3>' +
+      '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:0 0 8px">' +
+      'Se pegan en medio del guion, detrás de la escena que tengas tocada, y se recortan ' +
+      'desde el segundo que tú digas.</p>' +
+      '<input type="file" accept="video/*" multiple id="euClipFile" style="font-size:11px;width:100%">' +
+      (clips.length
+        ? '<div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">' +
+          clips.map(function (c) {
+            return '<div class="fila" style="gap:6px">' +
+              '<b style="flex:1;min-width:0;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+              EU.esc(c.nombre) + '</b>' +
+              '<button class="pill" data-pegar="' + c.id + '">➕ Al guion</button>' +
+              '<button class="pill" data-borraclip="' + c.id + '">✕</button></div>';
+          }).join('') + '</div>' +
+          '<div class="fila" style="margin-top:8px"><input type="checkbox" id="euSonClips"' +
+          (sonClips ? ' checked' : '') + ' style="width:auto">' +
+          '<span style="font-size:11.5px">Meter el sonido de los clips en el vídeo</span></div>'
+        : '') +
       '</div>' +
 
       '<div class="panel"><h3>Sonido</h3>' +
@@ -380,8 +705,64 @@
           o[1] + (pro ? '<span class="badge-pro">PRO</span>' : '') + '</span></div>';
       }).join('') +
       '<div id="euSonCtrl"></div>' +
+      (audio.blob
+        ? '<label class="mini-lbl">Volumen de la voz · ' + Math.round(vozVol * 100) + ' %</label>' +
+          '<input type="range" id="euVozVol" min="0" max="1" step="0.05" value="' + vozVol + '">' +
+          '<button class="btn btn-g btn-sm" style="width:100%;margin-top:6px" id="euVozQuitar">Quitar la voz</button>'
+        : '') +
+      '<label class="mini-lbl">Guion para leer</label>' +
+      '<textarea id="euGuionTexto" rows="4" placeholder="todo lo que dice la voz, seguido" ' +
+      'style="width:100%;background:#0f0f22;border:1px solid var(--bd);color:var(--tx);' +
+      'border-radius:8px;padding:8px;font-size:11.5px;resize:vertical;line-height:1.6;' +
+      'font-family:inherit">' + EU.esc(guionTexto || frasesSeguidas()) + '</textarea>' +
+      '<div class="tira" style="margin-top:6px">' +
+      '<button class="btn btn-g btn-sm" id="euLeerGuion">🗣 Escuchar con la voz del móvil</button>' +
+      '<button class="btn btn-g btn-sm" id="euCallar">■ Callar</button></div>' +
+      '<p style="font-size:10.5px;color:var(--tx2);line-height:1.55;margin:6px 0 0">' +
+      'La voz del navegador sirve para ensayar. Para que salga <b>dentro</b> del archivo, ' +
+      'grábala o súbela arriba.</p>' +
       '<div class="st avi">Con la voz gratis: <b>altavoz, no auriculares</b>, y sitio en silencio — se capta por el micrófono. ' +
       'Y no cambies de pestaña mientras graba.</div>' +
+      '</div>' +
+
+      '<div class="panel"><h3>Música de fondo</h3>' +
+      '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:0 0 8px">Suena por debajo de la voz. '+
+      'Entra dentro del archivo que descargues.</p>' +
+      '<input type="file" accept="audio/*" id="euMusFile" style="font-size:11px;width:100%">' +
+      (musica.blob
+        ? '<div class="st ok" style="margin-top:6px">' + EU.esc(musica.nombre || 'música') + '</div>' +
+          '<label class="mini-lbl">Volumen de la música · ' + Math.round(musica.vol * 100) + ' %</label>' +
+          '<input type="range" min="0" max="1" step="0.05" id="euMusVol" value="' + musica.vol + '">' +
+          '<button class="btn btn-g btn-sm" style="width:100%;margin-top:6px" id="euMusQuitar">Quitar la música</button>'
+        : '') +
+      '</div>' +
+
+      '<div class="panel"><h3>Medida del vídeo</h3>' +
+      '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:0 0 8px">' +
+      'La que sale al pulsar «Grabar el vídeo». La hoja se mete entera dentro y no se estira.</p>' +
+      '<div class="tira">' +
+      Object.keys(RATIOS).map(function (k) {
+        return '<button class="pill' + (ratio === k ? ' on' : '') + '" data-ratio="' + k + '">' +
+          EU.esc(RATIOS[k].nombre) + '</button>';
+      }).join('') + '</div>' +
+      '</div>' +
+
+      '<div class="panel"><h3>Descargar listo para cada sitio</h3>' +
+      '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:0 0 8px">' +
+      'Marca dónde vas a subirlo y sale un archivo por sitio, con su medida y con tu voz y la música dentro. ' +
+      'Se graban en fila, uno detrás de otro.</p>' +
+      '<div style="display:flex;flex-direction:column;gap:5px">' +
+      SALIDAS.map(function (x) {
+        var on = salidas.indexOf(x.id) >= 0;
+        return '<button class="pill' + (on ? ' on' : '') + '" data-salida="' + x.id + '" ' +
+          'style="width:100%;justify-content:flex-start;border-radius:9px;text-align:left">' +
+          '<span style="width:16px;flex:none;text-align:center">' + (on ? '☑' : '☐') + '</span>' +
+          '<span style="flex:1">' + EU.esc(x.n) + '</span>' +
+          '<span style="opacity:.7;font-size:10px">' + EU.esc(x.d) + '</span></button>';
+      }).join('') +
+      '</div>' +
+      '<button class="btn" id="euBtnLote" style="width:100%;margin-top:10px">' +
+      '⬇ Descargar todo lo marcado · ' + salidas.length + '</button>' +
       '</div>' +
 
       '<div class="panel"><h3>Marca en el vídeo</h3>' +
@@ -389,11 +770,15 @@
       '<span style="font-size:11.5px">Subtítulos de la narración</span></div>' +
       '<div class="fila"><input type="checkbox" id="euCierreQR"' + (cierreQR ? ' checked' : '') + ' style="width:auto">' +
       '<span style="font-size:11.5px">Cierre con el QR grande</span></div>' +
+      '<div class="fila"><input type="checkbox" id="euRotulo"' + (rotulo ? ' checked' : '') + ' style="width:auto">' +
+      '<span style="font-size:11.5px">Rótulo con el nombre del negocio</span></div>' +
       '<p style="font-size:11px;color:var(--tx2);line-height:1.6;margin:8px 0 0">' +
       (EU_PLAN.llevaMarcaAgua()
         ? 'Con el plan Free el vídeo lleva marca de agua y dura como mucho ' + EU_PLAN.topeVideo() + ' s.'
         : 'Plan Pro: sin marca de agua, hasta ' + EU_PLAN.topeVideo() + ' s.') + '</p>' +
-      '</div>';
+      '</div>' +
+
+      '<div id="euVideoBandeja"></div>';
 
     cablearPanel(c);
     controlesSonido();
@@ -430,8 +815,119 @@
     c.querySelectorAll('[data-rit]').forEach(function (b) {
       b.onclick = function () { ritmo = parseFloat(b.getAttribute('data-rit')); panel(); duracionTexto(); };
     });
+    c.querySelectorAll('[data-ador]').forEach(function (b) {
+      b.onclick = function () { adorno = b.getAttribute('data-ador'); panel(); pintarEnSel(); };
+    });
+    c.querySelectorAll('[data-ini]').forEach(function (n) {
+      n.oninput = function () {
+        var e = esc[parseInt(n.getAttribute('data-ini'), 10)];
+        if (e) e.ini = Math.max(0, parseFloat(n.value) || 0);
+        pintarEnSel();
+      };
+    });
+    c.querySelectorAll('[data-mover]').forEach(function (b) {
+      b.onclick = function () {
+        var i = parseInt(b.getAttribute('data-mover'), 10);
+        var j = i + parseInt(b.getAttribute('data-dir'), 10);
+        if (j < 0 || j >= esc.length) return;
+        var x = esc[i]; esc[i] = esc[j]; esc[j] = x;
+        sel = j;
+        panel(); pintarEnSel(); duracionTexto();
+      };
+    });
+    c.querySelectorAll('[data-quitaesc]').forEach(function (b) {
+      b.onclick = function () {
+        var i = parseInt(b.getAttribute('data-quitaesc'), 10);
+        esc.splice(i, 1);
+        sel = Math.max(0, Math.min(sel, esc.length - 1));
+        panel(); pintarEnSel(); duracionTexto();
+      };
+    });
+    var cf = EU.$('euClipFile');
+    if (cf) cf.onchange = function (ev) {
+      var fs = ev.target.files || [];
+      for (var i = 0; i < fs.length; i++) (function (f) {
+        var el = document.createElement('video');
+        el.src = URL.createObjectURL(f);
+        el.muted = true;              // hasta que se pida su sonido
+        el.playsInline = true;
+        el.preload = 'auto';
+        el.onloadeddata = function () { panel(); pintarEnSel(); };
+        clips.push({ id: 'c' + Date.now() + '_' + clips.length, nombre: f.name, el: el });
+      })(fs[i]);
+      panel();
+    };
+    c.querySelectorAll('[data-pegar]').forEach(function (b) {
+      b.onclick = function () {
+        var cl = clipDe(b.getAttribute('data-pegar'));
+        if (!cl) return;
+        var i = Math.min(sel + 1, esc.length);
+        esc.splice(i, 0, {
+          tipo: 'clip', clip: cl.id, ini: 0, seg: 4,
+          nombre: '🎬 ' + cl.nombre, efecto: 'deslizar', frase: ''
+        });
+        sel = i;
+        panel(); pintarEnSel(); duracionTexto();
+        EU.toast('Clip pegado en el guion.');
+      };
+    });
+    c.querySelectorAll('[data-borraclip]').forEach(function (b) {
+      b.onclick = function () {
+        var id = b.getAttribute('data-borraclip');
+        esc = esc.filter(function (e) { return e.clip !== id; });
+        clips = clips.filter(function (x) { return x.id !== id; });
+        sel = Math.max(0, Math.min(sel, esc.length - 1));
+        panel(); pintarEnSel(); duracionTexto();
+      };
+    });
+    var sc = EU.$('euSonClips');
+    if (sc) sc.onchange = function () {
+      sonClips = sc.checked;
+      clips.forEach(function (cl) {
+        if (sonClips) { enchufarClip(cl); cl.el.muted = false; }
+        else cl.el.muted = true;
+      });
+    };
     var g = c.querySelector('[data-guion]');
     if (g) g.onclick = guionCerebro;
+    var rh = c.querySelector('[data-rehacer]');
+    if (rh) rh.onclick = function () {
+      if (pararTodo) pararTodo();
+      construirEscenas();
+      preparar();
+      panel(); pintarEnSel(); duracionTexto();
+      EU.toast('Guion rehecho con los cuadros de la hoja.');
+    };
+    var sc2 = EU.$('euSegCuadro');
+    if (sc2) {
+      sc2.oninput = function () {
+        var v = parseFloat(sc2.value);
+        esc.forEach(function (e) { if (e.tipo === 'cuadro') e.seg = v; });
+        duracionTexto();
+      };
+      sc2.onchange = function () { panel(); pintarEnSel(); };
+    }
+    var ro = EU.$('euRotulo');
+    if (ro) ro.onchange = function () { rotulo = ro.checked; pintarEnSel(); };
+    var vv = EU.$('euVozVol');
+    if (vv) vv.oninput = function () { vozVol = parseFloat(vv.value); };
+    var vq = EU.$('euVozQuitar');
+    if (vq) vq.onclick = function () {
+      audio.blob = null; audio.segundos = 0; audio.nombre = '';
+      panel();
+      EU.toast('Voz quitada.');
+    };
+    var gt = EU.$('euGuionTexto');
+    if (gt) gt.oninput = function () { guionTexto = gt.value; };
+    var lg = EU.$('euLeerGuion');
+    if (lg) lg.onclick = function () {
+      var t = (guionTexto || frasesSeguidas()).trim();
+      if (!t) return EU.toast('El guion está vacío.');
+      if (!window.EU_VOZ || !EU_VOZ.disponible) return EU.toast('Este navegador no ofrece voces instaladas.');
+      EU_VOZ.hablar(t, null);
+    };
+    var cl = EU.$('euCallar');
+    if (cl) cl.onclick = function () { if (window.EU_VOZ) EU_VOZ.callar(); };
     c.querySelectorAll('input[name=euSon]').forEach(function (r) {
       r.onchange = function () {
         if (r.value === 'estudio' && !EU_PLAN.puede('vozEstudio')) {
@@ -445,14 +941,54 @@
         controlesSonido();
       };
     });
+    var mf = EU.$('euMusFile');
+    if (mf) mf.onchange = function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      musica.blob = f; musica.nombre = f.name;
+      panel();
+    };
+    var mv = EU.$('euMusVol');
+    if (mv) mv.oninput = function () { musica.vol = parseFloat(mv.value); };
+    var mq = EU.$('euMusQuitar');
+    if (mq) mq.onclick = function () { musica.blob = null; musica.nombre = ''; panel(); };
+    c.querySelectorAll('[data-ratio]').forEach(function (b) {
+      b.onclick = function () { ratio = b.getAttribute('data-ratio'); panel(); pintarEnSel(); };
+    });
+    c.querySelectorAll('[data-salida]').forEach(function (b) {
+      b.onclick = function () {
+        var id = b.getAttribute('data-salida'), k = salidas.indexOf(id);
+        if (k >= 0) salidas.splice(k, 1); else salidas.push(id);
+        panel();
+      };
+    });
+    var lote = EU.$('euBtnLote');
+    if (lote) lote.onclick = function () { V.exportarLote(); };
     var s = EU.$('euSubs'); if (s) s.onchange = function () { subtitulos = s.checked; pintarEnSel(); };
     var q = EU.$('euCierreQR'); if (q) q.onchange = function () { cierreQR = q.checked; };
+    /* La bandeja se vuelve a montar en cada repintado del panel: hay que
+       soltar la suscripción anterior o se quedan oyentes sobre nodos muertos. */
+    var hb = EU.$('euVideoBandeja');
+    if (hb && window.B6Bandeja) {
+      if (desBandeja) { try { desBandeja(); } catch (e) {} }
+      desBandeja = B6Bandeja.panel(hb, { origen: 'video' }, 'video');
+    }
   }
 
   function pintarEnSel() {
     var t = 0;
     for (var i = 0; i < sel; i++) t += esc[i].seg / ritmo;
     pintarFotograma(t + (esc[sel] ? esc[sel].seg / ritmo * 0.75 : 0));
+  }
+
+  /* Los segundos que dura cada cuadro. Si están todas iguales manda ese
+     número; si alguien ha tocado una a mano, se enseña la media. */
+  function segCuadro() {
+    var c = esc.filter(function (e) { return e.tipo === 'cuadro'; });
+    if (!c.length) return 2.5;
+    var t = 0;
+    c.forEach(function (e) { t += e.seg; });
+    return Math.round(t / c.length * 100) / 100;
   }
 
   function duracionTexto() {
@@ -462,11 +998,17 @@
     e.innerHTML = t.toFixed(1) + ' s' + (t > tope ? ' <b style="color:var(--warn)">· tope ' + tope + ' s</b>' : '');
   }
 
+  /* Todas las frases del guion, seguidas: es lo que se lee de un tirón. */
+  function frasesSeguidas() {
+    return esc.map(function (e) { return (e.frase || '').trim(); })
+      .filter(Boolean).join(' ');
+  }
+
   function guionCerebro() {
     esc.forEach(function (e) {
       if (e.tipo === 'portada') e.frase = fraseCabecera();
       else if (e.tipo === 'cierre') e.frase = fraseCierre();
-      else e.frase = fraseCelda(EU.pagina.celdas[e.idx] || {});
+      else if (e.tipo === 'cuadro') e.frase = fraseCelda(EU.pagina.celdas[e.idx] || {});
     });
     panel();
     EU.toast('Guion escrito con los textos de tu folleto.');
@@ -600,9 +1142,22 @@
   /* ───────────── Vista previa ───────────── */
 
   V.previa = function () {
-    if (corriendo) { if (pararTodo) pararTodo(); return; }
+    var b = EU.$('euBtnPrevia');
+    if (corriendo) {
+      if (pararTodo) pararTodo();
+      if (b) b.textContent = '▶ Ver sin sonido';
+      return;
+    }
     preparar();
-    correr(null, function () {});
+    if (b) b.textContent = '■ Parar';
+    correr(null, function () { if (b) b.textContent = '▶ Ver sin sonido'; });
+  };
+
+  /* Mover la barra de tiempo: se pinta ese instante exacto. */
+  V.irA = function (frac) {
+    if (corriendo) { if (pararTodo) pararTodo(); }
+    preparar();
+    pintarFotograma(Math.max(0, Math.min(0.999, frac)) * total());
   };
 
   function correr(alFotograma, alAcabar) {
@@ -627,102 +1182,209 @@
 
   /* ───────────── Grabar ───────────── */
 
-  V.grabar = function () {
+  V.grabar = function (opts) {
+    opts = opts || {};
+    var fallar = function (msg) {
+      dimSalida = null;
+      EU.estado('euVideoEstado', msg, 'err');
+      if (opts.alFallar) opts.alFallar();
+    };
     if (corriendo) { if (pararTodo) pararTodo(); return; }
-    if (!EU_PLAN.exigeSesion()) return;
+    if (!EU_PLAN.exigeSesion()) { if (opts.alFallar) opts.alFallar(); return; }
 
     var tope = EU_PLAN.topeVideo();
     if (total() > tope) {
       EU_PLAN.muro('video', 'Tu vídeo dura ' + total().toFixed(1) + ' s. Acorta las escenas o pasa a Pro.');
+      if (opts.alFallar) opts.alFallar();
       return;
     }
     if (!window.MediaRecorder || !document.createElement('canvas').captureStream) {
-      EU.estado('euVideoEstado', 'Este navegador no sabe grabar vídeo. Prueba en Chrome.', 'err');
+      fallar('Este navegador no sabe grabar vídeo. Prueba en Chrome.');
       return;
     }
 
     preparar();
     var m = medidas();
+    /* Sin lote se graba tal cual, a la medida de la hoja. Con lote el lienzo
+       que se graba lleva la medida del sitio y la hoja se compone dentro. */
+    var out = dimSalida || dimRatio() || m;
     var cv = document.createElement('canvas');
-    cv.width = m.W; cv.height = m.H;
+    cv.width = out.W; cv.height = out.H;
+    var interno = (out !== m) ? document.createElement('canvas') : null;
+    if (interno) { interno.width = m.W; interno.height = m.H; }
+
+    /* El primer fotograma tiene que estar YA pintado: hay navegadores que fijan
+       la medida del vídeo con lo que encuentran en el lienzo al arrancar. */
+    if (interno) { pintarFotograma(0, interno); componer(interno, cv); }
+    else pintarFotograma(0, cv);
 
     var flujo = new MediaStream();
     cv.captureStream(30).getVideoTracks().forEach(function (t) { flujo.addTrack(t); });
 
-    var ac = null, fuente = null;
+    var ac = null, fuente = null, dest = null;
     var seguir = function () { arranca(); };
+    var ganClips = [];
+    var conClips = !!(sonClips && clips.length);
 
-    if (audio.blob) {
-      ac = new (window.AudioContext || window.webkitAudioContext)();
-      audio.blob.arrayBuffer().then(function (ab) { return ac.decodeAudioData(ab); })
-        .then(function (buf) {
-          var dest = ac.createMediaStreamDestination();
-          fuente = ac.createBufferSource();
-          fuente.buffer = buf;
-          fuente.connect(dest);
-          fuente.connect(ac.destination);
-          dest.stream.getAudioTracks().forEach(function (t) { flujo.addTrack(t); });
-          seguir();
-        })
-        .catch(function () {
-          EU.estado('euVideoEstado', 'No se pudo leer el audio: el vídeo saldrá sin sonido.', 'avi');
-          seguir();
-        });
-    } else { seguir(); }
+    /* La voz, la música y el sonido de los clips se mezclan en un mismo
+       destino, cada uno con su ganancia: la música por debajo para que la
+       palabra se entienda. Si sólo hay una, suena esa. */
+    var fuenteMus = null;
+    if (audio.blob || musica.blob || conClips) {
+      ac = ctxAudio();
+    }
+    if (!ac) { seguir(); } else {
+      dest = ac.createMediaStreamDestination();
+      if (conClips) clips.forEach(function (cl) {
+        enchufarClip(cl);
+        if (cl._gan) { try { cl._gan.connect(dest); ganClips.push(cl._gan); } catch (e) {} }
+      });
+      var leer = function (blob) {
+        return blob.arrayBuffer().then(function (ab) { return ac.decodeAudioData(ab); });
+      };
+      var pistas = [];
+      if (audio.blob) pistas.push(leer(audio.blob).then(function (buf) {
+        var g = ac.createGain(); g.gain.value = vozVol;
+        fuente = ac.createBufferSource(); fuente.buffer = buf;
+        fuente.connect(g); g.connect(dest); g.connect(ac.destination);
+      }));
+      if (musica.blob) pistas.push(leer(musica.blob).then(function (buf) {
+        var g = ac.createGain(); g.gain.value = musica.vol;
+        fuenteMus = ac.createBufferSource(); fuenteMus.buffer = buf;
+        fuenteMus.loop = true;                 // la música se repite hasta el final
+        fuenteMus.connect(g); g.connect(dest); g.connect(ac.destination);
+      }));
+      Promise.all(pistas).then(function () {
+        dest.stream.getAudioTracks().forEach(function (t) { flujo.addTrack(t); });
+        seguir();
+      }).catch(function () {
+        EU.estado('euVideoEstado', 'No se pudo leer el audio: el vídeo saldrá sin sonido.', 'avi');
+        seguir();
+      });
+    }
 
     function arranca() {
       var tipo = '';
-      ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'].some(function (x) {
+      /* Con sonido hay que exigir un formato que nombre su códec de audio: hay
+         navegadores que dicen sí al mp4 genérico y luego entregan el vídeo mudo. */
+      var hayAudio = !!(audio.blob || musica.blob || conClips);
+      (hayAudio
+        ? ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+        : ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm']
+      ).some(function (x) {
         if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(x)) { tipo = x; return true; }
         return false;
       });
       var rec;
       try { rec = new MediaRecorder(flujo, tipo ? { mimeType: tipo, videoBitsPerSecond: 4500000 } : undefined); }
-      catch (e) { EU.estado('euVideoEstado', 'No se pudo iniciar la grabación: ' + EU.esc(e.message || e), 'err'); return; }
+      catch (e) { fallar('No se pudo iniciar la grabación: ' + EU.esc(e.message || e)); return; }
 
       var trozos = [];
       rec.ondataavailable = function (e) { if (e.data && e.data.size) trozos.push(e.data); };
       rec.onstop = function () {
         try { if (fuente) fuente.stop(); } catch (e) {}
-        try { if (ac) ac.close(); } catch (e) {}
+        try { if (fuenteMus) fuenteMus.stop(); } catch (e) {}
+        // la mesa NO se cierra: los clips viven enchufados a ella
+        ganClips.forEach(function (g) { try { g.disconnect(dest); } catch (e) {} });
+        pararOtrosClips(null);
         var mp4 = /mp4/.test(rec.mimeType || tipo || '');
         var b = new Blob(trozos, { type: mp4 ? 'video/mp4' : 'video/webm' });
-        EU_EDITOR.bajar(b, EU_EDITOR.limpio(EU.marca.nombre || 'video') + (mp4 ? '.mp4' : '.webm'));
-        EU.estado('euVideoEstado',
-          'Vídeo descargado' + (mp4 ? '.' : ' en formato WebM: este navegador no sabe hacer MP4. Se ve en el ordenador y en Android; para iPhone conviértelo.') +
-          ' Pesa ' + Math.round(b.size / 1024) + ' KB.', mp4 ? 'ok' : 'avi');
+        var nom = opts.nombre || EU_EDITOR.limpio(EU.marca.nombre || 'video');
+        var arch = nom + (mp4 ? '.mp4' : '.webm');
+        EU_EDITOR.bajar(b, arch);
+        if (window.B6Bandeja) {
+          var ub = URL.createObjectURL(b);
+          B6Bandeja.apuntar(ub, arch, 'video');
+          setTimeout(function () { URL.revokeObjectURL(ub); }, 10000);
+        }
+        if (!opts.alTerminar) {
+          EU.estado('euVideoEstado',
+            'Vídeo descargado' + (mp4 ? '.' : ' en formato WebM: este navegador no sabe hacer MP4. Se ve en el ordenador y en Android; para iPhone conviértelo.') +
+            ' Pesa ' + Math.round(b.size / 1024) + ' KB.', mp4 ? 'ok' : 'avi');
+        }
         EU.$('euBtnGrabar').textContent = '⏺ Grabar el vídeo';
+        if (cancelado && opts.alFallar) opts.alFallar();
+        else if (opts.alTerminar) opts.alTerminar();
       };
 
       EU.$('euBtnGrabar').textContent = '■ Parar';
-      EU.estado('euVideoEstado',
-        'Grabando… tarda lo mismo que dura el vídeo (' + total().toFixed(1) + ' s). ' +
-        '<b>No cambies de pestaña</b>.', 'proc');
+      EU.estado('euVideoEstado', opts.aviso ||
+        ('Grabando… tarda lo mismo que dura el vídeo (' + total().toFixed(1) + ' s). ' +
+         '<b>No cambies de pestaña</b>.'), 'proc');
 
       rec.start();
       if (fuente) { try { fuente.start(); } catch (e) {} }
+      if (fuenteMus) { try { fuenteMus.start(); } catch (e) {} }
 
       var ctxOff = cv.getContext('2d');
       var t0 = performance.now(), cancelado = false;
       corriendo = true;
       pararTodo = function () { cancelado = true; };
 
+      var salida = function (t) {
+        if (interno) { pintarFotograma(t, interno); componer(interno, cv); }
+        else pintarFotograma(t, cv);
+        EU_PLAN.marcaAgua(ctxOff, out.W, out.H);
+      };
+
       (function paso() {
         var t = (performance.now() - t0) / 1000;
         if (cancelado || t >= total()) {
-          pintarFotograma(Math.min(t, total() - 0.001), cv);
-          EU_PLAN.marcaAgua(ctxOff, m.W, m.H);
+          salida(Math.min(t, total() - 0.001));
           corriendo = false; pararTodo = null;
           setTimeout(function () { try { rec.stop(); } catch (e) {} }, 120);
           return;
         }
-        pintarFotograma(t, cv);
-        EU_PLAN.marcaAgua(ctxOff, m.W, m.H);
+        salida(t);
         pintarFotograma(t);           // espejo en pantalla, para verlo salir
         requestAnimationFrame(paso);
       })();
     }
   };
+
+  /* Descarga en fila un archivo por cada sitio marcado, cada uno con su
+     medida propia y el sonido ya dentro. */
+  V.exportarLote = function () {
+    if (corriendo) { EU.estado('euVideoEstado', 'Espera a que termine la grabación que está en marcha.', 'avi'); return; }
+    var defs = salidas.map(function (id) {
+      return SALIDAS.filter(function (x) { return x.id === id; })[0];
+    }).filter(Boolean);
+    if (!defs.length) {
+      EU.estado('euVideoEstado', 'Marca al menos un sitio donde vas a subirlo.', 'avi');
+      return;
+    }
+    var limpiar = function () {
+      dimSalida = null;
+      try { preparar(); pintarEnSel(); } catch (e) {}
+    };
+    var paso = function (k) {
+      if (k >= defs.length) {
+        limpiar();
+        EU.estado('euVideoEstado',
+          defs.length + (defs.length === 1 ? ' vídeo descargado' : ' vídeos descargados') +
+          ', cada uno con su medida y con tu voz y la música dentro.', 'ok');
+        return;
+      }
+      var d = defs[k];
+      dimSalida = { W: d.w, H: d.h };
+      V.grabar({
+        nombre: EU_EDITOR.limpio(EU.marca.nombre || 'video') + '-' + d.f,
+        aviso: 'Grabando ' + EU.esc(d.d) + ' (' + (k + 1) + ' de ' + defs.length + '). <b>No cambies de pestaña</b>.',
+        alTerminar: function () { setTimeout(function () { paso(k + 1); }, 1000); },
+        // si un sitio no se puede grabar, se corta el lote y el estudio vuelve
+        // a su medida normal, no se queda clavado en la del lote
+        alFallar: limpiar
+      });
+    };
+    paso(0);
+  };
+
+  /* La barra de tiempo se cablea una vez: vive fuera del panel. */
+  (function () {
+    var b = document.getElementById('euVideoPos');
+    if (!b) return;
+    b.oninput = function () { V.irA(parseInt(b.value, 10) / 1000); };
+  })();
 
   window.addEventListener('resize', function () { if (EU.pantalla === 'video' && !corriendo) pintarEnSel(); });
   window.addEventListener('pagehide', function () { if (pararTodo) pararTodo(); });

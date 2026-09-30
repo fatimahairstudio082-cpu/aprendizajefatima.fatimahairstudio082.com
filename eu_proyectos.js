@@ -23,6 +23,7 @@
   window._EU_PROYECTOS_LOADED = true;
 
   var P = {};
+  var ultimos = [];        // los proyectos leídos, para no volver a Firestore
   window.EU_PROYECTOS = P;
 
   function col() {
@@ -124,7 +125,11 @@
           (tope ? ' · plan Free: ' + tope + ' como mucho' : ' · sin límite')
         : 'Todavía no has guardado ninguno. Diseña uno y pulsa «Guardar».', arr.length ? 'ok' : 'avi');
 
-      caja.innerHTML = arr.map(function (v) {
+      ultimos = arr;
+      caja.innerHTML = (arr.length
+        ? '<div class="tira" style="width:100%;margin-bottom:10px">' +
+          '<button class="btn btn-sm" id="euMiosZip">🗜 Todos en un ZIP</button></div>'
+        : '') + arr.map(function (v) {
         return '<div class="proy-tarj">' +
           (v.mini ? '<img src="' + v.mini + '" style="display:block;width:100%">' : '') +
           '<div class="pie"><b style="font-size:12px">' + EU.esc(v.nombre || 'Sin nombre') + '</b>' +
@@ -133,6 +138,7 @@
           '<div class="tira">' +
           '<button class="btn btn-sm" data-abrir="' + v._id + '">Abrir</button>' +
           '<button class="btn btn-g btn-sm" data-dup="' + v._id + '">Duplicar</button>' +
+          '<button class="btn btn-g btn-sm" data-png="' + v._id + '">↓ PNG</button>' +
           '<button class="btn btn-g btn-sm" data-borrar="' + v._id + '">Borrar</button>' +
           '</div></div></div>';
       }).join('');
@@ -146,6 +152,17 @@
       caja.querySelectorAll('[data-borrar]').forEach(function (b) {
         b.onclick = function () { borrar(b.getAttribute('data-borrar')); };
       });
+      caja.querySelectorAll('[data-png]').forEach(function (b) {
+        b.onclick = function () { bajarUno(b.getAttribute('data-png')); };
+      });
+      var z = EU.$('euMiosZip');
+      if (z) z.onclick = zipTodos;
+
+      var hb = EU.$('euMiosBandeja');
+      if (hb && window.B6Bandeja) {
+        if (P._des) { try { P._des(); } catch (e) {} }
+        P._des = B6Bandeja.panel(hb, { origen: 'mios' }, 'mis-proyectos');
+      }
     }).catch(function (e) {
       caja.innerHTML = '';
       EU.estado('euMiosEstado',
@@ -158,6 +175,62 @@
     if (!iso) return '';
     try { return new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }); }
     catch (e) { return String(iso).slice(0, 10); }
+  }
+
+  /* La hoja de un proyecto guardado, a tamaño de imprenta. El documento
+     guarda la página entera, así que se puede repintar sin abrirla. */
+  function hojaDe(v) {
+    var M = EU.motor;
+    var pag = v.pagina;
+    if (!M || !pag) return null;
+    var F = M.FORMATOS[pag.formato] || M.FORMATOS.a4v;
+    var cv = document.createElement('canvas');
+    cv.width = F.w; cv.height = F.h;
+    var ctx = cv.getContext('2d');
+    M.pintar(ctx, F.w, F.h, pag, { nPagina: 1 });
+    EU.ponerLogo(ctx, F.w, F.h);
+    EU_PLAN.marcaAgua(ctx, F.w, F.h);
+    return cv;
+  }
+
+  function limpioNombre(t) {
+    return String(t || 'folleto').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'folleto';
+  }
+
+  function bajarUno(id) {
+    var v = ultimos.filter(function (x) { return x._id === id; })[0];
+    var cv = v && hojaDe(v);
+    if (!cv) return EU.toast('Ese proyecto no se puede repintar.');
+    cv.toBlob(function (b) {
+      if (!b) return EU.toast('El navegador no pudo generar la imagen.');
+      EU_EDITOR.bajar(b, limpioNombre(v.nombre) + '.png');
+      if (window.B6Bandeja) {
+        var u = URL.createObjectURL(b);
+        B6Bandeja.apuntar(u, limpioNombre(v.nombre) + '.png', 'mios');
+        setTimeout(function () { URL.revokeObjectURL(u); }, 10000);
+      }
+    }, 'image/png');
+  }
+
+  /* Todos los proyectos en un ZIP: se repintan uno a uno a tamaño de
+     imprenta y se pasan a la bandeja, que es quien sabe armar el ZIP. */
+  function zipTodos() {
+    if (!ultimos.length) return EU.toast('No hay proyectos que bajar.');
+    if (!EU_PLAN.exigeSesion()) return;
+    if (!window.B6Bandeja) return EU.toast('La bandeja no está cargada.');
+    var n = 0;
+    ultimos.forEach(function (v, i) {
+      var cv = hojaDe(v);
+      if (!cv) return;
+      B6Bandeja.apuntar(cv.toDataURL('image/png'),
+        String(i + 1).padStart(2, '0') + '-' + limpioNombre(v.nombre) + '.png', 'mios');
+      n++;
+    });
+    if (!n) return EU.toast('Ninguno de tus proyectos se pudo repintar.');
+    EU.estado('euMiosEstado', 'Preparando el ZIP con ' + n +
+      (n === 1 ? ' proyecto…' : ' proyectos…'), 'proc');
+    setTimeout(function () { B6Bandeja.zip('mis-proyectos', { origen: 'mios' }); }, 900);
   }
 
   function abrir(id, duplicar) {
