@@ -203,7 +203,9 @@
     }
     if (forma === 'ojiva') {
       // Arco apuntado que LLENA el cuadro: vértice arriba, hombros al ancho
-      // completo a media altura y base redondeada.
+      // completo a media altura y base redondeada. La versión anterior eran dos
+      // cuádricas cruzadas que daban una lente de 0,46 del ancho — una astilla
+      // donde no cabía ni un título de dos palabras.
       var rb = Math.min(w, h) * 0.20, cxo = x + w * 0.5;
       ctx.beginPath();
       ctx.moveTo(cxo, y);
@@ -255,7 +257,8 @@
     }
     if (forma === 'flor') {
       // Seis pétalos redondos: cada uno es un bezier de valle a valle con los
-      // dos controles abiertos sobre la punta.
+      // dos controles abiertos sobre la punta. Con una polilínea polar salía
+      // una estrella; los senos hay que redondearlos, no pinchar.
       var n = 6, rx2 = w / 2, ry2 = h / 2, val = 0.52, pun = 1.30;
       var paso = Math.PI * 2 / n, sep = paso * 0.30;
       var pt = function (ang, rad) {
@@ -281,7 +284,7 @@
       ctx.closePath(); return;
     }
     if (forma === 'gota') {
-      // Gota: punta arriba, panza abajo.
+      // Gota: punta arriba, panza abajo. El texto baja (txt negativo).
       var mx = x + w * 0.5;
       ctx.beginPath();
       ctx.moveTo(mx, y);
@@ -305,7 +308,7 @@
   /* ── Caja útil medida sobre la silueta ───────────────────────────────────
      Antes cada forma llevaba su rectángulo útil escrito a mano y siempre se
      quedaba corto o largo. Ahora se mide: se traza la silueta en un lienzo de
-     apoyo, se muestrean 34 alturas buscando en cada una el tramo interior más
+     apoyo, se muestrean 24 alturas buscando en cada una el tramo interior más
      ancho, y se queda el rectángulo inscrito de mayor área. Se guarda en caché
      por forma y proporción, así que el vídeo no paga el cálculo cada cuadro. */
 
@@ -356,19 +359,24 @@
         x0 = Math.max(x0, filas[b].x0); x1 = Math.min(x1, filas[b].x1);
         var an = x1 - x0;
         if (an <= W * 0.30) break;
-        /* El rectángulo llega justo hasta los CENTROS de las filas medidas: el
-           ancho sólo está comprobado ahí, y en una silueta curva un poco más
-           arriba la curva ya se ha cerrado. */
+        /* El rectángulo llega justo hasta los CENTROS de las filas medidas, no
+           hasta sus bordes: el ancho sólo está comprobado en esos centros, y
+           en una silueta curva medio pelÚño más arriba la curva ya se ha
+           cerrado. Estirarlo media fila era lo que dejaba la primera línea
+           fuera del recorte en formas aplanadas como la hoja. */
         var y0 = filas[a].y, y1 = filas[b].y;
         if (y1 - y0 < H * 0.06) continue;
+        /* El bloque de texto se escribe abajo, así que sólo compiten las bandas
+           que llegan al 55% inferior. Si no, la punta estrecha de una ojiva o
+           una rosa gana por alta y el título sale truncado con puntos. */
         /* La banda más ancha se apunta ANTES del filtro de altura: en la rosa y
            la flor lo más ancho está a media altura, y ahí es donde hay que
            poder caer si el título no cabe abajo. */
         if (!masAncha || an > masAncha.w + 0.001) masAncha = { x: x0, y: y0, w: an, h: y1 - y0 };
-        /* El bloque de texto se escribe abajo, así que sólo compiten las bandas
-           que llegan al 55% inferior. */
         if (y1 < H * 0.55) continue;
-        // El ancho manda con fuerza: una línea necesita ancho antes que alto.
+        // El ancho manda con fuerza: una línea necesita ancho antes que alto, y
+        // un título entero en una banda baja se lee mejor que dos líneas
+        // truncadas en una banda alta y estrecha.
         var punt = Math.pow(an, 2.5) * (y1 - y0);
         if (!mejor || punt > mejor.area) mejor = { area: punt, x: x0, y: y0, w: an, h: y1 - y0 };
       }
@@ -453,13 +461,14 @@
       t = Math.max(minTam, t - Math.max(0.5, t * 0.06));
     }
     // sólo se recorta si de verdad sobra texto (antes ponía «…» aunque cupiese)
-    if (lineas.length > maxLineas) {
+    var cortado = lineas.length > maxLineas;
+    if (cortado) {
       lineas = lineas.slice(0, maxLineas);
       var u = lineas[maxLineas - 1];
       while (u.length > 4 && ctx.measureText(u + '…').width > maxW) u = u.slice(0, -1);
       lineas[maxLineas - 1] = u + '…';
     }
-    return { lineas: lineas, tam: t };
+    return { lineas: lineas, tam: t, cortado: cortado };
   }
 
   function hex2rgb(h) {
@@ -821,6 +830,9 @@
       pildora(ctx, celda.etiqueta, cx0, r.y + CJ[1] * r.h + pad * 0.85, tamE, C.acento2, C.claro ? '#1a1a1a' : '#FFFFFF');
     }
 
+    // descripción · si no cabe se recorta con puntos suspensivos, nunca se
+    // encoge hasta ser ilegible: más vale media frase legible que dos ilegibles
+
     ctx.restore();
 
     if (ad.filetes) {
@@ -929,10 +941,6 @@
   function pintar(ctx, W, H, pag, op) {
     op = op || {};
     pag = pag || {};
-    /* El troquel puede venir en las opciones (como en el proyecto de diseño)
-       o puesto en la propia página, que es como lo guarda este repositorio.
-       Las opciones mandan; la página es el respaldo. */
-    if (pag.formaCelda && !op.formaCelda) op = Object.assign({}, op, { formaCelda: pag.formaCelda });
     var C = colores(pag);
     garantizarFuentes();
     fijarFuentes(C);

@@ -362,7 +362,8 @@
     g.fillRect(x, y, mm(3), mm(14));
     g.font = '700 ' + mm(4.6) + 'px ' + F;
     g.fillStyle = TINTA;
-    g.fillText((pag.negocio || 'Tu negocio').toUpperCase(), x + mm(6), y + mm(5.4));
+    /* si el nombre del negocio se ha borrado, no se imprime nada */
+    if (pag.negocio) g.fillText(String(pag.negocio).toUpperCase(), x + mm(6), y + mm(5.4));
     g.font = '700 ' + mm(7) + 'px ' + F;
     g.fillText(pag.titulo, x + mm(6), y + mm(13.4));
 

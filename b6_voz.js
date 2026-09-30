@@ -197,9 +197,15 @@
 
   var vozB6 = {
     vivo: false,
+    /* Captura del sonido de la propia pestaña: es la única vía por la que la
+       voz sintética del navegador puede quedar dentro del archivo de vídeo. */
+    pestana: false,
     nota: '',
     /* Guion que las pantallas dejan aquí antes de exportar: [{texto, clave}] */
     guion: [],
+    /* Clave del clip suelto: las pantallas que narran un bloque entero
+       (tríptico, carrusel, maqueta) graban una sola toma aquí. */
+    clave: 'suelto',
     suscritos: []
   };
 
@@ -210,6 +216,9 @@
   function clavesConAudio() {
     return (vozB6.guion || []).filter(function (p) { return p.clave && audios[p.clave]; });
   }
+
+  /* El clip suelto de la pantalla actual, si la persona lo ha grabado o subido. */
+  function sueltoHay() { return !!audios[vozB6.clave]; }
 
   function mime(conAudio) {
     var L = conAudio
@@ -229,6 +238,33 @@
     vozB6.nota = '';
     var AC = window.AudioContext || window.webkitAudioContext;
 
+    /* Sonido de la pestaña: el navegador reproduce la voz de Google por el
+       altavoz y aquí se toma esa misma pista, así que entra en el archivo sin
+       micrófono y sin ruido de la habitación. Hay que compartir «esta
+       pestaña» y marcar la casilla de audio. */
+    if (vozB6.pestana) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        vozB6.nota = 'Este navegador no deja capturar el sonido de la pestaña.';
+        return Promise.resolve(null);
+      }
+      return navigator.mediaDevices.getDisplayMedia({ video: true, audio: true }).then(function (st) {
+        var at = (st.getAudioTracks() || [])[0];
+        st.getVideoTracks().forEach(function (t) { try { t.stop(); } catch (e) { } });
+        if (!at) {
+          vozB6.nota = 'No has compartido el sonido. Vuelve a intentarlo eligiendo «Esta pestaña» y marcando «Compartir audio de la pestaña».';
+          return null;
+        }
+        return {
+          track: at, directo: false, pestana: true,
+          empezar: function () { narrar(vozB6.guion || []); },
+          parar: function () { callar(); try { at.stop(); } catch (e) { } }
+        };
+      }).catch(function () {
+        vozB6.nota = 'No se ha podido capturar el sonido de la pestaña.';
+        return null;
+      });
+    }
+
     if (vozB6.vivo) {
       if (!navigator.mediaDevices) {
         vozB6.nota = 'Este navegador no da acceso al micrófono.';
@@ -243,8 +279,26 @@
     }
 
     var conAudio = clavesConAudio();
+
+    /* Una sola toma para toda la pantalla: se enchufa entera y ya está. */
+    if (!conAudio.length && sueltoHay() && AC) {
+      var ac1 = new AC();
+      var d1 = ac1.createMediaStreamDestination();
+      var a1 = new Audio(audios[vozB6.clave]);
+      a1.crossOrigin = 'anonymous';
+      try { ac1.createMediaElementSource(a1).connect(d1); } catch (e) { }
+      return Promise.resolve({
+        track: d1.stream.getAudioTracks()[0], directo: false,
+        empezar: function () {
+          if (ac1.state === 'suspended') ac1.resume().catch(function () { });
+          a1.play().catch(function () { });
+        },
+        parar: function () { try { a1.pause(); } catch (e) { } }
+      });
+    }
+
     if (!conAudio.length || !AC) {
-      vozB6.nota = 'La voz del navegador no se puede meter dentro del archivo. Graba tu voz por pasos, o activa «narrar en directo», y quedará incrustada.';
+      vozB6.nota = 'La voz del navegador no se puede meter dentro del archivo por sí sola. Activa «meter la voz de Google» y comparte el sonido de la pestaña, graba tu voz, o narra en directo por micrófono.';
       return Promise.resolve(null);
     }
 
@@ -284,13 +338,53 @@
 
   window.B6Voz = {
     get vivo() { return vozB6.vivo; },
-    set vivo(v) { vozB6.vivo = !!v; avisarVoz(); },
+    set vivo(v) { vozB6.vivo = !!v; if (v) vozB6.pestana = false; avisarVoz(); },
+    setVivo: function (v) { vozB6.vivo = !!v; if (v) vozB6.pestana = false; avisarVoz(); },
+    get pestana() { return vozB6.pestana; },
+    setPestana: function (v) { vozB6.pestana = !!v; if (v) vozB6.vivo = false; avisarVoz(); },
     get nota() { return vozB6.nota; },
     /* Las pantallas dejan aquí el guion del vídeo que van a exportar. */
     ponerGuion: function (pasos) { vozB6.guion = (pasos || []).slice(); },
     guion: function () { return vozB6.guion.slice(); },
-    hay: function () { return clavesConAudio().length > 0; },
+    /* Y aquí la clave de la toma única de esta pantalla. */
+    ponerClave: function (c) { vozB6.clave = c || 'suelto'; },
+    clave: function () { return vozB6.clave; },
+    hay: function () { return clavesConAudio().length > 0 || sueltoHay(); },
     cuantos: function () { return clavesConAudio().length; },
+
+    /* ── La toma única: grabar, subir, oír, quitar ── */
+    get grabando() { return grabando(); },
+    grabar: function () {
+      if (grabando()) return parar().then(function (k) { avisarVoz(); return k; });
+      return grabar(vozB6.clave, function () { avisarVoz(); });
+    },
+    subir: function (f) {
+      if (!f) return Promise.resolve(null);
+      return new Promise(function (ok) {
+        var fr = new FileReader();
+        fr.onload = function () {
+          audios[vozB6.clave] = fr.result;
+          guardarAudios(); avisarVoz(); ok(vozB6.clave);
+        };
+        fr.readAsDataURL(f);
+      });
+    },
+    oir: function () {
+      var d = audios[vozB6.clave];
+      if (!d) return;
+      callar();
+      var a = new Audio(d);
+      reproduciendo = a;
+      a.play().catch(function () { });
+    },
+    quitar: function () { borrarAudio(vozB6.clave); avisarVoz(); },
+    /* Ensayo: suena lo que va a quedar dentro del vídeo. */
+    probar: function () {
+      if (sueltoHay() && !clavesConAudio().length) return window.B6Voz.oir();
+      return narrar(vozB6.guion || []);
+    },
+    callar: callar,
+
     mime: mime,
     pista: pista,
     suscribir: function (fn) {
@@ -301,9 +395,12 @@
     },
     resumen: function () {
       var n = clavesConAudio().length, t = (vozB6.guion || []).length;
+      if (vozB6.pestana) return 'La voz de Google entrará en el archivo: al grabar te pedirá compartir «Esta pestaña» con su audio.';
       if (vozB6.vivo) return 'Narrarás en directo: tu micrófono se graba dentro del vídeo.';
-      if (!t) return 'Todavía no hay guion para narrar en esta pantalla.';
-      if (!n) return 'Sin grabaciones tuyas: el vídeo saldrá con la narración rotulada. Graba tu voz por pasos y quedará dentro del archivo.';
+      if (grabando()) return 'Grabando tu voz… vuelve a pulsar para parar.';
+      if (sueltoHay() && !n) return 'Tienes tu toma grabada: el vídeo se descarga con esa voz dentro.';
+      if (!t) return 'Escribe la narración y elige cómo quieres que suene.';
+      if (!n) return 'De momento el vídeo saldría con la narración rotulada. Graba tu voz, o mete la de Google compartiendo el sonido de la pestaña.';
       if (n < t) return n + ' de ' + t + ' pasos con tu voz. Los que faltan salen en silencio con su rótulo.';
       return 'Los ' + t + ' pasos tienen tu voz: el vídeo se descarga con la narración dentro.';
     },
@@ -315,16 +412,38 @@
       caja.style.cssText = 'margin-top:10px;border:1px solid #2d2d4a;border-radius:10px;padding:10px;background:#13132a';
       var t = document.createElement('p');
       t.style.cssText = 'margin:0 0 8px;font-size:11px;color:#94a3b8;line-height:1.5';
-      var b = document.createElement('button');
-      b.style.cssText = 'border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer;border:1px solid #2d2d4a;background:#0f0f22;color:#94a3b8';
+      var fila = document.createElement('div');
+      fila.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+      var boton = function (txt) {
+        var b = document.createElement('button');
+        b.textContent = txt;
+        b.style.cssText = 'border-radius:8px;padding:6px 11px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid #2d2d4a;background:#0f0f22;color:#94a3b8;font-family:inherit';
+        fila.appendChild(b);
+        return b;
+      };
+      var bGoogle = boton(''), bGrab = boton(''), bVivo = boton(''), bOir = boton('▶ Oír'), bQuita = boton('Quitar');
       var pinta = function () {
         t.textContent = window.B6Voz.resumen();
-        b.textContent = vozB6.vivo ? '● Narrar en directo: activado' : '○ Narrar en directo';
-        b.style.borderColor = vozB6.vivo ? '#a855f7' : '#2d2d4a';
-        b.style.color = vozB6.vivo ? '#e2e8f0' : '#94a3b8';
+        var marca = function (b, on) {
+          b.style.borderColor = on ? '#a855f7' : '#2d2d4a';
+          b.style.color = on ? '#e2e8f0' : '#94a3b8';
+        };
+        bGoogle.textContent = vozB6.pestana ? '● Voz de Google dentro' : '○ Meter la voz de Google';
+        marca(bGoogle, vozB6.pestana);
+        bVivo.textContent = vozB6.vivo ? '● Narrar en directo' : '○ Narrar en directo';
+        marca(bVivo, vozB6.vivo);
+        bGrab.textContent = grabando() ? '⏹ Parar la grabación' : '🎙 Grabar mi voz';
+        marca(bGrab, grabando());
+        var hay = sueltoHay();
+        bOir.style.display = hay ? '' : 'none';
+        bQuita.style.display = hay ? '' : 'none';
       };
-      b.onclick = function () { window.B6Voz.vivo = !vozB6.vivo; pinta(); };
-      caja.appendChild(t); caja.appendChild(b);
+      bGoogle.onclick = function () { window.B6Voz.setPestana(!vozB6.pestana); };
+      bVivo.onclick = function () { window.B6Voz.setVivo(!vozB6.vivo); };
+      bGrab.onclick = function () { window.B6Voz.grabar().catch(function (e) { t.textContent = e.message; }); };
+      bOir.onclick = function () { window.B6Voz.oir(); };
+      bQuita.onclick = function () { window.B6Voz.quitar(); };
+      caja.appendChild(t); caja.appendChild(fila);
       host.appendChild(caja);
       pinta();
       var off = window.B6Voz.suscribir(pinta);
